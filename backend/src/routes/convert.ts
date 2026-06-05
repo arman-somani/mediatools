@@ -195,20 +195,16 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
           'x-rapidapi-key': process.env.RAPIDAPI_KEY || '425e2add9bmsh48be1a37a98d396p14a1c9jsnb614fa4d46e0'
         };
 
-        let videoTitle = 'YouTube Audio';
-        let durationSec = 0;
-        try {
-          const { stdout } = await execAsync(`yt-dlp --print title --print duration --no-playlist "${cleanUrl}"`);
-          const lines = stdout.trim().split('\n');
-          videoTitle = (lines[0] || '').trim() || 'YouTube Audio';
-          durationSec = parseInt((lines[1] || '').trim(), 10) || 0;
-        } catch { /* ignore */ }
-
-        const [response] = await Promise.all([
+        const [infoRes, response] = await Promise.all([
+          fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/info?id=${videoId}`, { headers }),
           fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/download?id=${videoId}&filter=audioonly`, { headers })
         ]);
 
+        const infoData = await infoRes.json().catch(() => ({})) as any;
         const data = await response.json().catch(() => ([])) as any;
+
+        const videoTitle = infoData?.title || infoData?.fulltitle || 'YouTube Audio';
+        const durationSec = infoData?.duration || 0;
 
         const safeTitle = sanitizeFilename(videoTitle) || 'YouTube Audio';
         const reqQuality = String(req.body.quality || '192');
@@ -341,23 +337,19 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
           'x-rapidapi-key': process.env.RAPIDAPI_KEY || '425e2add9bmsh48be1a37a98d396p14a1c9jsnb614fa4d46e0'
         };
 
-        let videoTitle = 'YouTube Video';
-        let durationSec = 0;
-        try {
-          const { stdout } = await execAsync(`yt-dlp --print title --print duration --no-playlist "${cleanUrl}"`);
-          const lines = stdout.trim().split('\n');
-          videoTitle = (lines[0] || '').trim() || 'YouTube Video';
-          durationSec = parseInt((lines[1] || '').trim(), 10) || 0;
-        } catch { /* ignore */ }
-
-        // Fetch video and audio streams simultaneously
-        const [videoRes, audioRes] = await Promise.all([
+        // Fetch video, audio, and metadata simultaneously
+        const [infoRes, videoRes, audioRes] = await Promise.all([
+          fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/info?id=${videoId}`, { headers }),
           fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/download?id=${videoId}&filter=videoonly`, { headers }),
           fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/download?id=${videoId}&filter=audioonly`, { headers })
         ]);
 
+        const infoData = await infoRes.json().catch(() => ({})) as any;
         const videoData = await videoRes.json().catch(() => ([])) as any[];
         const audioData = await audioRes.json().catch(() => ([])) as any[];
+
+        const videoTitle = infoData?.title || infoData?.fulltitle || 'YouTube Video';
+        const durationSec = infoData?.duration || 0;
 
         if (Array.isArray(videoData) && videoData.length > 0 && Array.isArray(audioData) && audioData.length > 0) {
           
