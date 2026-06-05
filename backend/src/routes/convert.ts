@@ -162,6 +162,10 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
       return;
     }
 
+    const fileId = uuidv4();
+    const diskFilename = `${fileId}.mp3`;
+    const outputPath = path.join(outputDir, diskFilename);
+
     const conversion: any = await Conversion.create({
       userId: req.user?.id,
       type: 'youtube',
@@ -169,8 +173,8 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
       youtubeUrl: cleanUrl,
       youtubeTitle: 'YouTube Audio',
       outputFilename: `audio.mp3`,
-      outputPath: '',
-      outputUrl: '',
+      outputPath: outputPath,
+      outputUrl: `/outputs/${diskFilename}`,
       quality: '192',
       progress: 0,
     });
@@ -195,9 +199,33 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         const data = await response.json() as any;
         
         if (Array.isArray(data) && data.length > 0 && data[0].url) {
-          conversion.outputUrl = data[0].url;
+          const audioUrl = data[0].url;
+          
+          const ffmpeg = spawn('ffmpeg', ['-y', '-i', audioUrl, '-vn', '-ab', '192k', outputPath]);
+          
+          let fakeProgress = 10;
+          const interval = setInterval(() => {
+            if (fakeProgress < 95) {
+              fakeProgress += 5;
+              Conversion.findByIdAndUpdate(conversion._id, { progress: fakeProgress }).catch(() => {});
+            }
+          }, 2000);
+
+          ffmpeg.stderr.on('data', (d) => console.log('[ffmpeg mp3]:', d.toString().substring(0, 50)));
+
+          await new Promise((resolve, reject) => {
+            ffmpeg.on('close', (code) => {
+              clearInterval(interval);
+              if (code === 0) resolve(true);
+              else reject(new Error('ffmpeg failed with code ' + code));
+            });
+          });
+
           conversion.status = 'completed';
           conversion.progress = 100;
+          conversion.fileSize = getFileSize(outputPath);
+          // Set outputUrl to our frontend's endpoint so it downloads from Render!
+          conversion.outputUrl = `/outputs/${diskFilename}`;
           await conversion.save();
         } else {
           throw new Error('API did not return a valid download link');
@@ -233,6 +261,10 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
       return;
     }
 
+    const fileId = uuidv4();
+    const diskFilename = `${fileId}.mp4`;
+    const outputPath = path.join(outputDir, diskFilename);
+
     const conversion: any = await Conversion.create({
       userId: req.user?.id,
       type: 'youtube-mp4',
@@ -240,8 +272,8 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
       youtubeUrl: cleanUrl,
       youtubeTitle: 'YouTube Video',
       outputFilename: `video.mp4`,
-      outputPath: '',
-      outputUrl: '',
+      outputPath: outputPath,
+      outputUrl: `/outputs/${diskFilename}`,
       quality: '192',         
       videoQuality: '720p',
       progress: 0,
@@ -258,21 +290,52 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
 
     (async () => {
       try {
-        const response = await fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/download?id=${videoId}&filter=audioandvideo&quality=highest`, {
-          headers: {
-            'x-rapidapi-host': 'cloud-api-hub-youtube-downloader.p.rapidapi.com',
-            'x-rapidapi-key': process.env.RAPIDAPI_KEY || '425e2add9bmsh48be1a37a98d396p14a1c9jsnb614fa4d46e0'
-          }
-        });
-        const data = await response.json() as any;
+        const headers = {
+          'x-rapidapi-host': 'cloud-api-hub-youtube-downloader.p.rapidapi.com',
+          'x-rapidapi-key': process.env.RAPIDAPI_KEY || '425e2add9bmsh48be1a37a98d396p14a1c9jsnb614fa4d46e0'
+        };
+
+        // Fetch video and audio separately
+        const [videoRes, audioRes] = await Promise.all([
+          fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/download?id=${videoId}&filter=videoonly`, { headers }),
+          fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/download?id=${videoId}&filter=audioonly`, { headers })
+        ]);
+
+        const videoData = await videoRes.json() as any;
+        const audioData = await audioRes.json() as any;
         
-        if (data && data.url) {
-          conversion.outputUrl = data.url;
+        if (Array.isArray(videoData) && videoData[0]?.url && Array.isArray(audioData) && audioData[0]?.url) {
+          const videoUrl = videoData[0].url;
+          const audioUrl = audioData[0].url;
+
+          // Merge them using FFmpeg
+          const ffmpeg = spawn('ffmpeg', ['-y', '-i', videoUrl, '-i', audioUrl, '-c:v', 'copy', '-c:a', 'aac', outputPath]);
+          
+          let fakeProgress = 10;
+          const interval = setInterval(() => {
+            if (fakeProgress < 95) {
+              fakeProgress += 5;
+              Conversion.findByIdAndUpdate(conversion._id, { progress: fakeProgress }).catch(() => {});
+            }
+          }, 3000);
+
+          ffmpeg.stderr.on('data', (d) => console.log('[ffmpeg mp4]:', d.toString().substring(0, 50)));
+
+          await new Promise((resolve, reject) => {
+            ffmpeg.on('close', (code) => {
+              clearInterval(interval);
+              if (code === 0) resolve(true);
+              else reject(new Error('ffmpeg failed with code ' + code));
+            });
+          });
+
           conversion.status = 'completed';
           conversion.progress = 100;
+          conversion.fileSize = getFileSize(outputPath);
+          conversion.outputUrl = `/outputs/${diskFilename}`;
           await conversion.save();
         } else {
-          throw new Error('API did not return a valid download link');
+          throw new Error('API did not return valid video and audio links');
         }
       } catch (err: any) {
         console.error('YouTube MP4 background error:', err.message);
