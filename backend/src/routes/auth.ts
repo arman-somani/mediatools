@@ -53,11 +53,10 @@ router.post(
       name,
       email,
       password,
-      emailVerificationToken: verificationCode,
-      emailVerificationExpiry: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      isEmailVerified: true, // Auto-verified to bypass Render free tier email block
     });
 
-    // Send verification email (non-blocking)
+    // Send welcome email (will silently fail on Render free tier, but doesn't crash)
     sendVerificationEmail(email, name, verificationCode).catch(console.error);
 
     res.status(201).json({
