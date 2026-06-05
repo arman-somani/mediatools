@@ -260,8 +260,10 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
 router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const youtubeUrl = req.body.youtubeUrl || req.body.url;
-    const videoQuality: string = (['360p', '480p', '720p', '1080p', '1440p', '2160p'].includes(req.body.videoQuality)) 
-      ? req.body.videoQuality : '720p';
+    // Frontend might send 'quality' or 'videoQuality'
+    const reqQuality = String(req.body.videoQuality || req.body.quality || '720p');
+    const videoQuality: string = (['360p', '480p', '720p', '1080p', '1440p', '2160p'].includes(reqQuality)) 
+      ? reqQuality : '720p';
 
     if (!youtubeUrl) {
       res.status(400).json({ success: false, message: 'YouTube URL is required' });
@@ -329,16 +331,22 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
         await conversion.save();
 
         if (Array.isArray(videoData) && videoData.length > 0 && Array.isArray(audioData) && audioData.length > 0) {
-          // Find the video stream that matches the requested quality
-          let selectedVideo = videoData.find(v => v.format_note?.includes(videoQuality) && v.ext === 'mp4');
-          if (!selectedVideo) selectedVideo = videoData.find(v => v.format_note?.includes('720p') && v.ext === 'mp4');
-          if (!selectedVideo) selectedVideo = [...videoData].reverse().find(v => v.ext === 'mp4'); // Fallback to highest mp4
+          
+          // Helper to get video height for strict sorting
+          const getHeight = (v: any) => parseInt(v.resolution?.split('x')[1] || v.format_note?.replace('p', '') || '0', 10);
+          
+          // Filter to mp4 and sort from HIGHEST to LOWEST resolution
+          const mp4Videos = videoData.filter(v => v.ext === 'mp4').sort((a, b) => getHeight(b) - getHeight(a));
+          
+          // Try to find the exact requested quality, else fallback to the absolute highest available
+          let selectedVideo = mp4Videos.find(v => v.format_note?.includes(videoQuality));
+          if (!selectedVideo) selectedVideo = mp4Videos[0];
           
           const videoUrl = selectedVideo?.url || videoData[0].url;
           
           // Get highest quality audio
-          let selectedAudio = [...audioData].reverse().find(a => a.ext === 'm4a');
-          if (!selectedAudio) selectedAudio = audioData[audioData.length - 1]; // Fallback to highest available audio
+          const m4aAudios = audioData.filter(a => a.ext === 'm4a');
+          let selectedAudio = m4aAudios.length > 0 ? m4aAudios[m4aAudios.length - 1] : audioData[audioData.length - 1];
 
           const audioUrl = selectedAudio?.url || audioData[0].url;
 
