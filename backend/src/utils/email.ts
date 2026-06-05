@@ -74,7 +74,7 @@ export const sendPasswordResetEmail = async (email: string, name: string, token:
 };
 
 export const sendContactEmail = async (name: string, email: string, message: string): Promise<void> => {
-  const adminEmail = 'armansomani786@gmail.com';
+  const adminEmail = process.env.FROM_EMAIL || 'mediatools.contactus@gmail.com';
 
   console.log(`\n======================================================`);
   console.log(`📩 NEW CONTACT FORM SUBMISSION FROM: ${name} (${email})`);
