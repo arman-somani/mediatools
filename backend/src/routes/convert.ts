@@ -283,11 +283,8 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
   try {
     const youtubeUrl = req.body.youtubeUrl || req.body.url;
     // Frontend might send 'quality' or 'videoQuality'
-    let reqQuality = String(req.body.videoQuality || req.body.quality || '720p');
-    if (reqQuality === '4K') reqQuality = '2160p';
-    if (reqQuality === '8K') reqQuality = '4320p';
-    
-    const videoQuality: string = (['360p', '480p', '720p', '1080p', '1440p', '2160p', '4320p'].includes(reqQuality)) 
+    const reqQuality = String(req.body.videoQuality || req.body.quality || '720p');
+    const videoQuality: string = (['360p', '480p', '720p', '1080p', '4K', '8K'].includes(reqQuality)) 
       ? reqQuality : '720p';
 
     if (!youtubeUrl) {
@@ -366,8 +363,13 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
           // Filter to mp4/webm and sort from HIGHEST to LOWEST resolution
           const compatibleVideos = videoData.filter(v => ['mp4', 'webm'].includes(v.ext)).sort((a, b) => getHeight(b) - getHeight(a));
           
+          // Translate UI quality to RapidAPI quality format for searching
+          let searchQuality = videoQuality;
+          if (searchQuality === '4K') searchQuality = '2160p';
+          if (searchQuality === '8K') searchQuality = '4320p';
+
           // Try to find the exact requested quality, else fallback to the absolute highest available
-          let selectedVideo = compatibleVideos.find(v => v.format_note?.includes(videoQuality));
+          let selectedVideo = compatibleVideos.find(v => v.format_note?.includes(searchQuality));
           if (!selectedVideo) selectedVideo = compatibleVideos[0];
           
           const videoUrl = selectedVideo?.url || videoData[0].url;
