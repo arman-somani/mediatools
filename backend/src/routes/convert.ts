@@ -357,26 +357,29 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
 
         if (Array.isArray(videoData) && videoData.length > 0 && Array.isArray(audioData) && audioData.length > 0) {
           
-          // Helper to get video height for strict sorting
-          const getHeight = (v: any) => parseInt(v.resolution?.split('x')[1] || v.format_note?.replace('p', '') || '0', 10);
+          // Helper to get video height for strict sorting safely
+          const getHeight = (v: any) => {
+            const resHeight = v.resolution ? v.resolution.split('x')[1] : null;
+            return parseInt(resHeight || v.format_note?.replace(/[^0-9]/g, '') || '0', 10);
+          };
           
-          // Filter to mp4 and sort from HIGHEST to LOWEST resolution
-          const mp4Videos = videoData.filter(v => v.ext === 'mp4').sort((a, b) => getHeight(b) - getHeight(a));
+          // Filter to mp4/webm and sort from HIGHEST to LOWEST resolution
+          const compatibleVideos = videoData.filter(v => ['mp4', 'webm'].includes(v.ext)).sort((a, b) => getHeight(b) - getHeight(a));
           
           // Try to find the exact requested quality, else fallback to the absolute highest available
-          let selectedVideo = mp4Videos.find(v => v.format_note?.includes(videoQuality));
-          if (!selectedVideo) selectedVideo = mp4Videos[0];
+          let selectedVideo = compatibleVideos.find(v => v.format_note?.includes(videoQuality));
+          if (!selectedVideo) selectedVideo = compatibleVideos[0];
           
           const videoUrl = selectedVideo?.url || videoData[0].url;
           
           // Get highest quality audio
-          const m4aAudios = audioData.filter(a => a.ext === 'm4a');
+          const m4aAudios = audioData.filter(a => ['m4a', 'webm'].includes(a.ext));
           let selectedAudio = m4aAudios.length > 0 ? m4aAudios[m4aAudios.length - 1] : audioData[audioData.length - 1];
 
           const audioUrl = selectedAudio?.url || audioData[0].url;
 
-          // Merge them using FFmpeg
-          const ffmpeg = spawn('ffmpeg', ['-y', '-i', videoUrl, '-i', audioUrl, '-c:v', 'copy', '-c:a', 'aac', outputPath]);
+          // Merge them using FFmpeg (adding -strict experimental for AV1/VP9 compatibility in MP4)
+          const ffmpeg = spawn('ffmpeg', ['-y', '-i', videoUrl, '-i', audioUrl, '-c:v', 'copy', '-c:a', 'aac', '-strict', 'experimental', outputPath]);
           
           const durationSec = infoData?.duration || 0;
           let lastUpdate = Date.now();
