@@ -1,6 +1,7 @@
 import { Router, Response, Request } from 'express';
 import multer from 'multer';
 import path from 'path';
+import os from 'os';
 import fs from 'fs';
 import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
@@ -213,7 +214,19 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
 
         // Step 2: Download + convert (disk path is always UUID — always safe)
         const ytQuality = quality === '320' ? '0' : quality === '192' ? '2' : '5';
-        const ytdlp = spawn('yt-dlp', ['-x', '--audio-format', 'mp3', '--audio-quality', ytQuality, '-o', outputPath, '--no-playlist', cleanUrl]);
+        let cookiesPath = '';
+        if (process.env.YOUTUBE_COOKIES) {
+          cookiesPath = path.join(os.tmpdir(), 'youtube_cookies.txt');
+          fs.writeFileSync(cookiesPath, process.env.YOUTUBE_COOKIES);
+        }
+
+        const args = ['-x', '--audio-format', 'mp3', '--audio-quality', ytQuality, '-o', outputPath, '--no-playlist'];
+        if (cookiesPath) {
+          args.push('--cookies', cookiesPath);
+        }
+        args.push(cleanUrl);
+
+        const ytdlp = spawn('yt-dlp', args);
         
         let lastUpdate = Date.now();
         ytdlp.stdout.on('data', (data) => {
