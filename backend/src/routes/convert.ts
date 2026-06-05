@@ -195,27 +195,34 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
           'x-rapidapi-key': process.env.RAPIDAPI_KEY || '425e2add9bmsh48be1a37a98d396p14a1c9jsnb614fa4d46e0'
         };
 
-        const [infoRes, response] = await Promise.all([
-          fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/info?id=${videoId}`, { headers }),
+        let videoTitle = 'YouTube Audio';
+        let durationSec = 0;
+        try {
+          const { stdout } = await execAsync(`yt-dlp --print title --print duration --no-playlist "${cleanUrl}"`);
+          const lines = stdout.trim().split('\n');
+          videoTitle = (lines[0] || '').trim() || 'YouTube Audio';
+          durationSec = parseInt((lines[1] || '').trim(), 10) || 0;
+        } catch { /* ignore */ }
+
+        const [response] = await Promise.all([
           fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/download?id=${videoId}&filter=audioonly`, { headers })
         ]);
 
-        const infoData = await infoRes.json().catch(() => ({})) as any;
         const data = await response.json().catch(() => ([])) as any;
 
-        const videoTitle = infoData?.title || 'YouTube Audio';
         const safeTitle = sanitizeFilename(videoTitle) || 'YouTube Audio';
+        const reqQuality = String(req.body.quality || '192');
+        const audioQuality: string = (['128', '192', '320'].includes(reqQuality)) ? reqQuality : '192';
         
         conversion.youtubeTitle = videoTitle;
-        conversion.outputFilename = `${safeTitle}.mp3`;
+        conversion.outputFilename = `${safeTitle} (${audioQuality}kbps).mp3`;
         await conversion.save();
         
         if (Array.isArray(data) && data.length > 0 && data[0].url) {
           const audioUrl = data[0].url;
           
-          const ffmpeg = spawn('ffmpeg', ['-y', '-i', audioUrl, '-vn', '-ab', '192k', outputPath]);
+          const ffmpeg = spawn('ffmpeg', ['-y', '-i', audioUrl, '-vn', '-ab', `${audioQuality}k`, outputPath]);
           
-          const durationSec = infoData?.duration || 0;
           let lastUpdate = Date.now();
           let fakeProgress = 0;
           
@@ -334,23 +341,23 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
           'x-rapidapi-key': process.env.RAPIDAPI_KEY || '425e2add9bmsh48be1a37a98d396p14a1c9jsnb614fa4d46e0'
         };
 
-        // Fetch video, audio, and metadata simultaneously
-        const [infoRes, videoRes, audioRes] = await Promise.all([
-          fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/info?id=${videoId}`, { headers }),
+        let videoTitle = 'YouTube Video';
+        let durationSec = 0;
+        try {
+          const { stdout } = await execAsync(`yt-dlp --print title --print duration --no-playlist "${cleanUrl}"`);
+          const lines = stdout.trim().split('\n');
+          videoTitle = (lines[0] || '').trim() || 'YouTube Video';
+          durationSec = parseInt((lines[1] || '').trim(), 10) || 0;
+        } catch { /* ignore */ }
+
+        // Fetch video and audio streams simultaneously
+        const [videoRes, audioRes] = await Promise.all([
           fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/download?id=${videoId}&filter=videoonly`, { headers }),
           fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/download?id=${videoId}&filter=audioonly`, { headers })
         ]);
 
-        const infoData = await infoRes.json().catch(() => ({})) as any;
         const videoData = await videoRes.json().catch(() => ([])) as any[];
         const audioData = await audioRes.json().catch(() => ([])) as any[];
-        
-        const videoTitle = infoData?.title || 'YouTube Video';
-        const safeTitle = sanitizeFilename(videoTitle) || 'YouTube Video';
-        
-        conversion.youtubeTitle = videoTitle;
-        conversion.outputFilename = `${safeTitle}.mp4`;
-        await conversion.save();
 
         if (Array.isArray(videoData) && videoData.length > 0 && Array.isArray(audioData) && audioData.length > 0) {
           
@@ -374,6 +381,13 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
           
           const videoUrl = selectedVideo?.url || videoData[0].url;
           
+          const safeTitle = sanitizeFilename(videoTitle) || 'YouTube Video';
+          const actualQuality = selectedVideo?.format_note || videoQuality;
+          
+          conversion.youtubeTitle = videoTitle;
+          conversion.outputFilename = `${safeTitle} (${actualQuality}).mp4`;
+          await conversion.save();
+          
           // Get highest quality audio
           const m4aAudios = audioData.filter(a => ['m4a', 'webm'].includes(a.ext));
           let selectedAudio = m4aAudios.length > 0 ? m4aAudios[m4aAudios.length - 1] : audioData[audioData.length - 1];
@@ -383,7 +397,6 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
           // Merge them using FFmpeg (adding -strict experimental for AV1/VP9 compatibility in MP4)
           const ffmpeg = spawn('ffmpeg', ['-y', '-i', videoUrl, '-i', audioUrl, '-c:v', 'copy', '-c:a', 'aac', '-strict', 'experimental', outputPath]);
           
-          const durationSec = infoData?.duration || 0;
           let lastUpdate = Date.now();
           let fakeProgress = 0;
           
