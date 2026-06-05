@@ -260,6 +260,9 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
 router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const youtubeUrl = req.body.youtubeUrl || req.body.url;
+    const videoQuality: string = (['360p', '480p', '720p', '1080p', '1440p', '2160p'].includes(req.body.videoQuality)) 
+      ? req.body.videoQuality : '720p';
+
     if (!youtubeUrl) {
       res.status(400).json({ success: false, message: 'YouTube URL is required' });
       return;
@@ -287,7 +290,7 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
       outputPath: outputPath,
       outputUrl: `/outputs/${diskFilename}`,
       quality: '192',         
-      videoQuality: '720p',
+      videoQuality: videoQuality as any,
       progress: 0,
     });
 
@@ -315,8 +318,8 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
         ]);
 
         const infoData = await infoRes.json().catch(() => ({})) as any;
-        const videoData = await videoRes.json().catch(() => ([])) as any;
-        const audioData = await audioRes.json().catch(() => ([])) as any;
+        const videoData = await videoRes.json().catch(() => ([])) as any[];
+        const audioData = await audioRes.json().catch(() => ([])) as any[];
         
         const videoTitle = infoData?.title || 'YouTube Video';
         const safeTitle = sanitizeFilename(videoTitle) || 'YouTube Video';
@@ -325,9 +328,19 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
         conversion.outputFilename = `${safeTitle}.mp4`;
         await conversion.save();
 
-        if (Array.isArray(videoData) && videoData[0]?.url && Array.isArray(audioData) && audioData[0]?.url) {
-          const videoUrl = videoData[0].url;
-          const audioUrl = audioData[0].url;
+        if (Array.isArray(videoData) && videoData.length > 0 && Array.isArray(audioData) && audioData.length > 0) {
+          // Find the video stream that matches the requested quality
+          let selectedVideo = videoData.find(v => v.format_note?.includes(videoQuality) && v.ext === 'mp4');
+          if (!selectedVideo) selectedVideo = videoData.find(v => v.format_note?.includes('720p') && v.ext === 'mp4');
+          if (!selectedVideo) selectedVideo = [...videoData].reverse().find(v => v.ext === 'mp4'); // Fallback to highest mp4
+          
+          const videoUrl = selectedVideo?.url || videoData[0].url;
+          
+          // Get highest quality audio
+          let selectedAudio = [...audioData].reverse().find(a => a.ext === 'm4a');
+          if (!selectedAudio) selectedAudio = audioData[audioData.length - 1]; // Fallback to highest available audio
+
+          const audioUrl = selectedAudio?.url || audioData[0].url;
 
           // Merge them using FFmpeg
           const ffmpeg = spawn('ffmpeg', ['-y', '-i', videoUrl, '-i', audioUrl, '-c:v', 'copy', '-c:a', 'aac', outputPath]);
