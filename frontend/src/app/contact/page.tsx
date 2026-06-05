@@ -23,7 +23,7 @@ export default function ContactPage() {
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                             </svg>
                         </div>
-                        
+
                         <h1 className="text-4xl md:text-5xl font-bold mb-4 font-display">Get in Touch</h1>
                         <p className="text-white/60 text-lg mb-12 leading-relaxed">
                             Whether you have a suggestion, found a bug, or just want to say hi, we'd love to hear from you.
@@ -38,7 +38,7 @@ export default function ContactPage() {
                                 </div>
                                 <div>
                                     <p className="text-sm text-white/50 font-medium mb-1">Email Us</p>
-                                    <p className="text-white text-lg font-semibold">armansomani786@proton.me</p>
+                                    <p className="text-white text-lg font-semibold">mediatools.contactus@gmail.com</p>
                                 </div>
                             </div>
 
