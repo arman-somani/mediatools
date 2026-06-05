@@ -149,35 +149,32 @@ router.post(
 router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const youtubeUrl = req.body.youtubeUrl || req.body.url;
-    const quality = safeAudioQuality(req.body.quality);
-
     if (!youtubeUrl) {
       res.status(400).json({ success: false, message: 'YouTube URL is required' });
       return;
     }
 
     const cleanUrl = String(youtubeUrl).trim();
+    const videoId = cleanUrl.match(/(?:v=|\/)([0-9A-Za-z_-]{11}).*/)?.[1];
+    
+    if (!videoId) {
+      res.status(400).json({ success: false, message: 'Invalid YouTube URL' });
+      return;
+    }
 
-    // Always UUID on disk — avoids all Windows path/special-char issues
-    const fileId = uuidv4();
-    const diskFilename = `${fileId}.mp3`;
-    const outputPath = path.join(outputDir, diskFilename);
-
-    // Create record FIRST so polling can start immediately
     const conversion: any = await Conversion.create({
       userId: req.user?.id,
       type: 'youtube',
       status: 'processing',
       youtubeUrl: cleanUrl,
-      youtubeTitle: 'Fetching title...',
-      outputFilename: diskFilename,
-      outputPath,
-      outputUrl: `/outputs/${diskFilename}`,
-      quality: quality as '128' | '192' | '320',
+      youtubeTitle: 'YouTube Audio',
+      outputFilename: `audio.mp3`,
+      outputPath: '',
+      outputUrl: '',
+      quality: '192',
       progress: 0,
     });
 
-    // ✅ Respond immediately — frontend gets jobId and starts polling
     res.json({
       success: true,
       message: 'YouTube conversion started',
@@ -187,75 +184,29 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
       },
     });
 
-    // ── Everything below runs in background after response is sent ──
     (async () => {
       try {
-        // Step 1: Get title (fast metadata only — no video downloaded)
-        let videoTitle = 'YouTube Audio';
-        let thumbnail = '';
-        try {
-          const { stdout } = await execAsync(
-            `yt-dlp --print title --print thumbnail --no-playlist "${cleanUrl}"`
-          );
-          const lines = stdout.trim().split('\n');
-          videoTitle = (lines[0] || '').trim() || 'YouTube Audio';
-          thumbnail  = (lines[1] || '').trim();
-        } catch {
-          // Title fetch failed — still convert with default name
-        }
-
-        const safeTitle = sanitizeFilename(videoTitle) || 'YouTube Audio';
-
-        // Update DB with title so polling response shows the video name
-        conversion.youtubeTitle    = videoTitle;
-        conversion.youtubeThumbnail = thumbnail;
-        conversion.outputFilename  = `${safeTitle}.mp3`; // user sees this on download
-        await conversion.save();
-
-        // Step 2: Download + convert (disk path is always UUID — always safe)
-        const ytQuality = quality === '320' ? '0' : quality === '192' ? '2' : '5';
-        const ytdlp = spawn('yt-dlp', ['-x', '--audio-format', 'mp3', '--audio-quality', ytQuality, '-o', outputPath, '--no-playlist', cleanUrl]);
-        
-        let lastUpdate = Date.now();
-        ytdlp.stdout.on('data', (data) => {
-          const output = data.toString();
-          const match = output.match(/\[download\]\s+([\d.]+)%/);
-          if (match) {
-            const progress = parseFloat(match[1]);
-            if (!isNaN(progress)) {
-              const now = Date.now();
-              if (now - lastUpdate > 1000) {
-                lastUpdate = now;
-                Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => {});
-              }
-            }
+        const response = await fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/download?id=${videoId}&filter=audioonly`, {
+          headers: {
+            'x-rapidapi-host': 'cloud-api-hub-youtube-downloader.p.rapidapi.com',
+            'x-rapidapi-key': process.env.RAPIDAPI_KEY || '425e2add9bmsh48be1a37a98d396p14a1c9jsnb614fa4d46e0'
           }
         });
+        const data = await response.json();
         
-        ytdlp.stderr.on('data', (data) => {
-          console.error('[yt-dlp MP3 ERROR]:', data.toString());
-        });
-
-        await new Promise((resolve, reject) => {
-          ytdlp.on('close', (code) => {
-            if (code === 0) resolve(true);
-            else reject(new Error('yt-dlp failed with code ' + code));
-          });
-        });
-
-        // Step 3: Mark complete
-        conversion.status   = 'completed';
-        conversion.progress = 100;
-        conversion.fileSize = getFileSize(outputPath);
-        await conversion.save();
-
+        if (Array.isArray(data) && data.length > 0 && data[0].url) {
+          conversion.outputUrl = data[0].url;
+          conversion.status = 'completed';
+          conversion.progress = 100;
+          await conversion.save();
+        } else {
+          throw new Error('API did not return a valid download link');
+        }
       } catch (err: any) {
         console.error('YouTube background error:', err.message);
-        try {
-          conversion.status       = 'failed';
-          conversion.errorMessage = err.message || 'Conversion failed';
-          await conversion.save();
-        } catch {}
+        conversion.status = 'failed';
+        conversion.errorMessage = err.message || 'Conversion failed';
+        await conversion.save();
       }
     })();
 
@@ -269,45 +220,33 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
 router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const youtubeUrl = req.body.youtubeUrl || req.body.url;
-    const videoQuality: string = (['360p', '480p', '720p', '1080p', '4K', '8K'].includes(req.body.videoQuality))
-      ? req.body.videoQuality : '720p';
-
     if (!youtubeUrl) {
       res.status(400).json({ success: false, message: 'YouTube URL is required' });
       return;
     }
 
     const cleanUrl = String(youtubeUrl).trim();
-    const fileId = uuidv4();
-    const diskFilename = `${fileId}.mp4`;
-    const outputPath = path.join(outputDir, diskFilename);
+    const videoId = cleanUrl.match(/(?:v=|\/)([0-9A-Za-z_-]{11}).*/)?.[1];
 
-    // Map quality label to yt-dlp format filter
-    const formatMap: Record<string, string> = {
-      '360p':  'bestvideo[height<=360]+bestaudio/best[height<=360]/bestvideo+bestaudio/best',
-      '480p':  'bestvideo[height<=480]+bestaudio/best[height<=480]/bestvideo+bestaudio/best',
-      '720p':  'bestvideo[height<=720]+bestaudio/best[height<=720]/bestvideo+bestaudio/best',
-      '1080p': 'bestvideo[height<=1080]+bestaudio/best[height<=1080]/bestvideo+bestaudio/best',
-      '4K':    'bestvideo[height<=2160]+bestaudio/best[height<=2160]/bestvideo+bestaudio/best',
-      '8K':    'bestvideo[height<=4320]+bestaudio/best[height<=4320]/bestvideo+bestaudio/best',
-    };
-    const ytFormat = formatMap[videoQuality] || formatMap['720p'];
+    if (!videoId) {
+      res.status(400).json({ success: false, message: 'Invalid YouTube URL' });
+      return;
+    }
 
     const conversion: any = await Conversion.create({
       userId: req.user?.id,
       type: 'youtube-mp4',
       status: 'processing',
       youtubeUrl: cleanUrl,
-      youtubeTitle: 'Fetching title...',
-      outputFilename: diskFilename,
-      outputPath,
-      outputUrl: `/outputs/${diskFilename}`,
-      quality: '192',         // audio quality within the mp4
-      videoQuality: videoQuality as any,
+      youtubeTitle: 'YouTube Video',
+      outputFilename: `video.mp4`,
+      outputPath: '',
+      outputUrl: '',
+      quality: '192',         
+      videoQuality: '720p',
       progress: 0,
     });
 
-    // Respond immediately — frontend starts polling
     res.json({
       success: true,
       message: 'YouTube MP4 download started',
@@ -317,70 +256,29 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
       },
     });
 
-    // Background processing
     (async () => {
       try {
-        // Step 1: Get metadata
-        let videoTitle = 'YouTube Video';
-        let thumbnail = '';
-        try {
-          const { stdout } = await execAsync(
-            `yt-dlp --print title --print thumbnail --no-playlist "${cleanUrl}"`
-          );
-          const lines = stdout.trim().split('\n');
-          videoTitle = (lines[0] || '').trim() || 'YouTube Video';
-          thumbnail  = (lines[1] || '').trim();
-        } catch { /* keep defaults */ }
-
-        const safeTitle = sanitizeFilename(videoTitle) || 'YouTube Video';
-        conversion.youtubeTitle     = videoTitle;
-        conversion.youtubeThumbnail = thumbnail;
-        conversion.outputFilename   = `${safeTitle}.mp4`;
-        await conversion.save();
-
-        // Step 2: Download video + audio merged into mp4
-        const ytdlp = spawn('yt-dlp', ['-f', ytFormat, '--merge-output-format', 'mp4', '-o', outputPath, '--no-playlist', cleanUrl]);
-        
-        let lastUpdate = Date.now();
-        ytdlp.stdout.on('data', (data) => {
-          const output = data.toString();
-          const match = output.match(/\[download\]\s+([\d.]+)%/);
-          if (match) {
-            const progress = parseFloat(match[1]);
-            if (!isNaN(progress)) {
-              const now = Date.now();
-              if (now - lastUpdate > 1000) {
-                lastUpdate = now;
-                Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => {});
-              }
-            }
+        const response = await fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/download?id=${videoId}&filter=audioandvideo&quality=highest`, {
+          headers: {
+            'x-rapidapi-host': 'cloud-api-hub-youtube-downloader.p.rapidapi.com',
+            'x-rapidapi-key': process.env.RAPIDAPI_KEY || '425e2add9bmsh48be1a37a98d396p14a1c9jsnb614fa4d46e0'
           }
         });
-
-        ytdlp.stderr.on('data', (data) => {
-          console.error('[yt-dlp MP4 ERROR]:', data.toString());
-        });
-
-        await new Promise((resolve, reject) => {
-          ytdlp.on('close', (code) => {
-            if (code === 0) resolve(true);
-            else reject(new Error('yt-dlp failed with code ' + code));
-          });
-        });
-
-        // Step 3: Mark complete
-        conversion.status   = 'completed';
-        conversion.progress = 100;
-        conversion.fileSize = getFileSize(outputPath);
-        await conversion.save();
-
+        const data = await response.json();
+        
+        if (data && data.url) {
+          conversion.outputUrl = data.url;
+          conversion.status = 'completed';
+          conversion.progress = 100;
+          await conversion.save();
+        } else {
+          throw new Error('API did not return a valid download link');
+        }
       } catch (err: any) {
         console.error('YouTube MP4 background error:', err.message);
-        try {
-          conversion.status       = 'failed';
-          conversion.errorMessage = err.message || 'Download failed';
-          await conversion.save();
-        } catch {}
+        conversion.status = 'failed';
+        conversion.errorMessage = err.message || 'Download failed';
+        await conversion.save();
       }
     })();
 
