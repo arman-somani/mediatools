@@ -28,6 +28,7 @@
     "mongoose": "^9.6.3",
     "multer": "^2.1.1",
     "nodemailer": "^8.0.10",
+    "play-dl": "^1.9.7",
     "razorpay": "^2.9.6",
     "resend": "^6.12.4",
     "streamifier": "^0.1.1",
