@@ -214,19 +214,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
 
         // Step 2: Download + convert (disk path is always UUID — always safe)
         const ytQuality = quality === '320' ? '0' : quality === '192' ? '2' : '5';
-        let cookiesPath = '';
-        if (process.env.YOUTUBE_COOKIES) {
-          cookiesPath = path.join(os.tmpdir(), 'youtube_cookies.txt');
-          fs.writeFileSync(cookiesPath, process.env.YOUTUBE_COOKIES);
-        }
-
-        const args = ['-x', '--audio-format', 'mp3', '--audio-quality', ytQuality, '-o', outputPath, '--no-playlist'];
-        if (cookiesPath) {
-          args.push('--cookies', cookiesPath);
-        }
-        args.push(cleanUrl);
-
-        const ytdlp = spawn('yt-dlp', args);
+        const ytdlp = spawn('yt-dlp', ['-x', '--audio-format', 'mp3', '--audio-quality', ytQuality, '-o', outputPath, '--no-playlist', cleanUrl]);
         
         let lastUpdate = Date.now();
         ytdlp.stdout.on('data', (data) => {
@@ -351,19 +339,7 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
         await conversion.save();
 
         // Step 2: Download video + audio merged into mp4
-        let cookiesPath = '';
-        if (process.env.YOUTUBE_COOKIES) {
-          cookiesPath = path.join(os.tmpdir(), 'youtube_cookies.txt');
-          fs.writeFileSync(cookiesPath, process.env.YOUTUBE_COOKIES);
-        }
-
-        const args = ['-f', ytFormat, '--merge-output-format', 'mp4', '-o', outputPath, '--no-playlist'];
-        if (cookiesPath) {
-          args.push('--cookies', cookiesPath);
-        }
-        args.push(cleanUrl);
-
-        const ytdlp = spawn('yt-dlp', args);
+        const ytdlp = spawn('yt-dlp', ['-f', ytFormat, '--merge-output-format', 'mp4', '-o', outputPath, '--no-playlist', cleanUrl]);
         
         let lastUpdate = Date.now();
         ytdlp.stdout.on('data', (data) => {
@@ -527,19 +503,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         await conversion.save();
 
         // Step 2: Download video + audio merged into mp4
-        let cookiesPath = '';
-        if (process.env.YOUTUBE_COOKIES) {
-          cookiesPath = path.join(os.tmpdir(), 'youtube_cookies.txt');
-          fs.writeFileSync(cookiesPath, process.env.YOUTUBE_COOKIES);
-        }
-
-        const args = ['-f', ytFormat, '--merge-output-format', 'mp4', '-o', outputPath, '--no-playlist'];
-        if (cookiesPath) {
-          args.push('--cookies', cookiesPath);
-        }
-        args.push(cleanUrl);
-
-        const ytdlp = spawn('yt-dlp', args);
+        const ytdlp = spawn('yt-dlp', ['-f', ytFormat, '--merge-output-format', 'mp4', '-o', outputPath, '--no-playlist', cleanUrl]);
         
         let lastUpdate = Date.now();
         ytdlp.stdout.on('data', (data) => {
