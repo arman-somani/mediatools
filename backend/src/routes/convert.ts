@@ -230,6 +230,10 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
             }
           }
         });
+        
+        ytdlp.stderr.on('data', (data) => {
+          console.error('[yt-dlp MP3 ERROR]:', data.toString());
+        });
 
         await new Promise((resolve, reject) => {
           ytdlp.on('close', (code) => {
@@ -350,6 +354,10 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
               }
             }
           }
+        });
+
+        ytdlp.stderr.on('data', (data) => {
+          console.error('[yt-dlp MP4 ERROR]:', data.toString());
         });
 
         await new Promise((resolve, reject) => {
@@ -510,6 +518,10 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
               }
             }
           }
+        });
+
+        ytdlp.stderr.on('data', (data) => {
+          console.error('[yt-dlp UNIVERSAL ERROR]:', data.toString());
         });
 
         await new Promise((resolve, reject) => {
