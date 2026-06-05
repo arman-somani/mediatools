@@ -192,7 +192,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
             'x-rapidapi-key': process.env.RAPIDAPI_KEY || '425e2add9bmsh48be1a37a98d396p14a1c9jsnb614fa4d46e0'
           }
         });
-        const data = await response.json();
+        const data = await response.json() as any;
         
         if (Array.isArray(data) && data.length > 0 && data[0].url) {
           conversion.outputUrl = data[0].url;
@@ -264,7 +264,7 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
             'x-rapidapi-key': process.env.RAPIDAPI_KEY || '425e2add9bmsh48be1a37a98d396p14a1c9jsnb614fa4d46e0'
           }
         });
-        const data = await response.json();
+        const data = await response.json() as any;
         
         if (data && data.url) {
           conversion.outputUrl = data.url;
