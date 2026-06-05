@@ -283,8 +283,11 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
   try {
     const youtubeUrl = req.body.youtubeUrl || req.body.url;
     // Frontend might send 'quality' or 'videoQuality'
-    const reqQuality = String(req.body.videoQuality || req.body.quality || '720p');
-    const videoQuality: string = (['360p', '480p', '720p', '1080p', '1440p', '2160p'].includes(reqQuality)) 
+    let reqQuality = String(req.body.videoQuality || req.body.quality || '720p');
+    if (reqQuality === '4K') reqQuality = '2160p';
+    if (reqQuality === '8K') reqQuality = '4320p';
+    
+    const videoQuality: string = (['360p', '480p', '720p', '1080p', '1440p', '2160p', '4320p'].includes(reqQuality)) 
       ? reqQuality : '720p';
 
     if (!youtubeUrl) {
