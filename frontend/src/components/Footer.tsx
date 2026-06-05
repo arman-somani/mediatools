@@ -21,7 +21,7 @@ export default function Footer() {
                 </svg>
               </div>
               <span className="font-display font-bold text-lg tracking-tight text-white">
-                Media<span className="text-white/40">Toolkit</span>
+                Media<span className="text-white/40">TOOlkit</span>
               </span>
             </Link>
 

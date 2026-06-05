@@ -97,7 +97,7 @@ export default function Navbar() {
           </div>
 
           <span className="text-2xl font-bold navbar-text">
-            MediaToolkit
+            MediaTOOlkit
           </span>
         </Link>
 
