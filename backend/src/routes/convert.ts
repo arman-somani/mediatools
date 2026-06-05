@@ -526,14 +526,23 @@ router.get('/status/:id', async (req: Request, res: Response): Promise<void> => 
 router.get('/download/:id', async (req: Request, res: Response): Promise<void> => {
   try {
     const conversion: any = await Conversion.findById(req.params.id);
-    if (!conversion || !conversion.outputPath) {
+    if (!conversion) {
       res.status(404).json({ success: false, message: 'File not found' }); return;
     }
-    if (!fs.existsSync(conversion.outputPath)) {
-      res.status(404).json({ success: false, message: 'File expired or deleted' }); return;
-    }
+
     conversion.downloadCount += 1;
     await conversion.save();
+
+    // If it's an external URL (from an API), just redirect to it
+    if (conversion.outputUrl && conversion.outputUrl.startsWith('http')) {
+      res.redirect(conversion.outputUrl);
+      return;
+    }
+
+    if (!conversion.outputPath || !fs.existsSync(conversion.outputPath)) {
+      res.status(404).json({ success: false, message: 'File expired or deleted' }); return;
+    }
+    
     // outputFilename = "Song Title.mp3" (user-facing), outputPath = UUID file on disk
     res.download(conversion.outputPath, conversion.outputFilename || 'download.mp3', (err) => {
       // Schedule cleanup exactly 1 minute after download finishes (or fails)
