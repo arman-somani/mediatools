@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
-import { ContactMessage } from '../models/ContactMessage';
+import { sendContactEmail } from '../utils/email';
 
 const router = Router();
 
@@ -22,8 +22,7 @@ router.post(
     const { name, email, message } = req.body;
 
     try {
-      // Save directly to database to bypass Render free tier email block
-      await ContactMessage.create({ name, email, message });
+      await sendContactEmail(name, email, message);
       res.json({ success: true, message: 'Your message has been sent successfully. We will get back to you soon!' });
     } catch (error) {
       console.error('Contact form error:', error);
