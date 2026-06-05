@@ -190,13 +190,25 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
 
     (async () => {
       try {
-        const response = await fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/download?id=${videoId}&filter=audioonly`, {
-          headers: {
-            'x-rapidapi-host': 'cloud-api-hub-youtube-downloader.p.rapidapi.com',
-            'x-rapidapi-key': process.env.RAPIDAPI_KEY || '425e2add9bmsh48be1a37a98d396p14a1c9jsnb614fa4d46e0'
-          }
-        });
-        const data = await response.json() as any;
+        const headers = {
+          'x-rapidapi-host': 'cloud-api-hub-youtube-downloader.p.rapidapi.com',
+          'x-rapidapi-key': process.env.RAPIDAPI_KEY || '425e2add9bmsh48be1a37a98d396p14a1c9jsnb614fa4d46e0'
+        };
+
+        const [infoRes, response] = await Promise.all([
+          fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/info?id=${videoId}`, { headers }),
+          fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/download?id=${videoId}&filter=audioonly`, { headers })
+        ]);
+
+        const infoData = await infoRes.json().catch(() => ({})) as any;
+        const data = await response.json().catch(() => ([])) as any;
+
+        const videoTitle = infoData?.title || 'YouTube Audio';
+        const safeTitle = sanitizeFilename(videoTitle) || 'YouTube Audio';
+        
+        conversion.youtubeTitle = videoTitle;
+        conversion.outputFilename = `${safeTitle}.mp3`;
+        await conversion.save();
         
         if (Array.isArray(data) && data.length > 0 && data[0].url) {
           const audioUrl = data[0].url;
@@ -295,15 +307,24 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
           'x-rapidapi-key': process.env.RAPIDAPI_KEY || '425e2add9bmsh48be1a37a98d396p14a1c9jsnb614fa4d46e0'
         };
 
-        // Fetch video and audio separately
-        const [videoRes, audioRes] = await Promise.all([
+        // Fetch video, audio, and metadata simultaneously
+        const [infoRes, videoRes, audioRes] = await Promise.all([
+          fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/info?id=${videoId}`, { headers }),
           fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/download?id=${videoId}&filter=videoonly`, { headers }),
           fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/download?id=${videoId}&filter=audioonly`, { headers })
         ]);
 
-        const videoData = await videoRes.json() as any;
-        const audioData = await audioRes.json() as any;
+        const infoData = await infoRes.json().catch(() => ({})) as any;
+        const videoData = await videoRes.json().catch(() => ([])) as any;
+        const audioData = await audioRes.json().catch(() => ([])) as any;
         
+        const videoTitle = infoData?.title || 'YouTube Video';
+        const safeTitle = sanitizeFilename(videoTitle) || 'YouTube Video';
+        
+        conversion.youtubeTitle = videoTitle;
+        conversion.outputFilename = `${safeTitle}.mp4`;
+        await conversion.save();
+
         if (Array.isArray(videoData) && videoData[0]?.url && Array.isArray(audioData) && audioData[0]?.url) {
           const videoUrl = videoData[0].url;
           const audioUrl = audioData[0].url;
