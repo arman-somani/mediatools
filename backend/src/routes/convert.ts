@@ -215,19 +215,41 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
           
           const ffmpeg = spawn('ffmpeg', ['-y', '-i', audioUrl, '-vn', '-ab', '192k', outputPath]);
           
-          let fakeProgress = 10;
-          const interval = setInterval(() => {
+          const durationSec = infoData?.duration || 0;
+          let lastUpdate = Date.now();
+          let fakeProgress = 0;
+          
+          const fallbackInterval = durationSec <= 0 ? setInterval(() => {
             if (fakeProgress < 95) {
               fakeProgress += 5;
               Conversion.findByIdAndUpdate(conversion._id, { progress: fakeProgress }).catch(() => {});
             }
-          }, 2000);
+          }, 2000) : null;
 
-          ffmpeg.stderr.on('data', (d) => console.log('[ffmpeg mp3]:', d.toString().substring(0, 50)));
+          ffmpeg.stderr.on('data', (data) => {
+            if (durationSec > 0) {
+              const output = data.toString();
+              const timeMatch = output.match(/time=(\d{2}):(\d{2}):(\d{2}\.\d+)/);
+              if (timeMatch) {
+                const h = parseInt(timeMatch[1], 10);
+                const m = parseInt(timeMatch[2], 10);
+                const s = parseFloat(timeMatch[3]);
+                const currentTime = (h * 3600) + (m * 60) + s;
+                let progress = Math.min(99, Math.round((currentTime / durationSec) * 100));
+                
+                // Ensure it doesn't jump backwards
+                const now = Date.now();
+                if (now - lastUpdate > 1000) {
+                  lastUpdate = now;
+                  Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => {});
+                }
+              }
+            }
+          });
 
           await new Promise((resolve, reject) => {
             ffmpeg.on('close', (code) => {
-              clearInterval(interval);
+              if (fallbackInterval) clearInterval(fallbackInterval);
               if (code === 0) resolve(true);
               else reject(new Error('ffmpeg failed with code ' + code));
             });
@@ -353,19 +375,40 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
           // Merge them using FFmpeg
           const ffmpeg = spawn('ffmpeg', ['-y', '-i', videoUrl, '-i', audioUrl, '-c:v', 'copy', '-c:a', 'aac', outputPath]);
           
-          let fakeProgress = 10;
-          const interval = setInterval(() => {
+          const durationSec = infoData?.duration || 0;
+          let lastUpdate = Date.now();
+          let fakeProgress = 0;
+          
+          const fallbackInterval = durationSec <= 0 ? setInterval(() => {
             if (fakeProgress < 95) {
               fakeProgress += 5;
               Conversion.findByIdAndUpdate(conversion._id, { progress: fakeProgress }).catch(() => {});
             }
-          }, 3000);
+          }, 3000) : null;
 
-          ffmpeg.stderr.on('data', (d) => console.log('[ffmpeg mp4]:', d.toString().substring(0, 50)));
+          ffmpeg.stderr.on('data', (data) => {
+            if (durationSec > 0) {
+              const output = data.toString();
+              const timeMatch = output.match(/time=(\d{2}):(\d{2}):(\d{2}\.\d+)/);
+              if (timeMatch) {
+                const h = parseInt(timeMatch[1], 10);
+                const m = parseInt(timeMatch[2], 10);
+                const s = parseFloat(timeMatch[3]);
+                const currentTime = (h * 3600) + (m * 60) + s;
+                let progress = Math.min(99, Math.round((currentTime / durationSec) * 100));
+                
+                const now = Date.now();
+                if (now - lastUpdate > 1000) {
+                  lastUpdate = now;
+                  Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => {});
+                }
+              }
+            }
+          });
 
           await new Promise((resolve, reject) => {
             ffmpeg.on('close', (code) => {
-              clearInterval(interval);
+              if (fallbackInterval) clearInterval(fallbackInterval);
               if (code === 0) resolve(true);
               else reject(new Error('ffmpeg failed with code ' + code));
             });
