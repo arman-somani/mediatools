@@ -183,3 +183,4 @@ export default function HomePage() {
       </main>
     </PageWrapper>
   );
+}
