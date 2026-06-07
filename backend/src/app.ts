@@ -66,7 +66,7 @@ const start = async () => {
   // Cleanup job - run every 30 minutes
   setInterval(cleanupOldFiles, 30 * 60 * 1000);
 
-  app.listen(PORT, () => {
+  app.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`🚀 MediaTools Backend running on port ${PORT}`);
     console.log(`📡 Environment: ${process.env.NODE_ENV}`);
   });
