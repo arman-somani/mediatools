@@ -1,27 +1,30 @@
-// Check if there's a 'url' field in the response (direct download link) and a formats array
+// Explore the download endpoint response fully
 (async () => {
-  const resp = await fetch('https://cloud-api-hub-youtube-downloader.p.rapidapi.com/info?id=jNQXAC9IVRw', {
+  const resp = await fetch('https://cloud-api-hub-youtube-downloader.p.rapidapi.com/download?id=jNQXAC9IVRw&format=mp3', {
     headers: {
       'x-rapidapi-key': '448df088femsh10889546dc271aap126ea2jsn1bec5c44767e',
       'x-rapidapi-host': 'cloud-api-hub-youtube-downloader.p.rapidapi.com'
     }
   });
   const data = await resp.json();
-  console.log('Has url field:', 'url' in data, data.url ? data.url.slice(0, 80) : 'N/A');
-  console.log('Has formats field:', 'formats' in data);
   
-  // Also check the requested_formats key
-  console.log('Has requested_formats:', 'requested_formats' in data);
-  
-  // Try the /download endpoint instead
-  console.log('\n=== Trying /download endpoint ===');
-  const resp2 = await fetch('https://cloud-api-hub-youtube-downloader.p.rapidapi.com/download?id=jNQXAC9IVRw&format=mp3', {
-    headers: {
-      'x-rapidapi-key': '448df088femsh10889546dc271aap126ea2jsn1bec5c44767e',
-      'x-rapidapi-host': 'cloud-api-hub-youtube-downloader.p.rapidapi.com'
+  if (Array.isArray(data)) {
+    console.log('Array of formats, count:', data.length);
+    // Find best audio-only
+    const audioOnly = data.filter(f => !f.height && f.url);
+    const videoAudio = data.filter(f => f.height && f.url && f.acodec !== 'none');
+    console.log('Audio-only with URL:', audioOnly.length);
+    console.log('Video+Audio with URL:', videoAudio.length);
+    if (audioOnly[0]) {
+      console.log('Best audio:', {url: audioOnly[0].url?.slice(0, 100), abr: audioOnly[0].abr, ext: audioOnly[0].ext, format_note: audioOnly[0].format_note});
     }
-  });
-  console.log('Download status:', resp2.status);
-  const data2 = await resp2.json().catch(() => resp2.text());
-  console.log('Download response:', JSON.stringify(data2).slice(0, 200));
+    if (videoAudio[0]) {
+      console.log('Best video:', {url: videoAudio[0].url?.slice(0, 100), height: videoAudio[0].height, ext: videoAudio[0].ext});
+    }
+    // Check if URL is fetchable
+    if (audioOnly[0]?.url) {
+      const testResp = await fetch(audioOnly[0].url, { headers: { Range: 'bytes=0-99' } });
+      console.log('Audio URL fetch status:', testResp.status);
+    }
+  }
 })();
