@@ -1,12 +1,17 @@
 const { Innertube, UniversalCache } = require('youtubei.js');
-const vm = require('vm');
+const jsdom = require('jsdom');
+const { JSDOM } = jsdom;
+
+const dom = new JSDOM();
+global.window = dom.window;
+global.document = dom.window.document;
 
 (async () => {
   try {
     const yt = await Innertube.create({
-      js_evaluator: (script) => {
-        return vm.runInNewContext(script);
-      }
+      generate_session_locally: true,
+      fetch: fetch,
+      cache: new UniversalCache(false)
     });
     
     console.log('Created! Fetching video...');
