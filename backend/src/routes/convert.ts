@@ -13,6 +13,7 @@ import { User } from '../models/User';
 import { Innertube, UniversalCache, Platform, ClientType } from 'youtubei.js';
 import ytdl from '@distube/ytdl-core';
 import vm from 'vm';
+import { downloadViaCobalt, downloadFromUrl } from '../utils/cobalt';
 
 // Determine the path to a cookies file for yt-dlp to bypass YouTube bot restrictions
 function getCookiesPath(): string | null {
@@ -429,47 +430,27 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
           // Tier 3a: youtubei.js MWEB — audio-only stream
           if (!audioDownloaded) {
             try {
-              // Tier 3: Cobalt API Public Instance Proxy
+              // Tier 3: Cobalt API — dynamic instance discovery with multiple fallbacks
         try {
-          console.log('Trying Cobalt API proxy for audio...');
-          const cobaltUrl = 'https://co.wuk.sh/api/json';
-          const reqBody = {
-            url: cleanUrl,
-            downloadMode: 'audio',
-            audioFormat: 'mp3',
-            audioBitrate: audioQuality
-          };
-          const cobaltResp = await fetch(cobaltUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            },
-            body: JSON.stringify(reqBody)
-          });
+          console.log('Trying Cobalt API for audio...');
+          const cobaltDownloadUrl = await downloadViaCobalt(cleanUrl, 'audio', audioQuality);
           
-          if (!cobaltResp.ok) throw new Error('Cobalt returned ' + cobaltResp.status);
-          
-          const cobaltData: any = await cobaltResp.json();
-          if (!cobaltData.url) throw new Error('Cobalt returned no URL');
-          
-          const audioResp = await fetch(cobaltData.url);
-          if (!audioResp.ok) throw new Error('Cobalt stream failed: ' + audioResp.status);
+          const audioResp = await downloadFromUrl(cobaltDownloadUrl);
           
           const fileStream = fs.createWriteStream(outputPath);
           const { Readable } = require('stream');
           await new Promise((resolve, reject) => {
-            if (!audioResp.body) return reject(new Error('No body'));
-            const readable = Readable.fromWeb(audioResp.body as any);
+            const readable = Readable.fromWeb(audioResp as any);
             readable.pipe(fileStream);
             readable.on('error', reject);
             fileStream.on('finish', resolve);
           });
           
+          console.log('Cobalt audio download succeeded');
           Conversion.findByIdAndUpdate(conversion._id, { progress: 100, status: 'completed' }).catch(() => {});
           return; // Success!
         } catch (cobaltErr: any) {
-          console.error('Cobalt proxy audio failed:', cobaltErr.message);
+          console.error('Cobalt audio failed:', cobaltErr.message);
         }
 
         console.log('Trying youtubei.js MWEB for audio...');
@@ -662,7 +643,30 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
             const targetHeightMap: Record<string, number> = { '360p': 360, '480p': 480, '720p': 720, '1080p': 1080, '4K': 2160, '8K': 4320 };
             const targetH = targetHeightMap[videoQuality] || 720;
 
-            // Tier 2: RapidAPI
+            // Tier 2: Cobalt API — dynamic instance discovery
+            if (!videoDownloaded) {
+              try {
+                console.log('Trying Cobalt API for video...');
+                const cobaltDownloadUrl = await downloadViaCobalt(cleanUrl, 'video', videoQuality);
+                
+                const videoResp = await downloadFromUrl(cobaltDownloadUrl);
+                const fileStream = fs.createWriteStream(fallbackOutputPath);
+                const { Readable } = require('stream');
+                await new Promise((resolve, reject) => {
+                  const readable = Readable.fromWeb(videoResp as any);
+                  readable.pipe(fileStream);
+                  readable.on('error', reject);
+                  fileStream.on('finish', resolve);
+                });
+                
+                videoDownloaded = true;
+                console.log('Cobalt video download succeeded');
+              } catch (e: any) {
+                console.error('Cobalt video failed:', e.message);
+              }
+            }
+
+            // Tier 3: RapidAPI
             if (!videoDownloaded) {
               try {
                 console.log('Trying RapidAPI for video...');
@@ -674,7 +678,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
               }
             }
 
-            // Tier 3: youtubei.js cascade
+            // Tier 4: youtubei.js cascade
             for (const clientType of [ClientType.ANDROID, ClientType.TV, ClientType.MWEB]) {
               if (videoDownloaded) break;
               try {
