@@ -169,8 +169,7 @@ export default function YtVideoPage() {
                         disabled={!url}
                         className={`min-w-[200px] h-[46px] rounded-xl font-semibold text-base transition-all duration-300 flex-shrink-0 ${!url — 'bg-white/5 text-white/40 cursor-not-allowed' : 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg hover:shadow-violet-500/25 active:scale-95'}`}
                       >
-                        Download Video
-                      </button>
+                        Download Video </button>
                     </div>
                   </div>
 
@@ -230,8 +229,7 @@ export default function YtVideoPage() {
                         <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
-                        Download Video
-                      </button>
+                        Download Video </button>
                     </a>
                     <button onClick={reset} className="btn-secondary h-14 w-full sm:w-auto px-8 whitespace-nowrap bg-black/5 hover:bg-white/20 text-white">
                       Download Another

@@ -210,8 +210,7 @@ export default function UniversalPage() {
                           disabled={!url}
                           className={`w-full sm:w-[280px] h-14 rounded-xl font-semibold text-lg transition-all duration-300 bg-gradient-to-r from-emerald-500 to-emerald-400 text-white shadow-[0_0_20px_rgba(52,211,153,0.3)] hover:shadow-[0_0_30px_rgba(52,211,153,0.5)] active:scale-95`}
                         >
-                          Download Video
-                        </motion.button>
+                          Download Video </motion.button>
                         <motion.button
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
@@ -280,8 +279,7 @@ export default function UniversalPage() {
                         <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
-                        Download Video
-                      </button>
+                        Download Video </button>
                     </a>
                     <button onClick={reset} className="btn-secondary h-14 w-full sm:w-auto px-8 whitespace-nowrap bg-black/5 hover:bg-white/20 text-white">
                       Download Another

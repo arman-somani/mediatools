@@ -47,7 +47,7 @@ export default function PlaylistDownloader() {
     setStatus('fetching');
     try {
       const { data } = await api.post('/convert/youtube-playlist/metadata', { url });
-      setVideos(data.data.videos);
+      setVideos(data.data.mp4s);
       setStatus('fetched');
     } catch (err: any) {
       setStatus('failed');

@@ -57,8 +57,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/yt-video" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">
-                  YouTube to Video
-                </Link>
+                  YouTube to Video </Link>
               </li>
               <li>
                 <Link href="/universal" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">

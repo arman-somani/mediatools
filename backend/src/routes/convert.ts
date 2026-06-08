@@ -286,7 +286,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
   try {
     const youtubeUrl = req.body.youtubeUrl || req.body.url;
     // Frontend might send 'quality' or 'videoQuality'
-    const reqQuality = String(req.body.videoQuality || req.body.quality || '720p');
+    const reqQuality = String(req.body.mp4Quality || req.body.quality || '720p');
     const videoQuality: string = (['360p', '480p', '720p', '1080p', '4K', '8K'].includes(reqQuality))
       — reqQuality : '720p';
 
@@ -304,7 +304,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
     }
 
     const fileId = uuidv4();
-    const diskFilename = `${fileId}.Video`;
+    const diskFilename = `${fileId}.mp4`;
     const outputPath = path.join(outputDir, diskFilename);
 
     const conversion: any = await Conversion.create({
@@ -313,7 +313,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
       status: 'processing',
       youtubeUrl: cleanUrl,
       youtubeTitle: 'YouTube Video',
-      outputFilename: `video.Video`,
+      outputFilename: `video.mp4`,
       outputPath: outputPath,
       outputUrl: `/outputs/${diskFilename}`,
       quality: '192',
@@ -377,7 +377,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           const actualQuality = selectedVideo—.format_note || videoQuality;
 
           conversion.youtubeTitle = videoTitle;
-          conversion.outputFilename = `${safeTitle} (${actualQuality}).Video`;
+          conversion.outputFilename = `${safeTitle} (${actualQuality}).mp4`;
           await conversion.save();
 
           // Get highest quality Audio const m4aAudios = audioData.filter(a => ['m4a', 'webm'].includes(a.ext));
@@ -491,8 +491,8 @@ router.post('/universal/metadata', async (req: Request, res: Response): Promise<
 router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const videoUrl = req.body.url;
-    const videoQuality: string = (['360p', '480p', '720p', '1080p', '4K', '8K'].includes(req.body.videoQuality))
-      — req.body.videoQuality : '720p';
+    const videoQuality: string = (['360p', '480p', '720p', '1080p', '4K', '8K'].includes(req.body.mp4Quality))
+      — req.body.mp4Quality : '720p';
 
     if (!videoUrl) {
       res.status(400).json({ success: false, message: 'Video URL is required' });
@@ -501,7 +501,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
 
     const cleanUrl = String(videoUrl).trim();
     const fileId = uuidv4();
-    const diskFilename = `${fileId}.Video`;
+    const diskFilename = `${fileId}.mp4`;
     const outputPath = path.join(outputDir, diskFilename);
 
     // Map quality label to yt-dlp format filter
@@ -557,11 +557,10 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         const safeTitle = sanitizeFilename(videoTitle) || 'Downloaded Video';
         conversion.youtubeTitle = videoTitle;
         conversion.youtubeThumbnail = thumbnail;
-        conversion.outputFilename = `${safeTitle}.Video`;
+        conversion.outputFilename = `${safeTitle}.mp4`;
         await conversion.save();
 
-        // Step 2: Download video + Audio merged into Video
-        const ytdlp = spawn('yt-dlp', ['-f', ytFormat, '--merge-output-format', 'Video', '-o', outputPath, '--no-playlist', cleanUrl]);
+        // Step 2: Download video + Audio merged into Video const ytdlp = spawn('yt-dlp', ['-f', ytFormat, '--merge-output-format', 'Video', '-o', outputPath, '--no-playlist', cleanUrl]);
 
         let lastUpdate = Date.now();
         ytdlp.stdout.on('data', (data) => {
