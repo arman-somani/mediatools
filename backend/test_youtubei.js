@@ -1,11 +1,13 @@
-const { Innertube, UniversalCache } = require('youtubei.js');
+const { Innertube, UniversalCache, Platform } = require('youtubei.js');
 const { Jinter } = require('jintr');
+const vm = require('vm');
 
-// The hack: Access Platform dynamically
-const { Platform } = require('youtubei.js/dist/src/utils/Utils.js');
-
+// Option A: Jinter
 Platform.shim.eval = (script) => {
-  return new Jinter().evaluate(script);
+  const jinter = new Jinter();
+  // Depending on what yt.js passes, it might be a string or an object with .output
+  const code = typeof script === 'string' ? script : script.output;
+  return jinter.evaluate(code);
 };
 
 (async () => {
