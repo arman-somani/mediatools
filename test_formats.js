@@ -3,16 +3,32 @@
   const HOST = 'youtube-media-downloader.p.rapidapi.com';
   const headers = { 'x-rapidapi-key': KEY, 'x-rapidapi-host': HOST };
 
-  // Get full video details
   const r = await fetch('https://youtube-media-downloader.p.rapidapi.com/v2/video/details?videoId=dQw4w9WgXcQ', { headers });
   const d = await r.json();
   
-  // Print all top-level keys
-  console.log('Top keys:', Object.keys(d).join(', '));
+  // Print video formats
+  console.log('=== VIDEO STREAMS ===');
+  d.videos.items.forEach((v, i) => {
+    console.log(i, v.quality || v.qualityLabel, v.extension, v.hasAudio ? 'WITH_AUDIO' : 'VIDEO_ONLY', v.url ? 'HAS_URL' : 'NO_URL');
+  });
   
-  // Check for streams/formats
-  if (d.videos) { console.log('d.videos items:', d.videos.items?.length); if(d.videos.items?.[0]) console.log('Video[0]:', JSON.stringify(d.videos.items[0]).slice(0,200)); }
-  if (d.audios) { console.log('d.audios items:', d.audios.items?.length); if(d.audios.items?.[0]) console.log('Audio[0]:', JSON.stringify(d.audios.items[0]).slice(0,200)); }
-  if (d.formats) console.log('d.formats:', JSON.stringify(d.formats).slice(0,300));
-  if (d.streamingData) console.log('streamingData keys:', Object.keys(d.streamingData));
+  console.log('\n=== AUDIO STREAMS ===');
+  d.audios.items.forEach((a, i) => {
+    console.log(i, a.quality || a.bitrate || a.audioSampleRate, a.extension, a.url ? 'HAS_URL' : 'NO_URL');
+  });
+  
+  // Get best video (1080p, no audio)  
+  const bestVid = d.videos.items.filter(v => !v.hasAudio && v.url).sort((a,b) => {
+    const qa = parseInt(a.quality || a.qualityLabel || '0');
+    const qb = parseInt(b.quality || b.qualityLabel || '0');
+    return qb - qa;
+  })[0];
+  const bestAud = d.audios.items.filter(a => a.url)[0];
+  
+  console.log('\nBest video-only:', JSON.stringify({quality: bestVid?.quality || bestVid?.qualityLabel, ext: bestVid?.extension, hasAudio: bestVid?.hasAudio}).slice(0, 150));
+  console.log('Best audio:', JSON.stringify({quality: bestAud?.quality, ext: bestAud?.extension}).slice(0, 100));
+  
+  // Test URLs
+  if (bestVid?.url) { const tr = await fetch(bestVid.url, {headers:{Range:'bytes=0-99'}}); console.log('\nVideo URL test:', tr.status); }
+  if (bestAud?.url) { const tr = await fetch(bestAud.url, {headers:{Range:'bytes=0-99'}}); console.log('Audio URL test:', tr.status); }
 })();
