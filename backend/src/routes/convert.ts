@@ -80,11 +80,11 @@ async function downloadAndMergeViaAPI(
     
     // Sort video formats by height, find best matching targetHeight
     const sortedVideos = vData.filter(f => f.height).sort((a, b) => b.height - a.height);
-    const bestVideo = sortedVideos.find(f => f.height <= targetHeight) || sortedVideos[0];
+    const bestVideo = sortedVideos.find(f => f.height <= targetHeight) || sortedVideos[0] || vData[0];
     
     const bestAudio = aData.find(f => f.ext === 'm4a' || f.acodec !== 'none') || aData[0];
     
-    if (!bestVideo.url || !bestAudio.url) throw new Error('Missing URL for video or audio');
+    if (!bestVideo || !bestAudio || !bestVideo.url || !bestAudio.url) throw new Error('Missing URL for video or audio');
     
     const tempVideo = outputPath.replace('.mp4', '_api_v.mp4');
     const tempAudio = outputPath.replace('.mp4', '_api_a.m4a');
