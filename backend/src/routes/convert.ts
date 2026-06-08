@@ -120,7 +120,7 @@ const router = Router();
 const execAsync = promisify(exec);
 
 router.get('/version', (req: Request, res: Response) => {
-  res.json({ version: 'v3_ytdlp_android_bypass' });
+  res.json({ version: 'v4_nightly_build_fix' });
 });
 
 router.post('/test-ytdlp', async (req: Request, res: Response): Promise<void> => {
