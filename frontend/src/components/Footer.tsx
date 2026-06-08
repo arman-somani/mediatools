@@ -34,7 +34,7 @@ export default function Footer() {
               <a href="https://instagram.com/arman_somani" target="_blank" rel="noopener noreferrer" className="hover:text-brand-purple transition-colors text-xs md:text-sm font-medium tracking-wide">
                 INSTAGRAM
               </a>
-              <a href="https://github.com/arman-somani/MEDIATOOLS" target="_blank" rel="noopener noreferrer" className="hover:text-brand-purple transition-colors text-xs md:text-sm font-medium tracking-wide">
+              <a href="https://github.com/arman-somani/mediatools" target="_blank" rel="noopener noreferrer" className="hover:text-brand-purple transition-colors text-xs md:text-sm font-medium tracking-wide">
                 GITHUB
               </a>
               <Link href="/contact" className="hover:text-brand-purple transition-colors text-xs md:text-sm font-medium tracking-wide">
@@ -85,7 +85,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <a href="https://github.com/arman-somani/MEDIATOOLS" target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">
+                <a href="https://github.com/arman-somani/mediatools" target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">
                   GitHub Repository
                 </a>
               </li>
