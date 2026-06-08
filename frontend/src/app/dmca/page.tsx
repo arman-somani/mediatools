@@ -15,7 +15,7 @@ export default function DMCAPage() {
                 </p>
 
                 <p className="text-white font-semibold">
-                    armansomani786@gmail.com
+                    mediatools.contactus@gmail.com
                 </p>
             </div>
         </main>
