@@ -21,8 +21,38 @@ export default function YtVideoPage() {
   const [videoInfo, setVideoInfo] = useState<{ title?: string; thumbnail?: string } | null>(null);
   const [error, setError] = useState('');
   const [conversionTime, setConversionTime] = useState<number | null>(null);
+  
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
   const startTimeRef = useRef<number | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (!url || isValidYouTubeUrl(url)) {
+      setSearchResults([]);
+      return;
+    }
+    
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    
+    searchTimeoutRef.current = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const { data } = await api.get(`/search/youtube?q=${encodeURIComponent(url)}`);
+        setSearchResults(data.data || []);
+      } catch (err) {
+        console.error('Search failed', err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 500);
+
+    return () => {
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    };
+  }, [url]);
 
   const videoId = url ? getYouTubeVideoId(url) : null;
   const thumbnailPreview = videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : null;
