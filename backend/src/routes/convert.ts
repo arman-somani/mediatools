@@ -19,7 +19,7 @@ Platform.shim.eval = (script: any) => {
   return vm.runInNewContext('new Function(' + JSON.stringify(code) + ')()');
 };
 
-const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || '448df088femsh10889546dc271aap126ea2jsn1bec5c44767e';
+const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || '208e9bff95msh90b82e1f2353e90p17b16ejsn23f1054a290e';
 const YT_MEDIA_HOST = 'youtube-media-downloader.p.rapidapi.com';
 
 /** Stream a URL response body into a local file */
