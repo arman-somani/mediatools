@@ -190,21 +190,17 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
 
     (async () => {
       try {
-        const headers = {
-          'x-rapidapi-host': 'cloud-api-hub-youtube-downloader.p.rapidapi.com',
-          'x-rapidapi-key': process.env.RAPIDAPI_KEY || ''
-        };
-
-        const [infoRes, response] = await Promise.all([
-          fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/info?id=${videoId}`, { headers }),
-          fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/download?id=${videoId}&filter=audioonly`, { headers })
-        ]);
-
-        const infoData = await infoRes.json().catch(() => ({})) as any;
-        const data = await response.json().catch(() => ([])) as any;
-
-        const videoTitle = infoData?.title || infoData?.fulltitle || 'YouTube Audio';
-        const durationSec = infoData?.duration || 0;
+        // Step 1: Get metadata
+        let videoTitle = 'YouTube Audio';
+        let durationSec = 0;
+        try {
+          const { stdout } = await execAsync(
+            `yt-dlp --print title --print duration --no-playlist "${cleanUrl}"`
+          );
+          const lines = stdout.trim().split('\n');
+          videoTitle = (lines[0] || '').trim() || 'YouTube Audio';
+          durationSec = parseInt((lines[1] || '').trim(), 10) || 0;
+        } catch { /* keep defaults */ }
 
         const safeTitle = sanitizeFilename(videoTitle) || 'YouTube Audio';
         const reqQuality = String(req.body.quality || '192');
@@ -214,59 +210,35 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         conversion.outputFilename = `${safeTitle} (${audioQuality}kbps).mp3`;
         await conversion.save();
 
-        if (Array.isArray(data) && data.length > 0 && data[0].url) {
-          const audioUrl = data[0].url;
+        // Step 2: Download audio using yt-dlp
+        const ytdlp = spawn('yt-dlp', ['-x', '--audio-format', 'mp3', '--audio-quality', `${audioQuality}K`, '-o', outputPath, '--no-playlist', cleanUrl]);
 
-          const ffmpeg = spawn('ffmpeg', ['-y', '-i', audioUrl, '-vn', '-ab', `${audioQuality}k`, outputPath]);
-
-          let lastUpdate = Date.now();
-          let fakeProgress = 0;
-
-          const fallbackInterval = durationSec <= 0 ? setInterval(() => {
-            if (fakeProgress < 95) {
-              fakeProgress += 5;
-              Conversion.findByIdAndUpdate(conversion._id, { progress: fakeProgress }).catch(() => { });
+        let lastUpdate = Date.now();
+        ytdlp.stdout.on('data', (data) => {
+          const output = data.toString();
+          const match = output.match(/\[download\]\s+([\d\.]+)%/);
+          if (match) {
+            const progress = Math.round(parseFloat(match[1]));
+            const now = Date.now();
+            if (now - lastUpdate > 1000) {
+              lastUpdate = now;
+              Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
             }
-          }, 2000) : null;
+          }
+        });
 
-          ffmpeg.stderr.on('data', (data) => {
-            if (durationSec > 0) {
-              const output = data.toString();
-              const timeMatch = output.match(/time=(\d{2}):(\d{2}):(\d{2}\.\d+)/);
-              if (timeMatch) {
-                const h = parseInt(timeMatch[1], 10);
-                const m = parseInt(timeMatch[2], 10);
-                const s = parseFloat(timeMatch[3]);
-                const currentTime = (h * 3600) + (m * 60) + s;
-                let progress = Math.min(99, Math.round((currentTime / durationSec) * 100));
-
-                // Ensure it doesn't jump backwards
-                const now = Date.now();
-                if (now - lastUpdate > 1000) {
-                  lastUpdate = now;
-                  Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
-                }
-              }
-            }
+        await new Promise((resolve, reject) => {
+          ytdlp.on('close', (code) => {
+            if (code === 0) resolve(true);
+            else reject(new Error('yt-dlp failed with code ' + code));
           });
+        });
 
-          await new Promise((resolve, reject) => {
-            ffmpeg.on('close', (code) => {
-              if (fallbackInterval) clearInterval(fallbackInterval);
-              if (code === 0) resolve(true);
-              else reject(new Error('ffmpeg failed with code ' + code));
-            });
-          });
-
-          conversion.status = 'completed';
-          conversion.progress = 100;
-          conversion.fileSize = getFileSize(outputPath);
-          // Set outputUrl to our frontend's endpoint so it downloads from Render!
-          conversion.outputUrl = `/outputs/${diskFilename}`;
-          await conversion.save();
-        } else {
-          throw new Error('API did not return a valid download link');
-        }
+        conversion.status = 'completed';
+        conversion.progress = 100;
+        conversion.fileSize = getFileSize(outputPath);
+        conversion.outputUrl = `/outputs/${diskFilename}`;
+        await conversion.save();
       } catch (err: any) {
         console.error('YouTube background error:', err.message);
         conversion.status = 'failed';
