@@ -1,13 +1,9 @@
 const { Innertube, UniversalCache, Platform } = require('youtubei.js');
-const { Jinter } = require('jintr');
 const vm = require('vm');
 
-// Option A: Jinter
 Platform.shim.eval = (script) => {
-  const jinter = new Jinter();
-  // Depending on what yt.js passes, it might be a string or an object with .output
   const code = typeof script === 'string' ? script : script.output;
-  return jinter.evaluate(code);
+  return new vm.Script(code).runInNewContext({}); // or new Function
 };
 
 (async () => {
