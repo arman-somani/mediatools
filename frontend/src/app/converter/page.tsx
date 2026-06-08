@@ -2,7 +2,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
-import api from '@/lib/api';
+import api, { apiUrl } from '@/lib/api';
 import { formatFileSize } from '@/lib/utils';
 import Link from 'next/link';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -203,7 +203,7 @@ export default function ConverterPage() {
                   {!fileSize && <div className="mb-8" />}
 
                   <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
-                    <a href={`${process.env.NEXT_PUBLIC_API_URL}/api/convert/download/${jobId}`} target="_blank" rel="noopener noreferrer" className="flex-1 block">
+                    <a href={apiUrl(`/api/convert/download/${jobId}`)} target="_blank" rel="noopener noreferrer" className="flex-1 block">
                       <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full btn-primary-glow flex items-center justify-center gap-2 h-14">
                         <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                         Download Audio </motion.button>

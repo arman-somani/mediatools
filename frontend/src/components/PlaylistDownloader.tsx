@@ -1,8 +1,8 @@
 ﻿'use client';
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import api from '@/lib/api';
-import { isValidYouTubeUrl } from '@/lib/utils';
+import api, { apiUrl } from '@/lib/api';
+import { isValidYouTubePlaylistUrl } from '@/lib/utils';
 import Image from 'next/image';
 
 type Quality = '128' | '192' | '320';
@@ -39,15 +39,15 @@ export default function PlaylistDownloader() {
   }, []);
 
   const fetchPlaylist = async () => {
-    if (!isValidYouTubeUrl(url)) {
-      setError('Please enter a valid YouTube URL');
+    if (!isValidYouTubePlaylistUrl(url)) {
+      setError('Please enter a valid YouTube playlist URL');
       return;
     }
     setError('');
     setStatus('fetching');
     try {
       const { data } = await api.post('/convert/youtube-playlist/metadata', { url });
-      setVideos(data.data.mp4s);
+      setVideos(data.data.videos || []);
       setStatus('fetched');
     } catch (err: any) {
       setStatus('failed');
@@ -109,7 +109,7 @@ export default function PlaylistDownloader() {
       if (jobId) {
         setTimeout(() => {
           const a = document.createElement('a');
-          a.href = `${process.env.NEXT_PUBLIC_API_URL}/api/convert/download/${jobId}`;
+          a.href = apiUrl(`/api/convert/download/${jobId}`);
           a.download = '';
           document.body.appendChild(a);
           a.click();
@@ -291,7 +291,7 @@ export default function PlaylistDownloader() {
                     <div className="flex-shrink-0">
                       {isCompleted ? (
                         <a
-                          href={`${process.env.NEXT_PUBLIC_API_URL}/api/convert/download/${download.jobId}`}
+                          href={apiUrl(`/api/convert/download/${download.jobId}`)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="h-9 px-3 bg-emerald-500/20 text-emerald-600 rounded-lg text-xs font-semibold flex items-center hover:bg-emerald-500/30 transition-colors"

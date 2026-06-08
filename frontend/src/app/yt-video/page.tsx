@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import api from '@/lib/api';
+import api, { apiUrl } from '@/lib/api';
 import { isValidYouTubeUrl, getYouTubeVideoId, formatFileSize } from '@/lib/utils';
 import Image from 'next/image';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -207,7 +207,7 @@ export default function YtVideoPage() {
 
                   <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
                     <a
-                      href={`${process.env.NEXT_PUBLIC_API_URL}/api/convert/download/${jobId}`}
+                      href={apiUrl(`/api/convert/download/${jobId}`)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex-1"

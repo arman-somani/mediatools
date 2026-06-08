@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import api from '@/lib/api';
+import api, { apiUrl } from '@/lib/api';
 import { isValidYouTubeUrl, getYouTubeVideoId, formatFileSize } from '@/lib/utils';
 import Image from 'next/image';
 import PlaylistDownloader from '@/components/PlaylistDownloader';
@@ -197,7 +197,7 @@ export default function YouTubePage() {
                     {!fileSize && <div className="mb-8" />}
 
                     <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm mx-auto">
-                      <a href={`${process.env.NEXT_PUBLIC_API_URL}/api/convert/download/${jobId}`} target="_blank" rel="noopener noreferrer" className="flex-1">
+                      <a href={apiUrl(`/api/convert/download/${jobId}`)} target="_blank" rel="noopener noreferrer" className="flex-1">
                         <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.96 }} className="w-full bg-gradient-to-r from-red-600 to-red-500 hover:shadow-[0_0_20px_rgba(239,68,68,0.4)] text-white font-semibold rounded-xl flex items-center justify-center gap-2 h-14 transition-all duration-300">
                           <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                           Download Audio </motion.button>

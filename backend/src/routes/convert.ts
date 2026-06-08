@@ -4,6 +4,8 @@ import path from 'path';
 import os from 'os';
 import fs from 'fs';
 import { exec, spawn } from 'child_process';
+import { Readable } from 'stream';
+import { pipeline } from 'stream/promises';
 import { promisify } from 'util';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -130,6 +132,84 @@ async function downloadAndMergeViaAPI(
 
 const router = Router();
 const execAsync = promisify(exec);
+
+function getYouTubeVideoId(input: string): string | null {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  try {
+    const parsed = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
+    const host = parsed.hostname.replace(/^www\./, '').replace(/^m\./, '');
+
+    if (host === 'youtu.be') {
+      const id = parsed.pathname.split('/').filter(Boolean)[0];
+      return /^[0-9A-Za-z_-]{11}$/.test(id || '') ? id : null;
+    }
+
+    if (host === 'youtube.com' || host === 'music.youtube.com') {
+      const watchId = parsed.searchParams.get('v');
+      if (/^[0-9A-Za-z_-]{11}$/.test(watchId || '')) return watchId;
+
+      const parts = parsed.pathname.split('/').filter(Boolean);
+      const pathId = parts.find((part, index) =>
+        ['shorts', 'embed', 'live'].includes(parts[index - 1]) && /^[0-9A-Za-z_-]{11}$/.test(part)
+      );
+      return pathId || null;
+    }
+  } catch {
+    const match = trimmed.match(/(?:v=|youtu\.be\/|shorts\/|embed\/|live\/)([0-9A-Za-z_-]{11})/);
+    return match?.[1] || null;
+  }
+
+  return null;
+}
+
+function ytDlpArgs(args: string[]): string[] {
+  const base = ['--js-runtimes', 'node', '--extractor-args', 'youtube:player_client=android,web'];
+  const cookiesFile = getCookiesPath();
+  if (cookiesFile) base.push('--cookies', cookiesFile);
+  return [...base, ...args];
+}
+
+function runYtDlp(args: string[]): Promise<{ stdout: string; stderr: string }> {
+  return new Promise((resolve, reject) => {
+    const child = spawn('yt-dlp', ytDlpArgs(args), { windowsHide: true });
+    let stdout = '';
+    let stderr = '';
+
+    child.stdout.on('data', data => { stdout += data.toString(); });
+    child.stderr.on('data', data => { stderr += data.toString(); });
+    child.on('error', reject);
+    child.on('close', code => {
+      if (code === 0) resolve({ stdout, stderr });
+      else reject(new Error((stderr || stdout || `yt-dlp failed with code ${code}`).trim()));
+    });
+  });
+}
+
+function findDownloadedFile(fileId: string): string | null {
+  const files = fs.readdirSync(outputDir);
+  return files.find(file =>
+    file.startsWith(`${fileId}.`) &&
+    !file.endsWith('.part') &&
+    !file.endsWith('.ytdl') &&
+    !file.endsWith('.temp')
+  ) || null;
+}
+
+function requireWrittenFile(filePath: string, label: string): void {
+  if (!fs.existsSync(filePath) || fs.statSync(filePath).size === 0) {
+    throw new Error(`${label} did not produce a downloadable file`);
+  }
+}
+
+async function writeWebStreamToFile(stream: ReadableStream<Uint8Array>, filePath: string): Promise<void> {
+  await pipeline(Readable.fromWeb(stream as any), fs.createWriteStream(filePath));
+}
+
+async function writeAsyncIterableToFile(stream: AsyncIterable<Uint8Array>, filePath: string): Promise<void> {
+  await pipeline(Readable.from(stream as any), fs.createWriteStream(filePath));
+}
 
 router.get('/version', (req: Request, res: Response) => {
   res.json({ version: 'v4_nightly_build_fix' });
@@ -300,13 +380,14 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
     }
 
     const cleanUrl = String(youtubeUrl).trim();
-    const videoId = cleanUrl.match(/(?:v=|\/)([0-9A-Za-z_-]{11}).*/)?.[1];
+    const videoId = getYouTubeVideoId(cleanUrl);
 
     if (!videoId) {
       res.status(400).json({ success: false, message: 'Invalid YouTube URL' });
       return;
     }
 
+    const audioQuality = safeAudioQuality(req.body.quality);
     const fileId = uuidv4();
     const diskFilename = `${fileId}.mp3`;
     const outputPath = path.join(outputDir, diskFilename);
@@ -320,7 +401,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
       outputFilename: `audio.mp3`,
       outputPath: outputPath,
       outputUrl: `/outputs/${diskFilename}`,
-      quality: '192',
+      quality: audioQuality,
       progress: 0,
     });
 
@@ -339,20 +420,13 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         let videoTitle = 'YouTube Audio';
         let durationSec = 0;
         try {
-          let ytdlpArgs = `--js-runtimes node --extractor-args "youtube:player_client=android,web" --print title --print duration --no-playlist`;
-          const cookiesFile = getCookiesPath();
-          if (cookiesFile) {
-            ytdlpArgs += ` --cookies ${cookiesFile}`;
-          }
-          const { stdout } = await execAsync(`yt-dlp ${ytdlpArgs} "${cleanUrl}"`);
+          const { stdout } = await runYtDlp(['--print', 'title', '--print', 'duration', '--no-playlist', cleanUrl]);
           const lines = stdout.trim().split('\n');
           videoTitle = (lines[0] || '').trim() || 'YouTube Audio';
           durationSec = parseInt((lines[1] || '').trim(), 10) || 0;
         } catch { /* keep defaults */ }
 
         const safeTitle = sanitizeFilename(videoTitle) || 'YouTube Audio';
-        const reqQuality = String(req.body.quality || '192');
-        const audioQuality: string = (['128', '192', '320'].includes(reqQuality)) ? reqQuality : '192';
 
         conversion.youtubeTitle = videoTitle;
         conversion.outputFilename = `${safeTitle} (${audioQuality}kbps).mp3`;
@@ -361,16 +435,21 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         // Step 2: Download audio using yt-dlp
         try {
           await new Promise((resolve, reject) => {
-            const ytdlpArgs = ['--js-runtimes', 'node', '--extractor-args', 'youtube:player_client=android,web', '-x', '--audio-format', 'mp3', '--audio-quality', `${audioQuality}K`, '-o', outputPath, '--no-playlist'];
-            const cookiesFile = getCookiesPath();
-            if (cookiesFile) {
-              ytdlpArgs.push('--cookies', cookiesFile);
-            }
-            ytdlpArgs.push(cleanUrl);
-            const ytdlp = spawn('yt-dlp', ytdlpArgs);
+            const outputTemplate = path.join(outputDir, `${fileId}.%(ext)s`);
+            const ytdlp = spawn('yt-dlp', ytDlpArgs([
+              '--newline',
+              '-f', 'bestaudio/best',
+              '-x',
+              '--audio-format', 'mp3',
+              '--audio-quality', `${audioQuality}K`,
+              '-o', outputTemplate,
+              '--no-playlist',
+              cleanUrl,
+            ]), { windowsHide: true });
 
             let lastUpdate = Date.now();
-            ytdlp.stdout.on('data', (data) => {
+            let stderr = '';
+            const handleProgress = (data: Buffer) => {
               const output = data.toString();
               const match = output.match(/\[download\]\s+([\d\.]+)%/);
               if (match) {
@@ -381,11 +460,18 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
                   Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
                 }
               }
+            };
+
+            ytdlp.stdout.on('data', handleProgress);
+            ytdlp.stderr.on('data', (data) => {
+              stderr += data.toString();
+              handleProgress(data);
             });
 
+            ytdlp.on('error', reject);
             ytdlp.on('close', (code) => {
               if (code === 0) resolve(true);
-              else reject(new Error('yt-dlp failed with code ' + code));
+              else reject(new Error((stderr || `yt-dlp failed with code ${code}`).trim()));
             });
           });
         } catch (ytdlpError: any) {

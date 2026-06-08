@@ -29,10 +29,49 @@ export function formatAmount(paise: number): string {
 }
 
 export function isValidYouTubeUrl(url: string): boolean {
-  return /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]+/.test(url);
+  return getYouTubeVideoId(url) !== null;
+}
+
+export function isValidYouTubePlaylistUrl(url: string): boolean {
+  const trimmed = url.trim();
+  if (!trimmed) return false;
+
+  try {
+    const parsed = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
+    const host = parsed.hostname.replace(/^www\./, '').replace(/^m\./, '');
+    return (host === 'youtube.com' || host === 'music.youtube.com') && Boolean(parsed.searchParams.get('list'));
+  } catch {
+    return /(?:youtube\.com|music\.youtube\.com)\/.*[?&]list=[0-9A-Za-z_-]+/.test(trimmed);
+  }
 }
 
 export function getYouTubeVideoId(url: string): string | null {
-  const match = url.match(/(?:v=|youtu\.be\/)([^&\s]+)/);
-  return match ? match[1] : null;
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+
+  try {
+    const parsed = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
+    const host = parsed.hostname.replace(/^www\./, '').replace(/^m\./, '');
+
+    if (host === 'youtu.be') {
+      const id = parsed.pathname.split('/').filter(Boolean)[0];
+      return /^[0-9A-Za-z_-]{11}$/.test(id || '') ? id : null;
+    }
+
+    if (host === 'youtube.com' || host === 'music.youtube.com') {
+      const watchId = parsed.searchParams.get('v');
+      if (/^[0-9A-Za-z_-]{11}$/.test(watchId || '')) return watchId;
+
+      const parts = parsed.pathname.split('/').filter(Boolean);
+      const possibleId = parts.find((part, index) =>
+        ['shorts', 'embed', 'live'].includes(parts[index - 1]) && /^[0-9A-Za-z_-]{11}$/.test(part)
+      );
+      return possibleId || null;
+    }
+  } catch {
+    const match = trimmed.match(/(?:v=|youtu\.be\/|shorts\/|embed\/|live\/)([0-9A-Za-z_-]{11})/);
+    return match?.[1] || null;
+  }
+
+  return null;
 }
