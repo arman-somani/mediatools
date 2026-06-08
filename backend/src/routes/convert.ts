@@ -10,7 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { authenticate, optionalAuth, AuthRequest } from '../middleware/auth';
 import { Conversion } from '../models/Conversion';
 import { User } from '../models/User';
-import { Innertube, UniversalCache, Platform } from 'youtubei.js';
+import { Innertube, UniversalCache, Platform, ClientType } from 'youtubei.js';
 import vm from 'vm';
 
 Platform.shim.eval = (script: any) => {
@@ -243,7 +243,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
           });
         } catch (ytdlpError: any) {
           console.error('yt-dlp failed for audio, falling back to youtubei.js:', ytdlpError.message);
-          const yt = await Innertube.create({ generate_session_locally: true, fetch: fetch, cache: new UniversalCache(false) });
+          const yt = await Innertube.create({ generate_session_locally: true, fetch: fetch, cache: new UniversalCache(false), client_type: ClientType.ANDROID });
           const stream = await yt.download(videoId, { type: 'video+audio', quality: 'best', format: 'mp4' });
           
           const fallbackVideoPath = outputPath.replace('.mp3', '.mp4');
@@ -394,7 +394,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
             });
           } catch (ytdlpError: any) {
             console.error('yt-dlp failed for video, falling back to youtubei.js:', ytdlpError.message);
-            const yt = await Innertube.create({ generate_session_locally: true, fetch: fetch, cache: new UniversalCache(false) });
+            const yt = await Innertube.create({ generate_session_locally: true, fetch: fetch, cache: new UniversalCache(false), client_type: ClientType.ANDROID });
             const stream = await yt.download(videoId, { type: 'video+audio', quality: 'best', format: 'mp4' });
             
             const fallbackOutputPath = path.join(outputDir, `${fileId}.mp4`);
