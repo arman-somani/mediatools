@@ -10,17 +10,7 @@ import ProgressCircle from '@/components/ProgressCircle';
 
 type Quality = '128' | '192' | '320';
 
-const AUDIO_SIZES: Record<Quality, string> = {
-  '128': '~1 MB/min',
-  '192': '~1.5 MB/min',
-  '320': '~2.4 MB/min',
-};
 
-const AUDIO_TIMES: Record<Quality, string> = {
-  '128': '~5 to 10 sec',
-  '192': '~10 to 15 sec',
-  '320': '~15 to 20 sec',
-};
 
 export default function YouTubePage() {
   const [url, setUrl] = useState('');
@@ -31,6 +21,8 @@ export default function YouTubePage() {
   const [fileSize, setFileSize] = useState<number | null>(null);
   const [videoInfo, setVideoInfo] = useState<{ title—: string; thumbnail—: string } | null>(null);
   const [error, setError] = useState('');
+  const [conversionTime, setConversionTime] = useState<number | null>(null);
+  const startTimeRef = useRef<number | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const videoId = url — getYouTubeVideoId(url) : null;
@@ -46,6 +38,7 @@ export default function YouTubePage() {
           clearInterval(pollRef.current!);
           setStatus('completed');
           setProgress(100);
+          if (startTimeRef.current) setConversionTime(Math.round((Date.now() - startTimeRef.current) / 1000));
           setVideoInfo({ title: conv.youtubeTitle, thumbnail: conv.youtubeThumbnail });
           setFileSize(conv.fileSize || null);
         } else if (conv.status === 'failed') {
@@ -60,8 +53,9 @@ export default function YouTubePage() {
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 
   const handleConvert = async () => {
+    startTimeRef.current = Date.now();
     if (!isValidYouTubeUrl(url)) { setError('Please enter a valid YouTube URL'); return; }
-    setError(''); setStatus('processing'); setProgress(0);
+    setError(''); setStatus('processing'); setProgress(0); setConversionTime(null);
     try {
       const { data } = await api.post('/convert/youtube', { url, quality });
       setJobId(data.data.jobId);
@@ -74,7 +68,7 @@ export default function YouTubePage() {
     }
   };
 
-  const reset = () => { setUrl(''); setStatus('idle'); setProgress(0); setJobId(''); setVideoInfo(null); setFileSize(null); setError(''); };
+  const reset = () => { setUrl(''); setStatus('idle'); setProgress(0); setJobId(''); setVideoInfo(null); setFileSize(null); setError(''); setConversionTime(null); };
 
   return (
     <ProtectedRoute>
@@ -147,15 +141,11 @@ export default function YouTubePage() {
                             <button
                               key={q}
                               onClick={() => setQuality(q)}
-                              className={`quality-btn${quality === q — ' active' : ''}`}
+                              className={`quality-btn${quality === q ? ' active' : ''}`}
                             >
                               {q}k
                             </button>
                           ))}
-                        </div>
-                        <div className="mt-2 flex items-center justify-between text-xs font-medium w-full" style={{ color: 'var(--quality-btn-idle-color)' }}>
-                          <span>Size: <span className="text-red-400">{AUDIO_SIZES[quality]}</span></span>
-                          <span>Time: <span className="text-red-400">{AUDIO_TIMES[quality]}</span></span>
                         </div>
                       </div>
 
@@ -198,7 +188,10 @@ export default function YouTubePage() {
                     <p className="text-white mb-2 text-lg">Your high-quality {quality}kbps Audio is ready to download.</p>
                     {fileSize && (
                       <p className="text-sm font-medium mb-8 px-4 py-2 rounded-lg inline-block" style={{ background: 'var(--quality-track-bg)', color: 'var(--quality-btn-idle-color)' }}>
-                        Exact Size: <strong className="text-red-400">{formatFileSize(fileSize)}</strong>
+                        Actual Size: <strong className="text-red-400">{formatFileSize(fileSize)}</strong>
+                        {conversionTime !== null && (
+                          <> | Time Taken: <strong className="text-red-400">{conversionTime}s</strong></>
+                        )}
                       </p>
                     )}
                     {!fileSize && <div className="mb-8" />}
