@@ -409,7 +409,50 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
           // Tier 3a: youtubei.js MWEB — audio-only stream
           if (!audioDownloaded) {
             try {
-              console.log('Trying youtubei.js MWEB for audio...');
+              // Tier 3: Cobalt API Public Instance Proxy
+        try {
+          console.log('Trying Cobalt API proxy for audio...');
+          const cobaltUrl = 'https://co.wuk.sh/api/json';
+          const reqBody = {
+            url: cleanUrl,
+            downloadMode: 'audio',
+            audioFormat: 'mp3',
+            audioBitrate: audioQuality
+          };
+          const cobaltResp = await fetch(cobaltUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify(reqBody)
+          });
+          
+          if (!cobaltResp.ok) throw new Error('Cobalt returned ' + cobaltResp.status);
+          
+          const cobaltData: any = await cobaltResp.json();
+          if (!cobaltData.url) throw new Error('Cobalt returned no URL');
+          
+          const audioResp = await fetch(cobaltData.url);
+          if (!audioResp.ok) throw new Error('Cobalt stream failed: ' + audioResp.status);
+          
+          const fileStream = fs.createWriteStream(outputPath);
+          const { Readable } = require('stream');
+          await new Promise((resolve, reject) => {
+            if (!audioResp.body) return reject(new Error('No body'));
+            const readable = Readable.fromWeb(audioResp.body as any);
+            readable.pipe(fileStream);
+            readable.on('error', reject);
+            fileStream.on('finish', resolve);
+          });
+          
+          Conversion.findByIdAndUpdate(conversion._id, { progress: 100, status: 'completed' }).catch(() => {});
+          return; // Success!
+        } catch (cobaltErr: any) {
+          console.error('Cobalt proxy audio failed:', cobaltErr.message);
+        }
+
+        console.log('Trying youtubei.js MWEB for audio...');
               const yt = await Innertube.create({ generate_session_locally: true, fetch: fetch, cache: new UniversalCache(false), client_type: ClientType.MWEB });
               const stream = await yt.download(videoId, { type: 'audio', quality: 'best', format: 'any' });
               const fallbackVideoPath = outputPath.replace('.mp3', '.m4a');
@@ -965,5 +1008,6 @@ router.get('/public-file/:id', async (req: Request, res: Response): Promise<void
 });
 
 export default router;
+
 
 
