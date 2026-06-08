@@ -37,12 +37,12 @@ function getFileSize(filePath: string): number | undefined {
 
 function safeAudioQuality(value: unknown): string {
   const q = String(value || '192');
-  return ['128', '192', '320'].includes(q) — q : '192';
+  return ['128', '192', '320'].includes(q) ? q : '192';
 }
 
 function sanitizeFilename(name: string): string {
   return name
-    .replace(/[<>:"/\\|—*\x00-\x1F]/g, '')
+    .replace(/[<>:"/\\|?*\x00-\x1F]/g, '')
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, 200);
@@ -55,7 +55,7 @@ router.post(
   upload.single('file'),
   async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const userId = req.user—.id;
+      const userId = req.user?.id;
       const file = req.file;
       const quality = safeAudioQuality(req.body.quality);
 
@@ -155,7 +155,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
     }
 
     const cleanUrl = String(youtubeUrl).trim();
-    const videoId = cleanUrl.match(/(—:v=|\/)([0-9A-Za-z_-]{11}).*/)—.[1];
+    const videoId = cleanUrl.match(/(?:v=|\/)([0-9A-Za-z_-]{11}).*/)?.[1];
 
     if (!videoId) {
       res.status(400).json({ success: false, message: 'Invalid YouTube URL' });
@@ -167,7 +167,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
     const outputPath = path.join(outputDir, diskFilename);
 
     const conversion: any = await Conversion.create({
-      userId: req.user—.id,
+      userId: req.user?.id,
       type: 'youtube',
       status: 'processing',
       youtubeUrl: cleanUrl,
@@ -196,19 +196,19 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         };
 
         const [infoRes, response] = await Promise.all([
-          fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/info—id=${videoId}`, { headers }),
-          fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/download—id=${videoId}&filter=audioonly`, { headers })
+          fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/info?id=${videoId}`, { headers }),
+          fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/download?id=${videoId}&filter=audioonly`, { headers })
         ]);
 
         const infoData = await infoRes.json().catch(() => ({})) as any;
         const data = await response.json().catch(() => ([])) as any;
 
-        const videoTitle = infoData—.title || infoData—.fulltitle || 'YouTube Audio';
-        const durationSec = infoData—.duration || 0;
+        const videoTitle = infoData?.title || infoData?.fulltitle || 'YouTube Audio';
+        const durationSec = infoData?.duration || 0;
 
         const safeTitle = sanitizeFilename(videoTitle) || 'YouTube Audio';
         const reqQuality = String(req.body.quality || '192');
-        const audioQuality: string = (['128', '192', '320'].includes(reqQuality)) — reqQuality : '192';
+        const audioQuality: string = (['128', '192', '320'].includes(reqQuality)) ? reqQuality : '192';
 
         conversion.youtubeTitle = videoTitle;
         conversion.outputFilename = `${safeTitle} (${audioQuality}kbps).mp3`;
@@ -222,7 +222,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
           let lastUpdate = Date.now();
           let fakeProgress = 0;
 
-          const fallbackInterval = durationSec <= 0 — setInterval(() => {
+          const fallbackInterval = durationSec <= 0 ? setInterval(() => {
             if (fakeProgress < 95) {
               fakeProgress += 5;
               Conversion.findByIdAndUpdate(conversion._id, { progress: fakeProgress }).catch(() => { });
@@ -288,7 +288,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
     // Frontend might send 'quality' or 'videoQuality'
     const reqQuality = String(req.body.mp4Quality || req.body.quality || '720p');
     const videoQuality: string = (['360p', '480p', '720p', '1080p', '4K', '8K'].includes(reqQuality))
-      — reqQuality : '720p';
+      ? reqQuality : '720p';
 
     if (!youtubeUrl) {
       res.status(400).json({ success: false, message: 'YouTube URL is required' });
@@ -296,7 +296,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
     }
 
     const cleanUrl = String(youtubeUrl).trim();
-    const videoId = cleanUrl.match(/(—:v=|\/)([0-9A-Za-z_-]{11}).*/)—.[1];
+    const videoId = cleanUrl.match(/(?:v=|\/)([0-9A-Za-z_-]{11}).*/)?.[1];
 
     if (!videoId) {
       res.status(400).json({ success: false, message: 'Invalid YouTube URL' });
@@ -308,7 +308,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
     const outputPath = path.join(outputDir, diskFilename);
 
     const conversion: any = await Conversion.create({
-      userId: req.user—.id,
+      userId: req.user?.id,
       type: 'youtube-Video',
       status: 'processing',
       youtubeUrl: cleanUrl,
@@ -339,24 +339,24 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
 
         // Fetch video, audio, and metadata simultaneously
         const [infoRes, videoRes, audioRes] = await Promise.all([
-          fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/info—id=${videoId}`, { headers }),
-          fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/download—id=${videoId}&filter=videoonly`, { headers }),
-          fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/download—id=${videoId}&filter=audioonly`, { headers })
+          fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/info?id=${videoId}`, { headers }),
+          fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/download?id=${videoId}&filter=videoonly`, { headers }),
+          fetch(`https://cloud-api-hub-youtube-downloader.p.rapidapi.com/download?id=${videoId}&filter=audioonly`, { headers })
         ]);
 
         const infoData = await infoRes.json().catch(() => ({})) as any;
         const videoData = await videoRes.json().catch(() => ([])) as any[];
         const audioData = await audioRes.json().catch(() => ([])) as any[];
 
-        const videoTitle = infoData—.title || infoData—.fulltitle || 'YouTube Video';
-        const durationSec = infoData—.duration || 0;
+        const videoTitle = infoData?.title || infoData?.fulltitle || 'YouTube Video';
+        const durationSec = infoData?.duration || 0;
 
         if (Array.isArray(videoData) && videoData.length > 0 && Array.isArray(audioData) && audioData.length > 0) {
 
           // Helper to get video height for strict sorting safely
           const getHeight = (v: any) => {
-            const resHeight = v.resolution — v.resolution.split('x')[1] : null;
-            return parseInt(resHeight || v.format_note—.replace(/[^0-9]/g, '') || '0', 10);
+            const resHeight = v.resolution ? v.resolution.split('x')[1] : null;
+            return parseInt(resHeight || v.format_note?.replace(/[^0-9]/g, '') || '0', 10);
           };
 
           // Filter to Video/webm and sort from HIGHEST to LOWEST resolution
@@ -368,22 +368,22 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           if (searchQuality === '8K') searchQuality = '4320p';
 
           // Try to find the exact requested quality, else fallback to the absolute highest available
-          let selectedVideo = compatibleVideos.find(v => v.format_note—.includes(searchQuality));
+          let selectedVideo = compatibleVideos.find(v => v.format_note?.includes(searchQuality));
           if (!selectedVideo) selectedVideo = compatibleVideos[0];
 
-          const videoUrl = selectedVideo—.url || videoData[0].url;
+          const videoUrl = selectedVideo?.url || videoData[0].url;
 
           const safeTitle = sanitizeFilename(videoTitle) || 'YouTube Video';
-          const actualQuality = selectedVideo—.format_note || videoQuality;
+          const actualQuality = selectedVideo?.format_note || videoQuality;
 
           conversion.youtubeTitle = videoTitle;
           conversion.outputFilename = `${safeTitle} (${actualQuality}).mp4`;
           await conversion.save();
 
           // Get highest quality Audio const m4aAudios = audioData.filter(a => ['m4a', 'webm'].includes(a.ext));
-          let selectedAudio = m4aAudios.length > 0 — m4aAudios[m4aAudios.length - 1] : audioData[audioData.length - 1];
+          let selectedAudio = m4aAudios.length > 0 ? m4aAudios[m4aAudios.length - 1] : audioData[audioData.length - 1];
 
-          const audioUrl = selectedAudio—.url || audioData[0].url;
+          const audioUrl = selectedAudio?.url || audioData[0].url;
 
           // Merge them using FFmpeg (adding -strict experimental for AV1/VP9 compatibility in Video)
           const ffmpeg = spawn('ffmpeg', ['-y', '-i', videoUrl, '-i', audioUrl, '-c:v', 'copy', '-c:a', 'aac', '-strict', 'experimental', outputPath]);
@@ -391,7 +391,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           let lastUpdate = Date.now();
           let fakeProgress = 0;
 
-          const fallbackInterval = durationSec <= 0 — setInterval(() => {
+          const fallbackInterval = durationSec <= 0 ? setInterval(() => {
             if (fakeProgress < 95) {
               fakeProgress += 5;
               Conversion.findByIdAndUpdate(conversion._id, { progress: fakeProgress }).catch(() => { });
@@ -477,7 +477,7 @@ router.post('/universal/metadata', async (req: Request, res: Response): Promise<
       data: {
         title,
         thumbnail,
-        resolution: resolution === 'NA' — 'Best Available' : resolution,
+        resolution: resolution === 'NA' ? 'Best Available' : resolution,
         sizeBytes
       },
     });
@@ -492,7 +492,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
   try {
     const videoUrl = req.body.url;
     const videoQuality: string = (['360p', '480p', '720p', '1080p', '4K', '8K'].includes(req.body.mp4Quality))
-      — req.body.mp4Quality : '720p';
+      ? req.body.mp4Quality : '720p';
 
     if (!videoUrl) {
       res.status(400).json({ success: false, message: 'Video URL is required' });
@@ -516,7 +516,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
     const ytFormat = formatMap[videoQuality] || formatMap['720p'];
 
     const conversion: any = await Conversion.create({
-      userId: req.user—.id,
+      userId: req.user?.id,
       type: 'universal',
       status: 'processing',
       youtubeUrl: cleanUrl, // Using existing schema field to store URL
@@ -529,7 +529,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
       progress: 0,
     });
 
-    // Respond immediately — frontend starts polling
+    // Respond immediately ? frontend starts polling
     res.json({
       success: true,
       message: 'Universal video download started',
@@ -636,7 +636,7 @@ router.post('/youtube-playlist/metadata', async (req: Request, res: Response): P
         return {
           id: item.id,
           title: item.title,
-          url: item.url || `https://www.youtube.com/watch—v=${item.id}`,
+          url: item.url || `https://www.youtube.com/watch?v=${item.id}`,
           thumbnail: `https://img.youtube.com/vi/${item.id}/hqdefault.jpg`,
         };
       } catch {

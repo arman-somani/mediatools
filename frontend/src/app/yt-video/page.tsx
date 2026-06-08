@@ -18,14 +18,14 @@ export default function YtVideoPage() {
   const [progress, setProgress] = useState(0);
   const [jobId, setJobId] = useState('');
   const [fileSize, setFileSize] = useState<number | null>(null);
-  const [videoInfo, setVideoInfo] = useState<{ title—: string; thumbnail—: string } | null>(null);
+  const [videoInfo, setVideoInfo] = useState<{ title?: string; thumbnail?: string } | null>(null);
   const [error, setError] = useState('');
   const [conversionTime, setConversionTime] = useState<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const videoId = url — getYouTubeVideoId(url) : null;
-  const thumbnailPreview = videoId — `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : null;
+  const videoId = url ? getYouTubeVideoId(url) : null;
+  const thumbnailPreview = videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : null;
 
   const poll = (id: string) => {
     pollRef.current = setInterval(async () => {
@@ -62,7 +62,7 @@ export default function YtVideoPage() {
       poll(data.data.jobId);
     } catch (err: unknown) {
       setStatus('failed');
-      const msg = (err as { response—: { data—: { message—: string } } })—.response—.data—.message;
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setError(msg || 'Failed to start download');
     }
   };
@@ -90,7 +90,7 @@ export default function YtVideoPage() {
             <div className="absolute top-0 right-0 w-64 h-64 bg-brand-violet/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
 
             <AnimatePresence mode="wait">
-              {status === 'idle' || status === 'failed' — (
+              {status === 'idle' || status === 'failed' ? (
                 <motion.div key="input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="relative z-10 space-y-8">
 
                   <div className="relative group">
@@ -104,7 +104,7 @@ export default function YtVideoPage() {
                       value={url}
                       onChange={(e) => { setUrl(e.target.value); setError(''); }}
                       onKeyDown={(e) => e.key === 'Enter' && handleDownload()}
-                      placeholder="https://www.youtube.com/watch—v=..."
+                      placeholder="https://www.youtube.com/watch?v=..."
                       className="url-input-field"
                     />
                   </div>
@@ -145,13 +145,13 @@ export default function YtVideoPage() {
                       </div>
                     </div>
 
-                    {/* Button — aligned to quality track top using invisible spacer label */}
+                    {/* Button ? aligned to quality track top using invisible spacer label */}
                     <div className="flex flex-col justify-start">
                       <label className="quality-label opacity-0 select-none">BTN</label>
                       <button
                         onClick={handleDownload}
                         disabled={!url}
-                        className={`min-w-[200px] h-[46px] rounded-xl font-semibold text-base transition-all duration-300 flex-shrink-0 ${!url — 'bg-white/5 text-white/40 cursor-not-allowed' : 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg hover:shadow-violet-500/25 active:scale-95'}`}
+                        className={`min-w-[200px] h-[46px] rounded-xl font-semibold text-base transition-all duration-300 flex-shrink-0 ${!url ? 'bg-white/5 text-white/40 cursor-not-allowed' : 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg hover:shadow-violet-500/25 active:scale-95'}`}
                       >
                         Download Video </button>
                     </div>
@@ -159,7 +159,7 @@ export default function YtVideoPage() {
 
                 </motion.div>
 
-              ) : status === 'processing' — (
+              ) : status === 'processing' ? (
                 <ProgressCircle
                   progress={progress}
                   statusText="Downloading & Encoding..."
@@ -168,7 +168,7 @@ export default function YtVideoPage() {
 
               ) : (
                 <motion.div key="done" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="py-8 text-center flex flex-col items-center">
-                  {videoInfo—.thumbnail && (
+                  {videoInfo?.thumbnail && (
                     <div className="w-full max-w-sm aspect-video relative rounded-2xl overflow-hidden border border-white/10 mb-8 shadow-2xl">
                       <Image src={videoInfo.thumbnail} alt="thumbnail" fill className="object-cover" unoptimized />
                       <div className="absolute inset-0 bg-black/20" />
@@ -180,7 +180,7 @@ export default function YtVideoPage() {
                     </div>
                   )}
 
-                  {!videoInfo—.thumbnail && (
+                  {!videoInfo?.thumbnail && (
                     <div className="w-24 h-24 bg-brand-violet/10 rounded-full flex items-center justify-center mb-6 border border-brand-violet/20 shadow-[0_0_40px_rgba(124,58,237,0.2)]">
                       <svg width="40" height="40" fill="none" stroke="#7c3aed" strokeWidth="2.5" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -189,7 +189,7 @@ export default function YtVideoPage() {
                   )}
 
                   <h3 className="text-3xl font-display font-bold text-white mb-3">Video is Ready!</h3>
-                  {videoInfo—.title && (
+                  {videoInfo?.title && (
                     <p className="max-w-sm truncate mb-2 text-sm text-white">{videoInfo.title}</p>
                   )}
                   <p className="text-white mb-2 text-lg">

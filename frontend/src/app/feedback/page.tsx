@@ -48,7 +48,7 @@ export default function FeedbackPage() {
             setTimeout(() => setStatus('idle'), 4000);
         } catch (err: any) {
             setStatus('idle');
-            setError(err.response—.data—.message || 'Something went wrong. Please try again.');
+            setError(err.response?.data?.message || 'Something went wrong. Please try again.');
         }
     };
 
@@ -63,7 +63,7 @@ export default function FeedbackPage() {
                     <div className="text-center mb-10">
                         <h1 className="text-4xl md:text-5xl font-bold mb-4 font-display">Feedback</h1>
                         <p className="text-white/60 text-lg leading-relaxed">
-                            Have a suggestion or found a bug— We'd love to hear your feedback.
+                            Have a suggestion or found a bug? We'd love to hear your feedback.
                         </p>
                     </div>
 
@@ -73,7 +73,7 @@ export default function FeedbackPage() {
                         transition={{ duration: 0.5 }}
                     >
                         <div className="glass-panel p-8 md:p-10 rounded-3xl relative overflow-hidden">
-                            {status === 'success' — (
+                            {status === 'success' ? (
                                 <motion.div
                                     initial={{ opacity: 0, scale: 0.9 }}
                                     animate={{ opacity: 1, scale: 1 }}
@@ -124,7 +124,7 @@ export default function FeedbackPage() {
                                 <div>
                                     <label className="block text-xs font-bold text-white/50 tracking-wider mb-2">TYPE OF MESSAGE</label>
                                     <div className="grid grid-cols-3 gap-3">
-                                        <label className={`cursor-pointer flex flex-col items-center justify-center gap-2 p-3 rounded-xl border transition-all duration-200 font-semibold text-xs text-center ${type === 'compliment' — 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'}`}>
+                                        <label className={`cursor-pointer flex flex-col items-center justify-center gap-2 p-3 rounded-xl border transition-all duration-200 font-semibold text-xs text-center ${type === 'compliment' ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'}`}>
                                             <input
                                                 type="radio"
                                                 name="type"
@@ -138,7 +138,7 @@ export default function FeedbackPage() {
                                             </svg>
                                             Compliment
                                         </label>
-                                        <label className={`cursor-pointer flex flex-col items-center justify-center gap-2 p-3 rounded-xl border transition-all duration-200 font-semibold text-xs text-center ${type === 'complain' — 'bg-rose-500/10 border-rose-500/50 text-rose-400' : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'}`}>
+                                        <label className={`cursor-pointer flex flex-col items-center justify-center gap-2 p-3 rounded-xl border transition-all duration-200 font-semibold text-xs text-center ${type === 'complain' ? 'bg-rose-500/10 border-rose-500/50 text-rose-400' : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'}`}>
                                             <input
                                                 type="radio"
                                                 name="type"
@@ -152,7 +152,7 @@ export default function FeedbackPage() {
                                             </svg>
                                             Complain
                                         </label>
-                                        <label className={`cursor-pointer flex flex-col items-center justify-center gap-2 p-3 rounded-xl border transition-all duration-200 font-semibold text-xs text-center ${type === 'bug' — 'bg-amber-500/10 border-amber-500/50 text-amber-400' : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'}`}>
+                                        <label className={`cursor-pointer flex flex-col items-center justify-center gap-2 p-3 rounded-xl border transition-all duration-200 font-semibold text-xs text-center ${type === 'bug' ? 'bg-amber-500/10 border-amber-500/50 text-amber-400' : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'}`}>
                                             <input
                                                 type="radio"
                                                 name="type"
@@ -186,7 +186,7 @@ export default function FeedbackPage() {
                                     disabled={status === 'submitting'}
                                     className="w-full btn-primary-glow h-14 text-lg mt-4 relative overflow-hidden"
                                 >
-                                    <span className={status === 'submitting' — 'opacity-0' : 'opacity-100 transition-opacity'}>
+                                    <span className={status === 'submitting' ? 'opacity-0' : 'opacity-100 transition-opacity'}>
                                         Submit Feedback
                                     </span>
                                     {status === 'submitting' && (

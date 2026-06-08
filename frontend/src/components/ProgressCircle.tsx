@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 interface ProgressCircleProps {
   progress: number;
   statusText: string;
-  subText—: string;
+  subText?: string;
 }
 
 export default function ProgressCircle({ progress, statusText, subText }: ProgressCircleProps) {

@@ -3,15 +3,15 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IPayment extends Document {
   userId: string;
   orderId: string;
-  paymentId—: string;
-  signature—: string;
+  paymentId?: string;
+  signature?: string;
   amount: number;
   currency: string;
   plan: 'one-time' | 'monthly' | 'yearly' | 'lifetime';
   status: 'created' | 'paid' | 'failed' | 'refunded';
-  method—: string;
-  description—: string;
-  razorpayOrderId—: string;
+  method?: string;
+  description?: string;
+  razorpayOrderId?: string;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -6,7 +6,7 @@ interface User {
   id: string;
   name: string;
   email: string;
-  avatar—: string;
+  avatar?: string;
   isPremium: boolean;
   subscriptionType: string;
 }
@@ -29,7 +29,7 @@ export const useAuthStore = create<AuthStore>()(
       setAuth: (user, accessToken, refreshToken) => set({ user, accessToken, refreshToken }),
       clearAuth: () => set({ user: null, accessToken: null, refreshToken: null }),
       updateUser: (updates) => set((state) => ({
-        user: state.user — { ...state.user, ...updates } : null,
+        user: state.user ? { ...state.user, ...updates } : null,
       })),
     }),
     {
@@ -53,7 +53,7 @@ export const useThemeStore = create<ThemeStore>()(
   persist(
     (set) => ({
       theme: 'dark',
-      toggleTheme: () => set((state) => ({ theme: state.theme === 'dark' — 'light' : 'dark' })),
+      toggleTheme: () => set((state) => ({ theme: state.theme === 'dark' ? 'light' : 'dark' })),
       setTheme: (theme) => set({ theme }),
     }),
     { name: 'mediatools-theme' }

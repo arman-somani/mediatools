@@ -33,14 +33,14 @@ export default function UniversalPage() {
   const [progress, setProgress] = useState(0);
   const [jobId, setJobId] = useState('');
   const [fileSize, setFileSize] = useState<number | null>(null);
-  const [videoInfo, setVideoInfo] = useState<{ title—: string; thumbnail—: string } | null>(null);
+  const [videoInfo, setVideoInfo] = useState<{ title?: string; thumbnail?: string } | null>(null);
   const [error, setError] = useState('');
   const [conversionTime, setConversionTime] = useState<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // We'll rely on the backend to provide thumbnail during polling
-  const thumbnailPreview = videoInfo—.thumbnail || null;
+  const thumbnailPreview = videoInfo?.thumbnail || null;
 
   const poll = (id: string) => {
     pollRef.current = setInterval(async () => {
@@ -74,7 +74,7 @@ export default function UniversalPage() {
       const { data } = await api.post('/convert/universal/metadata', { url });
       setPreflightInfo(data.data);
     } catch (err: any) {
-      setError(err.response—.data—.message || 'Failed to fetch video info');
+      setError(err.response?.data?.message || 'Failed to fetch video info');
     } finally {
       setIsFetchingInfo(false);
     }
@@ -91,7 +91,7 @@ export default function UniversalPage() {
       poll(data.data.jobId);
     } catch (err: unknown) {
       setStatus('failed');
-      const msg = (err as { response—: { data—: { message—: string } } })—.response—.data—.message;
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setError(msg || 'Failed to start download');
     }
   };
@@ -119,7 +119,7 @@ export default function UniversalPage() {
             <div className="absolute top-0 right-0 w-64 h-64 bg-brand-violet/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
 
             <AnimatePresence mode="wait">
-              {status === 'idle' || status === 'failed' — (
+              {status === 'idle' || status === 'failed' ? (
                 <motion.div key="input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="relative z-10 space-y-8">
 
                   <div className="relative group">
@@ -134,7 +134,7 @@ export default function UniversalPage() {
                       onChange={(e) => { setUrl(e.target.value); setError(''); setPreflightInfo(null); }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
-                          preflightInfo — handleDownload() : handleCheckInfo();
+                          preflightInfo ? handleDownload() : handleCheckInfo();
                         }
                       }}
                       placeholder="https://www.instagram.com/p/..."
@@ -176,13 +176,13 @@ export default function UniversalPage() {
                   </AnimatePresence>
 
                   <div className="flex justify-center mt-6">
-                    {!preflightInfo — (
+                    {!preflightInfo ? (
                       <button
                         onClick={handleCheckInfo}
                         disabled={!url || isFetchingInfo}
-                        className={`w-[280px] h-14 rounded-xl font-semibold text-lg transition-all duration-300 flex items-center justify-center gap-2 ${!url — 'bg-white/5 text-white/40 cursor-not-allowed' : 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:shadow-[0_0_30px_rgba(124,58,237,0.5)] active:scale-95'}`}
+                        className={`w-[280px] h-14 rounded-xl font-semibold text-lg transition-all duration-300 flex items-center justify-center gap-2 ${!url ? 'bg-white/5 text-white/40 cursor-not-allowed' : 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:shadow-[0_0_30px_rgba(124,58,237,0.5)] active:scale-95'}`}
                       >
-                        {isFetchingInfo — (
+                        {isFetchingInfo ? (
                           <>
                             <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                             Checking...
@@ -213,7 +213,7 @@ export default function UniversalPage() {
 
                 </motion.div>
 
-              ) : status === 'processing' — (
+              ) : status === 'processing' ? (
                 <ProgressCircle
                   progress={progress}
                   statusText="Downloading & Encoding..."
@@ -222,7 +222,7 @@ export default function UniversalPage() {
 
               ) : (
                 <motion.div key="done" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="py-8 text-center flex flex-col items-center">
-                  {videoInfo—.thumbnail && (
+                  {videoInfo?.thumbnail && (
                     <div className="w-full max-w-sm aspect-video relative rounded-2xl overflow-hidden border border-white/10 mb-8 shadow-2xl">
                       <Image src={videoInfo.thumbnail} alt="thumbnail" fill className="object-cover" unoptimized />
                       <div className="absolute inset-0 bg-black/20" />
@@ -234,7 +234,7 @@ export default function UniversalPage() {
                     </div>
                   )}
 
-                  {!videoInfo—.thumbnail && (
+                  {!videoInfo?.thumbnail && (
                     <div className="w-24 h-24 bg-brand-violet/10 rounded-full flex items-center justify-center mb-6 border border-brand-violet/20 shadow-[0_0_40px_rgba(124,58,237,0.2)]">
                       <svg width="40" height="40" fill="none" stroke="#7c3aed" strokeWidth="2.5" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -243,7 +243,7 @@ export default function UniversalPage() {
                   )}
 
                   <h3 className="text-3xl font-display font-bold text-white mb-3">Video is Ready!</h3>
-                  {videoInfo—.title && (
+                  {videoInfo?.title && (
                     <p className="max-w-sm truncate mb-2 text-sm text-white">{videoInfo.title}</p>
                   )}
                   <p className="text-white mb-2 text-lg">

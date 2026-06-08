@@ -42,7 +42,7 @@ export default function Navbar() {
     router.push('/');
   };
 
-  const firstLetter = user—.name — user.name.charAt(0).toUpperCase() : '';
+  const firstLetter = user?.name ? user.name.charAt(0).toUpperCase() : '';
 
   return (
     <header className="fixed top-0 z-50 w-full border-b border-white/10 navbar-bg backdrop-blur-xl">
@@ -111,7 +111,7 @@ export default function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`text-sm font-medium transition-colors hover:text-brand-purple ${isActive — 'text-brand-purple' : 'nav-link-color'
+                  className={`text-sm font-medium transition-colors hover:text-brand-purple ${isActive ? 'text-brand-purple' : 'nav-link-color'
                     }`}
                 >
                   {link.name}
@@ -127,7 +127,7 @@ export default function Navbar() {
               className="text-sm font-semibold nav-link-color hover:text-brand-purple flex items-center gap-1 transition-colors px-2 py-1"
             >
               Tools
-              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className={`transition-transform ${mobileMenuOpen — 'rotate-180' : ''}`}>
+              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className={`transition-transform ${mobileMenuOpen ? 'rotate-180' : ''}`}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </button>
@@ -139,7 +139,7 @@ export default function Navbar() {
                     key={link.href}
                     href={link.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`block rounded-lg px-4 py-2 text-sm transition-colors hover:bg-white/5 ${pathname === link.href — 'text-brand-purple bg-white/5 font-medium' : 'text-white/70'}`}
+                    className={`block rounded-lg px-4 py-2 text-sm transition-colors hover:bg-white/5 ${pathname === link.href ? 'text-brand-purple bg-white/5 font-medium' : 'text-white/70'}`}
                   >
                     {link.name}
                   </Link>
@@ -152,7 +152,7 @@ export default function Navbar() {
         {/* Right side: auth */}
         <div className="flex items-center gap-2 sm:gap-3 justify-end">
 
-          {user — (
+          {user ? (
             <div className="relative" ref={dropdownRef}>
               <button
                 id="user-avatar-btn"

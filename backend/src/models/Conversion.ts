@@ -1,21 +1,21 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IConversion extends Document {
-  userId—: string;
+  userId?: string;
   type: 'Video' | 'youtube' | 'youtube-Video' | 'universal';
   status: 'pending' | 'processing' | 'completed' | 'failed';
-  originalName—: string;
-  youtubeUrl—: string;
-  youtubeTitle—: string;
-  youtubeThumbnail—: string;
-  outputFilename—: string;
-  outputPath—: string;
-  outputUrl—: string;
+  originalName?: string;
+  youtubeUrl?: string;
+  youtubeTitle?: string;
+  youtubeThumbnail?: string;
+  outputFilename?: string;
+  outputPath?: string;
+  outputUrl?: string;
   quality: '128' | '192' | '320';
-  videoQuality—: '360p' | '480p' | '720p' | '1080p' | '4K' | '8K';
-  fileSize—: number;
-  duration—: number;
-  errorMessage—: string;
+  videoQuality?: '360p' | '480p' | '720p' | '1080p' | '4K' | '8K';
+  fileSize?: number;
+  duration?: number;
+  errorMessage?: string;
   progress: number;
   expiresAt: Date;
   downloadCount: number;

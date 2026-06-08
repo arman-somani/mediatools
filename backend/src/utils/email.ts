@@ -43,7 +43,7 @@ export const sendVerificationEmail = async (email: string, name: string, code: s
 
 export const sendPasswordResetEmail = async (email: string, name: string, token: string): Promise<void> => {
   const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:3000').trim();
-  const resetUrl = `${frontendUrl}/auth/reset-password—token=${token}`;
+  const resetUrl = `${frontendUrl}/auth/reset-password?token=${token}`;
 
   console.log(`\n======================================================`);
   console.log(`🔐 PASSWORD RESET REQUESTED FOR: ${email}`);
