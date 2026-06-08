@@ -15,7 +15,7 @@ api.interceptors.request.use((config) => {
     if (stored) {
       try {
         const { state } = JSON.parse(stored);
-        if (state?.accessToken) {
+        if (state—.accessToken) {
           config.headers.Authorization = `Bearer ${state.accessToken}`;
         }
       } catch {}
@@ -29,13 +29,13 @@ api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config;
-    if (error.response?.status === 401 && !original._retry) {
+    if (error.response—.status === 401 && !original._retry) {
       original._retry = true;
       try {
         const stored = localStorage.getItem('mediatools-auth');
         if (stored) {
           const { state } = JSON.parse(stored);
-          if (state?.refreshToken) {
+          if (state—.refreshToken) {
             const { data } = await axios.post(`${API_URL}/api/auth/refresh`, {
               refreshToken: state.refreshToken,
             });

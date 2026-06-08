@@ -17,8 +17,8 @@ interface Video {
 interface DownloadState {
   status: 'idle' | 'processing' | 'completed' | 'failed';
   progress: number;
-  jobId?: string;
-  error?: string;
+  jobId—: string;
+  error—: string;
 }
 
 export default function PlaylistDownloader() {
@@ -51,7 +51,7 @@ export default function PlaylistDownloader() {
       setStatus('fetched');
     } catch (err: any) {
       setStatus('failed');
-      setError(err.response?.data?.message || 'Failed to fetch playlist');
+      setError(err.response—.data—.message || 'Failed to fetch playlist');
     }
   };
 
@@ -65,7 +65,7 @@ export default function PlaylistDownloader() {
           [videoId]: {
             ...prev[videoId],
             progress: Math.round(conv.progress || 0),
-            status: conv.status === 'completed' || conv.status === 'failed' ? conv.status : 'processing',
+            status: conv.status === 'completed' || conv.status === 'failed' — conv.status : 'processing',
             error: conv.errorMessage,
           },
         }));
@@ -88,13 +88,13 @@ export default function PlaylistDownloader() {
     } catch (err: any) {
       setDownloads(prev => ({
         ...prev,
-        [video.id]: { status: 'failed', progress: 0, error: err.response?.data?.message || 'Failed to start' },
+        [video.id]: { status: 'failed', progress: 0, error: err.response—.data—.message || 'Failed to start' },
       }));
     }
   };
 
   const convertAll = () => {
-    const targetVideos = selectedIds.size > 0 ? videos.filter(v => selectedIds.has(v.id)) : videos;
+    const targetVideos = selectedIds.size > 0 — videos.filter(v => selectedIds.has(v.id)) : videos;
     targetVideos.forEach(video => {
       const dl = downloads[video.id];
       if (!dl || dl.status === 'failed') downloadVideo(video);
@@ -102,8 +102,8 @@ export default function PlaylistDownloader() {
   };
 
   const downloadAll = () => {
-    const targetVideos = selectedIds.size > 0 ? videos.filter(v => selectedIds.has(v.id)) : videos;
-    const completedVideos = targetVideos.filter(v => downloads[v.id]?.status === 'completed');
+    const targetVideos = selectedIds.size > 0 — videos.filter(v => selectedIds.has(v.id)) : videos;
+    const completedVideos = targetVideos.filter(v => downloads[v.id]—.status === 'completed');
     completedVideos.forEach((video, index) => {
       const jobId = downloads[video.id].jobId;
       if (jobId) {
@@ -177,7 +177,7 @@ export default function PlaylistDownloader() {
             <label className="quality-label">GLOBAL QUALITY</label>
             <div className="quality-track">
               {(['128', '192', '320'] as Quality[]).map(q => (
-                <button key={q} onClick={() => setQuality(q)} className={`quality-btn${quality === q ? ' active' : ''}`}>
+                <button key={q} onClick={() => setQuality(q)} className={`quality-btn${quality === q — ' active' : ''}`}>
                   {q}k
                 </button>
               ))}
@@ -188,9 +188,9 @@ export default function PlaylistDownloader() {
             whileTap={{ scale: 0.96 }}
             onClick={fetchPlaylist}
             disabled={!url || status === 'fetching'}
-            className={`w-full sm:w-auto min-w-[160px] h-[54px] rounded-xl font-semibold transition-all duration-300 ${!url ? 'bg-white/5 text-white/40 border border-white/10 cursor-not-allowed' : 'bg-gradient-to-r from-red-600 to-red-500 text-white hover:shadow-[0_0_20px_rgba(239,68,68,0.4)]'}`}
+            className={`w-full sm:w-auto min-w-[160px] h-[54px] rounded-xl font-semibold transition-all duration-300 ${!url — 'bg-white/5 text-white/40 border border-white/10 cursor-not-allowed' : 'bg-gradient-to-r from-red-600 to-red-500 text-white hover:shadow-[0_0_20px_rgba(239,68,68,0.4)]'}`}
           >
-            {status === 'fetching' ? 'Loading...' : 'Load Playlist'}
+            {status === 'fetching' — 'Loading...' : 'Load Playlist'}
           </motion.button>
         </div>
 
@@ -205,7 +205,7 @@ export default function PlaylistDownloader() {
                 onClick={convertAll}
                 className="flex-1 bg-black/5 hover:bg-brand-purple hover:text-white text-white font-semibold py-3 rounded-xl transition-all duration-200 border border-white/10 hover:border-brand-purple hover:shadow-[0_0_20px_rgba(168,85,247,0.3)]"
               >
-                Convert {selectedIds.size > 0 ? `Selected (${selectedIds.size})` : 'All'}
+                Convert {selectedIds.size > 0 — `Selected (${selectedIds.size})` : 'All'}
               </motion.button>
               <motion.button
                 whileHover={{ y: -2 }}
@@ -213,7 +213,7 @@ export default function PlaylistDownloader() {
                 onClick={downloadAll}
                 className="flex-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 font-semibold py-3 rounded-xl transition-all duration-200 border border-emerald-500/20 hover:border-emerald-500/40 hover:shadow-[0_0_20px_rgba(16,185,129,0.2)]"
               >
-                Download {selectedIds.size > 0 ? `Selected (${selectedIds.size})` : 'All'} Completed
+                Download {selectedIds.size > 0 — `Selected (${selectedIds.size})` : 'All'} Completed
               </motion.button>
             </div>
 
@@ -222,12 +222,12 @@ export default function PlaylistDownloader() {
               whileHover={{ y: -2 }}
               onClick={toggleAllSelection}
               className={`flex items-center justify-between px-4 py-3 rounded-xl border cursor-pointer transition-all duration-200 ${selectedIds.size > 0
-                ? 'bg-brand-purple/10 border-brand-purple/40 shadow-[0_0_15px_rgba(168,85,247,0.15)]'
+                — 'bg-brand-purple/10 border-brand-purple/40 shadow-[0_0_15px_rgba(168,85,247,0.15)]'
                 : 'bg-white/5 border-white/10 hover:bg-white/10'
                 }`}
             >
               <div className="flex items-center gap-3">
-                <div className={`w-5 h-5 rounded flex items-center justify-center transition-all ${selectedIds.size > 0 ? 'bg-brand-purple shadow-[0_0_10px_rgba(168,85,247,0.5)]' : 'border-2 border-black/30'}`}>
+                <div className={`w-5 h-5 rounded flex items-center justify-center transition-all ${selectedIds.size > 0 — 'bg-brand-purple shadow-[0_0_10px_rgba(168,85,247,0.5)]' : 'border-2 border-black/30'}`}>
                   {selectedIds.size === videos.length && videos.length > 0 && (
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
                   )}
@@ -235,11 +235,11 @@ export default function PlaylistDownloader() {
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>
                   )}
                 </div>
-                <span className={`text-sm font-semibold ${selectedIds.size > 0 ? 'text-brand-purple' : 'text-white'}`}>
-                  {selectedIds.size === videos.length && videos.length > 0 ? 'Deselect All' : 'Select All'}
+                <span className={`text-sm font-semibold ${selectedIds.size > 0 — 'text-brand-purple' : 'text-white'}`}>
+                  {selectedIds.size === videos.length && videos.length > 0 — 'Deselect All' : 'Select All'}
                 </span>
               </div>
-              <div className={`text-xs font-semibold px-2.5 py-1 rounded-md ${selectedIds.size > 0 ? 'bg-brand-purple/20 text-brand-purple' : 'bg-white/10 text-white'}`}>
+              <div className={`text-xs font-semibold px-2.5 py-1 rounded-md ${selectedIds.size > 0 — 'bg-brand-purple/20 text-brand-purple' : 'bg-white/10 text-white'}`}>
                 {selectedIds.size} / {videos.length}
               </div>
             </motion.div>
@@ -248,8 +248,8 @@ export default function PlaylistDownloader() {
             <div className="flex-1 max-h-[400px] overflow-y-auto pr-1 space-y-2 custom-scrollbar">
               {videos.map((video, idx) => {
                 const download = downloads[video.id];
-                const isProcessing = download?.status === 'processing';
-                const isCompleted = download?.status === 'completed';
+                const isProcessing = download—.status === 'processing';
+                const isCompleted = download—.status === 'completed';
                 const isSelected = selectedIds.has(video.id);
 
                 return (
@@ -257,14 +257,14 @@ export default function PlaylistDownloader() {
                     key={video.id + idx}
                     whileHover={{ y: -2 }}
                     className={`border rounded-xl p-3 flex items-center gap-3 transition-all duration-200 ${isSelected
-                      ? 'border-brand-purple/50 bg-brand-purple/5 shadow-[0_0_12px_rgba(168,85,247,0.1)]'
+                      — 'border-brand-purple/50 bg-brand-purple/5 shadow-[0_0_12px_rgba(168,85,247,0.1)]'
                       : 'bg-white/5 border-white/10 hover:bg-white/10'
                       }`}
                   >
                     {/* Checkbox */}
                     <div
                       onClick={() => toggleSelection(video.id)}
-                      className={`w-5 h-5 rounded flex items-center justify-center transition-all cursor-pointer flex-shrink-0 ${isSelected ? 'bg-brand-purple shadow-[0_0_8px_rgba(168,85,247,0.5)]' : 'border-2 border-black/30 hover:border-brand-purple'}`}
+                      className={`w-5 h-5 rounded flex items-center justify-center transition-all cursor-pointer flex-shrink-0 ${isSelected — 'bg-brand-purple shadow-[0_0_8px_rgba(168,85,247,0.5)]' : 'border-2 border-black/30 hover:border-brand-purple'}`}
                     >
                       {isSelected && (
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
@@ -284,12 +284,12 @@ export default function PlaylistDownloader() {
                           <div className="bg-brand-purple h-full rounded-full transition-all duration-300" style={{ width: `${download.progress}%` }} />
                         </div>
                       )}
-                      {download?.error && <p className="text-xs text-red-500 mt-1">Video is not available or cannot be converted.</p>}
+                      {download—.error && <p className="text-xs text-red-500 mt-1">Video is not available or cannot be converted.</p>}
                     </div>
 
                     {/* Action */}
                     <div className="flex-shrink-0">
-                      {isCompleted ? (
+                      {isCompleted — (
                         <a
                           href={`${process.env.NEXT_PUBLIC_API_URL}/api/convert/download/${download.jobId}`}
                           target="_blank"
@@ -298,7 +298,7 @@ export default function PlaylistDownloader() {
                         >
                           Download
                         </a>
-                      ) : isProcessing ? (
+                      ) : isProcessing — (
                         <div className="h-9 px-3 bg-white/5 text-white rounded-lg text-xs font-medium flex items-center border border-white/10">
                           {download.progress}%
                         </div>

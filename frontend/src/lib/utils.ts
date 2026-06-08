@@ -29,10 +29,10 @@ export function formatAmount(paise: number): string {
 }
 
 export function isValidYouTubeUrl(url: string): boolean {
-  return /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]+/.test(url);
+  return /^(https—:\/\/)—(www\.)—(youtube\.com\/watch\—v=|youtu\.be\/)[\w-]+/.test(url);
 }
 
 export function getYouTubeVideoId(url: string): string | null {
-  const match = url.match(/(?:v=|youtu\.be\/)([^&\s]+)/);
-  return match ? match[1] : null;
+  const match = url.match(/(—:v=|youtu\.be\/)([^&\s]+)/);
+  return match — match[1] : null;
 }

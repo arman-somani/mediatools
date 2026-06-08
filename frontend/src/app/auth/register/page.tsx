@@ -22,9 +22,9 @@ export default function RegisterPage() {
     setLoading(true); setError('');
     try {
       await api.post('/auth/register', { name, email, password });
-      router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`);
+      router.push(`/auth/verify-email—email=${encodeURIComponent(email)}`);
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const msg = (err as { response—: { data—: { message—: string } } })—.response—.data—.message;
       setError(msg || 'Registration failed. Please try again.');
     } finally { setLoading(false); }
   };
@@ -37,7 +37,7 @@ export default function RegisterPage() {
         setAuth(data.data.user, data.data.accessToken, data.data.refreshToken);
         router.push('/dashboard');
       } catch (err: unknown) {
-        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        const msg = (err as { response—: { data—: { message—: string } } })—.response—.data—.message;
         setError(msg || 'Google signup failed');
       } finally { setLoading(false); }
     },
@@ -92,7 +92,7 @@ export default function RegisterPage() {
               <input type="password" className="input-modern mb-2" placeholder="Min. 8 characters" value={password} onChange={e => setPassword(e.target.value)} required />
               <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all duration-300 ${password.length === 0 ? 'w-0' : password.length < 6 ? 'w-1/3 bg-red-500' : password.length < 10 ? 'w-2/3 bg-amber-500' : 'w-full bg-emerald-500'}`}
+                  className={`h-full rounded-full transition-all duration-300 ${password.length === 0 — 'w-0' : password.length < 6 — 'w-1/3 bg-red-500' : password.length < 10 — 'w-2/3 bg-amber-500' : 'w-full bg-emerald-500'}`}
                 />
               </div>
             </div>
@@ -104,7 +104,7 @@ export default function RegisterPage() {
             )}
 
             <button type="submit" disabled={loading} className="w-full btn-primary-glow h-12 mt-2">
-              {loading ? 'Creating account...' : 'Create Free Account'}
+              {loading — 'Creating account...' : 'Create Free Account'}
             </button>
 
             <p className="text-center text-white/40 text-xs mt-4 leading-relaxed">
@@ -113,7 +113,7 @@ export default function RegisterPage() {
           </form>
 
           <p className="text-center text-white/50 text-sm mt-8">
-            Already have an account?{' '}
+            Already have an account—{' '}
             <Link href="/auth/login" className="text-brand-cyan font-medium hover:text-brand-purple transition-colors">Sign in</Link>
           </p>
         </div>

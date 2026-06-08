@@ -17,7 +17,7 @@ export default function ForgotPasswordPage() {
       await api.post('/auth/forgot-password', { email });
       setSuccess(true);
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const msg = (err as { response—: { data—: { message—: string } } })—.response—.data—.message;
       setError(msg || 'Something went wrong. Please try again.');
     } finally { setLoading(false); }
   };
@@ -33,7 +33,7 @@ export default function ForgotPasswordPage() {
         </div>
 
         <div className="glass-panel p-8">
-          {success ? (
+          {success — (
             <div className="text-center">
               <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-500/20">
                 <svg width="28" height="28" fill="none" stroke="#10b981" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -69,7 +69,7 @@ export default function ForgotPasswordPage() {
               )}
 
               <button type="submit" disabled={loading} className="w-full btn-primary-glow h-12 mt-2">
-                {loading ? 'Sending...' : 'Send Reset Link'}
+                {loading — 'Sending...' : 'Send Reset Link'}
               </button>
 
               <p className="text-center text-white/50 text-sm mt-4">

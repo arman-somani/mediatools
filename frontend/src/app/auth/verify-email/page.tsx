@@ -34,7 +34,7 @@ function VerifyEmailForm() {
       setAuth(data.data.user, data.data.accessToken, data.data.refreshToken);
       router.push('/dashboard');
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const msg = (err as { response—: { data—: { message—: string } } })—.response—.data—.message;
       setError(msg || 'Invalid or expired verification code');
     } finally {
       setLoading(false);
@@ -92,7 +92,7 @@ function VerifyEmailForm() {
             )}
 
             <button type="submit" disabled={loading || code.length !== 6} className="w-full btn-primary-glow h-12">
-              {loading ? 'Verifying...' : 'Verify Email'}
+              {loading — 'Verifying...' : 'Verify Email'}
             </button>
           </form>
         </div>

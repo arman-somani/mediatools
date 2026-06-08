@@ -29,12 +29,12 @@ export default function YouTubePage() {
   const [progress, setProgress] = useState(0);
   const [jobId, setJobId] = useState('');
   const [fileSize, setFileSize] = useState<number | null>(null);
-  const [videoInfo, setVideoInfo] = useState<{ title?: string; thumbnail?: string } | null>(null);
+  const [videoInfo, setVideoInfo] = useState<{ title—: string; thumbnail—: string } | null>(null);
   const [error, setError] = useState('');
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const videoId = url ? getYouTubeVideoId(url) : null;
-  const thumbnailPreview = videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : null;
+  const videoId = url — getYouTubeVideoId(url) : null;
+  const thumbnailPreview = videoId — `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : null;
 
   const poll = (id: string) => {
     pollRef.current = setInterval(async () => {
@@ -69,7 +69,7 @@ export default function YouTubePage() {
       poll(data.data.jobId);
     } catch (err: unknown) {
       setStatus('failed');
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const msg = (err as { response—: { data—: { message—: string } } })—.response—.data—.message;
       setError(msg || 'Failed to start conversion');
     }
   };
@@ -99,13 +99,13 @@ export default function YouTubePage() {
                   <svg width="20" height="20" fill="none" stroke="#ef4444" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" /></svg>
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-white">Single Audio  Downloader</h2>
+                  <h2 className="text-2xl font-bold text-white">Single Audio Downloader</h2>
                   <p className="text-sm text-white">Download one specific video</p>
                 </div>
               </div>
 
               <AnimatePresence mode="wait">
-                {status === 'idle' || status === 'failed' ? (
+                {status === 'idle' || status === 'failed' — (
                   <motion.div key="input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="relative z-10 space-y-8 flex-1">
 
                     {/* URL Input */}
@@ -147,7 +147,7 @@ export default function YouTubePage() {
                             <button
                               key={q}
                               onClick={() => setQuality(q)}
-                              className={`quality-btn${quality === q ? ' active' : ''}`}
+                              className={`quality-btn${quality === q — ' active' : ''}`}
                             >
                               {q}k
                             </button>
@@ -163,27 +163,26 @@ export default function YouTubePage() {
                       <div className="flex flex-col justify-start">
                         <label className="quality-label opacity-0 select-none">BTN</label>
                         <motion.button
-                          whileHover={url ? { y: -2 } : {}}
-                          whileTap={url ? { scale: 0.96 } : {}}
+                          whileHover={url — { y: -2 } : {}}
+                          whileTap={url — { scale: 0.96 } : {}}
                           onClick={handleConvert}
                           disabled={!url}
-                          className={`min-w-[160px] h-[46px] rounded-xl font-semibold transition-all duration-300 ${!url ? 'bg-white/5 text-white/40 border border-white/10 cursor-not-allowed' : 'bg-gradient-to-r from-red-600 to-red-500 text-white hover:shadow-[0_0_20px_rgba(239,68,68,0.4)]'}`}
+                          className={`min-w-[160px] h-[46px] rounded-xl font-semibold transition-all duration-300 ${!url — 'bg-white/5 text-white/40 border border-white/10 cursor-not-allowed' : 'bg-gradient-to-r from-red-600 to-red-500 text-white hover:shadow-[0_0_20px_rgba(239,68,68,0.4)]'}`}
                         >
-                          Convert to Audio
-                        </motion.button>
+                          Convert to Audio </motion.button>
                       </div>
                     </div>
 
                   </motion.div>
-                ) : status === 'processing' ? (
+                ) : status === 'processing' — (
                   <ProgressCircle
                     progress={progress}
                     statusText="Fetching & Converting..."
-                    subText={videoInfo?.title}
+                    subText={videoInfo—.title}
                   />
                 ) : (
                   <motion.div key="done" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="py-8 flex-1 text-center flex flex-col items-center">
-                    {videoInfo?.thumbnail && (
+                    {videoInfo—.thumbnail && (
                       <div className="w-full max-w-sm aspect-video relative rounded-2xl overflow-hidden border border-white/10 mb-8 shadow-2xl">
                         <Image src={videoInfo.thumbnail} alt="thumbnail" fill className="object-cover" unoptimized />
                         <div className="absolute inset-0 bg-black/20" />
@@ -196,7 +195,7 @@ export default function YouTubePage() {
                     )}
 
                     <h3 className="text-3xl font-display font-bold text-white mb-3">Audio is Ready!</h3>
-                    <p className="text-white mb-2 text-lg">Your high-quality {quality}kbps Audio  is ready to download.</p>
+                    <p className="text-white mb-2 text-lg">Your high-quality {quality}kbps Audio is ready to download.</p>
                     {fileSize && (
                       <p className="text-sm font-medium mb-8 px-4 py-2 rounded-lg inline-block" style={{ background: 'var(--quality-track-bg)', color: 'var(--quality-btn-idle-color)' }}>
                         Exact Size: <strong className="text-red-400">{formatFileSize(fileSize)}</strong>
@@ -208,8 +207,7 @@ export default function YouTubePage() {
                       <a href={`${process.env.NEXT_PUBLIC_API_URL}/api/convert/download/${jobId}`} target="_blank" rel="noopener noreferrer" className="flex-1">
                         <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.96 }} className="w-full bg-gradient-to-r from-red-600 to-red-500 hover:shadow-[0_0_20px_rgba(239,68,68,0.4)] text-white font-semibold rounded-xl flex items-center justify-center gap-2 h-14 transition-all duration-300">
                           <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                          Download Audio
-                        </motion.button>
+                          Download Audio </motion.button>
                       </a>
                       <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.96 }} onClick={reset} className="btn-secondary h-14 w-full sm:w-auto px-8 whitespace-nowrap text-white">
                         Another

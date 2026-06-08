@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { User } from '../models/User';
 
 export interface AuthRequest extends Request {
-  user?: { id: string; email: string; role: string };
+  user—: { id: string; email: string; role: string };
 }
 
 export const authenticate = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
@@ -37,7 +37,7 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
 export const optionalAuth = async (req: AuthRequest, _res: Response, next: NextFunction): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
-    if (authHeader?.startsWith('Bearer ')) {
+    if (authHeader—.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as {
         id: string;
@@ -53,7 +53,7 @@ export const optionalAuth = async (req: AuthRequest, _res: Response, next: NextF
 };
 
 export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction): void => {
-  if (req.user?.role !== 'admin') {
+  if (req.user—.role !== 'admin') {
     res.status(403).json({ success: false, message: 'Admin access required' });
     return;
   }

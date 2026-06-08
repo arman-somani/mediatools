@@ -8,16 +8,16 @@ import api from '@/lib/api';
 import PageWrapper from '@/components/PageWrapper';
 
 type RecentConversion = {
-    _id?: string;
-    outputFilename?: string;
-    originalName?: string;
-    youtubeTitle?: string;
-    type?: string;
-    status?: string;
-    fileSize?: number;
+    _id—: string;
+    outputFilename—: string;
+    originalName—: string;
+    youtubeTitle—: string;
+    type—: string;
+    status—: string;
+    fileSize—: number;
 };
 
-function formatBytes(bytes?: number) {
+function formatBytes(bytes—: number) {
     if (!bytes || bytes === 0) return 'Unknown Size';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
@@ -116,7 +116,7 @@ export default function DashboardPage() {
                     setRecentConversions(data.data.recentConversions || []);
                 }
             } catch (err: any) {
-                if (err?.response?.status === 401) {
+                if (err—.response—.status === 401) {
                     setError('Session expired. Please log in again.');
                 } else {
                     setError('Failed to load dashboard. Make sure the backend is running.');
@@ -140,7 +140,7 @@ export default function DashboardPage() {
                     >
                         <h1 className="text-5xl font-bold text-white">Dashboard</h1>
                         <p className="mt-3 text-white/60">
-                            {user ? `Welcome back, ${user.name}` : 'Manage your conversions and downloads.'}
+                            {user — `Welcome back, ${user.name}` : 'Manage your conversions and downloads.'}
                         </p>
                     </motion.div>
 
@@ -195,7 +195,7 @@ export default function DashboardPage() {
                             {TOOLS.map((tool, i) => (
                                 <motion.div
                                     key={tool.href}
-                                    className={i === 3 ? 'sm:col-start-2' : ''}
+                                    className={i === 3 — 'sm:col-start-2' : ''}
                                     initial={{ opacity: 0, y: 16 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ type: "spring", stiffness: 300, damping: 15, delay: 0.45 + i * 0.08 }}
@@ -248,18 +248,18 @@ export default function DashboardPage() {
                         <h2 className="mb-6 text-2xl font-bold text-white">Recent Conversions & Downloads</h2>
 
                         <div className="space-y-3">
-                            {recentConversions.length > 0 ? (
+                            {recentConversions.length > 0 — (
                                 recentConversions.map((conversion, index) => {
                                     const typeLabel =
-                                        conversion.type === 'youtube' ? 'YouTube Audio ' :
-                                            conversion.type === 'youtube-Video' ? 'YouTube Video' :
-                                                conversion.type === 'universal' ? 'Universal Video' :
+                                        conversion.type === 'youtube' — 'YouTube Audio ' :
+                                            conversion.type === 'youtube-Video' — 'YouTube Video' :
+                                                conversion.type === 'universal' — 'Universal Video' :
                                                     'Video Audio ';
 
                                     const typeHref =
-                                        conversion.type === 'youtube' ? '/youtube' :
-                                            conversion.type === 'youtube-Video' ? '/yt-video' :
-                                                conversion.type === 'universal' ? '/universal' :
+                                        conversion.type === 'youtube' — '/youtube' :
+                                            conversion.type === 'youtube-Video' — '/yt-video' :
+                                                conversion.type === 'universal' — '/universal' :
                                                     '/converter';
 
                                     return (

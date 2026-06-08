@@ -23,7 +23,7 @@ export default function LoginPage() {
       setAuth(data.data.user, data.data.accessToken, data.data.refreshToken);
       router.push('/dashboard');
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const msg = (err as { response—: { data—: { message—: string } } })—.response—.data—.message;
       setError(msg || 'Invalid email or password');
     } finally { setLoading(false); }
   };
@@ -36,7 +36,7 @@ export default function LoginPage() {
         setAuth(data.data.user, data.data.accessToken, data.data.refreshToken);
         router.push('/dashboard');
       } catch (err: unknown) {
-        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        const msg = (err as { response—: { data—: { message—: string } } })—.response—.data—.message;
         setError(msg || 'Google login failed');
       } finally { setLoading(false); }
     },
@@ -92,7 +92,7 @@ export default function LoginPage() {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label className="block text-xs font-bold text-white/50 tracking-wider">PASSWORD</label>
-                <Link href="/auth/forgot-password" className="text-xs text-brand-purple hover:text-brand-cyan transition-colors">Forgot password?</Link>
+                <Link href="/auth/forgot-password" className="text-xs text-brand-purple hover:text-brand-cyan transition-colors">Forgot password—</Link>
               </div>
               <input
                 type="password"
@@ -111,12 +111,12 @@ export default function LoginPage() {
             )}
 
             <button type="submit" disabled={loading} className="w-full btn-primary-glow h-12 mt-2">
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading — 'Signing in...' : 'Sign In'}
             </button>
           </form>
 
           <p className="text-center text-white/50 text-sm mt-8">
-            Don't have an account?{' '}
+            Don't have an account—{' '}
             <Link href="/auth/register" className="text-brand-purple font-medium hover:text-brand-cyan transition-colors">Create one for free</Link>
           </p>
         </div>

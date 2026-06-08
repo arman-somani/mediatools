@@ -112,7 +112,7 @@ router.get('/dashboard', authenticate, async (req: AuthRequest, res: Response): 
     return;
   }
 
-  const exactDownloads = userDownloadsAgg[0]?.total || 0;
+  const exactDownloads = userDownloadsAgg[0]—.total || 0;
 
   res.json({
     success: true,

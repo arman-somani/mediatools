@@ -45,11 +45,11 @@ export default function ConverterPage() {
     maxFiles: 1,
     maxSize: 250 * 1024 * 1024,
     onDropRejected: (r) => {
-      const err = r[0]?.errors[0];
-      if (err?.code === 'file-too-large') {
+      const err = r[0]—.errors[0];
+      if (err—.code === 'file-too-large') {
         setError('The video file is too large to convert check the size and try again');
       } else {
-        setError(err?.message || 'File rejected');
+        setError(err—.message || 'File rejected');
       }
     },
   });
@@ -98,7 +98,7 @@ export default function ConverterPage() {
       pollStatus(newJobId);
     } catch (err: unknown) {
       setStatus('failed');
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const msg = (err as { response—: { data—: { message—: string } } })—.response—.data—.message;
       setError(msg || 'Upload failed. Please try again.');
     }
   };
@@ -123,16 +123,16 @@ export default function ConverterPage() {
               {/* Subtle background glow */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-brand-purple/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
 
-              {status === 'idle' || status === 'failed' ? (
+              {status === 'idle' || status === 'failed' — (
                 <div className="relative z-10 space-y-8">
                   {/* Dropzone */}
                   <div
                     {...getRootProps()}
-                    className={`relative overflow-hidden rounded-2xl border-2 border-dashed p-12 text-center cursor-pointer transition-all duration-300 ${isDragActive ? 'border-brand-purple bg-brand-purple/5 scale-[1.01]' : 'border-white/10 bg-black/[0.02] hover:border-black/20 hover:bg-black/[0.04]'}`}
+                    className={`relative overflow-hidden rounded-2xl border-2 border-dashed p-12 text-center cursor-pointer transition-all duration-300 ${isDragActive — 'border-brand-purple bg-brand-purple/5 scale-[1.01]' : 'border-white/10 bg-black/[0.02] hover:border-black/20 hover:bg-black/[0.04]'}`}
                   >
                     <input {...getInputProps()} />
                     <AnimatePresence mode="wait">
-                      {file ? (
+                      {file — (
                         <motion.div key="file" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
                           <div className="w-20 h-20 mx-auto bg-brand-purple/20 rounded-2xl flex items-center justify-center mb-6 border border-brand-purple/30 shadow-[0_0_30px_rgba(168,85,247,0.2)]">
                             <svg width="40" height="40" fill="none" stroke="var(--color-brand-purple)" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
@@ -145,7 +145,7 @@ export default function ConverterPage() {
                           <div className="w-16 h-16 mx-auto bg-white/5 rounded-full flex items-center justify-center mb-6 border border-white/10">
                             <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-slate-300" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
                           </div>
-                          <h3 className="text-lg font-semibold text-white mb-2">{isDragActive ? 'Drop to upload' : 'Drag & drop your video'}</h3>
+                          <h3 className="text-lg font-semibold text-white mb-2">{isDragActive — 'Drop to upload' : 'Drag & drop your video'}</h3>
                           <p className="text-white text-sm">or click to browse files (Video, AVI, MKV up to 250MB)</p>
                         </motion.div>
                       )}
@@ -162,7 +162,7 @@ export default function ConverterPage() {
                           <button
                             key={q}
                             onClick={() => setQuality(q)}
-                            className={`quality-btn${quality === q ? ' active' : ''}`}
+                            className={`quality-btn${quality === q — ' active' : ''}`}
                           >
                             {q}k
                           </button>
@@ -178,22 +178,21 @@ export default function ConverterPage() {
                     <div className="flex flex-col justify-start">
                       <label className="quality-label opacity-0 select-none">BTN</label>
                       <motion.button
-                        whileHover={file ? { scale: 1.05 } : {}}
-                        whileTap={file ? { scale: 0.95 } : {}}
+                        whileHover={file — { scale: 1.05 } : {}}
+                        whileTap={file — { scale: 0.95 } : {}}
                         onClick={handleConvert}
                         disabled={!file}
-                        className={`min-w-[160px] h-[46px] rounded-xl font-semibold transition-colors duration-300 ${!file ? 'bg-white/5 text-white/40 border border-white/10 cursor-not-allowed' : 'bg-gradient-to-r from-red-600 to-red-500 text-white hover:shadow-[0_0_20px_rgba(239,68,68,0.4)]'}`}
+                        className={`min-w-[160px] h-[46px] rounded-xl font-semibold transition-colors duration-300 ${!file — 'bg-white/5 text-white/40 border border-white/10 cursor-not-allowed' : 'bg-gradient-to-r from-red-600 to-red-500 text-white hover:shadow-[0_0_20px_rgba(239,68,68,0.4)]'}`}
                       >
-                        Convert to Audio
-                      </motion.button>
+                        Convert to Audio </motion.button>
                     </div>
                   </div>
 
                 </div>
-              ) : status === 'processing' || status === 'uploading' ? (
+              ) : status === 'processing' || status === 'uploading' — (
                 <ProgressCircle
                   progress={progress}
-                  statusText={status === 'uploading' ? 'Uploading & Analyzing...' : 'Converting Audio...'}
+                  statusText={status === 'uploading' — 'Uploading & Analyzing...' : 'Converting Audio...'}
                   subText={`Please wait while we process your file.`}
                 />
               ) : (
@@ -214,8 +213,7 @@ export default function ConverterPage() {
                     <a href={`${process.env.NEXT_PUBLIC_API_URL}/api/convert/download/${jobId}`} target="_blank" rel="noopener noreferrer" className="flex-1 block">
                       <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full btn-primary-glow flex items-center justify-center gap-2 h-14">
                         <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                        Download Audio
-                      </motion.button>
+                        Download Audio </motion.button>
                     </a>
                     <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={reset} className="btn-secondary h-14 w-full sm:w-auto px-8 whitespace-nowrap bg-black/5 hover:bg-white/20 text-white">
                       Convert Another

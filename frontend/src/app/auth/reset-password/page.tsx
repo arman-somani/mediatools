@@ -40,7 +40,7 @@ function ResetPasswordForm() {
       await api.post('/auth/reset-password', { token, password });
       setSuccess(true);
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const msg = (err as { response—: { data—: { message—: string } } })—.response—.data—.message;
       setError(msg || 'Failed to reset password. The link might be expired.');
     } finally {
       setLoading(false);
@@ -57,7 +57,7 @@ function ResetPasswordForm() {
 
   return (
     <div className="glass-panel p-8">
-      {success ? (
+      {success — (
         <div className="text-center">
           <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-500/20">
             <svg width="28" height="28" fill="none" stroke="#10b981" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -107,7 +107,7 @@ function ResetPasswordForm() {
           )}
 
           <button type="submit" disabled={loading} className="w-full btn-primary-glow h-12 mt-2">
-            {loading ? 'Resetting Password...' : 'Reset Password'}
+            {loading — 'Resetting Password...' : 'Reset Password'}
           </button>
         </form>
       )}
