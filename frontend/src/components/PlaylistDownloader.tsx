@@ -21,6 +21,8 @@ interface DownloadState {
   error?: string;
 }
 
+type ApiError = { response?: { data?: { message?: string } } };
+
 export default function PlaylistDownloader() {
   const [url, setUrl] = useState('');
   const [quality, setQuality] = useState<Quality>('192');
@@ -33,8 +35,9 @@ export default function PlaylistDownloader() {
   const pollRefs = useRef<Record<string, ReturnType<typeof setInterval>>>({});
 
   useEffect(() => {
+    const refs = pollRefs.current;
     return () => {
-      Object.values(pollRefs.current).forEach(clearInterval);
+      Object.values(refs).forEach(clearInterval);
     };
   }, []);
 
@@ -49,9 +52,10 @@ export default function PlaylistDownloader() {
       const { data } = await api.post('/convert/youtube-playlist/metadata', { url });
       setVideos(data.data.videos || []);
       setStatus('fetched');
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const apiError = err as ApiError;
       setStatus('failed');
-      setError(err.response?.data?.message || 'Failed to fetch playlist');
+      setError(apiError.response?.data?.message || 'Failed to fetch playlist');
     }
   };
 
@@ -85,10 +89,11 @@ export default function PlaylistDownloader() {
       const jobId = data.data.jobId;
       setDownloads(prev => ({ ...prev, [video.id]: { status: 'processing', progress: 0, jobId } }));
       poll(video.id, jobId);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const apiError = err as ApiError;
       setDownloads(prev => ({
         ...prev,
-        [video.id]: { status: 'failed', progress: 0, error: err.response?.data?.message || 'Failed to start' },
+        [video.id]: { status: 'failed', progress: 0, error: apiError.response?.data?.message || 'Failed to start' },
       }));
     }
   };
@@ -349,7 +354,7 @@ export default function PlaylistDownloader() {
               </div>
               <h3 className="text-2xl font-bold text-white mb-2">Error Occurred</h3>
               <p className="text-white/70 mb-8">
-                Playlist can't be converted for Audio , or playlist is not available. Please check the URL you pasted.
+                Playlist can&apos;t be converted for Audio , or playlist is not available. Please check the URL you pasted.
               </p>
               <button
                 onClick={() => { setError(''); setStatus('idle'); }}

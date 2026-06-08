@@ -7,9 +7,7 @@ import Image from 'next/image';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ProgressCircle from '@/components/ProgressCircle';
 
-type VideoQuality = '360p' | '480p' | '720p' | '1080p' | '4K' | '8K';
-
-
+type ApiError = { response?: { data?: { message?: string } } };
 
 const getQualityLabel = (resolution: string) => {
   if (!resolution || resolution === 'Best Available' || resolution === 'NA') return '';
@@ -38,9 +36,6 @@ export default function UniversalPage() {
   const [conversionTime, setConversionTime] = useState<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // We'll rely on the backend to provide thumbnail during polling
-  const thumbnailPreview = videoInfo?.thumbnail || null;
 
   const poll = (id: string) => {
     pollRef.current = setInterval(async () => {
@@ -73,8 +68,9 @@ export default function UniversalPage() {
     try {
       const { data } = await api.post('/convert/universal/metadata', { url });
       setPreflightInfo(data.data);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to fetch video info');
+    } catch (err: unknown) {
+      const apiError = err as ApiError;
+      setError(apiError.response?.data?.message || 'Failed to fetch video info');
     } finally {
       setIsFetchingInfo(false);
     }
@@ -134,7 +130,8 @@ export default function UniversalPage() {
                       onChange={(e) => { setUrl(e.target.value); setError(''); setPreflightInfo(null); }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
-                          preflightInfo ? handleDownload() : handleCheckInfo();
+                          if (preflightInfo) handleDownload();
+                          else handleCheckInfo();
                         }
                       }}
                       placeholder="https://www.instagram.com/p/..."
@@ -301,7 +298,7 @@ export default function UniversalPage() {
                 </div>
                 <h3 className="text-2xl font-bold text-white mb-2">Download Failed</h3>
                 <p className="text-white mb-8">
-                  Video can't be converted, or video is not available. Please check the URL you pasted.
+                  Video can&apos;t be converted, or video is not available. Please check the URL you pasted.
                 </p>
                 <button
                   onClick={() => { setError(''); setStatus('idle'); }}

@@ -243,7 +243,7 @@ export default function YouTubePage() {
                 </div>
                 <h3 className="text-2xl font-bold text-white mb-2">Download Failed</h3>
                 <p className="text-white mb-8">
-                  Video can't be converted for Audio , or video is not available. Please check the URL you pasted.
+                  Video can&apos;t be converted for Audio , or video is not available. Please check the URL you pasted.
                 </p>
                 <button
                   onClick={() => { setError(''); setStatus('idle'); }}

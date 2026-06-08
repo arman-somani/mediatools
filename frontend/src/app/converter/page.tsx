@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
 import api, { apiUrl } from '@/lib/api';
 import { formatFileSize } from '@/lib/utils';
-import Link from 'next/link';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ProgressCircle from '@/components/ProgressCircle';
 import PageWrapper from '@/components/PageWrapper';
@@ -20,7 +19,6 @@ export default function ConverterPage() {
   const [status, setStatus] = useState<Status>('idle');
   const [progress, setProgress] = useState(0);
   const [jobId, setJobId] = useState('');
-  const [outputUrl, setOutputUrl] = useState('');
   const [fileSize, setFileSize] = useState<number | null>(null);
   const [error, setError] = useState('');
   const [conversionTime, setConversionTime] = useState<number | null>(null);
@@ -28,7 +26,7 @@ export default function ConverterPage() {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const onDrop = useCallback((accepted: File[]) => {
-    if (accepted[0]) { setFile(accepted[0]); setError(''); setStatus('idle'); setJobId(''); setOutputUrl(''); }
+    if (accepted[0]) { setFile(accepted[0]); setError(''); setStatus('idle'); setJobId(''); }
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -58,7 +56,6 @@ export default function ConverterPage() {
           setStatus('completed');
           setProgress(100);
           if (startTimeRef.current) setConversionTime(Math.round((Date.now() - startTimeRef.current) / 1000));
-          setOutputUrl(conv.outputUrl || '');
           setFileSize(conv.fileSize || null);
         } else if (conv.status === 'failed') {
           clearInterval(pollRef.current!);
@@ -74,7 +71,7 @@ export default function ConverterPage() {
   const handleConvert = async () => {
     startTimeRef.current = Date.now();
     if (!file) return;
-    setStatus('uploading'); setProgress(0); setError(''); setJobId(''); setOutputUrl(''); setFileSize(null); setConversionTime(null);
+    setStatus('uploading'); setProgress(0); setError(''); setJobId(''); setFileSize(null); setConversionTime(null);
     const formData = new FormData();
     formData.append('file', file);
     formData.append('quality', quality);
@@ -97,7 +94,7 @@ export default function ConverterPage() {
     }
   };
 
-  const reset = () => { setFile(null); setStatus('idle'); setProgress(0); setJobId(''); setOutputUrl(''); setFileSize(null); setError(''); setConversionTime(null); };
+  const reset = () => { setFile(null); setStatus('idle'); setProgress(0); setJobId(''); setFileSize(null); setError(''); setConversionTime(null); };
 
   return (
     <ProtectedRoute>
