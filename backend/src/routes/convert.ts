@@ -913,9 +913,14 @@ router.post('/universal/metadata', async (req: Request, res: Response): Promise<
     const cleanUrl = String(videoUrl).trim();
 
     // Run yt-dlp to print title, thumbnail, resolution, and filesize
-    const { stdout } = await execAsync(
-      `yt-dlp --js-runtimes node --extractor-args "youtube:player_client=android,web" --print "%(title)s" --print "%(thumbnail)s" --print "%(resolution)s" --print "%(filesize_approx,filesize)s" --no-playlist "${cleanUrl}"`
-    );
+    const { stdout } = await runYtDlp([
+      '--print', '%(title)s',
+      '--print', '%(thumbnail)s',
+      '--print', '%(resolution)s',
+      '--print', '%(filesize_approx,filesize)s',
+      '--no-playlist',
+      cleanUrl,
+    ]);
 
     const lines = stdout.trim().split('\n');
     const title = (lines[0] || '').trim() || 'Downloaded Video';
@@ -944,8 +949,9 @@ router.post('/universal/metadata', async (req: Request, res: Response): Promise<
 router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const videoUrl = req.body.url;
-    const videoQuality: string = (['360p', '480p', '720p', '1080p', '4K', '8K'].includes(req.body.mp4Quality))
-      ? req.body.mp4Quality : '720p';
+    const reqQuality = String(req.body.mp4Quality || req.body.videoQuality || req.body.quality || '720p');
+    const videoQuality: string = (['360p', '480p', '720p', '1080p', '4K', '8K'].includes(reqQuality))
+      ? reqQuality : '720p';
 
     if (!videoUrl) {
       res.status(400).json({ success: false, message: 'Video URL is required' });
@@ -999,9 +1005,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         let videoTitle = 'Downloaded Video';
         let thumbnail = '';
         try {
-          const { stdout } = await execAsync(
-            `yt-dlp --js-runtimes node --extractor-args "youtube:player_client=android,web" --print title --print thumbnail --no-playlist "${cleanUrl}"`
-          );
+          const { stdout } = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--no-playlist', cleanUrl]);
           const lines = stdout.trim().split('\n');
           videoTitle = (lines[0] || '').trim() || 'Downloaded Video';
           thumbnail = (lines[1] || '').trim();
@@ -1015,7 +1019,15 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
 
         // Step 2: Download video in its native format without remuxing
         // We use -S for sorting formats which is highly optimized for ANY website!
-        const ytdlp = spawn('yt-dlp', ['--js-runtimes', 'node', '--extractor-args', 'youtube:player_client=android,web', '-S', ytSort, '-o', path.join(outputDir, `${fileId}.%(ext)s`), '--no-playlist', cleanUrl]);
+        const ytdlp = spawn('yt-dlp', ytDlpArgs([
+          '--newline',
+          '-f', 'bv*+ba/b',
+          '-S', ytSort,
+          '--merge-output-format', 'mp4',
+          '-o', path.join(outputDir, `${fileId}.%(ext)s`),
+          '--no-playlist',
+          cleanUrl,
+        ]), { windowsHide: true });
 
         let lastUpdate = Date.now();
         ytdlp.stdout.on('data', (data) => {
@@ -1045,19 +1057,20 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         });
 
         // Find the actual downloaded file since the extension could be .webm, .mkv, or .mp4
-        const files = fs.readdirSync(outputDir);
-        const downloadedFile = files.find(f => f.startsWith(fileId + '.') && !f.endsWith('.part') && !f.endsWith('.ytdl'));
+        const downloadedFile = findDownloadedFile(fileId);
         
         if (downloadedFile) {
           const actualExt = path.extname(downloadedFile);
           conversion.outputPath = path.join(outputDir, downloadedFile);
           conversion.outputFilename = safeTitle + actualExt;
         }
+        requireWrittenFile(conversion.outputPath, 'Universal download');
 
         // Step 3: Mark complete
         conversion.status = 'completed';
         conversion.progress = 100;
         conversion.fileSize = getFileSize(conversion.outputPath);
+        conversion.outputUrl = `/outputs/${path.basename(conversion.outputPath)}`;
         await conversion.save();
 
       } catch (err: any) {
