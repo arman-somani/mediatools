@@ -320,9 +320,11 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         let videoTitle = 'YouTube Audio';
         let durationSec = 0;
         try {
-          const { stdout } = await execAsync(
-            `yt-dlp --js-runtimes node --extractor-args "youtube:player_client=android,web" --print title --print duration --no-playlist "${cleanUrl}"`
-          );
+          let ytdlpArgs = `--js-runtimes node --extractor-args "youtube:player_client=android,web" --print title --print duration --no-playlist`;
+          if (fs.existsSync('/etc/secrets/cookies.txt')) {
+            ytdlpArgs += ` --cookies /etc/secrets/cookies.txt`;
+          }
+          const { stdout } = await execAsync(`yt-dlp ${ytdlpArgs} "${cleanUrl}"`);
           const lines = stdout.trim().split('\n');
           videoTitle = (lines[0] || '').trim() || 'YouTube Audio';
           durationSec = parseInt((lines[1] || '').trim(), 10) || 0;
@@ -339,7 +341,12 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         // Step 2: Download audio using yt-dlp
         try {
           await new Promise((resolve, reject) => {
-            const ytdlp = spawn('yt-dlp', ['--js-runtimes', 'node', '--extractor-args', 'youtube:player_client=android,web', '-x', '--audio-format', 'mp3', '--audio-quality', `${audioQuality}K`, '-o', outputPath, '--no-playlist', cleanUrl]);
+            const ytdlpArgs = ['--js-runtimes', 'node', '--extractor-args', 'youtube:player_client=android,web', '-x', '--audio-format', 'mp3', '--audio-quality', `${audioQuality}K`, '-o', outputPath, '--no-playlist'];
+            if (fs.existsSync('/etc/secrets/cookies.txt')) {
+              ytdlpArgs.push('--cookies', '/etc/secrets/cookies.txt');
+            }
+            ytdlpArgs.push(cleanUrl);
+            const ytdlp = spawn('yt-dlp', ytdlpArgs);
 
             let lastUpdate = Date.now();
             ytdlp.stdout.on('data', (data) => {
@@ -560,9 +567,11 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           // Step 1: Get metadata
           let videoTitle = 'YouTube Video';
           try {
-            const { stdout } = await execAsync(
-              `yt-dlp --js-runtimes node --extractor-args "youtube:player_client=android,web" --print title --no-playlist "${cleanUrl}"`
-            );
+            let ytdlpArgs = `--js-runtimes node --extractor-args "youtube:player_client=android,web" --print title --no-playlist`;
+            if (fs.existsSync('/etc/secrets/cookies.txt')) {
+              ytdlpArgs += ` --cookies /etc/secrets/cookies.txt`;
+            }
+            const { stdout } = await execAsync(`yt-dlp ${ytdlpArgs} "${cleanUrl}"`);
             const lines = stdout.trim().split('\n');
             videoTitle = (lines[0] || '').trim() || 'YouTube Video';
           } catch { /* keep defaults */ }
@@ -584,7 +593,12 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
 
           try {
             await new Promise((resolve, reject) => {
-              const ytdlp = spawn('yt-dlp', ['--js-runtimes', 'node', '--extractor-args', 'youtube:player_client=android,web', '-S', ytSort, '-o', path.join(outputDir, `${fileId}.%(ext)s`), '--no-playlist', cleanUrl]);
+              const ytdlpArgs = ['--js-runtimes', 'node', '--extractor-args', 'youtube:player_client=android,web', '-S', ytSort, '-o', path.join(outputDir, `${fileId}.%(ext)s`), '--no-playlist'];
+              if (fs.existsSync('/etc/secrets/cookies.txt')) {
+                ytdlpArgs.push('--cookies', '/etc/secrets/cookies.txt');
+              }
+              ytdlpArgs.push(cleanUrl);
+              const ytdlp = spawn('yt-dlp', ytdlpArgs);
     
               let lastUpdate = Date.now();
               ytdlp.stdout.on('data', (data) => {
