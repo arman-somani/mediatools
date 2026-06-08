@@ -800,7 +800,23 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
             });
           };
 
-          // API Tier 1: RapidAPI
+          // API Tier 1: youtubei.js cascade
+          for (const clientType of [ClientType.ANDROID, ClientType.TV, ClientType.MWEB]) {
+            if (videoDownloaded) break;
+            try {
+              console.log(`Trying youtubei.js ${clientType} for video...`);
+              const yt = await Innertube.create({ generate_session_locally: true, fetch: fetch, cache: new UniversalCache(false), client_type: clientType });
+              const stream = await yt.download(videoId, { type: 'video+audio', quality: 'best', format: 'mp4' });
+              await writeAsyncIterableToFile(stream, fallbackOutputPath);
+              requireWrittenFile(fallbackOutputPath, `youtubei.js ${clientType} video download`);
+              videoDownloaded = true;
+              console.log(`youtubei.js ${clientType} video succeeded`);
+            } catch (e: any) {
+              console.error(`youtubei.js ${clientType} video failed:`, e.message);
+            }
+          }
+
+          // API Tier 2: RapidAPI
           if (!videoDownloaded) {
             try {
               console.log('Trying RapidAPI for video...');
@@ -813,7 +829,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
             }
           }
 
-          // API Tier 2: Cobalt API — dynamic instance discovery
+          // API Tier 3: Cobalt API — dynamic instance discovery
           if (!videoDownloaded) {
             try {
               console.log('Trying Cobalt API for video...');
@@ -830,7 +846,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
             }
           }
 
-          // Tier 3: yt-dlp
+          // Tier 4: yt-dlp
           if (!videoDownloaded) {
             try {
               await new Promise((resolve, reject) => {
@@ -875,22 +891,6 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
               console.log('yt-dlp video succeeded');
             } catch (ytdlpError: any) {
               console.error('yt-dlp failed for video:', ytdlpError.message);
-            }
-          }
-
-          // Tier 4: youtubei.js cascade
-          for (const clientType of [ClientType.ANDROID, ClientType.TV, ClientType.MWEB]) {
-            if (videoDownloaded) break;
-            try {
-              console.log(`Trying youtubei.js ${clientType} for video...`);
-              const yt = await Innertube.create({ generate_session_locally: true, fetch: fetch, cache: new UniversalCache(false), client_type: clientType });
-              const stream = await yt.download(videoId, { type: 'video+audio', quality: 'best', format: 'mp4' });
-              await writeAsyncIterableToFile(stream, fallbackOutputPath);
-              requireWrittenFile(fallbackOutputPath, `youtubei.js ${clientType} video download`);
-              videoDownloaded = true;
-              console.log(`youtubei.js ${clientType} video succeeded`);
-            } catch (e: any) {
-              console.error(`youtubei.js ${clientType} video failed:`, e.message);
             }
           }
 
