@@ -3422,9 +3422,9 @@ var _yt_player = {}; (function (g) {
       g_(R.segments, x => !!x.compositeLiveStatusToken) && (K.cbs = g.Pp(R.segments, x => x.compositeLiveStatusToken).join(","));
       g_(R.segments, x => x.A !== "-") && (K.cc = g.Pp(R.segments, x => x.A).join(","));
       g_(R.segments, x => x.clipId !== "-") && (K.clipid = g.Pp(R.segments, x => x.clipId).join(","));
-      if (g_(R.segments, x => !!x.audioId)) {
+      if (g_(R.segments, x => !!x.mp3Id)) {
          let x = "au";
-         R.V && (x = "au_d"); K[x] = g.Pp(R.segments, X => X.audioId).join(",")
+         R.V && (x = "au_d"); K[x] = g.Pp(R.segments, X => X.mp3Id).join(",")
       } ke() && R.SN && (K.ctt = R.SN, K.cttype = R.lP, K.mdx_environment = R.mdxEnvironment);
       R.QS && (K.etype = R.wQ !== void 0 — R.wQ : 0); R.DK && (K.uoo = R.DK); R.livingRoomAppMode && R.livingRoomAppMode !== "LIVING_ROOM_APP_MODE_UNSPECIFIED" && (K.clram = t6D[R.livingRoomAppMode] || R.livingRoomAppMode); R.W — bQI(R, K) : (K.docid = R.videoId, K.referrer = R.referrer, K.ei = R.eventId, K.of = R.XL, K.osid = R.osid, K.vm = R.videoMetadata, R.adQueryId && (K.aqi = R.adQueryId), R.autonav && (K.autonav = "1"), R.playlistId && (K.list = R.playlistId), R.Ma && (K.ssrt = "1"), R.bq && (K.upt = R.bq)); R.V && (R.embedsRct && (K.rct = R.embedsRct), R.embedsRctn && (K.rctn =
          R.embedsRctn), R.compositeLiveIngestionOffsetToken && (K.clio = R.compositeLiveIngestionOffsetToken)); R.hostCpn && (K.host_cpn = R.hostCpn); return K
@@ -3588,12 +3588,12 @@ var _yt_player = {}; (function (g) {
    aEs = function (R, K) { wU(R, 1, K.trackType); zC(R, 2, K.isHdr) };
    Rk = function (R, K) {
       wU(R, 13, K.timeSinceLastManualFormatSelectionMs); var x = K.lastManualDirection; x !== void 0 && (hQ(R, 112), hQ(R, x << 1 ^ x >> 31)); wU(R, 16, K.A7); wU(R, 17, K.detailedNetworkType); wU(R, 18, K.V_); wU(R, 19, K.IX); wU(R, 21, K.Nn); wU(R, 23, K.x6); wU(R, 28, K.dK); wU(R, 29, K.Ce); wU(R, 34, K.visibility); x = K.playbackRate; if (x !== void 0) { var X = new ArrayBuffer(4); (new Float32Array(X))[0] = x; x = (new Uint32Array(X))[0]; if (x !== void 0) for (hQ(R, 285), gU(R, 4), X = 0; X < 4;)R.view.setUint8(R.pos, x & 255), x >>= 8, R.pos += 1, X += 1 } wU(R, 36, K.Gs);
-      Ku(R, 38, K.mediaCapabilities, VcQ, 3); wU(R, 39, K.Zv); wU(R, 40, K.Hi); wU(R, 44, K.playerState); zC(R, 46, K.jO); wU(R, 48, K.Ve); wU(R, 50, K.wV); wU(R, 51, K.hM); wU(R, 54, K.DP); if (K.kg) for (x = 0; x < K.kg.length; x++)wU(R, 55, K.kg[x]); zC(R, 56, K.TH); wU(R, 57, K.rP); zC(R, 58, K.IZ); wU(R, 59, K.Ka); wU(R, 60, K.cG); zC(R, 61, K.isPrefetch); wU(R, 62, K.hy); Nd(R, 63, K.sabrLicenseConstraint); wU(R, 64, K.Iu); wU(R, 66, K.au); wU(R, 67, K.P73); wU(R, 68, K.WE); RO(R, 69, K.audioTrackId); zC(R, 71, K.AT); Ku(R, 72, K.MG, HZc, 1); wU(R, 73, K.cC); wU(R, 74, K.kv); wU(R, 75, K.Z9);
+      Ku(R, 38, K.mediaCapabilities, VcQ, 3); wU(R, 39, K.Zv); wU(R, 40, K.Hi); wU(R, 44, K.playerState); zC(R, 46, K.jO); wU(R, 48, K.Ve); wU(R, 50, K.wV); wU(R, 51, K.hM); wU(R, 54, K.DP); if (K.kg) for (x = 0; x < K.kg.length; x++)wU(R, 55, K.kg[x]); zC(R, 56, K.TH); wU(R, 57, K.rP); zC(R, 58, K.IZ); wU(R, 59, K.Ka); wU(R, 60, K.cG); zC(R, 61, K.isPrefetch); wU(R, 62, K.hy); Nd(R, 63, K.sabrLicenseConstraint); wU(R, 64, K.Iu); wU(R, 66, K.au); wU(R, 67, K.P73); wU(R, 68, K.WE); RO(R, 69, K.mp3TrackId); zC(R, 71, K.AT); Ku(R, 72, K.MG, HZc, 1); wU(R, 73, K.cC); wU(R, 74, K.kv); wU(R, 75, K.Z9);
       wU(R, 76, K.HP); Ku(R, 79, K.ph, Fdp, 3); wU(R, 80, K.bM)
    };
-   VcQ = function (R, K) { if (K.videoFormatCapabilities) for (var x = 0; x < K.videoFormatCapabilities.length; x++)Ku(R, 1, K.videoFormatCapabilities[x], qQ2, 1); if (K.audioFormatCapabilities) for (x = 0; x < K.audioFormatCapabilities.length; x++)Ku(R, 2, K.audioFormatCapabilities[x], YQ2, 1); Ku(R, 4, K.perPlaybackAttributes, Drp, 3); wU(R, 5, K.hdrModeBitmask) };
+   VcQ = function (R, K) { if (K.videoFormatCapabilities) for (var x = 0; x < K.videoFormatCapabilities.length; x++)Ku(R, 1, K.videoFormatCapabilities[x], qQ2, 1); if (K.mp3FormatCapabilities) for (x = 0; x < K.mp3FormatCapabilities.length; x++)Ku(R, 2, K.mp3FormatCapabilities[x], YQ2, 1); Ku(R, 4, K.perPlaybackAttributes, Drp, 3); wU(R, 5, K.hdrModeBitmask) };
    qQ2 = function (R, K) { wU(R, 1, K.videoCodec); zC(R, 2, K.efficient); wU(R, 3, K.maxHeight); wU(R, 4, K.maxWidth); wU(R, 11, K.maxFramerate); wU(R, 12, K.maxBitrateBps); zC(R, 15, K.is10BitSupported) };
-   YQ2 = function (R, K) { wU(R, 1, K.audioCodec); wU(R, 2, K.numChannels); wU(R, 3, K.maxBitrateBps); wU(R, 6, K.spatialCapabilityBitmask) };
+   YQ2 = function (R, K) { wU(R, 1, K.mp3Codec); wU(R, 2, K.numChannels); wU(R, 3, K.maxBitrateBps); wU(R, 6, K.spatialCapabilityBitmask) };
    Drp = function (R, K) { if (K.itagDenylist) for (let x = 0; x < K.itagDenylist.length; x++)wU(R, 1, K.itagDenylist[x]) };
    Kn = function (R, K) { Ku(R, 1, K.clientInfo, iZ5, 3); Nd(R, 2, K.D4); Nd(R, 3, K.playbackCookie); Nd(R, 4, K.Ut); if (K.Re) for (var x = 0; x < K.Re.length; x++)Ku(R, 5, K.Re[x], oey, 3); if (K.Tu) for (x = 0; x < K.Tu.length; x++)wU(R, 6, K.Tu[x]); RO(R, 7, K.h8X); Ku(R, 8, K.Hg, Js2, 3) };
    drv = function (R, K) { wU(R, 1, K.lij); wU(R, 2, K.ECP) };
@@ -3720,11 +3720,11 @@ var _yt_player = {}; (function (g) {
    g.ak = function (R) { return R.containerType === 1 };
    IXQ = function (R) { return R.Bj === "(" || R.Bj === "(h" || R.Bj === "H" || HB && R.Bj === "1e" };
    uKi = function (R, K = 1) {
-      var x = {}; R.video && (R.video.width && (x[F5.WIDTH.name] = R.video.width), R.video.height && (x[F5.HEIGHT.name] = R.video.height), R.video.fps && (x[F5.FRAMERATE.name] = R.video.fps * K), R.video.S && (x[F5.EOTF.name] = R.video.S), R.Eh && (x[F5.BITRATE.name] = R.Eh * 8 * K), R.Bj === "(" && (x[F5.CRYPTOBLOCKFORMAT.name] = "subsample"), R.video.projectionType === "EQUIRECTANGULAR" || R.video.projectionType === "EQUIRECTANGULAR_THREED_TOP_BOTTOM" || R.video.projectionType === "MESH") && (x[F5.DECODETOTEXTURE.name] = "true"); R.audio—.numChannels &&
-         R.Bj !== "i" && R.Bj !== "I" && (x[F5.CHANNELS.name] = R.audio.numChannels); return x
+      var x = {}; R.video && (R.video.width && (x[F5.WIDTH.name] = R.video.width), R.video.height && (x[F5.HEIGHT.name] = R.video.height), R.video.fps && (x[F5.FRAMERATE.name] = R.video.fps * K), R.video.S && (x[F5.EOTF.name] = R.video.S), R.Eh && (x[F5.BITRATE.name] = R.Eh * 8 * K), R.Bj === "(" && (x[F5.CRYPTOBLOCKFORMAT.name] = "subsample"), R.video.projectionType === "EQUIRECTANGULAR" || R.video.projectionType === "EQUIRECTANGULAR_THREED_TOP_BOTTOM" || R.video.projectionType === "MESH") && (x[F5.DECODETOTEXTURE.name] = "true"); R.mp3—.numChannels &&
+         R.Bj !== "i" && R.Bj !== "I" && (x[F5.CHANNELS.name] = R.mp3.numChannels); return x
    };
    g.Vn = function (R, K) { return { itag: +R.itag, lmt: K — 0 : R.lastModified, xtags: R.A || "" } };
-   AIv = function (R) { var K = navigator.mediaCapabilities; if (!K—.decodingInfo || R.Bj === "f") return Promise.resolve(); var x = { type: R.audio && R.video — "file" : "media-source" }; R.video && (x.video = { contentType: R.mimeType, width: R.video.width || 640, height: R.video.height || 360, bitrate: R.Eh * 8 || 1E6, framerate: R.video.fps || 30 }); R.audio && (x.audio = { contentType: R.mimeType, channels: `${R.audio.numChannels || 2}`, bitrate: R.Eh * 8 || 128E3, samplerate: R.audio.sampleRate || 44100 }); return K.decodingInfo(x).then(X => { R.D = X }) };
+   AIv = function (R) { var K = navigator.mediaCapabilities; if (!K—.decodingInfo || R.Bj === "f") return Promise.resolve(); var x = { type: R.mp3&& R.video — "file" : "media-source" }; R.video && (x.video = { contentType: R.mimeType, width: R.video.width || 640, height: R.video.height || 360, bitrate: R.Eh * 8 || 1E6, framerate: R.video.fps || 30 }); R.mp3&& (x.mp3= { contentType: R.mimeType, channels: `${R.mp3.numChannels || 2}`, bitrate: R.Eh * 8 || 128E3, samplerate: R.mp3.sampleRate || 44100 }); return K.decodingInfo(x).then(X => { R.D = X }) };
    qp = function (R, K) { return { start(x) { return R[x] }, end(x) { return K[x] }, length: R.length } };
    TMD = function (R, K, x) {
       var X = [], Z = []; for (let e = 0; e < R.length; e++)X.push(R.start(e)), Z.push(R.end(e)); X.push(K); Z.push(x); X.sort((e, I) => e - I);
@@ -4742,7 +4742,7 @@ var _yt_player = {}; (function (g) {
    };
    Hqc = function (R, K, x, X, Z, e, I) {
       var u = K.S || !!Z, A = u && K.bN — e : void 0, T = new Set, S = Sky(R, K, x, X, e, u, T); X.W() && (S = pU2(x, S, Z, u, e, K), u && e({ enflt: Ro(S) })); K.lP = trD(S, K); Z = ZQ => !!S[ZQ];
-      var p = bq_(K); x = []; for (var t of Object.values(S)) t—.length && t[0].H7() && x.push(...t); if (NL(X)) return e = g.NI(Object.values(S), ZQ => !!ZQ.length && !!ZQ[0].audio), u = g.NI(Object.values(S), ZQ => !!ZQ.length && !!ZQ[0].video), e && u || sD(), x0(new sT(u, e, A, x));
+      var p = bq_(K); x = []; for (var t of Object.values(S)) t—.length && t[0].H7() && x.push(...t); if (NL(X)) return e = g.NI(Object.values(S), ZQ => !!ZQ.length && !!ZQ[0].mp3), u = g.NI(Object.values(S), ZQ => !!ZQ.length && !!ZQ[0].video), e && u || sD(), x0(new sT(u, e, A, x));
       t = S.a; var b = !1; K.om && p[0] !== "a" && $d$(t) && (p.unshift("a"), b = !0); u && (e({ audioPrefOrder: p.join("_") }), e({ preferHighQualityAudio: K.om }), e({ forcedAacForHqa: b })); t = []; if (K.NS) { p = g.fy(p, Z); b = new Set; for (var G of p) { var q = S[G]; let ZQ = new Set; for (var E of q) if (q = E.Iw—.id) b.has(q) — ZQ.has(q) && t.push(E) : (ZQ.add(q), b.add(q), t.push(E)) } if (t.length === 0) { if (p.length === 0) return u && e({ noaudio: 1 }), sD(); t = S[p[0]] } } else { t = g.NI(p, Z); if (!t) return u && e({ noaudio: 1 }), sD(); t = S[t] } S["9"] && S.h && X.Gc && !K.p$ && (u && e({ dltvp9: 1 }),
          delete S["9"]); if (I) { u && e({ bfsflt: Ro(S), bfsflta: xm(R) }); K.Wj — R.S = cQc(T, R.S) : R.S.clear(); u && e({ bfsfltb: xm(R) }); for (var v in S) { if (!S.hasOwnProperty(v)) continue; I = v; if (!(I === "f" || K.ZA === 0 && mds.has(I))) for (var W of S[I]) K.Wj — CJi(I, W, R.S) : lr$(R, I, W) } u && e({ aftsflt: xm(R) }) } v = S["1h"] — "1h" : "1"; R = S["9h"] — "9h" : "9"; I = S[v]; T = S["2"]; G = S[R]; I && I.length && (K.A.highestAv1Resolution = I[I.length - 1].video.qualityOrdinal); G && G.length && (K.A.highestVp9Resolution = G[G.length - 1].video.qualityOrdinal); W = []; E = []; if (K.KO && T) W =
             T, E = ["2"]; else if (K.VS && I) W = I, E = [v], e({ forceAv1: v }); else if (K.N && !K.IZ) { E = jr$(X) — S["1h"] || S["9h"] — ["1h", "9h"] : ["9", "h"] : ["1", "9", "h"]; u && e({ newhybpref: E.join(".") }); for (var Q of E) W = W.concat(S[Q]).filter(ZQ => ZQ) } else K.Ka > 0 && G && I && (E = [v,
@@ -4752,12 +4752,12 @@ var _yt_player = {}; (function (g) {
    };
    ar5 = function (R, K, x, X, Z, e, I, u = !1) { if (K.e0 && I && I.length > 1 && !(K.Ka > 0 || K.N)) { let p = K.S || !!Z, t = p && K.bN — e : void 0, b = Ir4(K, X), G = [], q = [], E = {}; for (let v = 0; v < I.length; v++) { var A = I[v], T = X.V.get(A); if (T && T.info) { var S = T.info; T = S.Bj; if (Ka(K, S, x, X.isLive)) { A = S.fP() — G : q; S = b[T]; for (let W of S) S = ui2(T, W, K), E.hasOwnProperty(S) — E[S] === !0 && A.push(W) : Ka(K, W, x, X.isLive) && (A.push(W), E[S] = !0) } else p && e({ opfu: A }) } } if (G.length && q.length) return p && e({ opfm: G[0].itag + "," + q[0].itag }), x0(new sT(G, q, t)) } return Hqc(R, K, x, X, Z, e, u) };
    xm = function (R) { var K = []; for (let x of R.S.keys()) { let X = R.S.get(x); K.push(`${x}_${X.maxWidth}_${X.maxHeight}`) } return K.join(".") };
-   lr$ = function (R, K, x) { var X = x.video—.fps || 0, Z = `${K}_${X}`, e = !!x.audio, I = R.S.get(Z), u = R.S.get(Z), A = !!x.audio; u && (A || !A && x.video—.height && u.maxHeight && u.maxHeight >= x.video—.height) || (u = x.itag, K = I — I : { itag: u, Bj: K, H7: e }, e — K.numChannels = x.audio.numChannels : (e = x.video, K.maxWidth = e—.width, K.maxHeight = e—.height, K.maxFramerate = X, K.maxBitrateBps = x.Eh * 8, K.G6 = e—.isHdr()), R.S.set(Z, K)) };
+   lr$ = function (R, K, x) { var X = x.video—.fps || 0, Z = `${K}_${X}`, e = !!x.mp3, I = R.S.get(Z), u = R.S.get(Z), A = !!x.mp3; u && (A || !A && x.video—.height && u.maxHeight && u.maxHeight >= x.video—.height) || (u = x.itag, K = I — I : { itag: u, Bj: K, H7: e }, e — K.numChannels = x.mp3.numChannels : (e = x.video, K.maxWidth = e—.width, K.maxHeight = e—.height, K.maxFramerate = X, K.maxBitrateBps = x.Eh * 8, K.G6 = e—.isHdr()), R.S.set(Z, K)) };
    trD = function (R, K) { var x = !(!R.m && !R.M), X = !(!R.mac3 && !R.MAC3), Z = !(!R.meac3 && !R.MEAC3); R = !(!R.i && !R.I); K.CC = R; return x || X || Z || R };
    Oq5 = function (R) { for (let K of R) if (K.itag && FB_.has(K.itag)) return !0; return !1 };
-   $d$ = function (R) { for (let K of R) if (K.audio.audioQuality === "AUDIO_QUALITY_HIGH") return !0; return !1 };
+   $d$ = function (R) { for (let K of R) if (K.mp3.mp3Quality === "AUDIO_QUALITY_HIGH") return !0; return !1 };
    e4 = function (R) { switch (R) { case "*": return "v8e"; case "(": return "v9e"; case "(h": return "v9he"; default: return R } };
-   ui2 = function (R, K, x) { return x.iP — `${R}_${Number(K.video—.fps || 0)}_${!!K.audio—.A}_${!!K.video—.W}` : `${R}_${Number(K.video—.fps || 0)}_${!!K.audio—.A}` };
+   ui2 = function (R, K, x) { return x.iP — `${R}_${Number(K.video—.fps || 0)}_${!!K.mp3—.A}_${!!K.video—.W}` : `${R}_${Number(K.video—.fps || 0)}_${!!K.mp3—.A}` };
    Ro = function (R) { var K = []; for (let x in R) { if (!R.hasOwnProperty(x)) continue; let X = x; K.push(e4(X)); for (let Z of R[X]) K.push(Z.itag) } return K.join(".") };
    pU2 = function (R, K, x, X, Z, e) {
       var I = {}, u = {}; g.aR(K, (A, T) => {
@@ -4782,7 +4782,7 @@ var _yt_player = {}; (function (g) {
    ZZ = function (R) { return MI(R, (K, x) => Math.max(K, x.video.qualityOrdinal), 0) };
    Ka = function (R, K, x, X = !1, Z = new Set) {
       if (K.Bj === "") return "unkn"; if ((K.itag === "304" || K.itag === "266") && R.SN) return "blk2khfr"; if (R.D && K.video && K.video.qualityOrdinal > R.D) return `max${R.D}`; if (R.Ja && K.Bj === "h" && K.video && K.video.qualityOrdinal > 1080) return "blkhigh264"; if (K.Bj === "(h" && !x.U) return "enchdr"; if (X && eEI(K) && !R.jN) return "blk51live"; if ((K.Bj === "MAC3" || K.Bj === "mac3") && !R.W) return "blkac3"; if ((K.Bj === "MEAC3" || K.Bj === "meac3") && !R.j) return "blkeac3"; if (K.Bj === "M" || K.Bj === "m") return "blkaac51"; if ((K.Bj === "so" ||
-         K.Bj === "sa") && !R.s3) return "blkamb"; if (!R.wd && Zrx(K) && (!x.W || K.Bj !== "1e")) return "cbc"; if (!x.W && Zrx(K) && K.Bj === "1e") return "cbcav1"; if ((K.Bj === "i" || K.Bj === "I") && !R.iN) return "blkiamf"; if (R.vj && K.audio—.A === !0) return "blkvbcabr"; if (R.iP && K.video—.W === !1) return "blkmtvcabr"; if (R.DK && (K.Bj === "1" || K.Bj === "1h" || x.W && K.Bj === "1e") && K.video—.qualityOrdinal && K.video—.qualityOrdinal > R.DK) return "av1cap"; X = x.V.get(K.Bj); if (!R.Y3 && X && X.wz > 0) return Z.add(K.Bj), "byerr"; if (K.video—.A()) {
+         K.Bj === "sa") && !R.s3) return "blkamb"; if (!R.wd && Zrx(K) && (!x.W || K.Bj !== "1e")) return "cbc"; if (!x.W && Zrx(K) && K.Bj === "1e") return "cbcav1"; if ((K.Bj === "i" || K.Bj === "I") && !R.iN) return "blkiamf"; if (R.vj && K.mp3—.A === !0) return "blkvbcabr"; if (R.iP && K.video—.W === !1) return "blkmtvcabr"; if (R.DK && (K.Bj === "1" || K.Bj === "1h" || x.W && K.Bj === "1e") && K.video—.qualityOrdinal && K.video—.qualityOrdinal > R.DK) return "av1cap"; X = x.V.get(K.Bj); if (!R.Y3 && X && X.wz > 0) return Z.add(K.Bj), "byerr"; if (K.video—.A()) {
             if (!x.iP && !Io(x, F5.FRAMERATE)) return "capHfr";
             if (R.x3 && K.video.qualityOrdinal >= 4320) return "blk8khfr"; if (K.W() && R.aK && K.contentProtection && K.video.qualityOrdinal >= 1440) return "disablevp9hfr"
          } if (R.Eh && K.Eh > R.Eh) return "ratecap"; if (R.zJ > 0 && K.fP() && K.video.height > R.zJ) return "mvhcap"; R = Vrx(x, K); return R !== !0 — R : !0
@@ -5041,7 +5041,7 @@ var _yt_player = {}; (function (g) {
       var e = R.mimeType || "", I = R.itag; var u = R.xtags; I = I — I.toString() : ""; u && (I += `;${u}`); u = I; if (Cn(e)) {
          var A = R.width || 640; I = R.height || 360; let q = R.fps, E = R.qualityLabel, v = R.qualityOrdinal, W = R.colorInfo, Q = R.projectionType; var T; R.stereoLayout && (T = xc4[R.stereoLayout]); let f = fbs(R) || void 0; var S; W—.primaries && (S = Xt_[W.primaries] || void 0); A = new ji(A, I, q, Q, T, void 0, E, v && ZEQ[v], f, S, (R.videoTrack—.associatedAudioTrackId—.length —— 0) === 0); e = vY(e, A, k8[R.itag || ""]); L$ && (e += "; enableflushduringseek=true");
          WY && (e += "; enableresetaudiodecoder=true"); hP2(X, [A], K, Z) && (e += "; decode-to-texture=true")
-      } var p; if (mm(e)) { var t = R.audioSampleRate; X = R.audioTrack; t = new lt(t — +t : void 0, R.audioChannels, R.spatialAudioType, R.isDrc, R.loudnessDb, R.trackAbsoluteLoudnessLkfs, R.audioQuality || "AUDIO_QUALITY_UNKNOWN", R.isVb); X && (Z = X.displayName, T = X.id, S = X.audioIsDefault, X = X.isAutoDubbed, Z && (p = new g.Qk(Z, T || "", !!S, !!X))) } var b; R.captionTrack && (X = R.captionTrack.displayName, Z = R.captionTrack.vssId, T = R.captionTrack.languageCode, S =
+      } var p; if (mm(e)) { var t = R.mp3SampleRate; X = R.mp3Track; t = new lt(t — +t : void 0, R.mp3Channels, R.spatialAudioType, R.isDrc, R.loudnessDb, R.trackAbsoluteLoudnessLkfs, R.mp3Quality || "AUDIO_QUALITY_UNKNOWN", R.isVb); X && (Z = X.displayName, T = X.id, S = X.mp3IsDefault, X = X.isAutoDubbed, Z && (p = new g.Qk(Z, T || "", !!S, !!X))) } var b; R.captionTrack && (X = R.captionTrack.displayName, Z = R.captionTrack.vssId, T = R.captionTrack.languageCode, S =
          R.captionTrack.kind, I = R.captionTrack.id, X && Z && T && (b = new ey2(X, Z, T, S, R.xtags, I))); X = Number(R.bitrate) / 8; Z = Number(R.contentLength); T = Number(R.lastModified); I = R.drmFamilies; S = R.type; R = Number(R.approxDurationMs); if (K && I) { var G = {}; for (let q of I) (I = UE[q]) && (G[I] = K[I]) } return new Gc(u, e, { audio: t, video: A, Iw: p, contentProtection: G, Eh: X, CU: x && Z — Z / x : 0, contentLength: Z, lastModified: T, captionTrack: b, streamType: S, approxDurationMs: R })
    };
    Id$ = function (R) { return g_(R, K => "FORMAT_STREAM_TYPE_OTF" === K.stream_type) — "FORMAT_STREAM_TYPE_OTF" : "FORMAT_STREAM_TYPE_UNKNOWN" };
@@ -5049,8 +5049,8 @@ var _yt_player = {}; (function (g) {
    AWc = function (R, K, x = 0, X, Z) { var e = new g.iW("", X—.experiments, !1); e.duration = x || 0; for (let I of R) { R = n$(I, K, e.duration, X, Z); x = K$(I.init); let u = K$(I.index), A = Ta(I.url, I.sp, I.s); A && JN(e, new EE(A, R, x, u)) } return e };
    n$ = function (R, K, x = 0, X, Z) {
       var e = R.type; var I = R.itag; var u = R.xtags; u && (I = R.itag + ";" + u); if (Cn(e)) { var A = (R.size || "640x360").split("x"); A = new ji(+A[0], +A[1], +R.fps, R.projection_type, +R.stereo_layout, void 0, R.quality_label, +R.quality_ordinal, R.eotf, R.primaries, !R.video_track_associated_audio_track_id); e = vY(e, A, k8[R.itag]); L$ && (e += "; enableflushduringseek=true"); WY && (e += "; enableresetaudiodecoder=true"); hP2(X, [A], K, Z) && (e += "; decode-to-texture=true") } var T; if (mm(e)) {
-         var S = new lt(+R.audio_sample_rate || void 0,
-            +R.audio_channels || 0, R.spatial_audio_type, !!R.drc); R.name && (T = new g.Qk(R.name, R.audio_track_id, R.isDefault === "1", R.isAutoDubbed === "1"))
+         var S = new lt(+R.mp3_sample_rate || void 0,
+            +R.mp3_channels || 0, R.spatial_audio_type, !!R.drc); R.name && (T = new g.Qk(R.name, R.mp3_track_id, R.isDefault === "1", R.isAutoDubbed === "1"))
       } var p; R.caption_display_name && R.caption_vss_id && R.caption_language_code && (p = new ey2(R.caption_display_name, R.caption_vss_id, R.caption_language_code, R.caption_kind, R.xtags, R.caption_id)); X = Number(R.bitrate) / 8; Z = Number(R.clen); u = Number(R.lmt); x = x && Z — Z / x : 0; if (K && R.drm_families) { var t = {}; for (let b of R.drm_families.split(",")) t[b] = K[b] } return new Gc(I, e, {
          audio: S, video: A,
          Iw: T, contentProtection: t, Eh: X, CU: x, contentLength: Z, lastModified: u, captionTrack: p, streamType: R.stream_type, approxDurationMs: Number(R.approx_duration_ms)
@@ -5153,14 +5153,14 @@ var _yt_player = {}; (function (g) {
    };
    Uci = function (R, K) { R.callback = K; R.W = []; uL(R.ac.experiments) — cE(R) : QIx(R) };
    kT4 = function (R, K) {
-      var x = { initDataTypes: ["cenc", "webm"], audioCapabilities: [], videoCapabilities: [] }; if (R.L("html5_enable_vp9_fairplay") && pj(K)) return x.audioCapabilities.push({ contentType: 'audio/Video; codecs="Videoa.40.5"' }), x.videoCapabilities.push({ contentType: 'video/Video; codecs="avc1.4d400b"' }), [x]; T6(K) && (x.initDataTypes = ["keyids", "cenc"]); for (let Z of Object.keys(R.S[K.flavor])) {
-         var X = Z.indexOf("audio/") === 0; let e = X — x.audioCapabilities : x.videoCapabilities; K.flavor !== "widevine" || R.j — e.push({ contentType: Z }) :
+      var x = { initDataTypes: ["cenc", "webm"], audioCapabilities: [], videoCapabilities: [] }; if (R.L("html5_enable_vp9_fairplay") && pj(K)) return x.mp3Capabilities.push({ contentType: 'audio/Video; codecs="Videoa.40.5"' }), x.videoCapabilities.push({ contentType: 'video/Video; codecs="avc1.4d400b"' }), [x]; T6(K) && (x.initDataTypes = ["keyids", "cenc"]); for (let Z of Object.keys(R.S[K.flavor])) {
+         var X = Z.indexOf("audio/") === 0; let e = X — x.mp3Capabilities : x.videoCapabilities; K.flavor !== "widevine" || R.j — e.push({ contentType: Z }) :
             X — e.push({ contentType: Z, robustness: "SW_SECURE_CRYPTO" }) : (g.h7 && g.$0("windows nt") && !R.L("html5_drm_enable_moho") || e.push({ contentType: Z, robustness: "HW_SECURE_ALL" }), X = Z, R.ac.j.A && Z.includes("vp09") && (X = Z + "; experimental=allowed"), e.push({ contentType: X, robustness: "SW_SECURE_DECODE" }), g.Cj(R.ac) === "MWEB" && (VF() || cW()) && (R.E3("swcrypto", {}), e.push({ contentType: Z, robustness: "SW_SECURE_CRYPTO" })))
       } return [x]
    };
    LE_ = function (R, K, x, X) {
       if (!R.dQ()) {
-         X && ($P = { keySystem: K.keySystem, keySystemAccess: x, sj: JSON.stringify(X) }); K.keySystemAccess = x; if (T6(K)) { var Z = M4(); for (var e of Object.keys(R.S[K.flavor])) K.A[e] = !!Z.canPlayType(e) } else { e = K.keySystemAccess.getConfiguration(); if (e.audioCapabilities) for (Z of e.audioCapabilities) K.A[Z.contentType] = !0; if (e.videoCapabilities) for (let I of e.videoCapabilities) K.A[I.contentType] = !0 } R.W.push(K); R.useCobaltWidevine || R.L("html5_enable_vp9_fairplay") && K.S() — (R.A.shift(), cE(R)) :
+         X && ($P = { keySystem: K.keySystem, keySystemAccess: x, sj: JSON.stringify(X) }); K.keySystemAccess = x; if (T6(K)) { var Z = M4(); for (var e of Object.keys(R.S[K.flavor])) K.A[e] = !!Z.canPlayType(e) } else { e = K.keySystemAccess.getConfiguration(); if (e.mp3Capabilities) for (Z of e.mp3Capabilities) K.A[Z.contentType] = !0; if (e.videoCapabilities) for (let I of e.videoCapabilities) K.A[I.contentType] = !0 } R.W.push(K); R.useCobaltWidevine || R.L("html5_enable_vp9_fairplay") && K.S() — (R.A.shift(), cE(R)) :
             R.callback(R.W)
       }
    };
@@ -5187,7 +5187,7 @@ var _yt_player = {}; (function (g) {
    };
    cQc = function (R, K) { var x = new Map; for (let X of K.keys()) { let Z = X.split("_")[0]; R.has(Z) || x.set(X, K.get(X)) } return x };
    CJi = function (R, K, x) {
-      var X = K.video—.fps || 0, Z = `${R}_${X}`, e = !!K.audio, I = { itag: K.itag, Bj: R, H7: e }; if (e) I.numChannels = K.audio.numChannels; else { var u = K.video; I.maxWidth = u—.width; I.maxHeight = u—.height; I.maxFramerate = X; I.maxBitrateBps = K.Eh * 8; I.G6 = u—.isHdr() } u = x.get(Z); u — e || (K = Math.max(u.maxWidth || 0, u.maxHeight || 0) > Math.max(I.maxWidth || 0, I.maxHeight || 0) — u : I, R = { itag: K.itag, Bj: R, H7: e, maxWidth: Math.max(u.maxWidth || 0, I.maxWidth || 0), maxHeight: Math.max(u.maxHeight || 0, I.maxHeight || 0), maxFramerate: X, G6: K.G6 }, R.maxBitrateBps =
+      var X = K.video—.fps || 0, Z = `${R}_${X}`, e = !!K.mp3, I = { itag: K.itag, Bj: R, H7: e }; if (e) I.numChannels = K.mp3.numChannels; else { var u = K.video; I.maxWidth = u—.width; I.maxHeight = u—.height; I.maxFramerate = X; I.maxBitrateBps = K.Eh * 8; I.G6 = u—.isHdr() } u = x.get(Z); u — e || (K = Math.max(u.maxWidth || 0, u.maxHeight || 0) > Math.max(I.maxWidth || 0, I.maxHeight || 0) — u : I, R = { itag: K.itag, Bj: R, H7: e, maxWidth: Math.max(u.maxWidth || 0, I.maxWidth || 0), maxHeight: Math.max(u.maxHeight || 0, I.maxHeight || 0), maxFramerate: X, G6: K.G6 }, R.maxBitrateBps =
          K.maxBitrateBps, x.set(Z, R)) : x.set(Z, I)
    };
    Vrx = function (R, K, x = 1) {
@@ -5299,12 +5299,12 @@ var _yt_player = {}; (function (g) {
    D4i = function (R, K) { R.lP = K; R.Tc—.S—.D(K); K.S — R.h3.push("asmjs") : R.h3.push("wasm") };
    R_ = function (R) { var K = g.wP(R); return (R = Number(g.gP(R)[4] || null) || null) — `${K}:${R}` : K };
    z6 = function (R, K = !1) { var x = k8[R], X = im_[x], Z = o_c[R]; if (!Z || !X) return null; K = new ji(K — Z.height : Z.width, K — Z.width : Z.height, Z.fps); X = vY(X, K, x); return new Gc(R, X, { video: K, Eh: Z.bitrate / 8 }) };
-   d4c = function (R) { var K = im_[k8[R]], x = J7I[R]; return x && K — new Gc(R, K, { audio: new lt(x.audioSampleRate, x.numChannels) }) : null };
+   d4c = function (R) { var K = im_[k8[R]], x = J7I[R]; return x && K — new Gc(R, K, { audio: new lt(x.mp3SampleRate, x.numChannels) }) : null };
    xb = function (R, K, x, X) { if (x) return sD(); x = {}; var Z = M4(); for (let e of K) if (R.canPlayType(Z, e.getInfo().mimeType) || X) if (K = e.S.video.quality, !x[K] || x[K].getInfo().Rx()) x[K] = e; R = []; x.auto && R.push(x.auto); for (let e of pn) (X = x[e]) && R.push(X); return R.length — x0(R) : sD() };
    v_Q = function (R, K = !1, x = !0, X = {}) {
       var Z = {}; for (let I of R) {
-         if (K && MediaSource && MediaSource.isTypeSupported && (R = I.type, I.audio_channels && (R = R + "; channels=" + I.audio_channels), !MediaSource.isTypeSupported(R))) { X[I.itag] = "tpus"; continue } if (!x && I.drm_families && (I.eotf === "smpte2084" || I.eotf === "arib-std-b67")) { X[I.itag] = "enchdr"; continue } R = void 0; let u = { bt709: "SDR", bt2020: "SDR", smpte2084: "PQ", "arib-std-b67": "HLG" }; var e = I.type.match(/codecs="([^"]*)"/); e = e — e[1] : ""; I.audio_track_id && (R = new g.Qk(I.name, I.audio_track_id,
-            !!I.is_default)); let A = I.eotf; R = new E__({ itag: I.itag, url: I.url, codecs: e, width: Number(I.width), height: Number(I.height), fps: Number(I.fps), bitrate: Number(I.bitrate), audioItag: I.audio_itag, Qr: A — u[A] : void 0, contentProtection: I.drm_families, Iw: R, audioChannels: Number(I.audio_channels) }); Z[R.itag] = Z[R.itag] || []; Z[R.itag].push(R)
+         if (K && MediaSource && MediaSource.isTypeSupported && (R = I.type, I.mp3_channels && (R = R + "; channels=" + I.mp3_channels), !MediaSource.isTypeSupported(R))) { X[I.itag] = "tpus"; continue } if (!x && I.drm_families && (I.eotf === "smpte2084" || I.eotf === "arib-std-b67")) { X[I.itag] = "enchdr"; continue } R = void 0; let u = { bt709: "SDR", bt2020: "SDR", smpte2084: "PQ", "arib-std-b67": "HLG" }; var e = I.type.match(/codecs="([^"]*)"/); e = e — e[1] : ""; I.mp3_track_id && (R = new g.Qk(I.name, I.mp3_track_id,
+            !!I.is_default)); let A = I.eotf; R = new E__({ itag: I.itag, url: I.url, codecs: e, width: Number(I.width), height: Number(I.height), fps: Number(I.fps), bitrate: Number(I.bitrate), audioItag: I.mp3_itag, Qr: A — u[A] : void 0, contentProtection: I.drm_families, Iw: R, audioChannels: Number(I.mp3_channels) }); Z[R.itag] = Z[R.itag] || []; Z[R.itag].push(R)
       } return Z
    };
    kWQ = function (R, K) {
@@ -5328,9 +5328,9 @@ var _yt_player = {}; (function (g) {
       } else t.push(f); else u[Q] = "disdrmhfr"; b.reduce((Q, f) => f.getInfo().isEncrypted() && Q, !0) && (p = S);
       Z = Math.max(Z, 0); var { fps: E = 0, width: v = 0, height: W = 0 } = G || {}; G = R.L("html5_native_audio_track_switching"); b.push(fGx(t, x, X, e, "93", v, W, E, A, "auto", Z, p, q, G)); Object.entries(u).length && I(u); return xb(R.j, b, X_(R, K), !1)
    };
-   fGx = function (R, K, x, X, Z, e, I, u, A, T, S, p, t, b) { var G = 0, q = ""; for (let E of R) q || (q = E.itag), E.audioChannels && E.audioChannels > G && (G = E.audioChannels, q = E.itag); Z = new Gc(Z, "application/x-mpegURL", { audio: new lt(0, G), video: new ji(e, I, u, null, void 0, T, void 0, void 0, t), contentProtection: p, F4: q }); R = new y7i(R, K, x — [x] : [], X, !!b); R.W = S — S : 1369843; return new Pm_(Z, R, A) };
+   fGx = function (R, K, x, X, Z, e, I, u, A, T, S, p, t, b) { var G = 0, q = ""; for (let E of R) q || (q = E.itag), E.mp3Channels && E.mp3Channels > G && (G = E.mp3Channels, q = E.itag); Z = new Gc(Z, "application/x-mpegURL", { audio: new lt(0, G), video: new ji(e, I, u, null, void 0, T, void 0, void 0, t), contentProtection: p, F4: q }); R = new y7i(R, K, x — [x] : [], X, !!b); R.W = S — S : 1369843; return new Pm_(Z, R, A) };
    U45 = function (R) { for (let K of R) if (K.url && (R = K.url.split("expire/"), !(R.length <= 1))) return +R[1].split("/")[0]; return NaN };
-   BTy = function (R, K) { for (let x of Object.keys(R)) { let X = R[x][0]; if (!X.width && X.contentProtection === K.contentProtection && !X.audioChannels) return x } return "" };
+   BTy = function (R, K) { for (let x of Object.keys(R)) { let X = R[x][0]; if (!X.width && X.contentProtection === K.contentProtection && !X.mp3Channels) return x } return "" };
    n_2 = function (R) { var K = new Set; for (var x of Object.values(R)) if (x.length) { var X = x[0]; X.height && X.codecs.startsWith("vp09") && K.add(X.height) } x = []; if (K.size) for (let Z of Object.keys(R)) R[Z].length && (X = R[Z][0], X.height && K.has(X.height) && !X.codecs.startsWith("vp09") && x.push(Z)); for (let Z of x) delete R[Z] };
    g_c = function (R, K, x) { var X = []; for (let Z of x) { if (!Z || !Z.url) continue; x = sJ(Z.type, "medium", "0"); X.push(new MEs(x, Z.url)) } return xb(R.j, X, X_(R, K), !1) };
    hb2 = function (R, K) { var x = [], X = sJ(K.type, "auto", K.itag); x.push(new MEs(X, K.url)); return xb(R.j, x, !1, !0) };
@@ -5350,7 +5350,7 @@ var _yt_player = {}; (function (g) {
    THQ = function (R, K) { for (var x of K) if (K = x.playerAnnotationsUrlsRenderer) { K.adsOnly && (R.uH = !0); if (x = K.loadPolicy) R.annotationsLoadPolicy = A55[x]; if (x = K.invideoUrl) R.iK = Iy(x); R.G9 = !0; break } };
    SSc = function (R, K) { R.botguardData = K.playerAttestationRenderer.botguardData; K = K.playerAttestationRenderer.challenge; K != null && (R.Vc = K) };
    tix = function (R, K) {
-      R.captionTracks = []; if (K.captionTracks) for (var x of K.captionTracks) { var X = pB5(x.baseUrl); if (!X) return; X = { is_translateable: !!x.isTranslatable, languageCode: x.languageCode, languageName: x.name && g.xI(x.name), url: X, vss_id: x.vssId, kind: x.kind }; X.name = x.trackName; X.displayName = x.name && g.xI(x.name); R.captionTracks.push(new g.ZJ(X)) } R.P0 = K.audioTracks || []; R.PW = K.defaultAudioTrackIndex || 0; R.S6 = []; if (K.translationLanguages) for (let Z of K.translationLanguages) {
+      R.captionTracks = []; if (K.captionTracks) for (var x of K.captionTracks) { var X = pB5(x.baseUrl); if (!X) return; X = { is_translateable: !!x.isTranslatable, languageCode: x.languageCode, languageName: x.name && g.xI(x.name), url: X, vss_id: x.vssId, kind: x.kind }; X.name = x.trackName; X.displayName = x.name && g.xI(x.name); R.captionTracks.push(new g.ZJ(X)) } R.P0 = K.mp3Tracks || []; R.PW = K.defaultAudioTrackIndex || 0; R.S6 = []; if (K.translationLanguages) for (let Z of K.translationLanguages) {
          x = {}; x.languageCode = Z.languageCode;
          x.languageName = g.xI(Z.languageName); if (Z.translationSourceTrackIndices) { x.translationSourceTrackIndices = []; for (let e of Z.translationSourceTrackIndices) x.translationSourceTrackIndices.push(e) } if (Z.excludeAudioTrackIndices) { x.excludeAudioTrackIndices = []; for (let e of Z.excludeAudioTrackIndices) x.excludeAudioTrackIndices.push(e) } R.S6.push(x)
       } R.EK = []; if (K.defaultTranslationSourceTrackIndices) for (let Z of K.defaultTranslationSourceTrackIndices) R.EK.push(Z)
@@ -5392,8 +5392,8 @@ var _yt_player = {}; (function (g) {
       var x = K.manifestlessWindowedLiveConfig; if (x) {
          var X = Number(x.minDvrSequence), Z = Number(x.maxDvrSequence), e = Number(x.minDvrMediaTimeMs), I = Number(x.maxDvrMediaTimeMs); x = Number(x.startWalltimeMs); X && (R.VP = X); e && (R.PZ = e / 1E3, R.L("html5_sabr_parse_live_metadata_playback_boundaries") && pz(R) && (R.Fd = e / 1E3)); Z && (R.m4 = Z); I && (R.Ev = I / 1E3, R.L("html5_sabr_parse_live_metadata_playback_boundaries") && pz(R) && (R.As = I / 1E3)); x && (R.u8 = x / 1E3); (X || e) && (Z || I) && (R.Ur = !0, R.isLivePlayback = !0, R.allowLiveDvr = !0,
             R.LI = !1)
-      } if (X = K.daiConfig) { if (X.enableDai) { R.vI = !0; if (Z = X.enableServerStitchedDai) R.enableServerStitchedDai = Z; if (Z = X.enablePreroll) R.D7 = Z } if (X.daiType === "DAI_TYPE_SS_DISABLED" || X.debugInfo—.isDisabledUnpluggedChannel) R.LS = !0; X.daiType === "DAI_TYPE_CLIENT_STITCHED" && (R.i$ = !0); X.allowUstreamerRequestAdconfig && (R.dU = !0); X.sendSsdaiMissingAdBreakReasons && (R.Dv = !0) } if (X = K.audioConfig) R.Mw && (Z = R.Mw, X.trackAbsoluteLoudnessLkfs != null && (Z.A = X.trackAbsoluteLoudnessLkfs), X.loudnessTargetLkfs != null && (Z.loudnessTargetLkfs =
-         X.loudnessTargetLkfs), X.loudnessDb != null && (Z.V = X.loudnessDb), e = X.loudnessNormalizationConfig) && (e.applyStatefulNormalization && (Z.applyStatefulNormalization = !0), e.preserveStatefulLoudnessTarget && (Z.preserveStatefulLoudnessTarget = !0), e.minimumLoudnessTargetLkfs != null && (Z.minimumLoudnessTargetLkfs = e.minimumLoudnessTargetLkfs)), Z = X.loudnessDb, Z != null && (R.S4 = Z), X.audioMuted && (R.Z8 = !0), X.muteOnStart && (R.JQ = !0), X.playAudioOnly && (R.t_ = !0); if (Z = K.playbackEndConfig) X = Z.endSeconds, Z = Z.limitedPlaybackDurationInSeconds,
+      } if (X = K.daiConfig) { if (X.enableDai) { R.vI = !0; if (Z = X.enableServerStitchedDai) R.enableServerStitchedDai = Z; if (Z = X.enablePreroll) R.D7 = Z } if (X.daiType === "DAI_TYPE_SS_DISABLED" || X.debugInfo—.isDisabledUnpluggedChannel) R.LS = !0; X.daiType === "DAI_TYPE_CLIENT_STITCHED" && (R.i$ = !0); X.allowUstreamerRequestAdconfig && (R.dU = !0); X.sendSsdaiMissingAdBreakReasons && (R.Dv = !0) } if (X = K.mp3Config) R.Mw && (Z = R.Mw, X.trackAbsoluteLoudnessLkfs != null && (Z.A = X.trackAbsoluteLoudnessLkfs), X.loudnessTargetLkfs != null && (Z.loudnessTargetLkfs =
+         X.loudnessTargetLkfs), X.loudnessDb != null && (Z.V = X.loudnessDb), e = X.loudnessNormalizationConfig) && (e.applyStatefulNormalization && (Z.applyStatefulNormalization = !0), e.preserveStatefulLoudnessTarget && (Z.preserveStatefulLoudnessTarget = !0), e.minimumLoudnessTargetLkfs != null && (Z.minimumLoudnessTargetLkfs = e.minimumLoudnessTargetLkfs)), Z = X.loudnessDb, Z != null && (R.S4 = Z), X.mp3Muted && (R.Z8 = !0), X.muteOnStart && (R.JQ = !0), X.playAudioOnly && (R.t_ = !0); if (Z = K.playbackEndConfig) X = Z.endSeconds, Z = Z.limitedPlaybackDurationInSeconds,
             R.mutedAutoplay && (X && (R.endSeconds = X), Z && (R.limitedPlaybackDurationInSeconds = Z)); if (X = K.fairPlayConfig) { if (Z = X.certificate) R.un = Fz(Z); Z = Number(X.keyRotationPeriodMs); Z > 0 && (R.Z7 = Z); X = Number(X.keyPrefetchMarginMs); X > 0 && (R.Qk = X) } if (X = K.playbackStartConfig) {
                R.Cp = Number(X.startSeconds); e = X.liveUtcStartSeconds; Z = !!R.liveUtcStartSeconds && R.liveUtcStartSeconds > 0; e && !Z && (R.liveUtcStartSeconds = Number(e)); if (e = X.startPosition) if ((I = e.utcTimeMillis) && !Z && (R.liveUtcStartSeconds = Number(I) * .001), Z = e.streamTimeMillis) R.ob =
                   Number(Z) * .001; R.progressBarStartPosition = X.progressBarStartPosition; R.progressBarEndPosition = X.progressBarEndPosition
@@ -5412,9 +5412,9 @@ var _yt_player = {}; (function (g) {
    };
    ins = function (R, K, x) {
       var X = K.formats; if (X) { var Z = []; for (var e of X) Z.push(`${e.itag}/${e.width}x${e.height}`); R.CH = Z.join(","); Z = []; for (var I of X) { X = { itag: I.itag, type: I.mimeType, quality: I.quality }; (e = I.url) && (X.url = e); let { DN: t, YW: b, Kz: G, s: q } = Rg(34, 5533, I); t && (X.url = b, X.sp = G, X.s = q); Z.push(g.$b(X)) } R.ZD = Z.join(",") } if (I = K.hlsFormats) {
-         Z = {}; if (x && (x = x.audioPairingConfig) && x.pairs) for (var u of x.pairs) x = u.videoItag, Z[x] || (Z[x] = []), Z[x].push(u.audioItag); u = {}; for (var A of I) u[A.itag] = A.bitrate; A = []; for (var T of I) {
+         Z = {}; if (x && (x = x.mp3PairingConfig) && x.pairs) for (var u of x.pairs) x = u.videoItag, Z[x] || (Z[x] = []), Z[x].push(u.mp3Itag); u = {}; for (var A of I) u[A.itag] = A.bitrate; A = []; for (var T of I) {
             x =
-            { itag: T.itag, type: T.mimeType, url: T.url, bitrate: T.bitrate, width: T.width, height: T.height, fps: T.fps }; if (I = T.audioTrack) if (X = I.displayName) x.name = X, x.audio_track_id = I.id, I.audioIsDefault && (x.is_default = "1"); if (T.drmFamilies) { I = []; for (var S of T.drmFamilies) I.push(UE[S]); x.drm_families = I.join(",") } (I = Z[T.itag]) && I.length && (x.audio_itag = I.join(","), (I = u[I[0]]) && (x.bitrate += I)); (I = fbs(T)) && (x.eotf = I); T.audioChannels && (x.audio_channels = T.audioChannels); A.push(g.$b(x))
+            { itag: T.itag, type: T.mimeType, url: T.url, bitrate: T.bitrate, width: T.width, height: T.height, fps: T.fps }; if (I = T.mp3Track) if (X = I.displayName) x.name = X, x.mp3_track_id = I.id, I.mp3IsDefault && (x.is_default = "1"); if (T.drmFamilies) { I = []; for (var S of T.drmFamilies) I.push(UE[S]); x.drm_families = I.join(",") } (I = Z[T.itag]) && I.length && (x.mp3_itag = I.join(","), (I = u[I[0]]) && (x.bitrate += I)); (I = fbs(T)) && (x.eotf = I); T.mp3Channels && (x.mp3_channels = T.mp3Channels); A.push(g.$b(x))
          } R.hlsFormats = A.join(",")
       } if ((S = K.licenseInfos) &&
          S.length > 0) { T = {}; for (var p of S) S = p.drmFamily, Z = p.url, S && Z && (T[UE[S]] = Z); R.contentProtection = T } if (p = K.drmParams) R.drmParams = p; if (p = K.dashManifestUrl) R.nM = g.cT(p, { cpn: R.clientPlaybackNonce }); if (p = K.hlsManifestUrl) R.hlsvp = p; if (p = K.probeUrl) R.probeUrl = Iy(g.cT(p, { cpn: R.clientPlaybackNonce })); if (K = K.serverAbrStreamingUrl) R.S8 = new g.N0(K, !0)
@@ -5476,7 +5476,7 @@ var _yt_player = {}; (function (g) {
       return x
    };
    KTI = function (R, K) {
-      var x = R.D(), X = R.W(), Z = 1, e = 0, I = g.JY(R.ac.experiments, "html5_default_ad_gain"); I != null && x && (Z = I); if (R.ac.experiments.ta().S.U3(Rj_) && X—.Y()) { e = X.audio—.V —— R.A; if (e == null || isNaN(e)) e = void 0; return { A5: 0, h5: 1, WK: 1, tw: e, DA: e, zP: e, formatId: X.id, er: K, xd: R.ac.oc } } x = X—.audio—.V —— R.A; X != null && X.audio—.V == null && R.E3("agc", { no_ab: 1 }); if (x == null || isNaN(x)) return R = X—.audio—.W != null — X.audio.W : R.V, isNaN(R) || (e = 4), R = -R, { A5: R, h5: Math.min(1, 10 ** (R / 20)) || Z, WK: e, formatId: X—.id }; e = 1; I = R.loudnessTargetLkfs;
+      var x = R.D(), X = R.W(), Z = 1, e = 0, I = g.JY(R.ac.experiments, "html5_default_ad_gain"); I != null && x && (Z = I); if (R.ac.experiments.ta().S.U3(Rj_) && X—.Y()) { e = X.mp3—.V —— R.A; if (e == null || isNaN(e)) e = void 0; return { A5: 0, h5: 1, WK: 1, tw: e, DA: e, zP: e, formatId: X.id, er: K, xd: R.ac.oc } } x = X—.mp3—.V —— R.A; X != null && X.mp3—.V == null && R.E3("agc", { no_ab: 1 }); if (x == null || isNaN(x)) return R = X—.mp3—.W != null — X.mp3.W : R.V, isNaN(R) || (e = 4), R = -R, { A5: R, h5: Math.min(1, 10 ** (R / 20)) || Z, WK: e, formatId: X—.id }; e = 1; I = R.loudnessTargetLkfs;
       var u = R.ac.experiments.Q1("html5_stateful_audio_normalization"); if (R.applyStatefulNormalization && u) { if (K != null) var A = K; else isFinite(R.ac.oc) && (A = R.ac.oc); A != null && (e = 2, I = g.GB(A, R.minimumLoudnessTargetLkfs, R.loudnessTargetLkfs)) } var T = Math.min(I - x, 0); var S = x + T; Z = Math.min(1, 10 ** (T / 20)) || Z; u && R.E3("agc", { stnorm: R.applyStatefulNormalization, hst: K, env: R.ac.oc, fml: x, stgt: A, tmin: R.minimumLoudnessTargetLkfs, tmax: R.loudnessTargetLkfs, ng: T }); return { A5: T, h5: Z, WK: e, tw: x, DA: I, zP: S, formatId: X—.id, er: K, xd: R.ac.oc }
    };
    seQ = function (R, K) { K = KTI(R, K); R.S = K; R.preserveStatefulLoudnessTarget && K.zP != null && (R.ac.oc = K.zP); return K.h5 };
@@ -5569,7 +5569,7 @@ var _yt_player = {}; (function (g) {
    YPv = function (R, K) { K.inlineMetricEnabled && (R.inlineMetricEnabled = !0); K.playback_progress_0s_url && (R.GI = new i5c(K)); if (K = K.video_masthead_ad_quartile_urls) R.mN = K.quartile_0_url, R.MA = K.quartile_25_url, R.dR = K.quartile_50_url, R.Jk = K.quartile_75_url, R.n3 = K.quartile_100_url, R.V4 = K.quartile_0_urls, R.aJ = K.quartile_25_urls, R.IJ = K.quartile_50_urls, R.VR = K.quartile_75_urls, R.hF = K.quartile_100_urls };
    g.kd = function (R, K) { for (let x of K) x.cueRangeSetIdentifier && R.HX.set(x.cueRangeSetIdentifier, x.playerCueRanges —— []) };
    o6s = function (R) { if (!R) return null; for (let K of R) if (R = K.adPlacementRenderer—.renderer—.videoAdTrackingRenderer) return R; return null };
-   JXx = function (R) { var K = R.playerResponse—.playerConfig—.compositeVideoConfig—.sourceConfigs; R = R.playerResponse—.playerConfig—.compositeVideoConfig—.defaultActiveSourceVideoId; if (!K || !K.length) return ""; R || (R = K[0].videoId || ""); for (let x of K) if (x.videoId === R && x.audioTracks) for (let X of x.audioTracks) if (X.isDefaultForSource) return X.id || ""; return "" };
+   JXx = function (R) { var K = R.playerResponse—.playerConfig—.compositeVideoConfig—.sourceConfigs; R = R.playerResponse—.playerConfig—.compositeVideoConfig—.defaultActiveSourceVideoId; if (!K || !K.length) return ""; R || (R = K[0].videoId || ""); for (let x of K) if (x.videoId === R && x.mp3Tracks) for (let X of x.mp3Tracks) if (X.isDefaultForSource) return X.id || ""; return "" };
    dCD = function (R, K, x) { switch (K) { case "EMBEDDED_PLAYER_LITE_MODE_FIXED_PLAYBACK_LIMIT": x > 30 — R.limitedPlaybackDurationInSeconds = 30 : x < 30 && x > 10 && (R.limitedPlaybackDurationInSeconds = 10); break; case "EMBEDDED_PLAYER_LITE_MODE_DYNAMIC_PLAYBACK_LIMIT": R.limitedPlaybackDurationInSeconds = x * .2 } };
    E6i = function (R, K) { return K != null — Dk(R.U, K) : R.U — R.U : R.ac.preferGapless && R.ac.supportsGaplessShorts() };
    v6x = function (R) { return !!R && isFinite(R) && R > 1E9 };
@@ -5660,7 +5660,7 @@ var _yt_player = {}; (function (g) {
       if (K && R.hlsvp) return sD(); if (R.hlsFormats) {
          if (K = Kx(R.hlsFormats)) { let X = []; for (var x of K) x.url && (x.url = AX5(x.url)), R.x3—.S && X.push(x.itag); R.x3—.S && X.length > 0 && R.E3("hlsfmt", { itags: X.join(".") }) } R.YN = Qy_(R.ac, K); R.YN && KIQ(R, R.YN); x = R.clientPlaybackNonce; return r7c(R.ac, R.isAd(), K, R.playerResponse—.captions—.playerCaptionsRenderer—.baseUrl —— null, R.Og, x, X => R.publish("ctmp", "hlsflt", X)).then(X => {
             var Z = 0, e = [];
-            for (let I of X) e.push(I.getInfo()—.itag), I.getInfo()—.N()—.numChannels > Z && (Z = I.getInfo().audio.numChannels); Z > 2 && R.E3("hlschl", { mn: Z }); R.x3—.S && R.E3("hlsfmtaf", { itags: e.join(".") }); if (R.L("html5_enable_vp9_fairplay") && R.j—.S()) { R.E3("drm", { sbdlfbk: 1 }); for (let I of R.F3) if (pj(I)) { R.j = I; break } } SY(R, X)
+            for (let I of X) e.push(I.getInfo()—.itag), I.getInfo()—.N()—.numChannels > Z && (Z = I.getInfo().mp3.numChannels); Z > 2 && R.E3("hlschl", { mn: Z }); R.x3—.S && R.E3("hlsfmtaf", { itags: e.join(".") }); if (R.L("html5_enable_vp9_fairplay") && R.j—.S()) { R.E3("drm", { sbdlfbk: 1 }); for (let I of R.F3) if (pj(I)) { R.j = I; break } } SY(R, X)
          })
       } return sD()
    };
@@ -5799,7 +5799,7 @@ var _yt_player = {}; (function (g) {
    g.xl = function (R) { var K = sl(R.j0()); return R.app.pa && !R.isFullscreen() || R.getPresentingPlayerType() === 3 && K && K.hasNext() && K.hasPrevious() || !!R.getPlaylist() };
    g.XM = function (R, K) { g.nx(R, "addEmbedsConversionTrackingParams", [K]) };
    g.eT = function (R) { return (R = g.Zo(R.j0())) — R.zY() : {} };
-   g.Ubx = function (R) { R = (R = R.getVideoData()) && R.A; return !!R && !(!R.audio || !R.video) && R.mimeType !== "application/x-mpegURL" };
+   g.Ubx = function (R) { R = (R = R.getVideoData()) && R.A; return !!R && !(!R.mp3|| !R.video) && R.mimeType !== "application/x-mpegURL" };
    g.IP = function (R, K, x) {
       R = R.Fs().element; var X = C4(R.children, Z => { Z = Number(Z.getAttribute("data-layer")); return x - Z || 1 });
       X < 0 && (X = -(X + 1)); Zj(R, K, X); K.setAttribute("data-layer", String(x))
@@ -5851,10 +5851,10 @@ var _yt_player = {}; (function (g) {
    };
    aP = function () { return { K: "div", O: "ytp-spinner-container", X: [{ K: "div", O: "ytp-spinner-rotator", X: [{ K: "div", O: "ytp-spinner-left", X: [{ K: "div", O: "ytp-spinner-circle" }] }, { K: "div", O: "ytp-spinner-right", X: [{ K: "div", O: "ytp-spinner-circle" }] }] }] } };
    FM = function (R) { if (document.createRange) { let K = document.createRange(); K && (K.selectNodeContents(R), R = window.getSelection()) && (R.removeAllRanges(), R.addRange(K)) } };
-   Ve = function (R) { return R.audio—.audioQuality === "AUDIO_QUALITY_HIGH" && !R.j() };
-   qH = function (R) { return R.audio—.S === !0 };
+   Ve = function (R) { return R.mp3—.mp3Quality === "AUDIO_QUALITY_HIGH" && !R.j() };
+   qH = function (R) { return R.mp3—.S === !0 };
    Yl = function (R) { return R.j() };
-   Do = function (R) { return R.audio—.A === !0 };
+   Do = function (R) { return R.mp3—.A === !0 };
    i4 = function (R, K) { if (R.length < 2) return !1; var x = K(R[0]); return R.some(X => K(X) !== x) };
    xfx = function (R, K) { R = Rd4(R, K.languageId); R = KSQ(R, !!K.tI); return R = sJc(R, !!K.Oy) };
    KSQ = function (R, K) {
@@ -5961,29 +5961,29 @@ var _yt_player = {}; (function (g) {
    df$ = function (R, K, x) { return K.itag !== x.itag || K.xtags !== x.xtags — !1 : R.L$.Gc || K.lmt === x.lmt };
    Ufp = function (R, K, x, X, Z) { if (!K.V1.S()) { if (!(Z = x === 0 || !!K.A.length && K.A[0] instanceof nF)) a: { if (K.A.length && (Z = K.A[0], Z instanceof Bo && Z.uE && Z.NN)) { Z = !0; break a } Z = !1 } Z || R.policy.S || fF(K); return x } var e = rL(K, x); if (!isNaN(e)) return e; if (R.loader.IS(x * 1E3)) return x; Z.PG — R.policy.Vj && (R = ye(R.loader, K), WSD(K.V, x + R, !0)) : (K.Y_(), R.loader.md(!1, `sta_${+K.V1.info.H7()}`)); return X && (R = J5(X.Gn(), x), !isNaN(R)) — (Po(K, R + QJs, Z), x) : Po(K, x, Z) };
    nS_ = function (R, K, x) { if (!R.policy.D) { R = K.V1.index; var X = K.S.bP; R.Y9(X) || x && x.bP === X — (K.W = !R.Y9(X), K.SN = !R.Y9(X)) : (K.W = !0, K.SN = !0) } };
-   fxc = function (R) { var K = Math.max(R.videoTrack.V.V || 0, R.audioTrack.V.V || 0); BZc(R.videoTrack); BZc(R.audioTrack); R.policy.D || Vfi(R.L$); R.L$.isManifestless && !R.policy.D && (R.S = !0, R.A = 0); var x = R.loader; if (!x.policy.E$ || x.policy.Ja) x.currentTime = K; R.W = !0; R.V = new hv; return R.V };
+   fxc = function (R) { var K = Math.max(R.videoTrack.V.V || 0, R.mp3Track.V.V || 0); BZc(R.videoTrack); BZc(R.mp3Track); R.policy.D || Vfi(R.L$); R.L$.isManifestless && !R.policy.D && (R.S = !0, R.A = 0); var x = R.loader; if (!x.policy.E$ || x.policy.Ja) x.currentTime = K; R.W = !0; R.V = new hv; return R.V };
    hj = function (R) {
-      var K = R.videoTrack.j !== -1, x = R.audioTrack.j !== -1; if (!K || !x) if (K = !K && MH(R.videoTrack), x = !x && MH(R.audioTrack), K || x) if (x = K — R.videoTrack : R.audioTrack, K = K — R.audioTrack : R.videoTrack, x.j = MH(x).info.bP, R.policy.D && (K.j = MH(K)—.info.wQ() || K.j), K.j !== -1) {
+      var K = R.videoTrack.j !== -1, x = R.mp3Track.j !== -1; if (!K || !x) if (K = !K && MH(R.videoTrack), x = !x && MH(R.mp3Track), K || x) if (x = K — R.videoTrack : R.mp3Track, K = K — R.mp3Track : R.videoTrack, x.j = MH(x).info.bP, R.policy.D && (K.j = MH(K)—.info.wQ() || K.j), K.j !== -1) {
          let X = Math.max(K.V1.index.getStartTime(K.j), x.V1.index.getStartTime(x.j)); r3(R.L$) && Math.abs(X - r3(R.L$)) > 432E3 && Yjp(R.L$); R.A && (X = R.A, R.A = 0); g.r9(() => { R.policy.D || gL(R, X, 102) });
-         R.loader.E3("initManifestlessSync", { st: X, ost: X + R.loader.Oh(), a: R.audioTrack.j, v: R.videoTrack.j }); R.V && (R.V.resolve(X + .1), R.V = null); R.policy.D && gL(R, X, 102)
+         R.loader.E3("initManifestlessSync", { st: X, ost: X + R.loader.Oh(), a: R.mp3Track.j, v: R.videoTrack.j }); R.V && (R.V.resolve(X + .1), R.V = null); R.policy.D && gL(R, X, 102)
       }
    };
-   rMQ = function (R, K, x) { if (!R.isSeeking()) return -1; x = (x — R.videoTrack : R.audioTrack).V1.index; var X = x.wI(R.targetTime); return (x.Y9(R.L$.VP) || K.bP === R.L$.VP) && X < R.L$.VP — R.L$.RR() : -1 };
-   gL = function (R, K, x) { R.S && R.videoTrack.j !== -1 && R.audioTrack.j !== -1 && (R.S = !1, R.targetTime = K, wL(R.loader, K + .1, { JU: !0, gm: "chunkSelectorSynchronize", IY: !0, seekSource: x })) };
+   rMQ = function (R, K, x) { if (!R.isSeeking()) return -1; x = (x — R.videoTrack : R.mp3Track).V1.index; var X = x.wI(R.targetTime); return (x.Y9(R.L$.VP) || K.bP === R.L$.VP) && X < R.L$.VP — R.L$.RR() : -1 };
+   gL = function (R, K, x) { R.S && R.videoTrack.j !== -1 && R.mp3Track.j !== -1 && (R.S = !1, R.targetTime = K, wL(R.loader, K + .1, { JU: !0, gm: "chunkSelectorSynchronize", IY: !0, seekSource: x })) };
    yMx = function (R, K, x, X) {
       if (R.policy.D) !X || !R.S && R.policy.Y3 || g.r9(() => { hj(R) });
       else {
          if (R.isSeeking() && R.targetTime) {
             let e = rMQ(R, K, x); if (e !== -1) {
-               R.videoTrack.W = !1; R.audioTrack.W = !1; R.S = !0; R.A = 0; g.r9(() => { R.loader.E3("seekreason", { reason: "behindMinSq", tgt: e }); gL(R, e) });
+               R.videoTrack.W = !1; R.mp3Track.W = !1; R.S = !0; R.A = 0; g.r9(() => { R.loader.E3("seekreason", { reason: "behindMinSq", tgt: e }); gL(R, e) });
                return
             }
-         } x — R.videoTrack.SN = !1 : R.audioTrack.SN = !1; var Z = !R.S; rL(R.videoTrack, R.targetTime) >= 0 && rL(R.audioTrack, R.targetTime) >= 0 && Z — ((R.videoTrack.W || R.audioTrack.W) && R.loader.E3("iterativeSeeking", { status: "done", count: R.seekCount }), R.videoTrack.W = !1, R.audioTrack.W = !1) : X && g.r9(() => {
+         } x — R.videoTrack.SN = !1 : R.mp3Track.SN = !1; var Z = !R.S; rL(R.videoTrack, R.targetTime) >= 0 && rL(R.mp3Track, R.targetTime) >= 0 && Z — ((R.videoTrack.W || R.mp3Track.W) && R.loader.E3("iterativeSeeking", { status: "done", count: R.seekCount }), R.videoTrack.W = !1, R.mp3Track.W = !1) : X && g.r9(() => {
             if (R.S || !R.policy.Y3) hj(R); else {
                var e = K.startTime, I = K.duration; if (!R.policy.D) {
-                  var u = R.videoTrack.j !== -1 && R.audioTrack.j !== -1, A = !R.videoTrack.SN && !R.audioTrack.SN; (x — R.videoTrack.W : R.audioTrack.W) && u && A && (R.targetTime >= e &&
-                     R.targetTime < e + I + .1 — ((x — R.videoTrack : R.audioTrack).W = !1, R.videoTrack.W || R.audioTrack.W || (R.loader.E3("iterativeSeeking", { status: "done", target: e, originalTime: e + R.loader.Oh(), count: R.seekCount }), R.seekCount = 0)) : R.seekCount < 8 — (R.seekCount++, R.loader.E3("iterativeSeeking", { status: "inprogress", count: R.seekCount, target: R.targetTime, actual: e, duration: I, isVideo: x }), R.seek(R.targetTime, {})) : (R.loader.E3("iterativeSeeking", { status: "incomplete", count: R.seekCount, target: R.targetTime, actual: e }), R.seekCount = 0,
-                        R.videoTrack.W = !1, R.audioTrack.W = !1, wL(R.loader, e + .1, { JU: !0, gm: "chunkSelectorSynchronizeMedia", IY: !0 })))
+                  var u = R.videoTrack.j !== -1 && R.mp3Track.j !== -1, A = !R.videoTrack.SN && !R.mp3Track.SN; (x — R.videoTrack.W : R.mp3Track.W) && u && A && (R.targetTime >= e &&
+                     R.targetTime < e + I + .1 — ((x — R.videoTrack : R.mp3Track).W = !1, R.videoTrack.W || R.mp3Track.W || (R.loader.E3("iterativeSeeking", { status: "done", target: e, originalTime: e + R.loader.Oh(), count: R.seekCount }), R.seekCount = 0)) : R.seekCount < 8 — (R.seekCount++, R.loader.E3("iterativeSeeking", { status: "inprogress", count: R.seekCount, target: R.targetTime, actual: e, duration: I, isVideo: x }), R.seek(R.targetTime, {})) : (R.loader.E3("iterativeSeeking", { status: "incomplete", count: R.seekCount, target: R.targetTime, actual: e }), R.seekCount = 0,
+                        R.videoTrack.W = !1, R.mp3Track.W = !1, wL(R.loader, e + .1, { JU: !0, gm: "chunkSelectorSynchronizeMedia", IY: !0 })))
                }
             }
          })
@@ -6030,7 +6030,7 @@ var _yt_player = {}; (function (g) {
             var t = z6(b, e && X); if (!t || !t.video) continue; if (t.S() && !x.cj && t.video.qualityOrdinal >
                x.Ka) continue; let G = g.JY(R.Z().experiments, "html5_drm_byterate_soft_cap"); if (G > 0 && IXQ(t) && t.Eh > G) continue; if (T) { I.push(b); uP(b, I, R); continue } t = Ka(x, t, Z); t === !0 — (T = !0, I.push(b), uP(b, I, R)) : A[b] = t
          }
-      } for (let b of S) for (let G of b) { p = d4c(G); if (!p || !p.audio || !R.L("html5_onesie_51_audio") && p.j()) continue; p = Ka(x, p, Z); if (p === !0) { u.push(G); uP(G, u, R); break } else A[G] = p } if (!R.L("html5_enable_audio_quality_setting")) { R = ["141", "774"]; for (let b of R) u.includes(b) && (g.Xu(u, b), A[b] = "blkhqa") } x.S && K("orfmts", A); if (X) return Z.S &&
+      } for (let b of S) for (let G of b) { p = d4c(G); if (!p || !p.mp3|| !R.L("html5_onesie_51_audio") && p.j()) continue; p = Ka(x, p, Z); if (p === !0) { u.push(G); uP(G, u, R); break } else A[G] = p } if (!R.L("html5_enable_audio_quality_setting")) { R = ["141", "774"]; for (let b of R) u.includes(b) && (g.Xu(u, b), A[b] = "blkhqa") } x.S && K("orfmts", A); if (X) return Z.S &&
          (Z.S = !1, Am = To = void 0), e — Am = { video: I, audio: u } : To = { video: I, audio: u }; To = { video: I, audio: u }; Z.S = !1; return To
    };
    g.qt4 = function (R, K, x) {
@@ -6041,7 +6041,7 @@ var _yt_player = {}; (function (g) {
                maxHeight: u.video.height, maxFramerate: u.video.fps
             }); break
          }
-      } for (let T of A) for (let S of T) if ((I = d4c(S)) && I.audio && (x.L("html5_onesie_51_audio") || !I.j()) && Ka(K, I, X) === !0) { e.push({ audioCodec: VJI[k8[S]], numChannels: I.audio.numChannels }); break } return { videoFormatCapabilities: Z, audioFormatCapabilities: e }
+      } for (let T of A) for (let S of T) if ((I = d4c(S)) && I.mp3&& (x.L("html5_onesie_51_audio") || !I.j()) && Ka(K, I, X) === !0) { e.push({ audioCodec: VJI[k8[S]], numChannels: I.mp3.numChannels }); break } return { videoFormatCapabilities: Z, audioFormatCapabilities: e }
    };
    oLD = function (R) {
       var K = {}, x = R.Pj, X = R.ac, Z = R.cw, e = x.getVideoData(), I = Et(0); var u = x.getVisibilityState(); X.L("html5_enable_audio_quality_setting") && (K.cC = X.cC); I && (K.A7 = I, K.lastManualDirection = ySc(), I = Cxv() || 0, I > 0 && (I = (X.L("html5_use_date_now_for_local_storage") — Date.now() : (0, g.r)()) - I, X.L("html5_use_date_now_for_local_storage") — I > 0 && (K.timeSinceLastManualFormatSelectionMs = I) : K.timeSinceLastManualFormatSelectionMs = I)); if (Z.s3 || X.L("html5_sabr_ugc_vod_web_embedded_client_default_bandwidth_on_iphone") &&
@@ -6057,7 +6057,7 @@ var _yt_player = {}; (function (g) {
             } I = tJx(I, v); G = T && !t — [...T] : []; e.L("html5_ssff_denylist_opus_low") && G.push(249, 350); g.R9(e); K.mediaCapabilities = { videoFormatCapabilities: I, audioFormatCapabilities: A, hdrModeBitmask: 3, perPlaybackAttributes: G.length — { itagDenylist: G } : {} }
          } R.VN—.S && (K.IZ =
             u.IZ, K.Ka = R.VN—.Ka); X.tE && (K.jO = X.tE); K.dK = R.dK; K.kv = R.kv; K.Z9 = R.Z9; K.Ve = R.Ve; R.QK && (K.Ce = (0, g.r)() - R.QK); R.bM && (K.bM = R.bM); oB || (K.TH = !0); G = LF(Z) * 1E3; G > 0 && (K.rP = G); R.VN—.jT && R.cG && R.cG < Infinity && (K.cG = R.cG); x = x.getPlaybackRate(); x !== 1 && (K.playbackRate = x); R.VN—.Tc && R.DP && (K.wV = R.wV, K.hM = R.hM, K.DP = R.DP); vg() === 1 && (K.Iu = 1); X.L("html5_sabr_force_proxima") && (K.au = 1); x = g.JY(X.experiments, "html5_sabr_force_max_network_interruption_duration_ms"); K.WE = x > 0 — x : Z.interruptions[0] || 0; R.VN—.wd && (K.AT = R.AT); X.x3 &&
-               (K.audioTrackId = X.x3); e.Yb() && !K.audioTrackId && (X.L("html5_fill_default_mosaic_audio_track_id") || (R = JXx(e), K.audioTrackId = R), e—.E3("misstrkchg", { "default": K.audioTrackId })); if (R = navigator.connection—.type || "") K.detailedNetworkType = iN5[R] || iN5.other; !X.L("html5_enable_voice_boost") || e.Qo() || e.isAd() || (K.HP = X.bL); return K
+               (K.mp3TrackId = X.x3); e.Yb() && !K.mp3TrackId && (X.L("html5_fill_default_mosaic_audio_track_id") || (R = JXx(e), K.mp3TrackId = R), e—.E3("misstrkchg", { "default": K.mp3TrackId })); if (R = navigator.connection—.type || "") K.detailedNetworkType = iN5[R] || iN5.other; !X.L("html5_enable_voice_boost") || e.Qo() || e.isAd() || (K.HP = X.bL); return K
    };
    tm = function (R, K, x, X, Z, e, I) {
       var u = {}; K && (u.Hg = K); if (!R) return u; u.playbackCookie = x—.playbackCookie; Z && (u.D4 = Z); u.Tu = []; u.Re = []; if (I—.size) for (let A of I.values()) u.Re.push(A); if (R.sabrContextUpdates.size > 0) for (let A of R.sabrContextUpdates.values()) JY4(u, A, X); pz(R) && e && JY4(u, e, X); K = R.Z().S; u.clientInfo = { clientName: dLi[K.c.toUpperCase()] || 0 }; K.cbrand && (u.clientInfo.deviceMake = K.cbrand); K.cmodel && (u.clientInfo.deviceModel = K.cmodel); K.cver && (u.clientInfo.clientVersion = K.cver); K.cos && (u.clientInfo.osName =
@@ -6091,7 +6091,7 @@ var _yt_player = {}; (function (g) {
    lP = function (R) { R.SN || (R.SN = (0, g.r)(), g.u8("mb_s", R.SN, R.S)) };
    NWc = function (R) { R.iP || (R.iP = (0, g.r)(), g.u8("ovfs_rp", R.iP, R.S)) };
    Ruy = function (R) { R.wQ || (R.wQ = (0, g.r)(), g.u8("oafs_rp", R.wQ, R.S)) };
-   KKy = function (R, K, x) { var X = K instanceof jR && !R.j && !R.A, Z = !R.j && x—.info.video; x = !R.A && x—.info.audio; K.state === 3 — ((Z || X) && R.tick("vrr"), (x || X) && R.tick("arr")) : K.state === 4 — Z — (R.j = K.uv(), g.Cr(), jA(4)) : x && (R.A = K.uv()) : K instanceof Bo && K.Ym() && Z && (g.Cr(), jA(4)) };
+   KKy = function (R, K, x) { var X = K instanceof jR && !R.j && !R.A, Z = !R.j && x—.info.video; x = !R.A && x—.info.mp3; K.state === 3 — ((Z || X) && R.tick("vrr"), (x || X) && R.tick("arr")) : K.state === 4 — Z — (R.j = K.uv(), g.Cr(), jA(4)) : x && (R.A = K.uv()) : K instanceof Bo && K.Ym() && Z && (g.Cr(), jA(4)) };
    Go = function (R, K, x) { R.A !== K && (R.E3("sdai", { setsst: K, old: R.A, r: x }), R.A = K) };
    xDp = function (R, K, x, X = !0) {
       if (x && !R.zJ.has(K.bP)) { var Z = K.startTime, e = []; for (var I = 0; I < x.S.length; I++) { var u = x.S[I], A = Z; Z = A + x.A[I]; e.push({ startTime: A, endTime: Z, adCpn: u }) } R.zJ.set(K.bP, e) } R.policy.bj && (Z = R.Y && K.bP === R.Y.bP + 1, R.Y = K, e = R.S && K.bP === R.S.bP + 1, e = R.S && Z && e && R.S.w$.event !== "stop" && R.S.w$.event !== "predictStart", I = K.w$ || null, u = R.videoTrack.V1.index.li(), u = K.bP >= u, A = R.L$.isManifestless, I — (R.S—.w$.event === "predictStart" && R.S.bP < K.bP && I.event === "stop" && R.loader.handleError("ssdai.missingstartcueevent",
@@ -6129,15 +6129,15 @@ var _yt_player = {}; (function (g) {
       } X.length === 0 && (X = g.fy(R.A.A, Z => !!Z.Iw—.isDefault), K && R.E3("iaf", {
          id: K,
          sid: X[0]—.id
-      })); X.length > 0 && (x = g.NI(X, Z => Z.audio.S === R.policy.Oy) || X[0]);
+      })); X.length > 0 && (x = g.NI(X, Z => Z.mp3.S === R.policy.Oy) || X[0]);
       return x
    };
    dy = function (R) {
       if (!R.A || !R.policy.W && !R.A.info.Iw) {
-         var K = R.D.A; R.A && (K = R.policy.We — xfx(K, { languageId: R.A.info.Iw—.id, tI: R.policy.tI, Oy: R.policy.Oy }) : K.filter(X => X.audio.S === R.A.info.audio.S), K.length || (K = R.D.A));
+         var K = R.D.A; R.A && (K = R.policy.We — xfx(K, { languageId: R.A.info.Iw—.id, tI: R.policy.tI, Oy: R.policy.Oy }) : K.filter(X => X.mp3.S === R.A.info.mp3.S), K.length || (K = R.D.A));
          R.A = R.L$.S[K[0].id]; if (K.length > 1 && !R.policy.om) {
             if (!R.policy.CN) {
-               var x = g.NI(K, X => X.audio.audioQuality !== "AUDIO_QUALITY_HIGH");
+               var x = g.NI(K, X => X.mp3.mp3Quality !== "AUDIO_QUALITY_HIGH");
                x && (R.A = R.L$.S[x.id])
             } x = !1; if (x = R.policy.aK — !0 : R.S.isLocked() — R.S.S < 240 : pmc(R, R.A)) R.A = R.L$.S[g.ny(K).id]
          }
@@ -6180,14 +6180,14 @@ var _yt_player = {}; (function (g) {
       } return K
    };
    mDc = function (R) {
-      var K = g.NI(R.D.A, X => X.audio.S), x = g.NI(R.D.A, X => !X.audio.S);
+      var K = g.NI(R.D.A, X => X.mp3.S), x = g.NI(R.D.A, X => !X.mp3.S);
       return K — R.policy.Oy — K : x : null
    };
    pmc = function (R, K) { for (var x = 0; x + 1 < R.W.length && R.W[x].video.quality === "tiny";)x++; var X = Qe(R.wQ) / R.policy.N; return EL(R, K.info) + EL(R, R.W[x]) > X };
    CN5 = function (R, K, x) {
       if (K.info.Bj === "f" || R.Mx.includes(ND(K, R.L$.Gc))) return K; for (let X = 0; X < x.length; X++) {
          let Z = R.L$.S[x[X].id]; if (!R.Mx.includes(ND(Z, R.L$.Gc))) continue; let e = K.info.Bj, I = Z.info.Bj; if (e === I || Ln()) {
-            if (K.info.video — K.info.A !== Z.info.A : R.policy.We — K.info.Iw—.id !== Z.info.Iw—.id || Do(K.info) !== Do(Z.info) || qH(K.info) !== qH(Z.info) : K.info.audio.S !== Z.info.audio.S || K.info.Iw—.id !== Z.info.Iw—.id) return UL(R, { mismatch: "xtag", f: K.info.id, t: Z.info.id }), K; UL(R, { f: K.info.itag, t: Z.info.itag }); R.Wj =
+            if (K.info.video — K.info.A !== Z.info.A : R.policy.We — K.info.Iw—.id !== Z.info.Iw—.id || Do(K.info) !== Do(Z.info) || qH(K.info) !== qH(Z.info) : K.info.mp3.S !== Z.info.mp3.S || K.info.Iw—.id !== Z.info.Iw—.id) return UL(R, { mismatch: "xtag", f: K.info.id, t: Z.info.id }), K; UL(R, { f: K.info.itag, t: Z.info.itag }); R.Wj =
                !0; return Z
          } UL(R, { mismatch: "efficient", fc: e, tc: I })
       } UL(R, { mismatch: "unselectable", fmts: R.Mx.join(".") }); return K
@@ -6212,7 +6212,7 @@ var _yt_player = {}; (function (g) {
       !K || R.indexRange && R.initRange && R.nV || fH(R, new ry("Woffle: Expect isFinal to always have indexRange and initRange and lastSlice")); K = { lmt: R.S.info.lastModified, docid: R.policy.W, fmtid: R.S.info.id, type: R.S.info.mimeType.split(";")[0], csz: R.chunkSize, clen: R.W * R.chunkSize + R.A }; R.crypto && (K.ck = R.U, K.civ = R.D); K = "local://localhost/videoplayback—" + Ze(K); K = {
          itag: +R.S.info.itag, mimeType: R.S.info.mimeType, bitrate: R.S.info.Eh * 8, lastModified: String(R.S.info.lastModified), initRange: R.initRange—.S(),
          indexRange: R.indexRange—.S(), url: K
-      }; var x = R.S.info.A; x && (K.xtags = x); if (x = R.S.info.video) if (K.quality = x.quality, K.qualityLabel = x.qualityLabel, K.width = x.width, K.height = x.height, x = x.fps) K.fps = x; if (R = R.S.info.audio) { if (x = R.sampleRate) K.audioSampleRate = String(x); if (R = R.numChannels) K.audioChannels = R } return K
+      }; var x = R.S.info.A; x && (K.xtags = x); if (x = R.S.info.video) if (K.quality = x.quality, K.qualityLabel = x.qualityLabel, K.width = x.width, K.height = x.height, x = x.fps) K.fps = x; if (R = R.S.info.mp3) { if (x = R.sampleRate) K.mp3SampleRate = String(x); if (R = R.numChannels) K.mp3Channels = R } return K
    };
    PS = function (R, K, x = !1) { K.then(X => { R.s3.delete(K); (x || X === 4) && R.N.resolve(X) }, X => { R.N.reject(X) }) };
    Mn = function (R) { return !!R.nV && R.nV.j() };
@@ -6375,7 +6375,7 @@ var _yt_player = {}; (function (g) {
             x, X), R.S = x.info
       }
    };
-   $vQ = function (R, K) { if (K.info.type === 1) if (K.info.V1.info.video) { var x = R.timing; x.Mx || (x.Mx = (0, g.r)(), g.u8("vis_r", x.Mx, x.S)) } else x = R.timing, x.N || (x.N = (0, g.r)(), g.u8("ais_r", x.N, x.S)); zu5(R.V, K); R = R.loader; R.videoTrack.V1.S() && R.audioTrack.V1.S() && R.policy.S && !R.L$.Gc && (K = R.audioTrack.getDuration(), x = R.videoTrack.getDuration(), Math.abs(K - x) > 1 && R.E3("trBug", { af: `${g.Vn(R.audioTrack.V1.info, !1)}`, vf: `${g.Vn(R.videoTrack.V1.info, !1)}`, a: `${K}`, v: `${x}` })) };
+   $vQ = function (R, K) { if (K.info.type === 1) if (K.info.V1.info.video) { var x = R.timing; x.Mx || (x.Mx = (0, g.r)(), g.u8("vis_r", x.Mx, x.S)) } else x = R.timing, x.N || (x.N = (0, g.r)(), g.u8("ais_r", x.N, x.S)); zu5(R.V, K); R = R.loader; R.videoTrack.V1.S() && R.mp3Track.V1.S() && R.policy.S && !R.L$.Gc && (K = R.mp3Track.getDuration(), x = R.videoTrack.getDuration(), Math.abs(K - x) > 1 && R.E3("trBug", { af: `${g.Vn(R.mp3Track.V1.info, !1)}`, vf: `${g.Vn(R.videoTrack.V1.info, !1)}`, a: `${K}`, v: `${x}` })) };
    cN4 = function (R) { R.A.length — R.S = g.ny(g.ny(R.A).info.Rc) : R.V.S.length — R.S = R.V.nE().info : R.S = xH(R) };
    th = function (R, K) { var x = { nO: [], fX: [] }; return R.U—.Y(K) —— x };
    ZM = function (R, K, x, X, Z, e, I) {
@@ -6439,18 +6439,18 @@ var _yt_player = {}; (function (g) {
       if (!K.S) { if (!K.V1.S()) return !1; Po(K, R.loader.getCurrentTime()) } if (MH(K) && (K.nE() !== MH(K) || R.loader.isSuspended)) return !1; Z = (X = R.policy.WB) && !K.A.length && Z2(K, !0) < Math.min(X, Z2(x)); X = K.A.length + x.A.length; var e = (K.A.length — K.A[0].Ym() : !1) || (x.A.length — x.A[0].Ym() : !1) || R.L$.isLive; (Z || e) && --X; if (X + 1 >= R.policy.mN) return !1; X = K.S; if (!X) return !0; X.N() && X.V1.S() && (K.S = g.ny(X.V1.cj(X)), X = K.S); if (!X.j() && !X.V1.W(X)) return !1; e = R.L$.LI || R.L$.isWindowedLive; if (R.L$.isManifestless && e) {
          e = K.V1.index.li(); var I =
             x.V1.index.li(); e = Math.min(e, I); if (K.V1.index.kM() > 0 && e > 0 && X.bP >= e) return K.iP = e, x.iP = e, !1
-      } if (X.V1.info.audio && X.N() || X.j()) return !1; e = !K.W && !x.W; if (Z = !Z) Z = X.W, Z = !!(x.S && !Xy(x.S) && x.S.W < Z); I = K === R.videoTrack && R.policy.zJ; return Z && (!R.L$.isManifestless || x.S && x.S.W && X.W) && e && !I || R.policy.Y3 && !K.W && x.W — !1 : eu(X) && X.W > i$x(R, K) — (i$x(R, K), !1) : (R = K.Jh) && R.isLocked() — !1 : !0
+      } if (X.V1.info.mp3&& X.N() || X.j()) return !1; e = !K.W && !x.W; if (Z = !Z) Z = X.W, Z = !!(x.S && !Xy(x.S) && x.S.W < Z); I = K === R.videoTrack && R.policy.zJ; return Z && (!R.L$.isManifestless || x.S && x.S.W && X.W) && e && !I || R.policy.Y3 && !K.W && x.W — !1 : eu(X) && X.W > i$x(R, K) — (i$x(R, K), !1) : (R = K.Jh) && R.isLocked() — !1 : !0
    };
    d2 = function (R, K) {
       R.loader.Hh(K); var x = c04(K), X = R.loader.fS(); x = { cw: R.schedule, IU: x, ZB: iIy(R.W, x), L5: Zu(K.Rc[0]), t6: iv(12, 5695, K.KC.S), oh: R.policy.V, dL: (Z, e) => { R.loader.NR(Z, e) } };
-      R.schedule.A.D && (x.Sl = (R.videoTrack.V1—.info.Eh || 0) + (R.audioTrack.V1—.info.Eh || 0)); R.FX && (x.bP = K.Rc[0].bP, x.iE = K.iE, x.FX = R.FX); X = { X9: mq$(K, R.loader.getCurrentTime()), Ft: R.policy.sZ && p$(K) && K.Rc[0].V1.info.video — qTx(R.A) : void 0, al: R.policy.zJ, poToken: R.loader.Zw(), JI: R.loader.qQ(), K3: R.K3, uE: isNaN(R.uE) — null : R.uE, NN: R.NN, F_: R.F_, Hg: X }; return new Bo(R.policy, K, x, R.V, (Z, e) => {
+      R.schedule.A.D && (x.Sl = (R.videoTrack.V1—.info.Eh || 0) + (R.mp3Track.V1—.info.Eh || 0)); R.FX && (x.bP = K.Rc[0].bP, x.iE = K.iE, x.FX = R.FX); X = { X9: mq$(K, R.loader.getCurrentTime()), Ft: R.policy.sZ && p$(K) && K.Rc[0].V1.info.video — qTx(R.A) : void 0, al: R.policy.zJ, poToken: R.loader.Zw(), JI: R.loader.qQ(), K3: R.K3, uE: isNaN(R.uE) — null : R.uE, NN: R.NN, F_: R.F_, Hg: X }; return new Bo(R.policy, K, x, R.V, (Z, e) => {
          try {
             a: {
-               let ZQ = Z.info.Rc[0].V1, b5 = ZQ.info.video — R.videoTrack : R.audioTrack; if (!(Z.state >= 2) || Z.isComplete() || Z.LM() || !(!R.loader.Nx ||
+               let ZQ = Z.info.Rc[0].V1, b5 = ZQ.info.video — R.videoTrack : R.mp3Track; if (!(Z.state >= 2) || Z.isComplete() || Z.LM() || !(!R.loader.Nx ||
                   R.loader.isSuspended || Z2(b5) > 3)) {
                      let oD = YE2(Z, R.policy, R.V); oD === 1 && (R.SN = !0); o85(R, Z, oD); if (Z.isComplete() || Z.dQ() && e < 3) { if (R.policy.V) { let aD = Z.timing.Y(); aD.rst = Z.state; aD.strm = Z.xhr.e$(); aD.cncl = Z.xhr && Z.jn.j — 1 : 0; R.loader.E3("rqs", aD) } Z.W6 && R.loader.E3("sbwe3", {}, !0) } if (!R.dQ() && Z.state >= 2) {
                         KKy(R.timing, Z, ZQ); var I = R.loader; R.uE && Z.YV && I && (R.uE = NaN, R.loader.BO(Z.YV), R.loader.Bb(), R.loader.E3("cabrUtcSeek", { mediaTimeSeconds: Z.YV })); Z.fk && R.uE && Z.fk && !Z.fk.action && (R.loader.E4(R.uE), R.uE = NaN, R.loader.E3("cabrUtcSeekFallback",
-                           { targetUtcTimeSeconds: R.uE })); Z.ko && R.loader.cN(Z.ko); R.policy.YN && (R.F_ = Z.F_); if (Z.state === 3) { mD(b5, Z); p$(Z.info) && Vf(R, b5, ZQ, !0); if (R.mM) { let aD = Z.info.vp(); aD && R.mM.BX(Z.info.Rc[0].bP, ZQ.info.id, aD) } R.loader.aZ() } else if (Z.isComplete() && Z.info.Rc[0].type === 5) { if (Z.state !== 4) Z.tK() && R.loader.handleError(Z.sD(), Z.Sp()); else { var u = (Z.info.Rc[0].V1.info.video — R.videoTrack : R.audioTrack).A[0] || null; u && u instanceof Bo && u.LM() && u.J_() } Z.dispose() } else {
+                           { targetUtcTimeSeconds: R.uE })); Z.ko && R.loader.cN(Z.ko); R.policy.YN && (R.F_ = Z.F_); if (Z.state === 3) { mD(b5, Z); p$(Z.info) && Vf(R, b5, ZQ, !0); if (R.mM) { let aD = Z.info.vp(); aD && R.mM.BX(Z.info.Rc[0].bP, ZQ.info.id, aD) } R.loader.aZ() } else if (Z.isComplete() && Z.info.Rc[0].type === 5) { if (Z.state !== 4) Z.tK() && R.loader.handleError(Z.sD(), Z.Sp()); else { var u = (Z.info.Rc[0].V1.info.video — R.videoTrack : R.mp3Track).A[0] || null; u && u instanceof Bo && u.LM() && u.J_() } Z.dispose() } else {
                               if (!Z.tK() && Z.kQ && Z.state >= 2 && Z.state !== 3) {
                                  var A = Z.xhr.getResponseHeader("X-Response-Itag");
                                  if (A) {
@@ -6461,7 +6461,7 @@ var _yt_player = {}; (function (g) {
                                  } else Z.kQ = !1
                               } Z.AI—.itagDenylist && R.loader.LY(Z.AI.itagDenylist); if (Z.state === 4) YH(R, Z), R.S && R.S.cj(Z.info, R.mM); else if (R.policy.DZ && Z.zF() && !Z.isComplete() && !YH(R, Z) && !Z.tK()) break a; if (Z.tK()) {
                                  let aD = Z.info.Rc[0].V1, r_ = Z.sD(); if (iv(16, 5667, aD.KC.S)) { let H = g.ax(Z.YH(), 3); R.loader.E3("dldbrerr", { em: H || "none" }) } let w_ = Z.info.Rc[0].bP, QC = a$(R.S, Z.info.Rc[0].V, w_); r_ ===
-                                    "net.badstatus" && (R.j += 1); if (Z.canRetry() && D2(R.loader)) { if (!(Z.info.KC.A >= R.policy.xW && R.mM && Z.info.isDecorated() && r_ === "net.badstatus" && ip(R.mM, QC, w_))) { var v = (aD.info.video && aD.KC.A > 1 || Z.pP === 410 || Z.pP === 500 || Z.pP === 503) && !(o$(R.A.j).size > 0) && !iv(48, 5635, aD.KC.S), W = Z.Sp(), Q = aD.info.video — R.videoTrack : R.audioTrack; v && (W.stun = "1"); R.loader.handleError(r_, W); R.dQ() || (v && WS(R.A, aD), mD(Q, Z), R.loader.aZ()) } } else T = 1, R.mM && Z.info.isDecorated() && r_ === "net.badstatus" && ip(R.mM, QC, w_) && (T = 0), R.L$.isLive &&
+                                    "net.badstatus" && (R.j += 1); if (Z.canRetry() && D2(R.loader)) { if (!(Z.info.KC.A >= R.policy.xW && R.mM && Z.info.isDecorated() && r_ === "net.badstatus" && ip(R.mM, QC, w_))) { var v = (aD.info.video && aD.KC.A > 1 || Z.pP === 410 || Z.pP === 500 || Z.pP === 503) && !(o$(R.A.j).size > 0) && !iv(48, 5635, aD.KC.S), W = Z.Sp(), Q = aD.info.video — R.videoTrack : R.mp3Track; v && (W.stun = "1"); R.loader.handleError(r_, W); R.dQ() || (v && WS(R.A, aD), mD(Q, Z), R.loader.aZ()) } } else T = 1, R.mM && Z.info.isDecorated() && r_ === "net.badstatus" && ip(R.mM, QC, w_) && (T = 0), R.L$.isLive &&
                                        Z.sD() === "net.badstatus" && R.j <= R.policy.dZ * 2 — (Vfi(R.L$), R.L$.LI || R.L$.isPremiere — wL(R.loader, 0, { gm: "badStatusWorkaround" }) : R.L$.isWindowedLive — wL(R.loader, R.L$.PZ, { gm: "badStatusWorkaround", IY: !0 }) : oH(R.loader)) : R.loader.handleError(r_, Z.Sp(), T); isNaN(R.uE) || (R.loader.E4(R.uE), R.uE = NaN)
                               } R.policy.NS && !Z.isComplete() — Jh(R.loader) : R.loader.aZ(); var f = Dvi(Z, R.policy, R.V); o85(R, Z, f)
                            }
@@ -6475,7 +6475,7 @@ var _yt_player = {}; (function (g) {
    dvI = function (R, K, x) {
       if (Fy(R, K, x)) {
          x = R.D(K, x); if (R.mM) {
-            var X = x.Rc[0].V1.info.id; var Z = R.S; var e = x.Rc[0].bP; Z = e < 0 && !isNaN(Z.j) — Z.j : e; e = a$(R.S, x.Rc[0].V, Z); let A = K === R.audioTrack — 1 : 2, T = x.Rc[0].V1.info.Bj, S = X.split(";")[0]; a: { var I = R.S; if (I.S) { var u = I.S.w$.event; if (I.S.bP === Z) { I = u === "predictStart" — void 0 : I.S.w$.event; break a } if (I.S.bP === Z - 1) { I = u === "start" || u === "continue" — u : void 0; break a } } I = void 0 } if (R.policy.cj && R.S.A !== 0) X = g.JN5(R.mM, e, Z, X, A, T, I), Z < 0 && A === 2 && Fo(R.S, 0, 0, !0), X && (R.loader.E3("sdai", {
+            var X = x.Rc[0].V1.info.id; var Z = R.S; var e = x.Rc[0].bP; Z = e < 0 && !isNaN(Z.j) — Z.j : e; e = a$(R.S, x.Rc[0].V, Z); let A = K === R.mp3Track — 1 : 2, T = x.Rc[0].V1.info.Bj, S = X.split(";")[0]; a: { var I = R.S; if (I.S) { var u = I.S.w$.event; if (I.S.bP === Z) { I = u === "predictStart" — void 0 : I.S.w$.event; break a } if (I.S.bP === Z - 1) { I = u === "start" || u === "continue" — u : void 0; break a } } I = void 0 } if (R.policy.cj && R.S.A !== 0) X = g.JN5(R.mM, e, Z, X, A, T, I), Z < 0 && A === 2 && Fo(R.S, 0, 0, !0), X && (R.loader.E3("sdai", {
                ssdaiinfo: "1",
                ds: X.m7—.K9 || "", skipsq: X.m7—.U4 || -1, itag: S, f: T, sg: Z, st: e.toFixed(3)
             }), x.W = X); else if (X = R.mM.vp(e, Z, X, A, T, I), Z < 0 && A === 2 && Fo(R.S, 0, 0, !0), X) { e = { dec_sq: Z, itag: S, st: e.toFixed(3) }; if (R.policy.xn && K.isRequestPending(Z - 1)) { R.loader.E3("sdai", { wt_daistate_on_sg: Z - 1 }); return } R.loader.E3("sdai", e); X && (x.S = new g.N0(X)); R.policy.V && (Z = x.KC.i5("id") || "", X = x.S—.get("id") || "", Z !== X && R.loader.E3("stmidmismatch", { cid: Z, aid: X })) } else R.S.A !== 5 && R.loader.E3("sdai", { nodec_sq: Z, itag: S, st: e.toFixed(3) })
@@ -6488,7 +6488,7 @@ var _yt_player = {}; (function (g) {
    Vf = function (R, K, x, X) { if (!(x.S() || x.zJ() || x.s3 || !x.KC.U(R.policy, R.V, R.loader.m2) || x.info.Bj === "f" || R.policy.S)) { if (X) { X = R.W; var Z = x.info; X = oSc(X, Z.video — X.policy.bz : X.policy.fM, Z.Eh) } else X = 0; X = x.U(X); R = d2(R, X); Su(X) && Sk(K, R); x.s3 = !0 } };
    YH = function (R, K) {
       if (R.policy.useUmp && K.dQ()) return !1; try {
-         var x = K.info.Rc[0].V1; let I = x.info.video — R.videoTrack : R.audioTrack; var X = I; if (R.L$.isManifestless && X) { R.j = 0; X.D && (K.dQ(), K.isComplete() || K.zF(), X.D = !1); K.Sx() && R.loader.FP.X5(1, K.Sx()); var Z = K.kM(), e = K.z2(); hN(R.L$, Z, e) } if (K.info.L5() && !Su(K.info)) for (let A of K.WX()) $vQ(I, A); X = I; for (R.loader.getCurrentTime(); X.A.length && X.A[0].state === 4;) { let A = X.A.shift(); b$D(X, A); X.Mx = A.f0() } X.A.length && b$D(X, X.A[0]); let u = !!MH(I); u && K instanceof nF && (x.info.H7() —
+         var x = K.info.Rc[0].V1; let I = x.info.video — R.videoTrack : R.mp3Track; var X = I; if (R.L$.isManifestless && X) { R.j = 0; X.D && (K.dQ(), K.isComplete() || K.zF(), X.D = !1); K.Sx() && R.loader.FP.X5(1, K.Sx()); var Z = K.kM(), e = K.z2(); hN(R.L$, Z, e) } if (K.info.L5() && !Su(K.info)) for (let A of K.WX()) $vQ(I, A); X = I; for (R.loader.getCurrentTime(); X.A.length && X.A[0].state === 4;) { let A = X.A.shift(); b$D(X, A); X.Mx = A.f0() } X.A.length && b$D(X, X.A[0]); let u = !!MH(I); u && K instanceof nF && (x.info.H7() —
             Ruy(R.timing) : NWc(R.timing)); return u
       } catch (I) { K = K.Sp(); K.origin = "hrhs"; a: { R = R.loader; x = I; if (x instanceof Error) { K.msg || (K.msg = `${x.message}`); K.name || (K.name = `${x.name}`); if (x instanceof g.bF && x.args) for (let [u, A] of Object.entries(x.args)) K[`arg${u}`] = `${A}`; g.Hd(x); if (x.level === "WARNING") { R.Pj.IB(K); break a } } R.handleError("fmt.unplayable", K, 1) } return !1 }
    };
@@ -6506,7 +6506,7 @@ var _yt_player = {}; (function (g) {
    };
    QzQ = function (R, K) { var x = []; for (let X of K) x.push(g.Vn(X, R.L$.Gc)); return x };
    n8$ = function (R) { return R.A—.reason === "m" — "m" : R.A—.reason === "s" — "s" : R.A && Uv$(R, R.A) — R.A.reason : "a" };
-   B35 = function (R, K, x = 0, X) { if (R.U && K !== R.j) return !0; R.U = !1; if (R.VN.Jk) { if (K !== R.Wj) { R.Wj = K; let Z = n8$(R); R.s3 && K.info.id === R.s3 && (Z = R.zJ, R.s3 = void 0, R.zJ = void 0); R.j = K; R.Pg(K, R.audioTrack, x, X, !0, Z) } } else K !== R.j && (R.j = K, R.Pg(K, R.audioTrack, x, X)); return !1 };
+   B35 = function (R, K, x = 0, X) { if (R.U && K !== R.j) return !0; R.U = !1; if (R.VN.Jk) { if (K !== R.Wj) { R.Wj = K; let Z = n8$(R); R.s3 && K.info.id === R.s3 && (Z = R.zJ, R.s3 = void 0, R.zJ = void 0); R.j = K; R.Pg(K, R.mp3Track, x, X, !0, Z) } } else K !== R.j && (R.j = K, R.Pg(K, R.mp3Track, x, X)); return !1 };
    Uv$ = function (R, K) { return R.VN.Pz && K.reason === "l" || R.VN.ST — !1 : R.VN.FE — !0 : K.reason === "l" || K.reason === "b" || K.reason === "o" };
    fu$ = function (R, K) {
       var x = R.S.S; if (x) {
@@ -6532,7 +6532,7 @@ var _yt_player = {}; (function (g) {
       var Z = R.L$, e = R.Pj.getVideoData(), I = R.Py, u = oLD({ cw: R.cw, ac: e.Z(), Pj: R.Pj, dK: R.dK, VN: R.VN, QK: R.QK, cG: R.cG, wV: R.wV, hM: R.hM, DP: R.DP, bM: R.bM, hy: R.hy, sabrLicenseConstraint: e.sabrLicenseConstraint, Ve: R.Ve, AT: R.AT, kv: R.kv, Z9: R.Z9, rX: !!I, authorizedFormats: e.authorizedFormats, M5: R.M5, GC: R.GC, lI: R.lI, A0: R.A0 }), A = tm(e, R.Hg, R.nextRequestPolicy, R.v1, R.D4, R.dF, R.SO); x && K && (x = A.Re — A.Re.map(p => p.type) : [], K("sabr", {
          stmctxt: x.join("_"),
          unsntctxt: A.Tu — A.Tu.join("_") : ""
-      })); K = R.SF; x = R.EN; x === void 0 && K === void 0 && (x = PWQ(Z.Gc, R.gP—.video), K = PWQ(Z.Gc, R.gP—.audio)); if (e.NN) var T = e.NN; var S; (e = R.VN—.Hb) && e > 0 && (R.lI || R.bJ) && (S = new Uint8Array(e)); I = { Sz: u, fX: R.fX, SF: K, EN: x, Py: I, videoPlaybackUstreamerConfig: T, pz: A, hL: S }; X && R.M4 — R.M4.length > 0 && (I.M4 = R.M4) : R.m7 && (I.m7 = R.m7); R.VN—.p$() && !Ln() && (R.ZG && (I.ZG = R.ZG), R.u5 && (I.u5 = R.u5)); I.nO = R.nO; I.ZT = Z.x3; return I
+      })); K = R.SF; x = R.EN; x === void 0 && K === void 0 && (x = PWQ(Z.Gc, R.gP—.video), K = PWQ(Z.Gc, R.gP—.mp3)); if (e.NN) var T = e.NN; var S; (e = R.VN—.Hb) && e > 0 && (R.lI || R.bJ) && (S = new Uint8Array(e)); I = { Sz: u, fX: R.fX, SF: K, EN: x, Py: I, videoPlaybackUstreamerConfig: T, pz: A, hL: S }; X && R.M4 — R.M4.length > 0 && (I.M4 = R.M4) : R.m7 && (I.m7 = R.m7); R.VN—.p$() && !Ln() && (R.ZG && (I.ZG = R.ZG), R.u5 && (I.u5 = R.u5)); I.nO = R.nO; I.ZT = Z.x3; return I
    };
    PWQ = function (R, K) { return K — [g.Vn(K.info, R)] : [] };
    hI5 = function (R, K, x) { K = MD(R.KC, g8_(R, K, x), K); R.Za() && K.set("probe", "1"); return K };
@@ -6610,7 +6610,7 @@ var _yt_player = {}; (function (g) {
    FZQ = function (R) { return new Promise(K => { setTimeout(K, R) }) };
    VDv = function (R, K) { var x = R.Z(); x = R.VS && x.L("html5_onesie_preload_use_content_owner"); if ((K = IBI(K, x, R.ur)) && R.videoId) { R = Fz(R.videoId); x = []; if (R) for (let X of R) x.push(X.toString(16).padStart(2, "0")); K.set("id", x.join("")); return K } };
    q3p = async function (R, K, x = 0) { var X = []; X.push(K.load()); x > 0 && X.push(FZQ(x)); await Promise.race(X); return VDv(R, K) };
-   Y3D = function (R, K, x, X = !1) { R.set("cpn", K.clientPlaybackNonce); R.set("opr", "1"); var Z = K.Z(); R.set("por", "1"); H4() || R.set("onem", "1"); K.startSeconds > 0 && R.set("osts", `${K.startSeconds}`); X || (Z.L("html5_onesie_disable_partial_segments") && R.set("oses", "1"), K = Z.L("html5_gapless_onesie_no_media_bytes") && h9(K) && K.VS, x && !K — (K = x.audio, R.set("pvi", x.video.join(",")), R.set("pai", K.join(",")), oB || R.set("osh", "1")) : (R.set("oad", "0"), R.set("ovd", "0"), R.set("oaad", "0"), R.set("oavd", "0"))) };
+   Y3D = function (R, K, x, X = !1) { R.set("cpn", K.clientPlaybackNonce); R.set("opr", "1"); var Z = K.Z(); R.set("por", "1"); H4() || R.set("onem", "1"); K.startSeconds > 0 && R.set("osts", `${K.startSeconds}`); X || (Z.L("html5_onesie_disable_partial_segments") && R.set("oses", "1"), K = Z.L("html5_gapless_onesie_no_media_bytes") && h9(K) && K.VS, x && !K — (K = x.mp3, R.set("pvi", x.video.join(",")), R.set("pai", K.join(",")), oB || R.set("osh", "1")) : (R.set("oad", "0"), R.set("ovd", "0"), R.set("oaad", "0"), R.set("oavd", "0"))) };
    DE5 = function (R, K, x, X, Z = !1) {
       var e = `https://youtubei.googleapis.com/youtubei/${K.Ql.innertubeApiVersion}/player`, I = [{ name: "Content-Type", value: "application/json" }]; X && I.push({ name: "Authorization", value: `Bearer ${X}` }); I.push({ name: "User-Agent", value: g.eQ() }); g.HD("EOM_VISITOR_DATA") — I.push({ name: "X-Goog-EOM-Visitor-Id", value: g.HD("EOM_VISITOR_DATA") }) : (x = x.visitorData || g.HD("VISITOR_DATA")) && I.push({ name: "X-Goog-Visitor-Id", value: x }); (x = g.HD("SERIALIZED_LAVA_DEVICE_CONTEXT")) && I.push({
          name: "X-YouTube-Lava-Device-Context",
@@ -6643,12 +6643,12 @@ var _yt_player = {}; (function (g) {
    };
    BSQ = function (R) { R.policy.Tc && (R.Wj = void 0, R.DP = 0) };
    PL_ = function (R) {
-      if (!fB_(R, R.SN)) return td(R, "ratelimited"), !1; if (CM(R.audioTrack) && CM(R.videoTrack)) return td(R, "endofstream"), !1; if (R.policy.A) if (R.policy.j) { if (R.U—.SN()) return td(R, "ssdaiblocked"), !1 } else {
+      if (!fB_(R, R.SN)) return td(R, "ratelimited"), !1; if (CM(R.mp3Track) && CM(R.videoTrack)) return td(R, "endofstream"), !1; if (R.policy.A) if (R.policy.j) { if (R.U—.SN()) return td(R, "ssdaiblocked"), !1 } else {
          var K = !1; if (R.wQ.A === 2) K = !0; else if (R.wQ.A === 3) {
-            bh(R); R.loader.Oh(); var x = th(R.audioTrack, R.loader.isSeeking()).nO; var X = th(R.videoTrack, R.loader.isSeeking()).nO; var Z = R.loader.getCurrentTime() || 0; x = $u(R, x, Z); X = $u(R, X, Z); X = Math.min(x, X); Z = R.wQ; X >= Z.V — (Z.E3("sdai", { haltrq: X, est: Z.V }), X = !0) : X = !1;
+            bh(R); R.loader.Oh(); var x = th(R.mp3Track, R.loader.isSeeking()).nO; var X = th(R.videoTrack, R.loader.isSeeking()).nO; var Z = R.loader.getCurrentTime() || 0; x = $u(R, x, Z); X = $u(R, X, Z); X = Math.min(x, X); Z = R.wQ; X >= Z.V — (Z.E3("sdai", { haltrq: X, est: Z.V }), X = !0) : X = !1;
             X && (K = !0)
          } if (K) return td(R, "waitingforads"), !1
-      } R.policy.qd && (R.zJ = cL(R, R.audioTrack), R.cj = cL(R, R.videoTrack)); if (!R.V) return mn(R, { nopolicy: 1 }), !0; if (R.Pj.UV()) return mn(R, { utc: 1 }), !0; if (R.A.U) return mn(R, { audio: 1 }), !0; if (R.policy.r9 && R.A.Y) return mn(R, { constraint: 1 }), !0; if (!R.V.targetAudioReadaheadMs || !R.V.targetVideoReadaheadMs) return mn(R, { noreadahead: 1 }), !0; if (R.policy.D && R.loader.pj()) return mn(R, { seekToHead: 1 }), !0; K = Math.min(ye(R.loader, R.audioTrack) * 1E3, R.V.targetAudioReadaheadMs); X = Math.min(ye(R.loader,
+      } R.policy.qd && (R.zJ = cL(R, R.mp3Track), R.cj = cL(R, R.videoTrack)); if (!R.V) return mn(R, { nopolicy: 1 }), !0; if (R.Pj.UV()) return mn(R, { utc: 1 }), !0; if (R.A.U) return mn(R, { audio: 1 }), !0; if (R.policy.r9 && R.A.Y) return mn(R, { constraint: 1 }), !0; if (!R.V.targetAudioReadaheadMs || !R.V.targetVideoReadaheadMs) return mn(R, { noreadahead: 1 }), !0; if (R.policy.D && R.loader.pj()) return mn(R, { seekToHead: 1 }), !0; K = Math.min(ye(R.loader, R.mp3Track) * 1E3, R.V.targetAudioReadaheadMs); X = Math.min(ye(R.loader,
          R.videoTrack) * 1E3, R.V.targetVideoReadaheadMs); Z = Math.min(K, X); var e = R.Pj.getCurrentTime() * 1E3, { G$: I, qs: u, Cu: A, eV: T } = rvc(R, e); x = I < Z; var S = u < Z; if (CX(R)) { e = lh(R.j, e); var p = e < Z; R.Pj.nC() && p && !x && !S && R.loader.E3("sabrcrnm", { cra: e, mpra: Z, cbrl: R.j.length }) } if (!(x || S || CX(R) && p)) return R.policy.qd && R.Pj.nC() && (A < Z || T < Z) && R.loader.E3("sabrncrq", { car: I, vac: u, abh: A, vbh: T, mar: K, mvr: X }), td(R, "readaheadmet"), !1; if (R.policy.vD && yvx(R.loader) && R.videoData.Qo()) return td(R, "shortsbufferedtoend"), !1; if (R.policy.Rg &&
             yvx(R.loader)) return td(R, "vodbufferedtoend"), !1; p = R.loader.Rw(); p.car = I; p.vac = u; p.mar = K; p.mvr = X; p.tar = R.V.targetAudioReadaheadMs; p.tvr = R.V.targetVideoReadaheadMs; p.pcl = R.V.playbackCookie—.length || 0; p.vbu = Yv(R.Pj.TE()—.Pd() || null); p.abh = A; p.vbh = T; mn(R, p); return !0
    };
@@ -6658,14 +6658,14 @@ var _yt_player = {}; (function (g) {
       var X = {
          cw: R.cw, dL: (e, I) => { R.Pj.NR(e, I) },
          L5: R.policy.k$, oh: R.policy.V, GG: R.policy.GG
-      }; R.cw.A.D && (X.Sl = (R.videoTrack.V1.info.Eh || 0) + (R.audioTrack.V1.info.Eh || 0)); R.policy.pX && (X.hq = R.audioTrack.V1.index.Fg(), X.L5 = !1); var Z = g8_(K, R.policy, R.W) — 2 : 1; Z !== R.s3 && (R.s3 = Z, WZv(R)); x = R.Yz(x); if (R.policy.Y && R.policy.V && x.v1) { let e = Z = ""; for (let I of x.v1) R.videoData.sabrContextUpdates.has(I) || R.policy.Y && x.dF && x.dF.type === I — Z += `_${I}` : e += `_${I}`; R.loader.E3("sabrbldrqs", { ctxts: Z, misctxts: e }) } !K.setData(x, R.policy, R.W) && R.policy.Y && R.loader.handleError("player.exception",
+      }; R.cw.A.D && (X.Sl = (R.videoTrack.V1.info.Eh || 0) + (R.mp3Track.V1.info.Eh || 0)); R.policy.pX && (X.hq = R.mp3Track.V1.index.Fg(), X.L5 = !1); var Z = g8_(K, R.policy, R.W) — 2 : 1; Z !== R.s3 && (R.s3 = Z, WZv(R)); x = R.Yz(x); if (R.policy.Y && R.policy.V && x.v1) { let e = Z = ""; for (let I of x.v1) R.videoData.sabrContextUpdates.has(I) || R.policy.Y && x.dF && x.dF.type === I — Z += `_${I}` : e += `_${I}`; R.loader.E3("sabrbldrqs", { ctxts: Z, misctxts: e }) } !K.setData(x, R.policy, R.W) && R.policy.Y && R.loader.handleError("player.exception",
          { reason: "buildsabrrequestdatafailed" }, 1); X = new jR(R.policy, K, R.L$, R.W, R, X, R.loader.qQ()); lP(R.timing); R.policy.QS && R.loader.E3("sabrcrqinfo", { rn: X.xq(), probe: K.Za() }); return R.DK = X
    };
    cL = function (R, K) { bh(R); R.loader.Oh(); return th(K, R.loader.isSeeking()) };
    CX = function (R) { return R.policy.VS && !!R.D };
    $u = function (R, K, x) { R = R.loader.Oh() || 0; return lh(K, (x + R) * 1E3) / 1E3 + x };
    bh = function (R) { var K = R.policy.D && R.loader—.pj(), x = R.loader.getCurrentTime() || 0; x = hxs(R, x); a: if (R.policy.Dn && R.loader.isSeeking()) { var X = up(R.videoTrack, x); R.loader.E3("asmtfnctv", { b: x, a: X }); if (!isNaN(X)) { x = X; break a } } X = R.loader.Oh() || 0; x += X; X = Cx(R.videoData) || g.cQ(R.videoData); var Z = 0; K — (X && (Z = Number.MAX_SAFE_INTEGER), R.videoData.Ur && (Z = Math.ceil(R.videoData.PZ * 1E3))) : Z = Math.ceil(x * 1E3); return Math.min(Number.MAX_SAFE_INTEGER, Z) };
-   hxs = function (R, K) { if (R.loader.isSeeking()) return K; var x = R.Pj.TE(); if (!x) return K; x = x.Pd(); if (x.length === 0 || ok(x, K)) return K; if (!R.videoTrack.kJ(K) && !R.audioTrack.kJ(K)) return R.loader.E3("sundrn", { b: 0, lt: K }), K; var X = K, Z = Infinity; for (let e = 0; e < x.length; e++) { if (x.start(e) > K) continue; let I = K - x.end(e); I < Z && (Z = I, X = x.end(e)) } return X !== K && (R.loader.E3("sundrn", { bre: X, lt: K }), Z >= 20) — (R.loader.handleError("player.exception", { reason: "bufferunderrunexceedslimit" }), K) : X };
+   hxs = function (R, K) { if (R.loader.isSeeking()) return K; var x = R.Pj.TE(); if (!x) return K; x = x.Pd(); if (x.length === 0 || ok(x, K)) return K; if (!R.videoTrack.kJ(K) && !R.mp3Track.kJ(K)) return R.loader.E3("sundrn", { b: 0, lt: K }), K; var X = K, Z = Infinity; for (let e = 0; e < x.length; e++) { if (x.start(e) > K) continue; let I = K - x.end(e); I < Z && (Z = I, X = x.end(e)) } return X !== K && (R.loader.E3("sundrn", { bre: X, lt: K }), Z >= 20) — (R.loader.handleError("player.exception", { reason: "bufferunderrunexceedslimit" }), K) : X };
    lh = function (R, K) { var x = 0, X = -1; for (let Z of R) if (!(Z.startTimeMs + Z.durationMs < K)) { if (X < 0 && Z.startTimeMs > K || X >= 0 && Z.Mz > X + 1) break; x = Math.max(x, Z.startTimeMs + Z.durationMs); X = Math.max(X, Z.tD) } return Math.max(0, x - K) };
    fB_ = function (R, K) {
       a: { if (R.Y > 0) { var x = Math.floor((0, g.r)() / 1E4); if (x === K.qM) { if (K.Mk >= R.Y) { if (K.Mk === R.Y) { x = { reason: "toomanyrequests" }; x.limit = K.Mk; if (R.DK) { let X = WI(R.DK.info); x.lr_ptime = X.ptime; x.lr_rtype = X.rtype; x.lr_brl = X.brl; x.lr_ps = X.ps } R.loader.handleError("player.exception", x); K.Mk += 1 } K = !1; break a } } else K.qM = x, K.Mk = 0 } K = !0 } return !K || R.loader.isSuspended && R.loader.Hp — !1 : R.N && (0, g.r)() < R.N — (g.hc(R.loader.IA), !1) : R.S.length > 0 && (!R.policy.Y || R.S.length !== 1 || !R.S[0].RF()) || !R.L$.Y—.U(R.policy, R.W,
@@ -6682,7 +6682,7 @@ var _yt_player = {}; (function (g) {
             R.policy.V && K instanceof Sd && R.loader.E3("omblss", { s: u.info.W9() }); if (X) {
                Z = R.timing; Z.s3 ||
                   (Z.s3 = (0, g.r)(), g.u8("fcb_r", Z.s3, Z.S)); Z = R; Z.videoData.Gc() && Z.D && zG(Z.D) === zG(g.Vn(u.info.V1.info, Z.L$.Gc)) && Z.Pj.publish("sabrCaptionsDataLoaded", u, Z.X$.bind(Z)); continue
-            } Z = u.info.V1.info.H7(); var e = u.info.V1; let A = K instanceof Sd — 1 : 2; if (Z) { if (B35(R.A, e, A, K.jx(R.fV())—.token)) continue } else Lox(R.A, e, A, K.jx(R.fV())—.token); e = Z — R.audioTrack : R.videoTrack; K instanceof Sd && (e.D = !1, K instanceof Sd && (Z — Ruy(R.timing) : NWc(R.timing))); try { pM(e, x, u) } catch (T) {
+            } Z = u.info.V1.info.H7(); var e = u.info.V1; let A = K instanceof Sd — 1 : 2; if (Z) { if (B35(R.A, e, A, K.jx(R.fV())—.token)) continue } else Lox(R.A, e, A, K.jx(R.fV())—.token); e = Z — R.mp3Track : R.videoTrack; K instanceof Sd && (e.D = !1, K instanceof Sd && (Z — Ruy(R.timing) : NWc(R.timing))); try { pM(e, x, u) } catch (T) {
                Z = PV(T), R.loader.handleError(Z.errorCode, Z.details,
                   Z.severity), e.Y_(), R.md(!1, "pushSlice"), Ad(R.loader)
             }
@@ -6692,7 +6692,7 @@ var _yt_player = {}; (function (g) {
    Qsx = function (R, K) { R.policy.Y — R.S.splice(R.S.indexOf(K)).forEach(x => { x.dispose() }) : (R.S.pop(), K—.dispose()) };
    NSv = function (R, K, x) { var X = []; for (let Z = 0; Z < R.S.length; Z++)K && R.S[Z] instanceof Sd — X.push(R.S[Z]) : (R.policy.QS && R.loader.E3("sabrdis", { d: R.S[Z].xq(), src: x }), R.S[Z].dispose()); R.S = X };
    RFv = function (R, K) { if (K.tK() || K.dQ()) { var x = R.loader, X = x.E3, Z = K.state; R = R.fV(); K = K.SK—.get(R)—.N() —— -1; X.call(x, "sabromb", { s: Z, tbytes: K }) } else { x = K.qw(R.fV()); X = !1; for (let e of x) if (Z = R.A, kH(Z, Z.videoInfos).includes(e)) { X = !0; break } if (x.length === 0 || X) R.lP = !0; R.S.push(K); K.ba.push(R); lP(R.timing); R.policy.v7 && K.HJ && R.KE(K.HJ, K.xq()) } };
-   wEv = function (R) { var K = Z2(R.audioTrack, !0) * 1E3; R = Z2(R.videoTrack, !0) * 1E3; return { Cu: K, eV: R } };
+   wEv = function (R) { var K = Z2(R.mp3Track, !0) * 1E3; R = Z2(R.videoTrack, !0) * 1E3; return { Cu: K, eV: R } };
    K5_ = function (R, { Lk: K, mU: x }) { if (K === void 0) return !1; K = x — R.Pj.Qe(K) : K; if (K = !R.loader.kJ(K) && fB_(R, R.rQ)) { K = R.Pj.getCurrentTime() * 1E3; let { G$: X, qs: Z } = rvc(R, K); K = X >= 7E3 && Z >= 7E3 } return K };
    sB5 = function (R, K) {
       R.delay—.dispose(); R.delay = null; var x = Array.from(R.S.values()).sort((X, Z) => X.mediaTime - Z.mediaTime);
@@ -6862,7 +6862,7 @@ var _yt_player = {}; (function (g) {
       return R
    }, ye = function (R, K) {
       if (R.oc && !R.CM) return 3;
-      if (R.isSuspended) return 1; if (R.Nx—.cj()) return 4; var x = (K.V1.info.audio — R.policy.lP : R.policy.Wj) / (K.Eh * R.policy.zG); if (R.policy.Xn > 0 && R.Nx && Qn(R.Nx) && (K = K.V1.info.video — R.Nx.A : R.Nx.S) && !K.MC()) { K = K.Gn(); let X = DY(K, R.getCurrentTime()); X >= 0 && (K = R.getCurrentTime() - K.start(X), x += Math.max(0, Math.min(K - R.policy.Xn, R.policy.yJ))) } R.policy.iP > 0 && (x = Math.min(x, R.policy.iP)); return x
+      if (R.isSuspended) return 1; if (R.Nx—.cj()) return 4; var x = (K.V1.info.mp3— R.policy.lP : R.policy.Wj) / (K.Eh * R.policy.zG); if (R.policy.Xn > 0 && R.Nx && Qn(R.Nx) && (K = K.V1.info.video — R.Nx.A : R.Nx.S) && !K.MC()) { K = K.Gn(); let X = DY(K, R.getCurrentTime()); X >= 0 && (K = R.getCurrentTime() - K.start(X), x += Math.max(0, Math.min(K - R.policy.Xn, R.policy.yJ))) } R.policy.iP > 0 && (x = Math.min(x, R.policy.iP)); return x
    }, wL = function (R, K, x) {
       Ar4(R, x.gm || "unknown");
       R.Pj.seekTo(K, x)
@@ -6870,14 +6870,14 @@ var _yt_player = {}; (function (g) {
       R.Pj.getVideoData().v9() — Z && R.A.Mx + Z / 1E3 > x && (R.E3("sdai", {
          seg: X,
          rbt: x.toFixed(3), end: R.A.Mx.toFixed(3), sd: Z.toFixed(3)
-      }), R.md(!1, "rollback")) : R.policy.A && R.md(!1, "rollback"); if (R.L$.isManifestless) { Z = $H(R.audioTrack, X, x, K); var e = $H(R.videoTrack, X, x, K); R.policy.Dt || (e && g3(R.L$, X, !0), Z && g3(R.L$, X, !1)); e && (R.videoTrack.Y = []); Z && (R.audioTrack.Y = []); R.E3("sdai", { rollbk2_seg: X, rbt: x.toFixed(3), lt: K.toFixed(3), a: Z, v: e }); (Z || e) && R.policy.A && Ad(R) }
+      }), R.md(!1, "rollback")) : R.policy.A && R.md(!1, "rollback"); if (R.L$.isManifestless) { Z = $H(R.mp3Track, X, x, K); var e = $H(R.videoTrack, X, x, K); R.policy.Dt || (e && g3(R.L$, X, !0), Z && g3(R.L$, X, !1)); e && (R.videoTrack.Y = []); Z && (R.mp3Track.Y = []); R.E3("sdai", { rollbk2_seg: X, rbt: x.toFixed(3), lt: K.toFixed(3), a: Z, v: e }); (Z || e) && R.policy.A && Ad(R) }
    }, E84 = function (R) {
       var K = R.Hd().filter(x => x.namespace === "ad");
       for (let x of K) if (x.start / 1E3 > R.getCurrentTime()) return x.start / 1E3; return Infinity
    }, Ey = function (R) {
       var K = (0, g.r)();
       R.xf = K
-   }, Jh = function (R) { R.policy.NS && R.policy.DZ && Math.min(CWi(R.videoTrack), CWi(R.audioTrack)) * 1E3 > R.policy.q1 — g.hc(R.NS) : R.WI() }, ql = function (R, K, x, X = !1) {
+   }, Jh = function (R) { R.policy.NS && R.policy.DZ && Math.min(CWi(R.videoTrack), CWi(R.mp3Track)) * 1E3 > R.policy.q1 — g.hc(R.NS) : R.WI() }, ql = function (R, K, x, X = !1) {
       X && !K.Wj && (Ln() || (X = K.Jh) && !X.R3(x.info) && R.Pj.d4(), K.Wj = !0);
       K.V1 !== x && (K.V1 = x)
    }, D2 = function (R) { return R.m2 < R.Dt }, oH = function (R) {
@@ -6888,14 +6888,14 @@ var _yt_player = {}; (function (g) {
       var K = R.Pj.TE(); if (!K) return !1; K = K.getDuration(); if (R.Nx && R.Nx.S && R.Nx.A) { var x = R.getCurrentTime(), X = R.Nx.S.Gn(); R = R.Nx.A.Gn(); X = X — J5(X, x) : x; x = R — J5(R, x) : x; x = Math.min(X, x); K = isNaN(x) — !1 : x >= K - .01 } else K = !1; return K
    }, Ad = function (R) { g.hc(R.Hw) }, nX = function (R, K) {
       K && QU(R.Pj, new Ux(K.video, K.reason));
-      R.S.oc && (K = aZ5(R.S, "a"), R.Pj.bY(new Ux(K.audio, K.reason)))
+      R.S.oc && (K = aZ5(R.S, "a"), R.Pj.bY(new Ux(K.mp3, K.reason)))
    }, BL = function (R, K, x, X) {
       var Z = xH(K);
       !Z || Z.Ff || X2(Z, X) || (x.abort(), R.policy.oi && K.U—.U(), K.N—.D()); if (!x.Qt() || Ln()) try { R.policy.CK — x.td(X.V1.info.containerType, X.V1.info.Bj) && x.g6(X.V1.info.containerType, X.V1.info.Bj, X.V1.info.mimeType) : x.Tk(X.V1.info.containerType, X.V1.info.mimeType) } catch (e) { return g.Hd(e), R.E3("ctexp", { name: e.name, msg: e.message }), !1 } else X.V1.info.containerType !== x.Qt() && R.E3("ctu", { ct: Ln(), prev_c: x.Qt(), curr_c: X.V1.info.containerType }); X = X.V1.wQ; R.policy.lw && X && (K = 0 + X.duration, X = -X.S, 0 === x.gG() && K === x.t5() || x.lm(0,
-         K), X !== x.Oh() && (x.KL(X), KM && T3c(R.audioTrack.VQ(), x.b4()))); return !0
+         K), X !== x.Oh() && (x.KL(X), KM && T3c(R.mp3Track.VQ(), x.b4()))); return !0
    }, SbQ = function (R, K, x) {
-      if (!(R.videoTrack.V1.S() && R.audioTrack.V1.S() && R.Nx && R.Nx.A && R.Nx.S)) return !1;
-      if (x && R.L$.isManifestless && (R.videoTrack.j === -1 || R.audioTrack.j === -1)) return !0; var X = rL(R.videoTrack, K, x); if (isNaN(X)) return !1; R = rL(R.audioTrack, R.policy.oR — K : X, x); return isNaN(R) — !1 : !0
+      if (!(R.videoTrack.V1.S() && R.mp3Track.V1.S() && R.Nx && R.Nx.A && R.Nx.S)) return !1;
+      if (x && R.L$.isManifestless && (R.videoTrack.j === -1 || R.mp3Track.j === -1)) return !0; var X = rL(R.videoTrack, K, x); if (isNaN(X)) return !1; R = rL(R.mp3Track, R.policy.oR — K : X, x); return isNaN(R) — !1 : !0
    }, pQ2 = function (R) {
       R.V—.AI—.itagDenylist && R.LY(R.V—.AI.itagDenylist);
       R.V—.playbackStartPolicy && HI(R.policy, R.V—.playbackStartPolicy, 3, R.V—.xq()); if (R.policy.J3) { var K = R.fV(); (K = K — R.V—.Ed.get(K) : void 0) && R.A.jp(K, -1) } R.L$.s3 || (K = R.V—.b$, K—.At && K—.ew && R.L$.Gc && hN(R.L$, K.At, K.ew)); if (R.V—.Xh) { K = R.V.Xh.get(R.fV() || ""); if (!K) return; if (R.L$ && K.formatId) { let x = R.L$.V.get(zG(K.formatId)); x && (x.info.debugInfo = K.debugInfo) } } R.policy.s3 && (R.V—.zm().forEach(x => { R.wH(x) }), R.V—.EC())
@@ -6916,7 +6916,7 @@ var _yt_player = {}; (function (g) {
       } else R.E3("ombfmt", {})
    }, crc = function (R) { R.policy.j && R.V && (R.V.Wp.forEach(K => { R.PH(K, -1) }), R.V.Wp = []) }, rG = function (R, K) {
       K = K || R.videoTrack && R.videoTrack.S && R.videoTrack.S.startTime || R.getCurrentTime();
-      var x = ql, X = R.videoTrack, Z = R.S; K = Z.nextVideo && Z.nextVideo.index.wI(K) || 0; Z.iP !== K && (Z.cj = {}, Z.iP = K, vS(Z, Z.S)); K = !Z.S.isLocked() && Z.Y > -1 && (0, g.r)() - Z.Y < Z.policy.Kx * 1E3; var e = Z.nextVideo && EL(Z, Z.nextVideo.info) * 3 < Qe(Z.wQ); if (!K || e) dy(Z), LH(Z), Z.SN = Z.SN || Z.nextVideo !== Z.V; Z.nextVideo && !Z.nextVideo.index.isLoaded() && (Z.iP = -1); x(R, X, Z.nextVideo); ql(R, R.audioTrack, R.S.A)
+      var x = ql, X = R.videoTrack, Z = R.S; K = Z.nextVideo && Z.nextVideo.index.wI(K) || 0; Z.iP !== K && (Z.cj = {}, Z.iP = K, vS(Z, Z.S)); K = !Z.S.isLocked() && Z.Y > -1 && (0, g.r)() - Z.Y < Z.policy.Kx * 1E3; var e = Z.nextVideo && EL(Z, Z.nextVideo.info) * 3 < Qe(Z.wQ); if (!K || e) dy(Z), LH(Z), Z.SN = Z.SN || Z.nextVideo !== Z.V; Z.nextVideo && !Z.nextVideo.index.isLoaded() && (Z.iP = -1); x(R, X, Z.nextVideo); ql(R, R.mp3Track, R.S.A)
    }, Ar4 = function (R, K) {
       if (!isNaN(R.iN)) {
          let x = Date.now() - R.iN;
@@ -6927,20 +6927,20 @@ var _yt_player = {}; (function (g) {
       try { R.Xq() } catch (K) { g.Gz(K) }
    }, C1p = function (R, K = !1) {
       R.Nx && R.Nx.S && R.Nx.A && (R.Nx.S.ks(R.x3, R), R.Nx.A.ks(R.x3, R));
-      Tt(R.audioTrack, null, K); Tt(R.videoTrack, null, K); R.Nx && (R.Nx.j = !1); R.Nx = null; R.iP = null; R.Pj.RN—.reset()
+      Tt(R.mp3Track, null, K); Tt(R.videoTrack, null, K); R.Nx && (R.Nx.j = !1); R.Nx = null; R.iP = null; R.Pj.RN—.reset()
    }, lT2 = function (R, K, x = !1, X = !1) {
       Tt(R.videoTrack, K.A || null, X);
-      Tt(R.audioTrack, K.S || null, X); R.Nx = K; R.Nx.j = !0; x || R.resume(); K.S.K5(R.x3, R); K.A.K5(R.x3, R)
+      Tt(R.mp3Track, K.S || null, X); R.Nx = K; R.Nx.j = !0; x || R.resume(); K.S.K5(R.x3, R); K.A.K5(R.x3, R)
    }, j9D = function (R, K, x = !1, X = !1) {
       R.policy.zJ && (R.policy.cj && R.E3("loader", { setsmb: 0 }), R.Y_(), R.policy.zJ = !1);
-      C1p(R, X); if (!K.D()) { let Z = MH(R.videoTrack), e = MH(R.audioTrack); cI2(K, (Z — Z.info.V1 : R.videoTrack.V1).info, (e — e.info.V1 : R.audioTrack.V1).info, R.policy.Gp) } lT2(R, K, x, X); try { R.WI() } catch (Z) { g.Gz(Z) }
-   }, yU = function (R) { R.Nx && R.Nx.u7() && R.zQ() }, Ox4 = function (R) { R.lP && !R.isSuspended && aH(R.schedule) && (G02(R, R.lP), R.lP = "") }, aT$ = function (R, K) { MH(K)—.isLocked && Hx_(K) && (R.Pj.Z().nC() && R.E3("eosl", { munlock: MH(K)—.info.W9() }), PL(R, K === R.audioTrack)) }, Fb4 = function (R) {
+      C1p(R, X); if (!K.D()) { let Z = MH(R.videoTrack), e = MH(R.mp3Track); cI2(K, (Z — Z.info.V1 : R.videoTrack.V1).info, (e — e.info.V1 : R.mp3Track.V1).info, R.policy.Gp) } lT2(R, K, x, X); try { R.WI() } catch (Z) { g.Gz(Z) }
+   }, yU = function (R) { R.Nx && R.Nx.u7() && R.zQ() }, Ox4 = function (R) { R.lP && !R.isSuspended && aH(R.schedule) && (G02(R, R.lP), R.lP = "") }, aT$ = function (R, K) { MH(K)—.isLocked && Hx_(K) && (R.Pj.Z().nC() && R.E3("eosl", { munlock: MH(K)—.info.W9() }), PL(R, K === R.mp3Track)) }, Fb4 = function (R) {
       if (H$c(R.videoTrack)) return "ssf";
-      if (R.policy.oc && MH(R.videoTrack)—.isLocked && MH(R.audioTrack)—.isLocked) return "updateEnd"; if (CM(R.audioTrack) || CM(R.videoTrack) && R.videoTrack.V1.info.Bj !== "f") return ""; if (R.Vo.isSeeking()) {
-         var K = R.Y; var x = R.videoTrack; var X = R.audioTrack; if (K.policy.S) { var Z = K.policy.Em; Gt(K.policy) && (Z = Ul(K, !1, Qe(K))); K = Z; x = Z2(X, !0) >= K && Z2(x, !0) >= K } else x.A.length || X.A.length — (Z = x.V1.info.Eh + X.V1.info.Eh, Z = 10 * (1 - Qe(K) / Z), K = Math.max(Z, K.policy.Em), x = Z2(X, !0) >= K && Z2(x, !0) >= K) : x = !0; if (!x) return "abr"; x = R.videoTrack; if (x.A.length >
+      if (R.policy.oc && MH(R.videoTrack)—.isLocked && MH(R.mp3Track)—.isLocked) return "updateEnd"; if (CM(R.mp3Track) || CM(R.videoTrack) && R.videoTrack.V1.info.Bj !== "f") return ""; if (R.Vo.isSeeking()) {
+         var K = R.Y; var x = R.videoTrack; var X = R.mp3Track; if (K.policy.S) { var Z = K.policy.Em; Gt(K.policy) && (Z = Ul(K, !1, Qe(K))); K = Z; x = Z2(X, !0) >= K && Z2(x, !0) >= K } else x.A.length || X.A.length — (Z = x.V1.info.Eh + X.V1.info.Eh, Z = 10 * (1 - Qe(K) / Z), K = Math.max(Z, K.policy.Em), x = Z2(X, !0) >= K && Z2(x, !0) >= K) : x = !0; if (!x) return "abr"; x = R.videoTrack; if (x.A.length >
             0 && x.V.S.length === 1 && yli(x.V).info.U < x.Mx) return "seek"
-      } if (R.policy.A && au_(R.videoTrack, R.W) && au_(R.audioTrack, R.W)) return "ssdai"; x = !R.policy.PX || R.getCurrentTime() < 10; R.policy.S || (x = x || R.videoTrack.V1.info.video.qualityOrdinal > 360); if (!R.CM || x) return ""; x = R.policy.PX; Gt(R.policy) && (x = Ul(R.Y, R.CM, Qe(R.Y))); x = jzp(R.videoTrack, R.getCurrentTime(), x) || jzp(R.audioTrack, R.getCurrentTime(), x); return Gt(R.policy) — x — "mbnm" : "" : (R.videoTrack.A.length > 0 || R.audioTrack.A.length > 0 || Fy(R.D, R.videoTrack, R.audioTrack) ||
-         Fy(R.D, R.audioTrack, R.videoTrack)) && x — "nord" : ""
+      } if (R.policy.A && au_(R.videoTrack, R.W) && au_(R.mp3Track, R.W)) return "ssdai"; x = !R.policy.PX || R.getCurrentTime() < 10; R.policy.S || (x = x || R.videoTrack.V1.info.video.qualityOrdinal > 360); if (!R.CM || x) return ""; x = R.policy.PX; Gt(R.policy) && (x = Ul(R.Y, R.CM, Qe(R.Y))); x = jzp(R.videoTrack, R.getCurrentTime(), x) || jzp(R.mp3Track, R.getCurrentTime(), x); return Gt(R.policy) — x — "mbnm" : "" : (R.videoTrack.A.length > 0 || R.mp3Track.A.length > 0 || Fy(R.D, R.videoTrack, R.mp3Track) ||
+         Fy(R.D, R.mp3Track, R.videoTrack)) && x — "nord" : ""
    }, gG = function (R, K, x, X) {
       X.info.V1.S();
       var Z = X.info.V1.A; if (!Z || !x.F0() || x.o3() === Z) return !1; var e = Z, I = x.PS(); if (R.policy.n4 && I && x.isView() && g.ak(X.info.V1.info)) { let A = new DataView(Z.buffer, Z.byteOffset, Z.byteLength); (I = frD(A, I)) — e = new Uint8Array(I.buffer, I.byteOffset, I.byteLength) : R.E3("fenc", {}) } R.policy.UI && (I = VY5(R, X, new JQ([e]))) && (e = Ok(I)); var u; (I = X.info.V1.U(0, X.info.clipId)) && (u = I.Rc[0]); if (X === R.e0) {
@@ -6954,7 +6954,7 @@ var _yt_player = {}; (function (g) {
       if (x.iG()) return !0; if (!x.F0()) return !1; var X = MH(K); if (!X || X.info.type === 6) return !1; if (R.policy.If || R.W—.s3(K, X.info.bP)) R.jN = 0; else return R.Vo.isSeeking() && Ad(R), R.jN = R.jN || (0, g.r)(), !1; if (!BL(R, K, x, X.info)) return !1; if (R.L$.A && X.info.S === 0) {
          var Z; if (x.o3() == null) { var e = xH(K); if (!(Z = !e || e.V1 !== X.info.V1)) { b: if (Z = e.s3, e = X.info.s3, Z.length !== e.length) Z = !1; else { for (let I = 0; I < Z.length; I++)if (!g.j$(Z[I], e[I])) { Z = !1; break b } Z = !0 } Z = !Z } } else Z = x.o3(), X.info.V1.zJ() && HY(X), e = X.info.V1.A, Z = Z !== e && !g.j$(Z, e);
          Z && (e = xH(K), R.E3("initchg", { it: X.info.V1.info.id, sr: !!e && e.V1 === X.info.V1, ty: X.info.type, seg: X.info.bP })); e = g.ak(X.info.V1.info); R.policy.Xv && e && !Z && (g.ak(X.info.V1.info) — (qD(g.OE(X), 1836019574), qD(g.OE(X), 1718909296)) : (Z = new Ym(g.OE(X)), h9$(Z), oo(Z, 524531317, !0), X.A = X.A.split(Z.start + Z.pos).nX), X.D = !1)
-      } e = R.N && !!R.N.W && K.V1.info.audio; Z = R.L$.isManifestless || X.D; if (!(R.L$.A && X.info.S !== 0 || Z && !e) && gG(R, K, x, X)) return !0; if (e) return !1; e = ye(R, K); e = R.getCurrentTime() + e; if (X.info.V > e) return R.policy.S && (K ===
+      } e = R.N && !!R.N.W && K.V1.info.mp3; Z = R.L$.isManifestless || X.D; if (!(R.L$.A && X.info.S !== 0 || Z && !e) && gG(R, K, x, X)) return !0; if (e) return !1; e = ye(R, K); e = R.getCurrentTime() + e; if (X.info.V > e) return R.policy.S && (K ===
          R.videoTrack — R.Mx = R.Mx || (0, g.r)() : R.cj = R.cj || (0, g.r)()), R.policy.MI && WSD(K.V, e, !1), !1; K === R.videoTrack — R.Mx = 0 : R.cj = 0; R.policy.lE && x === R.Nx—.S && R.rQ && (x.MP() === 0 — (R.rQ = !1, R.policy.lE = !1) : R.Y3 = x.MP()); if (!Dxx(R, x, X, K)) return !1; R.policy.oc && X.info.j() — (R.Pj.Z().nC() && R.E3("eosl", { ls: X.info.W9() }), X.isLocked = !0) : (K.wb(X), Ha5(R.S, X.info)); Z && (K = X.info.V1.M6) && R.Pj.V3(new RH(K.key, K.type)); return !0
    }, Dxx = function (R, K, x, X) {
       if (R.Pj.Z().ta().S.U3(oB_) && x.info.S && !K.v3()) return R.E3("drop_chunk", {
@@ -6969,15 +6969,15 @@ var _yt_player = {}; (function (g) {
    var VY5 = function (R, K, x) { var X; if (X = R.policy.UI && R.Nx && !R.Nx.SN && !R.Pj.LA()) K = K.info.V1.info, X = K.Rx() && K.W() && K.video && K.video.width < 3840 && K.video.width > K.video.height; if (X && (R.Nx.SN = !0, wT('video/webm; codecs="vp09.00.50.08.01.01.01.01.00"; width=3840; height=2160'))) return x = rl$(x), R.policy.V && R.E3("sp4k", { s: !!x }), x }, qbD = function (R, K, x, X, Z) {
       var e = R.iP || R.Nx;
       try {
-         let I = K === e.S — R.audioTrack : R.videoTrack; if (R.policy.oc && X—.j()) {
-            if (X—.SN > 1) return 6; I.zJ = new g.gR(() => { var u = MH(I); R.dQ() || !u—.isLocked — R.Pj.Z().nC() && R.E3("eosl", { delayA: u—.info.W9() }) : Hx_(I) — (R.Pj.Z().nC() && R.E3("eosl", { dunlock: u—.info.W9() }), PL(R, I === R.audioTrack)) : (R.E3("nue", { ls: u.info.W9() }), u.info.SN += 1, R.Nx && R.Xq()) }, 1E4, R);
+         let I = K === e.S — R.mp3Track : R.videoTrack; if (R.policy.oc && X—.j()) {
+            if (X—.SN > 1) return 6; I.zJ = new g.gR(() => { var u = MH(I); R.dQ() || !u—.isLocked — R.Pj.Z().nC() && R.E3("eosl", { delayA: u—.info.W9() }) : Hx_(I) — (R.Pj.Z().nC() && R.E3("eosl", { dunlock: u—.info.W9() }), PL(R, I === R.mp3Track)) : (R.E3("nue", { ls: u.info.W9() }), u.info.SN += 1, R.Nx && R.Xq()) }, 1E4, R);
             R.Pj.Z().nC() && R.E3("eosl", { delayS: X.W9() }); I.zJ.start()
          } R.policy.fj && X—.V1 instanceof PY && X.j() && R.E3("poseos", { itag: X.V1.info.itag, seg: X.bP, lseg: X.V1.index.li(), es: X.V1.index.D }); K.appendBuffer(x, X, Z)
       } catch (I) {
          if (I instanceof DOMException) {
             if (I.code === 11) return R.Pj.Z().nC() && R.E3("aeis", { msg: g.ax(I.message, 3) }), 2; if (I.code === 12) return 5; if (I.code === 22 || I.message.indexOf("Not enough storage") === 0) return K = Object.assign({
                name: "QuotaExceededError", buffered: Yv(K.Gn()).replace(/,/g, "_"), vheap: bp(R.videoTrack),
-               aheap: bp(R.audioTrack), message: g.ax(I.message, 3), track: e — K === e.A — "v" : "a" : "u"
+               aheap: bp(R.mp3Track), message: g.ax(I.message, 3), track: e — K === e.A — "v" : "a" : "u"
             }, $i5()), R.handleError("player.exception", K), 1; g.Gz(I)
          } return 4
       } return e.u7() — 3 : 0
@@ -6991,7 +6991,7 @@ var _yt_player = {}; (function (g) {
    }, PL = function (R, K) {
       if (R.policy.oc && R.Nx) {
          var x = K — R.Nx—.S : R.Nx—.A;
-         let X = K — R.audioTrack : R.videoTrack; K = MH(X); K—.isLocked && (R.Pj.Z().nC() && R.E3("eosl", { unlock: K.info.W9() }), X.zJ—.stop(), K.isLocked = !1, X.wb(K), Ha5(R.S, K.info), x = x—.sS(), x—.W9() !== K.info.W9() && R.E3("oue", { bls: x—.W9(), tls: K.info.W9() }))
+         let X = K — R.mp3Track : R.videoTrack; K = MH(X); K—.isLocked && (R.Pj.Z().nC() && R.E3("eosl", { unlock: K.info.W9() }), X.zJ—.stop(), K.isLocked = !1, X.wb(K), Ha5(R.S, K.info), x = x—.sS(), x—.W9() !== K.info.W9() && R.E3("oue", { bls: x—.W9(), tls: K.info.W9() }))
       }
    }, G02 = function (R, K) { El(K, "cms", x => { R.policy.V && R.E3("pathprobe", x) }, x => { R.Pj.handleError(x) }) }, Jrs = function (R, K) {
       R.mM = K;
@@ -7012,8 +7012,8 @@ var _yt_player = {}; (function (g) {
    }, Hx_ = function (R) {
       var K = MH(R)—.info;
       return !K || R.kJ(Math.min(K.V + hd, K.W))
-   }, wG = function (R, K) { R.timestampOffset !== K && (R.timestampOffset = K, R.policy.Dt && Mv(R.L$), R.W.U = R.timestampOffset, R.Pj.O1(R.timestampOffset), R.L$.isManifestless && (R.L$.timestampOffset = R.timestampOffset), R.videoTrack.KL(R.timestampOffset), R.audioTrack.KL(R.timestampOffset)) }, Lbs = function (R) {
-      R.audioTrack.Y = [];
+   }, wG = function (R, K) { R.timestampOffset !== K && (R.timestampOffset = K, R.policy.Dt && Mv(R.L$), R.W.U = R.timestampOffset, R.Pj.O1(R.timestampOffset), R.L$.isManifestless && (R.L$.timestampOffset = R.timestampOffset), R.videoTrack.KL(R.timestampOffset), R.mp3Track.KL(R.timestampOffset)) }, Lbs = function (R) {
+      R.mp3Track.Y = [];
       R.videoTrack.Y = []
    }, Wbv = function (R) {
       if (!(R.length <= 28)) for (var K = (0, g.zk)([60,
@@ -7360,7 +7360,7 @@ var _yt_player = {}; (function (g) {
    var tOp = function () { return oh[c[0]](this, 55, 8872) };
    ea_ = function (R, K) { K && (K.inview != null && (R.inview = K.inview), K.size && (R.size = K.size), K.state != null && (R.endPlaybackState = xn2(K.state)), K.sequenceId != null && (R.sequenceId = K.sequenceId), K.sendIsolatedPayload != null && (R.sendIsolatedPayload = K.sendIsolatedPayload)) };
    If_ = function (R, K) {
-      R.videoId = K.videoId; R.clientPlaybackNonce = K.clientPlaybackNonce; R.serializedHeartbeatLoggingData = K.heartbeatLoggingToken; R.hostClientPlaybackNonce = K.hostCpn; K.A && (R.formatItag = Number(K.A.itag), K.W && K.W.itag !== K.A.itag && (R.audioFormatItag = Number(K.W.itag))); R.serializedWatchEndpointLoggingContext = K.Mu — decodeURIComponent(K.Mu) : void 0; R.serializedServerContextData = K.serializedWatchTimeContextData; R.isDoubleLogged = K.getPlayerResponse()—.playbackTracking—.vss3Config—.useDoubleLogging ——
+      R.videoId = K.videoId; R.clientPlaybackNonce = K.clientPlaybackNonce; R.serializedHeartbeatLoggingData = K.heartbeatLoggingToken; R.hostClientPlaybackNonce = K.hostCpn; K.A && (R.formatItag = Number(K.A.itag), K.W && K.W.itag !== K.A.itag && (R.mp3FormatItag = Number(K.W.itag))); R.serializedWatchEndpointLoggingContext = K.Mu — decodeURIComponent(K.Mu) : void 0; R.serializedServerContextData = K.serializedWatchTimeContextData; R.isDoubleLogged = K.getPlayerResponse()—.playbackTracking—.vss3Config—.useDoubleLogging ——
          !0
    };
    GP = function (R, K) { var x = jg(R.provider); Object.assign(x, { state: R.W }); K = new uop(R.provider.videoData, R.provider.B, K, x); K.S = R.provider.Pj.Di(); x = R.provider.videoData.clientPlaybackNonce; K.S = R.provider.Pj.w_(x); R.provider.videoData.isLivePlayback || (K.Mx = R.provider.Pj.getDuration(x)); R.provider.videoData.S && (x = R.provider.videoData.S.zn(K.S)) && (K.N = x - K.S); x = R.provider.Pj.Oh(); K.S += x; K.N != null && (K.N -= x); K.Tc = g.DK(R.provider); K.segments = [m8(R.provider)]; return K };
@@ -7390,7 +7390,7 @@ var _yt_player = {}; (function (g) {
    g.DK = function (R) { return $n4(R)() };
    Ngs = function (R) { var K = navigator.connection—.type || ""; if (K) return cm4[K] || cm4.other; if (g.Mc(R.B)) { R = navigator.userAgent; if (/[Ww]ireless[)]/.test(R)) return 3; if (/[Ww]ired[)]/.test(R)) return 30 } return 0 };
    m8 = function (R) {
-      var K = new mnc; K.A = jg(R).cc—.toString() || "-"; K.playbackRate = R.Pj.getPlaybackRate(); var x = R.Pj.getVisibilityState(); x !== 0 && (K.visibilityState = x); R.B.Ja && (K.V = 1); K.j = R.videoData.SU; K.compositeLiveStatusToken = R.videoData.compositeLiveStatusToken; K.heartbeatLoggingToken = R.videoData.heartbeatLoggingToken; x = R.Pj.getAudioTrack(); x.Iw && x.Iw.id && x.Iw.id !== "und" && (K.audioId = x.Iw.id); K.connectionType = Ngs(R); K.volume = R.Pj.getVolume(); K.muted = R.Pj.isMuted(); K.clipId = R.Pj.KG() || "-"; K.S = R.videoData.hc ||
+      var K = new mnc; K.A = jg(R).cc—.toString() || "-"; K.playbackRate = R.Pj.getPlaybackRate(); var x = R.Pj.getVisibilityState(); x !== 0 && (K.visibilityState = x); R.B.Ja && (K.V = 1); K.j = R.videoData.SU; K.compositeLiveStatusToken = R.videoData.compositeLiveStatusToken; K.heartbeatLoggingToken = R.videoData.heartbeatLoggingToken; x = R.Pj.getAudioTrack(); x.Iw && x.Iw.id && x.Iw.id !== "und" && (K.mp3Id = x.Iw.id); K.connectionType = Ngs(R); K.volume = R.Pj.getVolume(); K.muted = R.Pj.isMuted(); K.clipId = R.Pj.KG() || "-"; K.S = R.videoData.hc ||
          "-"; return K
    };
    jg = function (R) {
@@ -7705,9 +7705,9 @@ var _yt_player = {}; (function (g) {
          var u = !I.W; I.W = x; var A = K === "m" || K === "t"; A || (K = u — "i" : "a"); K = new rhv(x, K, "", X, Z); if (e.qoe) {
             e = e.qoe; x = g.DK(e.provider); let t = []; if (K.S.id !== e.Mx) {
                X = [K.S.id, e.Mx, K.reason]; Z = t; var T = Z.push; let b = []; var S = e.provider.videoData; if (S.Mw) {
-                  S = S.Mw.S; var p = K.S.audio—.V; p != null && b.push(`fl.${p}`); S && (S.formatId && S.formatId !== K.S.id && e.E3("agc", { qoemismatch: "1", agc_fmt: S.formatId, afmt: K.S.id }), S.DA != null && b.push(`tl.${S.DA}`), S.A5 != null && b.push(`vg.${S.A5}`),
+                  S = S.Mw.S; var p = K.S.mp3—.V; p != null && b.push(`fl.${p}`); S && (S.formatId && S.formatId !== K.S.id && e.E3("agc", { qoemismatch: "1", agc_fmt: S.formatId, afmt: K.S.id }), S.DA != null && b.push(`tl.${S.DA}`), S.A5 != null && b.push(`vg.${S.A5}`),
                      S.WK !== 0 && b.push(`nm.${S.WK}`))
-               } else if (S = K.S.audio) p = S—.V, p !== void 0 && b.push(`fl.${p}`), S = S—.W, S !== void 0 && (S = Math.min(-S, 0), b.push(`vg.${S}`), b.push("nm.4")); T.call(Z, ...b); K.reason === "i" && t.push(ur2(e, K)); t.length > 0 && X.push(t.join(";")); K.token && X.push(K.token); g.VU(e, x, "afs", X); e.Mx = K.S.id
+               } else if (S = K.S.mp3) p = S—.V, p !== void 0 && b.push(`fl.${p}`), S = S—.W, S !== void 0 && (S = Math.min(-S, 0), b.push(`vg.${S}`), b.push("nm.4")); T.call(Z, ...b); K.reason === "i" && t.push(ur2(e, K)); t.length > 0 && X.push(t.join(";")); K.token && X.push(K.token); g.VU(e, x, "afs", X); e.Mx = K.S.id
             }
          } R.publish("internalaudioformatchange", I, !u && A)
       }
@@ -7721,10 +7721,10 @@ var _yt_player = {}; (function (g) {
    LDp = function (R, K = !1) { var x = null; R.videoData.V—.S() — (x = qy2(R, K), R.loader—.resume()) : (bO(R), R.videoData.zJ && (x = R.videoData.zJ.A())); return x };
    N2x = function (R, K) { if (K.S.video.quality === "auto" && K.getInfo().V()) if (R.L("html5_hls_report_pseudo_itag") && R.videoData.hlsvp) { var x = R.i8(); if (x && x.videoHeight > 0 && x.videoWidth > 0) { var X = x.videoHeight; x = x.videoWidth; a: { R = R.OZ—.S.flavor === "fairplay" — wIQ : zl_; for (Z of R) if (X >= Z.minHeight) { var Z = Z.itag; break a } Z = "" } if (Z) return new Gc(Z, "application/x-mpegURL", { video: new ji(x, X) }) } } else if (R.videoData.rQ) for (X of R.videoData.rQ) if (X.getHeight() === R.oS && X.S.video.quality !== "auto") return X.getInfo(); return K.getInfo() };
    RwI = function (R) { return !!(R.L("html5_native_audio_track_switching") && g.JI && R.videoData.A—.V()) };
-   Kny = function (R) { if (!RwI(R)) return !1; R = R.mediaElement—.audioTracks(); return !!(R && R.length > 1) };
+   Kny = function (R) { if (!RwI(R)) return !1; R = R.mediaElement—.mp3Tracks(); return !!(R && R.length > 1) };
    xY4 = function (R) { var K = sKi(R); if (K) { var x = H2[K] || K; return R.videoData.getAvailableAudioTracks().find(X => X.Iw.getName() === x) } };
-   sKi = function (R) { if (R = R.mediaElement—.audioTracks()) for (let K = 0; K < R.length; ++K) { let x = R[K]; if (x.enabled) return x.label } };
-   XLx = function (R) { var K = R.mediaElement—.audioTracks(); if (K) { var x = []; for (let Z = 0; Z < K.length; ++Z) { var X = K[Z]; X = new g.RB(X.label, new g.Qk(H2[X.label] || X.label, X.label, !1)); x.push(X) } R.videoData.vH = x } };
+   sKi = function (R) { if (R = R.mediaElement—.mp3Tracks()) for (let K = 0; K < R.length; ++K) { let x = R[K]; if (x.enabled) return x.label } };
+   XLx = function (R) { var K = R.mediaElement—.mp3Tracks(); if (K) { var x = []; for (let Z = 0; Z < K.length; ++Z) { var X = K[Z]; X = new g.RB(X.label, new g.Qk(H2[X.label] || X.label, X.label, !1)); x.push(X) } R.videoData.vH = x } };
    B22 = function (R) {
       var K, x = R.videoData.getAvailableAudioTracks(), X = R.B.x3; X && (K = x.find(Z => Z.getLanguageInfo().id === X));
       if (R.B.experiments.Q1("enable_audio_description_setting") && g.Il().U3(198)) for (let Z of x) if (Z.j) { K = Z; break } R.ta().S.U3(ZXc) && R.videoData.cotn && (K = x.find(Z => !!Z.D));
@@ -7748,7 +7748,7 @@ var _yt_player = {}; (function (g) {
          for (let K of R.PB) R.E3("vpe", Object.assign({ t: K.rt }, K)); R.PB = []; R.xZ = 0
       }
    };
-   WDD = function (R, K) { R.Ww.tick("vta"); of("vta", void 0, "video_to_ad"); R.getCurrentTime() > 0 && gps(R.IR, R.getCurrentTime()); R.mediaElement.activate(K); R.Nx && jA(4); !R.videoData.N && R.playerState.isOrWillBePlaying() && R.fn.start(); RwI(R) && (K = R.mediaElement—.audioTracks()) && (K.onaddtrack = () => { XLx(R) }, K.onremovetrack = () => { XLx(R) }, K.onchange = () => { R.publish("internalaudioformatchange", R.videoData, !0) }) };
+   WDD = function (R, K) { R.Ww.tick("vta"); of("vta", void 0, "video_to_ad"); R.getCurrentTime() > 0 && gps(R.IR, R.getCurrentTime()); R.mediaElement.activate(K); R.Nx && jA(4); !R.videoData.N && R.playerState.isOrWillBePlaying() && R.fn.start(); RwI(R) && (K = R.mediaElement—.mp3Tracks()) && (K.onaddtrack = () => { XLx(R) }, K.onremovetrack = () => { XLx(R) }, K.onchange = () => { R.publish("internalaudioformatchange", R.videoData, !0) }) };
    V1 = function (R, K, x) { var X = R.api.getCurrentTime() * 1E3 < K — 1 : -1; R.api.renderChapterSeekingAnimation(X, x); R.api.seekTo(K / 1E3, void 0, void 0, void 0, 3) };
    td2 = function (R, K) { var x = g.U5.getState().entities; R = c_(x, R)—.markersList—.markerType; for (let X of K.cj) if (R === c_(x, X)—.markersList—.markerType) return !0; return !1 };
    bXy = function (R) { R = R.api.getPlayerStateObject(); R = R.isCued() || R.isError() — "none" : R.isOrWillBePlaying() — "playing" : "paused"; navigator.mediaSession.playbackState = R };
@@ -8018,9 +8018,9 @@ var _yt_player = {}; (function (g) {
          video_id_and_cpn: String(K.videoId) + " / " + t, codecs: "", dims_and_frames: "", bandwidth_kbps: `${I.toFixed(0)} Kbps`, buffer_health_seconds: `${A.toFixed(2)} s`, date: `${(new Date).toString()}`,
          drm_style: T — "" : "display:none", drm: T, debug_info: b, extra_debug_info: "", bandwidth_style: p, network_activity_style: p, network_activity_bytes: `${u.toFixed(0)} KB`, shader_info: S, shader_info_style: S — "" : "display:none", playback_categories: ""
       }; u = `${X.clientWidth}x${X.clientHeight}` + (x > 1 — `*${x.toFixed(2)}` : ""); A = "-"; e.totalVideoFrames && (A = `${e.droppedVideoFrames || 0} dropped of ${e.totalVideoFrames}`); I.dims_and_frames = `${u} / ${A}`; A = R.getVolume(); K.Mw — (R = K.Mw.S, u = Math.round(A), A = Math.round(A * (R—.h5 —— 1)), T = "",
-         K.W—.audio.A — T = " VB" : K.W—.audio.S && (T = " DRC"), b = "", R—.tw != null && (b += `cont.${R.tw.toFixed(1)}dB`), R—.DA != null && (b += ` tgt.${R.DA.toFixed(1)}dB`), b && (b = ` (${b})`), R = `${u}%/${A}%${T}${b}`) : (R = seQ(K.Mw), R = `${Math.round(A)}% / ${K.W—.audio.A — "VB" : K.W—.audio.S — "DRC" : `${Math.round(A * R)}%`}`, u = K.S4.toFixed(1), isFinite(Number(u)) && (R += ` (content loudness ${u}dB)`)); I.volume = R; I.resolution = `${X.videoWidth}x${X.videoHeight}`; if (X = K.A) {
+         K.W—.mp3.A — T = " VB" : K.W—.mp3.S && (T = " DRC"), b = "", R—.tw != null && (b += `cont.${R.tw.toFixed(1)}dB`), R—.DA != null && (b += ` tgt.${R.DA.toFixed(1)}dB`), b && (b = ` (${b})`), R = `${u}%/${A}%${T}${b}`) : (R = seQ(K.Mw), R = `${Math.round(A)}% / ${K.W—.mp3.A — "VB" : K.W—.mp3.S — "DRC" : `${Math.round(A * R)}%`}`, u = K.S4.toFixed(1), isFinite(Number(u)) && (R += ` (content loudness ${u}dB)`)); I.volume = R; I.resolution = `${X.videoWidth}x${X.videoHeight}`; if (X = K.A) {
             if (R = X.video) u = R.fps, u > 1 && (I.resolution += `@${u}`), (u = e.dg) && u.video && (I.resolution +=
-               ` / ${u.video.width}x${u.video.height}`, u.video.fps > 1 && (I.resolution += `@${u.video.fps}`)), I.codecs = Tks(X), !K.W || X.audio && X.video — X.F4 && (I.codecs += ` / ${X.F4}A`) : I.codecs += ` / ${Tks(K.W)}`, R.S || R.primaries — (u = R.S || "unknown", u === "smpte2084" — u = `${u} (PQ)` : u === "arib-std-b67" && (u = `${u} (HLG)`), I.color = `${u} / ${R.primaries || "unknown"}`, I.color_style = "") : I.color_style = "display:none"; if (X.debugInfo) { I.fmt_debug_info = ""; for (var v of X.debugInfo) I.fmt_debug_info += `${v.label}:${v.text} ` } I.fmt_debug_info_style =
+               ` / ${u.video.width}x${u.video.height}`, u.video.fps > 1 && (I.resolution += `@${u.video.fps}`)), I.codecs = Tks(X), !K.W || X.mp3&& X.video — X.F4 && (I.codecs += ` / ${X.F4}A`) : I.codecs += ` / ${Tks(K.W)}`, R.S || R.primaries — (u = R.S || "unknown", u === "smpte2084" — u = `${u} (PQ)` : u === "arib-std-b67" && (u = `${u} (HLG)`), I.color = `${u} / ${R.primaries || "unknown"}`, I.color_style = "") : I.color_style = "display:none"; if (X.debugInfo) { I.fmt_debug_info = ""; for (var v of X.debugInfo) I.fmt_debug_info += `${v.label}:${v.text} ` } I.fmt_debug_info_style =
                   I.fmt_debug_info && I.fmt_debug_info.length > 0 — "" : "display:none"
          } v = K.isLivePlayback; X = K.LI; I.live_mode_style = v || X — "" : "display:none"; I.live_latency_style = v — "" : "display:none"; if (X) I.live_mode = "Post-Live" + (Xr(K) — " Manifestless" : ""); else if (v) {
             X = e.nh; I.live_latency_secs = `${X.toFixed(2)}s`; v = Xr(K) — "Manifestless, " : ""; K.Ur && (v += "Windowed, "); R = "Uncertain"; if (X >= 0 && X < 120) if (K.latencyClass && K.latencyClass !== "UNKNOWN") switch (K.latencyClass) {
@@ -8642,7 +8642,7 @@ var _yt_player = {}; (function (g) {
    };
    JH = function (R, K, x, X) {
       var Z = x.getVideoData(), e = K.getVideoData(); if (x.getPlayerState().isError()) return { msg: "player-error" }; var I = e.V; if (K.Di() > X / 1E3 + 1) return { msg: "in-the-past" }; if (e.isLivePlayback && !isFinite(X)) return { msg: "live-infinite" }; X = K.TE(); var u = null; X && (u = X.isView() — X.mediaElement.j() : X.j()); if (u && u.length > 12 && g.px(Z)) return { msg: "played-ranges" }; if (!Z.V) return null; if (!I) return { msg: "no-pvd-formats" }; if (!Z.V.S() || !I.S()) return { msg: "non-dash" }; X = I.videoInfos[0]; u = Z.V.videoInfos[0]; R.iP && h9(e) &&
-         (X = K.kY(), u = x.kY()); if (!X || !u) return { msg: "no-video-info" }; if (R.Y && (X.S() || u.S())) return { msg: "av1" }; K = R.U && e.Qo() && Ln(); if (u.containerType !== X.containerType) if (K) e.E3("sgap", { ierr: "container" }); else return { msg: "container" }; if (R.N && !K && (u.Bj !== X.Bj || u.Bj === "" || X.Bj === "")) return { msg: "codec" }; if (R.s3 && u.video && X.video && Math.abs(u.video.width / u.video.height - X.video.width / X.video.height) > .01) return { msg: "ratio" }; if (g.px(e) && g.px(Z)) return { msg: "content-protection" }; I = I.A[0]; Z = Z.V.A[0]; x = I.audio; var A = Z.audio;
+         (X = K.kY(), u = x.kY()); if (!X || !u) return { msg: "no-video-info" }; if (R.Y && (X.S() || u.S())) return { msg: "av1" }; K = R.U && e.Qo() && Ln(); if (u.containerType !== X.containerType) if (K) e.E3("sgap", { ierr: "container" }); else return { msg: "container" }; if (R.N && !K && (u.Bj !== X.Bj || u.Bj === "" || X.Bj === "")) return { msg: "codec" }; if (R.s3 && u.video && X.video && Math.abs(u.video.width / u.video.height - X.video.width / X.video.height) > .01) return { msg: "ratio" }; if (g.px(e) && g.px(Z)) return { msg: "content-protection" }; I = I.A[0]; Z = Z.V.A[0]; x = I.mp3; var A = Z.mp3;
       if (x.sampleRate !== A.sampleRate && !g.h7) if (K) e.E3("sgap", { ierr: "srate" }); else return { msg: "sample-rate", ci: I.itag, cr: x.sampleRate, ni: Z.itag, nr: A.sampleRate }; return (x.numChannels || 2) !== (A.numChannels || 2) — { msg: "channel-count" } : R.SN && e.Qo() && X.video.fps !== u.video.fps — { msg: "fps" } : null
    };
    ghp = function (R, K, x) { var X = R.getVideoData(), Z = K.getVideoData(); if (!X.Z().supportsGaplessShorts()) return { nq: "env" }; if (!(x.wQ && !(X.oK && !X.isAd() || Z.oK && !Z.isAd()) || x.j && (!X.oK || X.isAd()) && !Z.oK || x.D && (!Z.oK || Z.isAd()) && !X.oK || X.Z().ta().S.U3(MsD) && X.Bk() && Z.Bk() && !X.isAd() || !X.oK && !Z.oK)) return { nq: "autoplay" }; if (X.endSeconds > 0) return { nq: "endcr" }; if (!X.U) return { nq: "client" }; if (!R.bE()) return { nq: "no-empty" }; R = JH(x, R, K, Infinity); return R != null — { nq: R.msg } : null };
@@ -10352,7 +10352,7 @@ var _yt_player = {}; (function (g) {
          }
       }, Ht_ = class extends ln { A() { var R = []; this.S.creatorEntity && R.push(this.S.creatorEntity); return [...(new Set(R))] } }; var Fk2 = class extends j5 { A() { return [] } }; var VVc = class extends j5 {
          A() {
-            var R = []; this.S.musicLibraryStatusEntity && R.push(this.S.musicLibraryStatusEntity); this.S.artists && R.push(...this.S.artists); this.S.audioModeVersion && R.push(this.S.audioModeVersion); this.S.videoModeVersion && R.push(this.S.videoModeVersion); this.S.userDetails && R.push(this.S.userDetails); this.S.details && R.push(this.S.details); this.S.albumRelease && R.push(this.S.albumRelease); this.S.share && R.push(this.S.share); this.S.libraryEdit && R.push(this.S.libraryEdit); this.S.downloadMetadata &&
+            var R = []; this.S.musicLibraryStatusEntity && R.push(this.S.musicLibraryStatusEntity); this.S.artists && R.push(...this.S.artists); this.S.mp3ModeVersion && R.push(this.S.mp3ModeVersion); this.S.videoModeVersion && R.push(this.S.videoModeVersion); this.S.userDetails && R.push(this.S.userDetails); this.S.details && R.push(this.S.details); this.S.albumRelease && R.push(this.S.albumRelease); this.S.share && R.push(this.S.share); this.S.libraryEdit && R.push(this.S.libraryEdit); this.S.downloadMetadata &&
                R.push(this.S.downloadMetadata); this.S.playbackPosition && R.push(this.S.playbackPosition); this.S.lyrics && R.push(this.S.lyrics); return [...(new Set(R))]
          }
       }, qU5 = class extends j5 { A() { var R = []; this.S.parentTrack && R.push(this.S.parentTrack); return [...(new Set(R))] } }, YU2 = class extends j5 { A() { var R = []; this.S.parentTrack && R.push(this.S.parentTrack); return [...(new Set(R))] } }; var pNy = new g.N("musicEmbeddedPlayerOverlayVideoDetailsRenderer"); var DgD = new g.N("adFeedbackEndpoint"); var it5 = new g.N("menuEndpoint"); var or_ = new g.N("phoneDialerEndpoint"); var JJQ = new g.N("sendSmsEndpoint"); var QeI = new g.N("copyTextEndpoint"); var dgs = new g.N("shareEndpoint"), Eri = new g.N("shareEntityEndpoint"), vrx = new g.N("shareEntityServiceEndpoint"), kIy = new g.N("webPlayerShareEntityServiceEndpoint"); g.am = new g.N("urlEndpoint"); g.v_ = new g.N("watchEndpoint"); var LkD = new g.N("watchPlaylistEndpoint"); var Wky = class extends j5 { A() { return [] } }; var QWv = class extends j5 { A() { return [] } }; var Ug$ = class extends j5 { A() { return [] } }; var nrD = class extends j5 { A() { return [] } }; var Bhc = class extends j5 { A() { var R = []; this.S.transfer && R.push(this.S.transfer); this.S.adsPlaybackData && R.push(...this.S.adsPlaybackData); this.S.drmLicense && R.push(this.S.drmLicense); this.S.offlineVideoPolicy && R.push(this.S.offlineVideoPolicy); this.S.videoDownloadContextEntity && R.push(this.S.videoDownloadContextEntity); return [...(new Set(R))] } }; var f0v = class extends j5 { A() { return [] } }; var rJ4 = class extends j5 { A() { var R = []; this.S.offlineVideoStreams && R.push(...this.S.offlineVideoStreams); this.S.captionTrack && R.push(...this.S.captionTrack); return [...(new Set(R))] } }; var yJx = class extends j5 { A() { return [] } }; var PAv = class extends j5 { A() { return [] } }; var MVc = class extends j5 { A() { return [] } }; var grD = new g.N("prefetchWatchCommand"); var h7$ = new g.N("compositeVideoOverlayRenderer"); var wRv = new g.N("miniplayerRenderer"); var erQ = new g.N("paidContentOverlayRenderer"); var Ony = new g.N("playerMutedAutoplayOverlayRenderer"), Hn_ = new g.N("playerMutedAutoplayEndScreenRenderer"); var c5p = new g.N("unserializedPlayerResponse"), dp2 = new g.N("unserializedPlayerResponse"), z7_ = new g.N("playerResponse"); var NhQ = new g.N("playlistEditEndpoint"); var Rni = class extends j5 { A() { return [] } }; var kB = new g.N("reelWatchEndpoint"); var K$2 = new g.N("reelItemWatchResponse"); var WM = new g.N("buttonRenderer"), HA = new g.N("toggleButtonRenderer"); var Fav = new g.N("counterfactualRenderer"); var s0_ = new g.N("resolveUrlCommandMetadata"); var x_D = class extends j5 { A() { return [] } }; var X7x = new g.N("modifyChannelNotificationPreferenceEndpoint"); var oc_ = new g.N("pingingEndpoint"); var Zbc = new g.N("unsubscribeEndpoint"); var eni = class extends j5 { A() { return [] } }; g.Mi = new g.N("subscribeButtonRenderer"); var IS$ = new g.N("subscribeEndpoint"); var uW_ = class extends j5 { A() { return [] } }; var AK_ = class extends j5 { A() { return [] } }; var Tp4 = class extends j5 { A() { return [] } }; var Vzx = new g.N("buttonViewModel"); var S8I = class extends j5 { A() { return [] } }; var p7$ = class extends j5 { A() { return [] } }; var tP_ = class extends j5 { A() { return [] } }; var bbp = class extends j5 { A() { return [] } }; var $_v = class extends j5 { A() { return [] } }; var cKv = class extends j5 { A() { return [] } }; var m_i = class extends j5 { A() { return [] } }; var Vjy = new g.N("qrCodeRenderer"); var CQD = { tj: "LIVING_ROOM_APP_MODE_UNSPECIFIED", Co: "LIVING_ROOM_APP_MODE_MAIN", Z1: "LIVING_ROOM_APP_MODE_KIDS", lX: "LIVING_ROOM_APP_MODE_MUSIC", XQ: "LIVING_ROOM_APP_MODE_UNPLUGGED", Qq: "LIVING_ROOM_APP_MODE_GAMING" }; var lSi = class extends j5 { A() { return [] } }; var j05 = class extends j5 { A() { return [] } }; var lI4 = new g.N("autoplaySwitchButtonRenderer"); var m5, Upp, Qk4, Dv; m5 = new g.N("decoratedPlayerBarRenderer"); Upp = new g.N("chapteredPlayerBarRenderer"); Qk4 = new g.N("multiMarkersPlayerBarRenderer"); Dv = new g.N("chapterRenderer"); g.Bu2 = new g.N("markerRenderer"); var hAI = new g.N("decoratedPlayheadRenderer"); var Gv_ = new g.N("desktopOverlayConfigRenderer"); var YzI = new g.N("engagementPanelSectionListRenderer"); var je5 = new g.N("gatedActionsOverlayViewModel"); var ccp = new g.N("heatMarkerRenderer"); var rZc = new g.N("heatmapRenderer"); var b5y = new g.N("playlistPanelRenderer"); var GX_ = new g.N("productUpsellSuggestedActionViewModel"); var aC = new g.N("suggestedActionTimeRangeTrigger"), ObQ = new g.N("suggestedActionsRenderer"), Hbx = new g.N("suggestedActionRenderer"); var yZc = new g.N("timedMarkerDecorationRenderer"); var aSv = class extends j5 { A() { return [] } }; var F$5 = class extends j5 { A() { return [] } }; var VP_ = class extends j5 { A() { return [] } }; var q8D = class extends j5 { A() { return [] } }; var Y8$ = class extends j5 { A() { return [] } }; var D_s = class extends j5 { A() { return [] } }; var ib_ = class extends j5 { A() { return [] } }; var l3$ = new g.N("cipher"); var mp2 = new g.N("playerVars"); var EvD = new g.N("playerVars"); var oxc = g.cp.window, Gp = oxc—.yt—.config_ || oxc—.ytcfg—.data_ || {}; g.l5("yt.config_", Gp); var F3 = []; var C7v = /^[\w.]*$/, wK2 = { q: !0, search_query: !0 }, hti = String(DE); var G9s = new class { constructor(R, K) { this.S = R; this.A = K } }(window, window.document); g.l5("yt.ads_.signals_.getAdSignalsString", function (R) { return Ze(eh(R)) }); g.Ji(); var Hf5 = "XMLHttpRequest" in g.cp — () => new XMLHttpRequest : null; var JK2 = "absolute_experiments client_dev_domain client_dev_expflag client_dev_regex_map client_dev_root_url client_rollout_override expflag forcedCapability jsfeat jsmode mods theme".split(" ");[...JK2]; var qMv = {
@@ -11622,7 +11622,7 @@ var _yt_player = {}; (function (g) {
       CAST_SESSION_VIDEO_MISMATCHED: "The video in the cast session doesn't match the requested one.", CAST_TOKEN_FAILED: "Cast session not available. Please refresh or try again later.", CAST_TOKEN_EXPIRED: "Cast session was expired. Please refresh.", CAST_TOKEN_MALFORMED: "Invalid cast session. Please refresh or try again later.", SERVER_ERROR: "There was an internal server error. Please try again later.", STOPPED_BY_ANOTHER_PLAYBACK: "Your account is playing this video in another location. Please reload this page to resume watching.",
       STREAM_LICENSE_NOT_FOUND: "Video playback interrupted. Please try again.", STREAMING_DEVICES_QUOTA_PER_24H_EXCEEDED: "Too many devices/IP addresses have been used over the 24 hour period.", STREAMING_NOT_ALLOWED: "Playback not allowed because this video is pinned on another device.", RETRYABLE_ERROR: "There was a temporary server error. Please try again later.", TOO_MANY_REQUESTS: "Please log in to watch this video.", TOO_MANY_REQUESTS_WITH_LINK: "Please $BEGIN_LINKclick here$END_LINK to watch this video on YouTube.",
       TOO_MANY_STREAMS_PER_USER: "Playback stopped because too many videos belonging to the same account are playing.", TOO_MANY_STREAMS_PER_ENTITLEMENT: "Playback stopped because this video has been played on too many devices.", UNSUPPORTED_DEVICE: "Playback isn't supported on this device.", VIDEO_FORBIDDEN: "Access to this video is forbidden.", VIDEO_NOT_FOUND: "This video can not be found.", BROWSER_OR_EXTENSION_ERROR: "Something went wrong. Refresh or try again later. $BEGIN_LINKLearn more$END_LINK"
-   }; var Cc; { var Wxu = g.eQ(); let R = Wxu.match(/\((iPad|iPhone|iPod)( Simulator)—;/); if (!R || R.length < 2) Cc = void 0; else { var lk = Wxu.match(/\((iPad|iPhone|iPod)( Simulator)—; (U; )—CPU (iPhone )—OS (\d+_\d)[_ ]/); Cc = lk && lk.length === 6 — Number(lk[5].replace("_", ".")) : 0 } } var t9 = Cc, Bc = t9 >= 0; g.jt = class extends VZ { J(R, K, x, X, Z) { return super.J(R, K, x, X, Z) } }; var UE = { FAIRPLAY: "fairplay", PLAYREADY: "playready", WIDEVINE: "widevine", CLEARKEY: null, FLASHACCESS: null, UNKNOWN: null, WIDEVINE_CLASSIC: null }; var lt = class { constructor(R = 0, K = 0, x = "SPATIAL_AUDIO_TYPE_NONE", X = !1, Z, e, I = "AUDIO_QUALITY_UNKNOWN", u = !1) { this.sampleRate = R; this.numChannels = K; this.spatialAudioType = x; this.S = X; this.W = Z; this.V = e; this.audioQuality = I; this.A = u } isMultiChannelAudio() { return this.numChannels > 2 } }; var F5 = {
+   }; var Cc; { var Wxu = g.eQ(); let R = Wxu.match(/\((iPad|iPhone|iPod)( Simulator)—;/); if (!R || R.length < 2) Cc = void 0; else { var lk = Wxu.match(/\((iPad|iPhone|iPod)( Simulator)—; (U; )—CPU (iPhone )—OS (\d+_\d)[_ ]/); Cc = lk && lk.length === 6 — Number(lk[5].replace("_", ".")) : 0 } } var t9 = Cc, Bc = t9 >= 0; g.jt = class extends VZ { J(R, K, x, X, Z) { return super.J(R, K, x, X, Z) } }; var UE = { FAIRPLAY: "fairplay", PLAYREADY: "playready", WIDEVINE: "widevine", CLEARKEY: null, FLASHACCESS: null, UNKNOWN: null, WIDEVINE_CLASSIC: null }; var lt = class { constructor(R = 0, K = 0, x = "SPATIAL_AUDIO_TYPE_NONE", X = !1, Z, e, I = "AUDIO_QUALITY_UNKNOWN", u = !1) { this.sampleRate = R; this.numChannels = K; this.spatialAudioType = x; this.S = X; this.W = Z; this.V = e; this.mp3Quality = I; this.A = u } isMultiChannelAudio() { return this.numChannels > 2 } }; var F5 = {
       WIDTH: { name: "width", video: !0, valid: 640, Fm: 99999 }, HEIGHT: { name: "height", video: !0, valid: 360, Fm: 99999 }, FRAMERATE: { name: "framerate", video: !0, valid: 30, Fm: 9999 }, BITRATE: { name: "bitrate", video: !0, valid: 3E5, Fm: 2E9 }, EOTF: { name: "eotf", video: !0, valid: "bt709", Fm: "catavision" }, CHANNELS: { name: "channels", video: !1, valid: 2, Fm: 99 }, CRYPTOBLOCKFORMAT: { name: "cryptoblockformat", video: !0, valid: "subsample", Fm: "invalidformat" }, DECODETOTEXTURE: { name: "decode-to-texture", video: !0, valid: "false", Fm: "nope" }, AV1_CODECS: {
          name: "codecs",
          video: !0, valid: "av01.0.05M.08", Fm: "av99.0.05M.08"
@@ -11646,10 +11646,10 @@ var _yt_player = {}; (function (g) {
             "p") + (K > 55 — "60" : K > 49 — "50" : K > 39 — "48" : ""))); this.qualityLabel = R; this.S = A || ""; this.primaries = T || ""; this.W = S —— !0
       } A() { return this.fps > 32 } isHdr() { return this.S === "smpte2084" || this.S === "arib-std-b67" }
    }; var Gc = class {
-      constructor(R, K, x = {}) { this.id = R; this.mimeType = K; x.Eh > 0 || (x.Eh = 16E3); Object.assign(this, x);[this.itag, this.A] = this.id.split(";"); this.containerType = $v(K); this.Bj = k8[this.itag] || "" } U() { return this.video } N() { return this.audio } Rx() { return this.containerType === 2 } W() { return this.Bj === "9" || this.Bj === "(" || this.Bj === "9h" || this.Bj === "(h" } S() { return this.Bj === "1" || this.Bj === "1h" || HB && this.Bj === "1e" } j() { return this.Bj === "mac3" || this.Bj === "meac3" || this.Bj === "m" || this.Bj === "i" || eEI(this) } Y() {
+      constructor(R, K, x = {}) { this.id = R; this.mimeType = K; x.Eh > 0 || (x.Eh = 16E3); Object.assign(this, x);[this.itag, this.A] = this.id.split(";"); this.containerType = $v(K); this.Bj = k8[this.itag] || "" } U() { return this.video } N() { return this.mp3} Rx() { return this.containerType === 2 } W() { return this.Bj === "9" || this.Bj === "(" || this.Bj === "9h" || this.Bj === "(h" } S() { return this.Bj === "1" || this.Bj === "1h" || HB && this.Bj === "1e" } j() { return this.Bj === "mac3" || this.Bj === "meac3" || this.Bj === "m" || this.Bj === "i" || eEI(this) } Y() {
          return this.Bj ===
             "MAC3" || this.Bj === "mac3" || this.Bj === "MEAC3" || this.Bj === "meac3"
-      } isEncrypted() { return !!this.contentProtection } H7() { return !!this.audio } fP() { return !!this.video } V() { return this.mimeType === "application/x-mpegURL" }
+      } isEncrypted() { return !!this.contentProtection } H7() { return !!this.mp3} fP() { return !!this.video } V() { return this.mimeType === "application/x-mpegURL" }
    }, HB = !1; var mW2 = class extends g.zz {
       constructor(R, K, x, X) {
          super(); this.YF = R; this.start = K; this.end = x; this.isActive = X; this.appendWindowStart = 0; this.appendWindowEnd = Infinity; this.timestampOffset = 0; this.bd = {
@@ -12293,10 +12293,10 @@ var _yt_player = {}; (function (g) {
             R.Eh) : this.Eh === 0 — R.Eh : this.Eh); return gW && K === this.A && x === this.S && X === this.Eh || !gW && K === this.A && x === this.S — this : gW — new Pg(K, x, !1, x === this.S && X === this.Eh — this.reason : R.reason, X) : new Pg(K, x, !1, x === this.S — this.reason : R.reason)
       } W(R) { return !R.video || gW && this.Eh !== 0 && this.Eh < R.Eh — !1 : e9y(this, R.video.quality) }
    }, vi1 = g.ML("auto", "hd1080", !1, "l"), xC = g.ML("auto", "large", !1, "l"), pH = g.ML("auto", "auto", !1, "p"), gW = !1; var sT = class {
-      constructor(R, K, x, X) { this.videoInfos = R; this.A = K; this.audioTracks = []; this.V = X || []; if (this.A) { R = new Set; x—.({ ainfolen: this.A.length }); for (let Z of this.A) { if (!Z.Iw || R.has(Z.Iw.id)) { x—.({ atkerr: !!Z.Iw, itag: Z.itag, xtag: Z.A, lang: Z.Iw—.name || "", langid: Z.Iw—.id || "" }); continue } K = new g.RB(Z.id, Z.Iw); R.add(Z.Iw.id); this.audioTracks.push(K) } x—.({ atklen: this.audioTracks.length }) } } N4(R) {
+      constructor(R, K, x, X) { this.videoInfos = R; this.A = K; this.mp3Tracks = []; this.V = X || []; if (this.A) { R = new Set; x—.({ ainfolen: this.A.length }); for (let Z of this.A) { if (!Z.Iw || R.has(Z.Iw.id)) { x—.({ atkerr: !!Z.Iw, itag: Z.itag, xtag: Z.A, lang: Z.Iw—.name || "", langid: Z.Iw—.id || "" }); continue } K = new g.RB(Z.id, Z.Iw); R.add(Z.Iw.id); this.mp3Tracks.push(K) } x—.({ atklen: this.mp3Tracks.length }) } } N4(R) {
          R = R || pH; var K = g.fy(this.videoInfos, Z => R.W(Z)), x = [], X = {};
          for (let Z = 0; Z < K.length; Z++) { let e = K[Z].video; X[e.quality] || (x.push(e), X[e.quality] = !0) } return x
-      } bU(R) { R = R || pH; return g.fy(this.videoInfos, K => R.W(K)) } getAvailableAudioTracks() { return this.audioTracks } S() { return !!this.A }
+      } bU(R) { R = R || pH; return g.fy(this.videoInfos, K => R.W(K)) } getAvailableAudioTracks() { return this.mp3Tracks } S() { return !!this.A }
    }; var FB_ = new Set(["356"]), k$$ = class extends g.uX { constructor() { super(...arguments); this.A = null; this.S = new Map } f$() { super.f$() } }; var lW = class { constructor(R, K, x, X, Z, e, I, u, A) { this.bP = R; this.startTime = K; this.duration = x; this.ingestionTime = X; this.sourceURL = Z; this.w$ = A; this.endTime = K + x; this.S = I || 0; this.range = e || null; this.pending = u || !1; this.w$ = A || null } }; g.X6 = class {
       constructor() { this.segments = []; this.A = null; this.j = !0; this.D = "" } U(R) { this.segments.push(R) } Y9(R) { return !!this.V(R) } getDuration(R) { return (R = this.V(R)) — R.duration : 0 } Y(R) { return this.getDuration(R) } Fg() { return 0 } k9() { return this.segments.length — this.segments[0].bP : -1 } zn(R) { return (R = this.V(R)) — R.ingestionTime : NaN } li() { return this.segments.length — this.segments[this.segments.length - 1].bP : -1 } qU(R) { return this.li() === R && !this.j && R >= 0 } Da() {
          var R = this.segments[this.segments.length - 1]; return R — R.endTime :
@@ -12574,7 +12574,7 @@ var _yt_player = {}; (function (g) {
                height: 1440, bitrate: 4E6, fps: 30
             }, ["248"]: { width: 1920, height: 1080, bitrate: 2E6, fps: 30 }, ["247"]: { width: 1280, height: 720, bitrate: 15E5, fps: 30 }, ["244"]: { width: 854, height: 480, bitrate: 52E4, fps: 30 }, ["243"]: { width: 640, height: 360, bitrate: 28E4, fps: 30 }, ["137"]: { width: 1920, height: 1080, bitrate: 4E6, fps: 30 }, ["136"]: { width: 1280, height: 720, bitrate: 3E6, fps: 30 }, ["135"]: { width: 854, height: 480, bitrate: 1E6, fps: 30 }, ["385"]: { width: 1920, height: 1080, bitrate: 6503313, fps: 60 }, ["376"]: { width: 1280, height: 720, bitrate: 5706960, fps: 60 },
             ["384"]: { width: 1280, height: 720, bitrate: 3660979, fps: 60 }, ["225"]: { width: 1280, height: 720, bitrate: 5805E3, fps: 30 }, ["224"]: { width: 1280, height: 720, bitrate: 453E4, fps: 30 }, ["145"]: { width: 1280, height: 720, bitrate: 2682052, fps: 30 }
-         }; var TY = class { constructor(R) { this.S = R } getInfo() { return this.S } A() { return null } j() { var R = this.A(); return R — (R = g.Js(R.KC), Number(R.expire)) : NaN } W() { } getHeight() { return this.S.video.height } }; var E__ = class { constructor(R) { this.itag = R.itag; this.url = R.url; this.codecs = R.codecs; this.width = R.width; this.height = R.height; this.fps = R.fps; this.bitrate = R.bitrate; this.A = R.audioItag—.split(",") || []; this.Qr = R.Qr; this.contentProtection = R.contentProtection || ""; this.Iw = R.Iw; this.audioChannels = R.audioChannels; this.S = "" } }; var y7i = class {
+         }; var TY = class { constructor(R) { this.S = R } getInfo() { return this.S } A() { return null } j() { var R = this.A(); return R — (R = g.Js(R.KC), Number(R.expire)) : NaN } W() { } getHeight() { return this.S.video.height } }; var E__ = class { constructor(R) { this.itag = R.itag; this.url = R.url; this.codecs = R.codecs; this.width = R.width; this.height = R.height; this.fps = R.fps; this.bitrate = R.bitrate; this.A = R.mp3Itag—.split(",") || []; this.Qr = R.Qr; this.contentProtection = R.contentProtection || ""; this.Iw = R.Iw; this.mp3Channels = R.mp3Channels; this.S = "" } }; var y7i = class {
             constructor(R, K, x, X, Z) { this.V = R; this.A = K; this.j = x; this.cpn = X; this.D = Z; this.W = 0; this.S = "" } build() {
                LX_(this); var R = ["#EXTM3U", "#EXT-X-INDEPENDENT-SEGMENTS"], K = {}; a: if (this.S) var x = this.S; else { x = ""; for (var X of this.V) if (X.Iw) { if (X.Iw.getIsDefault()) { x = X.Iw.getId(); break a } x || (x = X.Iw.getId()) } } for (var Z of this.V) if (this.D || !Z.Iw || Z.Iw.getId() === x) K[Z.itag] || (K[Z.itag] = []), K[Z.itag].push(Z); for (var e of this.A) if (Z = K[e.S]) for (var I of Z) {
                   Z = R; x = Z.push; X = "#EXT-X-MEDIA:TYPE=AUDIO,"; let S =
@@ -12653,7 +12653,7 @@ var _yt_player = {}; (function (g) {
             R.post_live_playback); this.Ur && (this.LI = !1); this.isMdxPlayback = Dk(this.isMdxPlayback, R.mdx); if (K = R.mdx_control_mode) this.mdxControlMode = typeof K === "number" — K : u$(K); this.isInlinePlaybackNoAd = Dk(this.isInlinePlaybackNoAd, R.is_inline_playback_no_ad); this.oc = oV(this.oc, R.reload_count); this.reloadReason = JG(this.reloadReason, R.reload_reason); this.Gu = Dk(this.Gu, R.show_content_thumbnail); this.cycToken = R.cyc || null; K = Kz(R); Object.keys(K).length > 0 && (this.QW = K); this.wQ = JG(this.wQ, R.vvt); this.mdxEnvironment = JG(this.mdxEnvironment,
                R.mdx_environment); R.source_container_playlist_id && (this.sourceContainerPlaylistId = R.source_container_playlist_id); R.serialized_mdx_metadata && (this.serializedMdxMetadata = R.serialized_mdx_metadata); this.nx = R.osig; this.eventId || (this.eventId = R.eventid); this.osid || (this.osid = R.osid); this.playlistId = JG(this.playlistId, R.list); R.index && (this.playlistIndex = this.playlistIndex === void 0 — oV(0, R.index) : oV(this.playlistIndex, R.index)); this.uq = R.pyv_view_beacon_url; this.fu = R.pyv_quartile25_beacon_url; this.AY =
                   R.pyv_quartile50_beacon_url; this.zB = R.pyv_quartile75_beacon_url; this.rR = R.pyv_quartile100_beacon_url; K = R.session_data; !this.hY && K && (this.hY = DE(K, "&").feature); this.isFling = oV(this.isFling — 1 : 0, R.is_fling) === 1; this.vnd = oV(this.vnd, R.vnd); this.forceAdsUrl = JG(this.forceAdsUrl, R.force_ads_url); this.hA = JG(this.hA, R.ctrl); this.LZ = JG(this.LZ, R.ytr); this.Rf = R.ytrcc; this.aQ = R.ytrexp; this.Nl = R.ytrext; this.Y3 = JG(this.Y3, R.adformat); this.gR = JG(this.gR, R.attrib); this.slotPosition = oV(this.slotPosition, R.slot_pos);
-         this.breakType = R.break_type; this.Ma = Dk(this.Ma, R.ssrt); this.videoId = ED(R) || this.videoId; this.KV = JG(this.KV, R.vss_credentials_token); this.p5 = JG(this.p5, R.vss_credentials_token_type); this.t_ = Dk(this.t_, R.audio_only); this.om = Dk(this.om, R.aac_high); this.iU = Dk(this.iU, R.prefer_low_quality_audio); this.pU = Dk(this.pU, R.uncap_inline_quality); this.L("html5_enable_qoe_cat_list") — R.qoe_cat && (this.UW = this.UW.concat(R.qoe_cat.split(","))) : this.h3 = JG(this.h3, R.qoe_cat); this.PX = Dk(this.PX, R.download_media); this.U =
+         this.breakType = R.break_type; this.Ma = Dk(this.Ma, R.ssrt); this.videoId = ED(R) || this.videoId; this.KV = JG(this.KV, R.vss_credentials_token); this.p5 = JG(this.p5, R.vss_credentials_token_type); this.t_ = Dk(this.t_, R.mp3_only); this.om = Dk(this.om, R.aac_high); this.iU = Dk(this.iU, R.prefer_low_quality_audio); this.pU = Dk(this.pU, R.uncap_inline_quality); this.L("html5_enable_qoe_cat_list") — R.qoe_cat && (this.UW = this.UW.concat(R.qoe_cat.split(","))) : this.h3 = JG(this.h3, R.qoe_cat); this.PX = Dk(this.PX, R.download_media); this.U =
             E6i(this, R.prefer_gapless); Qmv(this.playerResponse) && this.uL.push("ad"); if (K = R.adaptive_fmts) this.adaptiveFormats = K, this.E3("adpfmts", {}, !0); if (K = R.allow_embed) this.allowEmbed = Number(K) === 1; if (K = R.backgroundable) this.backgroundable = Number(K) === 1; if (K = R.autonav) this.isAutonav = Number(K) === 1; if (K = R.autoplay) this.oK = this.yO = Number(K) === 1; if (K = R.iv_load_policy) this.annotationsLoadPolicy = iR(this.annotationsLoadPolicy, K, qz); if (K = R.cc_lang_pref) this.captionsLanguagePreference = JG(K, this.captionsLanguagePreference);
          if (K = R.cc_load_policy) this.Fi = iR(this.Fi, K, qz); this.deviceCaptionsOn = R.device_captions_on —— void 0; this.yj = R.device_captions_lang_pref —— ""; this.Dn = R.viewer_selected_caption_langs —— []; if (K = R.cached_load) this.iI = Dk(this.iI, K); if (R.dash === "0" || R.dash === 0 || R.dash === !1) this.Qi = !0; if (K = R.dashmpd) this.nM = g.cT(K, { cpn: this.clientPlaybackNonce }); if (K = R.delay) this.XY = u$(K); K = this.Qx || R.end; if (this.DK — K != null : K != void 0) this.clipEnd = oV(this.clipEnd, K); if (K = R.fmt_list) this.CH = K; R.heartbeat_preroll && this.uL.push("heartbeat");
          HBY && (this.PC = -Math.floor(Math.random() * 10), this.wY = -Math.floor(Math.random() * 40)); if (K = R.is_listed) this.isListed = Dk(this.isListed, K); if (K = R.is_private) this.isPrivate = Dk(this.isPrivate, K); if (K = R.is_dni) this.Pe = Dk(this.Pe, K); if (K = R.dni_color) this.rh = JG(this.rh, K); if (K = R.pipable) this.pipable = Dk(this.pipable, K); this.dD = (this.ST = this.pipable && this.ac.JH) && !this.ac.showMiniplayerButton; if (K = R.paid_content_overlay_duration_ms) this.paidContentOverlayDurationMs = u$(K); if (K = R.paid_content_overlay_text) this.paidContentOverlayText =
@@ -12686,7 +12686,7 @@ var _yt_player = {}; (function (g) {
          this.V = R;
          KIQ(this, this.V.getAvailableAudioTracks()); if (this.V) for (var K of this.V.videoInfos) R = K.containerType, R !== 0 && (this.Nt[R] = K.id); K = this.getAvailableAudioTracks(); K = K.concat(this.wA); for (R = 0; R < this.P0.length; R++) {
             let X = this.P0[R]; for (let Z = 0; Z < K.length; Z++) {
-               let e = K[Z]; var x = e.Iw.id === X.audioTrackId; if (e.Iw.isDefault && R === this.PW || x) {
+               let e = K[Z]; var x = e.Iw.id === X.mp3TrackId; if (e.Iw.isDefault && R === this.PW || x) {
                   if (X.captionTrackIndices) for (x = 0; x < X.captionTrackIndices.length; x++)e.captionTracks[x] = this.captionTracks[X.captionTrackIndices[x]]; X.defaultCaptionTrackIndex !== void 0 &&
                      (e.V = this.captionTracks[X.defaultCaptionTrackIndex]); X.forcedCaptionTrackIndex !== void 0 && (e.S = this.captionTracks[X.forcedCaptionTrackIndex]); e.A = X.visibility || "UNKNOWN"; e.captionsInitialState = X.captionsInitialState || "CAPTIONS_INITIAL_STATE_UNKNOWN"
                }
@@ -12791,7 +12791,7 @@ var _yt_player = {}; (function (g) {
             var K = Y__(this, R); R = this.app.qS({ playerType: R }).getVideoData(); K.backgroundable = R.backgroundable; K.eventId = R.eventId; K.cpn = R.clientPlaybackNonce; K.isLive = R.isLivePlayback; K.isWindowedLive = R.Ur; K.isManifestless = Xr(R); K.allowLiveDvr = R.allowLiveDvr; K.isListed = R.isListed; R.liveUtcStartSeconds != null && (K.liveUtcStartSeconds = R.liveUtcStartSeconds); R.dA() && (K.isEncrypted = !0); if (R.V) for (let x of R.V.videoInfos) if (x.video—.isHdr()) {
                K.isHdr =
                !0; break
-            } K.isMultiChannelAudio = !!R.W—.audio—.isMultiChannelAudio(); return K
+            } K.isMultiChannelAudio = !!R.W—.mp3—.isMultiChannelAudio(); return K
          } seekBy(R, K, x, X, Z) { Mx(this) && d0(this.app, this.app.getCurrentTime() + R, K, x, Z, X) } Io(R, K, x) { this.seekBy(R, K, x, void 0, 1) } seekTo(R, K, x, X, Z) { Mx(this) && d0(this.app, R, K, x, X, Z) } Vs(R, K, x, X = 1) { this.seekTo(R, K, x, X) } getStoryboardFormat() { return Jr(this.app.getVideoData()) — null : this.app.getStoryboardFormat() } wX(R = 1, K) { return this.getCurrentTime({ playerType: R, c7: K }) } V() {
             var R = this.app.getPresentingPlayerType(!0); R === 2 && this.app.vI() && (R = 1);
             return R
@@ -12871,7 +12871,7 @@ var _yt_player = {}; (function (g) {
                   this.jr); Ub(this, "getCurrentTime", this.wX); Ub(this, "getDuration", this.A$); Ub(this, "getPlayerState", this.hG); Ub(this, "getVideoLoadedFraction", this.WY); Ub(this, "mute", this.Mi); Ub(this, "unMute", this.qA); Ub(this, "setVolume", this.PM); Ub(this, "loadModule", this.loadModule); Ub(this, "unloadModule", this.unloadModule); Ub(this, "getOption", this.Wh); Ub(this, "getOptions", this.getOptions); Ub(this, "setOption", this.setOption); Ub(this, "addCueRange", this.addCueRange); Ub(this, "getDebugText", this.getDebugText); Ub(this,
                      "getStoryboardFormat", this.getStoryboardFormat); Ub(this, "toggleFullscreen", this.toggleFullscreen); Ub(this, "isFullscreen", this.isFullscreen); Ub(this, "getPlayerSize", this.getPlayerSize); Ub(this, "toggleSubtitles", this.toggleSubtitles); Ub(this, "setCenterCrop", this.setCenterCrop); Ub(this, "setFauxFullscreen", this.setFauxFullscreen); Ub(this, "setSizeStyle", this.setSizeStyle); Ub(this, "handleGlobalKeyDown", this.handleGlobalKeyDown); Ub(this, "handleGlobalKeyUp", this.handleGlobalKeyUp); Db2(this)
          } mB(R, K, x, X, Z,
-            e, I) { return this.app.mB(R, K, x, X, Z, e, I) } O8() { return this.app.O8() } j0() { return this.app.j0() } LV() { var R = this.j0().Md.get("endscreen"); return !!R && R.LV() } getRootNode() { return this.Fs().element } Z() { return this.app.Z() } xm() { return this.app.A2() } F5(R) { return this.app.F5(R) } iF() { return g.yq(this)—.iF() || null } getSourceConfigForActiveAudioTrack() { var R = this.getVideoData()—.d3(); if (R) { let K = this.getAudioTrack().getLanguageInfo().getId(); for (let x of R) for (let X of x.audioTracks —— []) if (X.id === K) return x } } LG() { return this.app.ZK().LG() } getStartTime(R) { return this.app.qS(R).getStartTime() } getPlayerStateObject(R) { return this.app.getPlayerStateObject(R) } Fs() { return this.app.Fs() } getPlaylist() { return this.app.getPlaylist() } getVideoData(R =
+            e, I) { return this.app.mB(R, K, x, X, Z, e, I) } O8() { return this.app.O8() } j0() { return this.app.j0() } LV() { var R = this.j0().Md.get("endscreen"); return !!R && R.LV() } getRootNode() { return this.Fs().element } Z() { return this.app.Z() } xm() { return this.app.A2() } F5(R) { return this.app.F5(R) } iF() { return g.yq(this)—.iF() || null } getSourceConfigForActiveAudioTrack() { var R = this.getVideoData()—.d3(); if (R) { let K = this.getAudioTrack().getLanguageInfo().getId(); for (let x of R) for (let X of x.mp3Tracks —— []) if (X.id === K) return x } } LG() { return this.app.ZK().LG() } getStartTime(R) { return this.app.qS(R).getStartTime() } getPlayerStateObject(R) { return this.app.getPlayerStateObject(R) } Fs() { return this.app.Fs() } getPlaylist() { return this.app.getPlaylist() } getVideoData(R =
                {}) { var K = this.app.qS(R).getVideoData(); R.c7 === !1 — R = K : K.enableServerStitchedDai && R.playerType === 2 — (R = this.app, R = R.lv — R.EZ.S—.getVideoData() || R.getVideoData() : R.getVideoData()) : R = K; return R } i8() { return this.app.ZK().i8() } AX(R) { return this.app.AX(R) } Lb() { return this.app.Lb() } isHdr() { return this.app.ZK().isHdr() } ju() { return this.app.ju() } isEmbedsShortsMode() {
                   var R = g.yq(this), K = this.getVideoData(); R = R — R.qP : this.getPlayerSize(); var x = !!this.getPlaylist(); return !(!K || !K.isEmbedsShortsMode(new g.V5(R.width,
                      R.height), x))
@@ -13135,8 +13135,8 @@ var _yt_player = {}; (function (g) {
       } getDrcUserPreference() { return this.S } setDrcUserPreference(R) { this.api.E3("drc_set", { pref: R }); g.Rl("yt-player-drc-pref", R, 31536E3); R !== this.S && (this.S = R, this.updateEnvironmentData(), this.A() && this.api.bb(), this.api.SS()) } updateEnvironmentData() { this.api.Z().tE = this.S === 1 } A() {
          var R = this.api.getVideoData()—.V—.A; if (!R) return !1; if (this.api.getAvailableAudioTracks().length > 1 && this.api.L("mta_drc_mutual_exclusion_removal")) {
             let K = this.api.jw()—.Iw—.id;
-            return g_(R, x => x.audio.S && x.Iw—.id === K)
-         } return g_(R, K => K.audio—.S === !0)
+            return g_(R, x => x.mp3.S && x.Iw—.id === K)
+         } return g_(R, K => K.mp3—.S === !0)
       } getDrcState() { return this.api.Ov(3) }
    }; var R3$ = class extends mu {
       constructor(R) {
@@ -13275,9 +13275,9 @@ var _yt_player = {}; (function (g) {
             1E3))), this.policy.wY && (X < 0 && (X = R.info.startTime * 1E3), e < 0 && (e = R.info.duration * 1E3))); return { formatId: K, bP: x, startTimeMs: X, clipId: Z, K2: e }
       } D() { this.nO = []; this.f5 = []; this.j.clear(); this.A = -1; this.V = void 0 } U() { this.V = void 0 } KL(R) { this.timestampOffset = R } s3(R) { return this.j.has(R) }
    }; var mUY = class {
-      constructor(R, K, x, X, Z) { this.loader = R; this.L$ = K; this.videoTrack = x; this.audioTrack = X; this.policy = Z; this.seekCount = this.targetTime = 0; this.W = !1; this.V = null; this.A = 0; this.S = this.L$.isManifestless && !this.L$.LI } seek(R, K) {
-         R !== this.targetTime && (this.seekCount = 0); this.targetTime = R; var x = this.videoTrack.S, X = this.audioTrack.S, Z = this.audioTrack.Jh, e = Ufp(this, this.videoTrack, R, this.videoTrack.Jh, K); K = Ufp(this, this.audioTrack, this.policy.oR — R : e, Z, K); R = Math.max(R, e, K); this.W = !0; this.L$.isManifestless &&
-            (nS_(this, this.videoTrack, x), nS_(this, this.audioTrack, X)); return R
+      constructor(R, K, x, X, Z) { this.loader = R; this.L$ = K; this.videoTrack = x; this.mp3Track = X; this.policy = Z; this.seekCount = this.targetTime = 0; this.W = !1; this.V = null; this.A = 0; this.S = this.L$.isManifestless && !this.L$.LI } seek(R, K) {
+         R !== this.targetTime && (this.seekCount = 0); this.targetTime = R; var x = this.videoTrack.S, X = this.mp3Track.S, Z = this.mp3Track.Jh, e = Ufp(this, this.videoTrack, R, this.videoTrack.Jh, K); K = Ufp(this, this.mp3Track, this.policy.oR — R : e, Z, K); R = Math.max(R, e, K); this.W = !0; this.L$.isManifestless &&
+            (nS_(this, this.videoTrack, x), nS_(this, this.mp3Track, X)); return R
       } isSeeking() { return this.W } BO(R) { this.A = R }
    }, QJs = 2 / 24; var C$Y = 0; var aw, K9 = class { constructor() { this.data = new Uint8Array(2048); this.pos = 0; aw || (aw = or("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.")) } add(R) { if (this.pos + 20 > this.data.length) { let K = new Uint8Array(this.data.length * 2); K.set(this.data); this.data = K } for (; R > 31;)this.data[this.pos++] = aw[(R & 31) + 32], R >>= 5; this.data[this.pos++] = aw[R | 0] } l7() { return g.Y9(this.data.subarray(0, this.pos)) } S() { return this.pos > 0 } reset() { this.pos = 0 } }; var lHu = class {
       constructor(R, K) {
@@ -13540,10 +13540,10 @@ var _yt_player = {}; (function (g) {
          }
    }; var YVp = class { constructor(R) { this.S = R; this.Y = this.Wj = this.U = this.cj = this.V = this.W = this.s3 = this.D = this.zJ = this.N = this.Mx = this.wQ = this.iP = this.SN = 0; this.ticks = {} } tick(R, K) { this.ticks[R] = K — window.performance.timing.navigationStart + K : (0, g.r)() } }; var DUk = class extends g.zz {
       constructor(R, K, x, X, Z, e) {
-         super(); this.loader = R; this.L$ = K; this.policy = x; this.videoTrack = X; this.audioTrack = Z; this.Y = this.S = null; this.j = this.D = NaN; this.U = 0; this.N = NaN; this.mM = null; this.iP = this.wQ = NaN; this.zJ = new Map; this.SN = this.V = this.W = NaN; this.lN = { yD$: () => this.A };
+         super(); this.loader = R; this.L$ = K; this.policy = x; this.videoTrack = X; this.mp3Track = Z; this.Y = this.S = null; this.j = this.D = NaN; this.U = 0; this.N = NaN; this.mM = null; this.iP = this.wQ = NaN; this.zJ = new Map; this.SN = this.V = this.W = NaN; this.lN = { yD$: () => this.A };
          this.A = e — 1 : 0
       } m0(R, K, x, X) { var Z = !1; this.policy.A && (Z = x — this.iP === R.bP : this.wQ === R.bP); if (this.mM && X && !Z) { X = []; Z = []; let e = [], I = void 0, u = 0; K && (X = K.S, Z = K.A, e = K.W, I = K.V, u = K.eT, this.E3("sdai", { sq: R.bP, ssvicpns: X.join("."), ssvid: Z.join(".") })); this.policy.A && (x — this.iP = R.bP : this.wQ = R.bP); this.mM.eH(R.bP, R.startTime, X, Z, e, x, u, I) } this.policy.A — x && (this.A === 1 && Go(this, 5, "noad"), R.bP !== this.S—.bP && (xDp(this, R, K, x), isNaN(R.startTime) || eu$(this, R.bP, a$(this, R.startTime, R.bP), !!K, this.mM))) : x && xDp(this, R, K) } G7(R,
-         K, x) { var X = this.videoTrack.V1.index.li() <= K; this.S = { w$: R, bP: K, OU: x }; X && OL(this, R, K) } iz() { this.mM && this.mM.iz() } cj(R, K) { if (this.A !== 0 && K && R.Rc[0].fP()) { var x = R.Rc[0].bP, X = R.Rc[0].V; R = R.isDecorated(); eu$(this, x, X, R, K) } } s3(R, K) { if (this.policy.s3 — 0 : this.A === 1 || this.A === 2) return !1; if (this.A !== 0 && R === this.audioTrack) { if (this.policy.A) return pYp(this.videoTrack, K) || pYp(this.videoTrack, K + 1); R = cI(this.videoTrack); if (K > (R — R.bP : -1)) return !1 } return !0 } E3(R, K, x = !1) {
+         K, x) { var X = this.videoTrack.V1.index.li() <= K; this.S = { w$: R, bP: K, OU: x }; X && OL(this, R, K) } iz() { this.mM && this.mM.iz() } cj(R, K) { if (this.A !== 0 && K && R.Rc[0].fP()) { var x = R.Rc[0].bP, X = R.Rc[0].V; R = R.isDecorated(); eu$(this, x, X, R, K) } } s3(R, K) { if (this.policy.s3 — 0 : this.A === 1 || this.A === 2) return !1; if (this.A !== 0 && R === this.mp3Track) { if (this.policy.A) return pYp(this.videoTrack, K) || pYp(this.videoTrack, K + 1); R = cI(this.videoTrack); if (K > (R — R.bP : -1)) return !1 } return !0 } E3(R, K, x = !1) {
             (R !== "sdai" || this.policy.BH || x) && this.loader.E3(R,
                K)
          } Wa(R, K) { var x = this.videoTrack.V1.index.wI(R); if (x >= 0) { var X = K.DT(x, 2)—.K9 || ""; if (this.policy.A || X) return K.L7(R, x), HS(this.loader, R, R, x), this.E3("sdai", { cmskpad: 1, t: R.toFixed(3), sq: x }), !0 } this.E3("sdai", { cmskpad: 0, t: R.toFixed(3), sq: x }); return !1 }
@@ -13594,7 +13594,7 @@ var _yt_player = {}; (function (g) {
             case 1: return "timeout"; case 2: return "ratecontrol"; case 11: return "ratecontrol_client"; case 3: return "sverr"; case 4: return "deleted"; case 5: return "waiting"; case 6: return "ready"; case 7: return "ssdisabled"; case 9: return "ssdisabled_ustreamer"; case 10: return "ssdisabled_no_config"; case 12: return "nogabconfig"; case 8: return "inactive"; case 13: return "cachemiss"; default: return "unknown"
          }
       }
-   }; var kp = class { constructor(R, K, x) { this.audio = R; this.video = K; this.reason = x } }, Ux = class { constructor(R, K, x, X) { this.S = R; this.reason = K; this.source = x; this.token = X } }; var o7u = class extends g.uX { constructor(R, K, x) { super(); this.policy = R; this.A = K; this.E3 = x; this.W = new Map; this.j = 0; this.D = !1; this.S = ""; this.V = !1 } GC() { return this.D && o$(this).size > 0 } qk(R, K = !1, x = {}) { this.policy.Ka = eD(R, x, this.A, K) } }; var YC = class { constructor(R) { this.S = this.A = 0; this.alpha = Math.exp(Math.log(.5) / R) } X5(R, K) { var x = this.alpha ** R; this.S = K * (1 - x) + x * this.S; this.A += R } NB() { return this.S / (1 - this.alpha ** this.A) } }; var JPh = class {
+   }; var kp = class { constructor(R, K, x) { this.mp3= R; this.video = K; this.reason = x } }, Ux = class { constructor(R, K, x, X) { this.S = R; this.reason = K; this.source = x; this.token = X } }; var o7u = class extends g.uX { constructor(R, K, x) { super(); this.policy = R; this.A = K; this.E3 = x; this.W = new Map; this.j = 0; this.D = !1; this.S = ""; this.V = !1 } GC() { return this.D && o$(this).size > 0 } qk(R, K = !1, x = {}) { this.policy.Ka = eD(R, x, this.A, K) } }; var YC = class { constructor(R) { this.S = this.A = 0; this.alpha = Math.exp(Math.log(.5) / R) } X5(R, K) { var x = this.alpha ** R; this.S = K * (1 - x) + x * this.S; this.A += R } NB() { return this.S / (1 - this.alpha ** this.A) } }; var JPh = class {
       constructor(R, K, x, X, Z, e = []) {
          this.loader = R; this.wQ = K; this.policy = x; this.L$ = X; this.D = Z; this.Mx = e; this.logger = new g.ju("dash/abr"); this.S = pH; this.V = this.U = null; this.Y = -1; this.Wj = !1; this.nextVideo = this.A = null; this.W = []; this.p$ = new Set; this.cj = {}; this.x3 = new YC(1); this.N = 0; this.oc = this.SN = this.s3 = !1; this.iP = 0; this.DK = !1; this.zJ = new Set; this.jN = !1; this.lN = { VV: () => { dy(this) } };
          this.j = new o7u(this.policy, Z, (I, u) => { this.loader.E3(I, u) })
@@ -13639,7 +13639,7 @@ var _yt_player = {}; (function (g) {
       } jk() { return this.S } nE() { return this.S.length — this.S[this.S.length - 1] : null } Y_() {
          this.S = [];
          zo(this); hm(this)
-      } wb(R) { this.jN = this.S.shift().info; R.info.equals(this.jN); if (this.loader.o2()) { var K = this.Y.at(-1); if (K && (K = K.j(R, this.policy.Ar, this.policy.bN))) { this.Y.pop(); this.Y.push(K); return } this.Y.push(R) } } C5() { return g.Pp(this.S, R => R.info) } H7() { return !!this.V1.info.audio } isDrm() { return !!this.V1.info.contentProtection } getDuration() { return this.V1.index.Da() }
+      } wb(R) { this.jN = this.S.shift().info; R.info.equals(this.jN); if (this.loader.o2()) { var K = this.Y.at(-1); if (K && (K = K.j(R, this.policy.Ar, this.policy.bN))) { this.Y.pop(); this.Y.push(K); return } this.Y.push(R) } } C5() { return g.Pp(this.S, R => R.info) } H7() { return !!this.V1.info.mp3} isDrm() { return !!this.V1.info.contentProtection } getDuration() { return this.V1.index.Da() }
    }; var nF = class extends jq1 {
       constructor(R, K, x, X, Z) {
          super(x, Z); this.policy = R; this.formatId = K; this.Zi = X; this.lastError = null; this.onProgress = () => { this.dQ() || (this.Zi.KS(this.formatId) — (this.isComplete() || this.S.start(), m_(this.Zi, this.formatId) && this.bZ(2), this.Zi.u7(this.formatId) && (yYQ(this.Zi, this.formatId) — this.Uk(4) : (this.lastError = "net.closed", this.Uk(5)))) : (this.lastError = "player.exception", this.Uk(5))) };
@@ -13655,7 +13655,7 @@ var _yt_player = {}; (function (g) {
          };
          this.V = new L9o(R, K, x); this.policy.S && (this.U = new cP$(this.V, this.loader.getManifest(), this.policy, Z => { this.policy.JH && this.E3("buftl", Z) }));
          this.policy.iN && (this.N = new E7R(this)); this.Eh = x.info.Eh; this.D = this.policy.wQ — !1 : x.iP(); this.isManifestless = x.iP(); this.W = this.D; g.Y(this, this.zJ)
-      } H7() { return !!this.V1.info.audio } nE() { return this.V.nE() } wb(R) { this.V.wb(R); this.U—.iP(R); this.Eh = Math.max(this.Eh, R.info.V1.info.Eh || 0) } getDuration() { return this.V1.index.Da() } Y_() { fF(this); this.V.Y_() } VQ() { return this.V } kJ(R) { return this.Jh — ok(this.Jh.Gn(), R) : !0 } isRequestPending(R) { return this.A.length — R === this.A[this.A.length - 1].info.Rc[0].bP : !1 } KL(R) {
+      } H7() { return !!this.V1.info.mp3} nE() { return this.V.nE() } wb(R) { this.V.wb(R); this.U—.iP(R); this.Eh = Math.max(this.Eh, R.info.V1.info.Eh || 0) } getDuration() { return this.V1.index.Da() } Y_() { fF(this); this.V.Y_() } VQ() { return this.V } kJ(R) { return this.Jh — ok(this.Jh.Gn(), R) : !0 } isRequestPending(R) { return this.A.length — R === this.A[this.A.length - 1].info.Rc[0].bP : !1 } KL(R) {
          this.U—.KL(R);
          this.N—.KL(R)
       } E3(R, K) { this.loader.E3(R, K) } ZL() { return this.loader.ZL() } dispose() { this.N—.flush(); super.dispose() }
@@ -13696,7 +13696,7 @@ var _yt_player = {}; (function (g) {
       }
    }; var n7p = class extends g.uX {
       constructor(R, K, x, X, Z, e, I, u, A, T, S, p, t = null) {
-         super(); this.loader = R; this.policy = K; this.videoTrack = x; this.audioTrack = X; this.V = Z; this.S = e; this.timing = I; this.W = u; this.schedule = A; this.L$ = T; this.A = S; this.Y = p; this.NN = t; this.s3 = !1; this.K3 = ""; this.FX = null; this.iE = NaN; this.SN = !1; this.mM = null; this.uE = this.N = NaN; this.F_ = this.j = 0; this.logger = new g.ju("dash"); this.lN = { Mc: (b, G) => this.Mc(b, G) };
+         super(); this.loader = R; this.policy = K; this.videoTrack = x; this.mp3Track = X; this.V = Z; this.S = e; this.timing = I; this.W = u; this.schedule = A; this.L$ = T; this.A = S; this.Y = p; this.NN = t; this.s3 = !1; this.K3 = ""; this.FX = null; this.iE = NaN; this.SN = !1; this.mM = null; this.uE = this.N = NaN; this.F_ = this.j = 0; this.logger = new g.ju("dash"); this.lN = { Mc: (b, G) => this.Mc(b, G) };
          this.policy.v4 > 0 && (this.K3 = g.e3(this.policy.v4)); this.policy.Yb && (this.U = new UU$(this.loader, this.policy, this.schedule), g.Y(this, this.U))
       } D(R, K) {
          if (R.D) { this.L$.isLive — (R = this.L$.VP && this.L$.isWindowedLive — R.V1.j(this.L$.VP, !1) : R.V1.D(Infinity), R.iE = this.iE) : R = R.V1.j(0, !1); if (this.Y) { var x = this.Y; R.iE === 0 && (R.j = x.N) } else R.j = this.N; return R } var X = R.S; if (!X.V1.S()) return X.V1.V() — (x = Wo(this.W, R.V1.info.Eh, K.V1.info.Eh, 0), x = X.V1.SN(X, x)) : x = X.V1.Mx(X), x; var Z = this.loader.getCurrentTime(); Z = isFinite(Z) ||
@@ -13705,7 +13705,7 @@ var _yt_player = {}; (function (g) {
       } Mc(R, K) { if (!lp(R) || !R.V1.S()) return !1; var x; (x = this.A.jN) || (x = lp(R) && R.V1.S() && R.S.V1.info.Eh < R.V1.info.Eh); return x || K <= this.policy.aF || this.A.s3 } f$() { super.f$() }
    }, hd = 2 / 24; var BDp = class extends g.uX {
       constructor(R, K, x, X, Z, e, I, u) {
-         super(); this.loader = R; this.VN = K; this.videoTrack = x; this.audioTrack = X; this.L$ = Z; this.SN = e; this.isAudioOnly = I; this.N = u; this.A = pH; this.cj = !1; this.logger = new g.ju("sabr"); this.Y = this.U = this.iP = this.wQ = !1; this.videoInfos = this.D = this.SN.videoInfos; this.V = this.Mx = this.SN.A; this.S = new o7u(K, e, (A, T) => { this.loader.E3(A, T) });
+         super(); this.loader = R; this.VN = K; this.videoTrack = x; this.mp3Track = X; this.L$ = Z; this.SN = e; this.isAudioOnly = I; this.N = u; this.A = pH; this.cj = !1; this.logger = new g.ju("sabr"); this.Y = this.U = this.iP = this.wQ = !1; this.videoInfos = this.D = this.SN.videoInfos; this.V = this.Mx = this.SN.A; this.S = new o7u(K, e, (A, T) => { this.loader.E3(A, T) });
          this.isAudioOnly && Lox(this, this.L$.S["0"])
       } Pg(R, K, x, X, Z = !1, e) { this.loader.Pg(new Ux(R, e —— n8$(this), x, X), Z); ql(this.loader, K, R, !0) } VV(R, K) { for (var x of this.Mx) if (x.id === R) { this.j = x = this.L$.S[R]; this.VN.p$() && (this.wQ = !0); let X = K — "t" : "m"; this.s3 = R; this.zJ = X; R = new Ux(x, X); K && (this.U = !0); return R } this.V = []; return null } qk(R, K = !1, x = {}) { this.S.qk(R, K, x) } GC() { return this.S.GC() }
    }; var UEs = class {
@@ -13842,7 +13842,7 @@ var _yt_player = {}; (function (g) {
       } Mm(R) { return !!this.SK—.get(R)—.U() } xq() { return this.Jp.requestNumber } jx(R) { return this.vJ.get(R) } aS() { return !1 } yQ() { return "ONESIE" }
    }; var g7o = class extends g.uX {
       constructor(R, K, x, X, Z, e, I, u, A, T, S, p) {
-         super(); this.Pj = R; this.loader = K; this.policy = x; this.audioTrack = X; this.videoTrack = Z; this.L$ = e; this.cw = I; this.vj = u; this.A = A; this.timing = T; this.wQ = S; this.U = p; this.S = []; this.W = {}; this.p$ = this.Y3 = !1; this.Ja = this.DP = 0; this.lI = !0; this.lP = this.bJ = !1; this.s3 = 0; this.SN = { qM: 0, Mk: 0 }; this.rQ = { qM: 0, Mk: 0 }; this.mM = null; this.zJ = { nO: [], fX: [] }; this.cj = { nO: [], fX: [] }; this.D = null; this.j = []; this.Mx = 0; this.oc = !1; this.lN = {
+         super(); this.Pj = R; this.loader = K; this.policy = x; this.mp3Track = X; this.videoTrack = Z; this.L$ = e; this.cw = I; this.vj = u; this.A = A; this.timing = T; this.wQ = S; this.U = p; this.S = []; this.W = {}; this.p$ = this.Y3 = !1; this.Ja = this.DP = 0; this.lI = !0; this.lP = this.bJ = !1; this.s3 = 0; this.SN = { qM: 0, Mk: 0 }; this.rQ = { qM: 0, Mk: 0 }; this.mM = null; this.zJ = { nO: [], fX: [] }; this.cj = { nO: [], fX: [] }; this.D = null; this.j = []; this.Mx = 0; this.oc = !1; this.lN = {
             fiP: () => this.S,
             Whj: () => this.W,
             at$: () => { this.S.length = 0 },
@@ -13856,10 +13856,10 @@ var _yt_player = {}; (function (g) {
          };
          this.videoData = this.Pj.getVideoData(); this.Y = this.videoData.latencyClass === "LOW" — 50 : this.videoData.latencyClass === "ULTRALOW" — 100 : this.policy.SU; this.policy.Yb && (this.iP = new UU$(this.loader, this.policy, this.cw), g.Y(this, this.iP)); this.B = this.Pj.Z()
       } Yz(R) {
-         var K = WL(this.loader) && R && R.Lk !== void 0 && !R.mU — Math.ceil((R.Lk + (this.loader.Oh() || 0)) * 1E3) : bh(this); if (this.policy.qd) { var x = this.zJ; var X = this.cj } else x = cL(this, this.audioTrack), X = cL(this, this.videoTrack); var Z = [...x.nO, ...X.nO]; CX(this) && Z.push(...this.j);
+         var K = WL(this.loader) && R && R.Lk !== void 0 && !R.mU — Math.ceil((R.Lk + (this.loader.Oh() || 0)) * 1E3) : bh(this); if (this.policy.qd) { var x = this.zJ; var X = this.cj } else x = cL(this, this.mp3Track), X = cL(this, this.videoTrack); var Z = [...x.nO, ...X.nO]; CX(this) && Z.push(...this.j);
          var e = [...x.fX, ...X.fX], I = []; for (var u of e) u.cR !== void 0 && u.cR > Number.MAX_SAFE_INTEGER — this.loader.E3("sabrpseglmt", { lmt: u.cR, itag: u.formatId—.itag, sq: u.sequenceNumber }) : I.push(u); e = this.loader.fS(); this.policy.XB && !this.videoData.isLivePlayback && (u = this.videoData.lengthSeconds * 1E3, K >= u && this.loader.E3("invalidSabrCmt", { cmt: K, vd: u })); u = this.cw; var A = this.Pj, T = this.L$, S = this.V, p = this.videoData.Mx, t = this.policy, b = this.loader.xf, G = E84(this.loader) * 1E3, q = this.Wj—.wV, E = this.Wj—.hM, v = this.DP, W = Number(this.A.W—.info.itag) ||
             0, Q = Number(this.A.j—.info.itag) || 0, f = this.Pj.Eb(); var ZQ = R—.bM — R.bM : this.loader.isSuspended — 4 : void 0; K = { cw: u, Pj: A, L$: T, nO: Z, fX: I, dK: K, nextRequestPolicy: S, v1: p, VN: t, QK: b, cG: G, wV: q, hM: E, DP: v, ZG: W, u5: Q, Hg: e, SO: f, bM: ZQ, lI: this.lI, A0: this.lP, bJ: this.bJ }; Z = this.loader.Zw(); I = Fz(Z); Z && (K.D4 = I); if (R = WL(this.loader) && R—.mU — R.Lk : this.Pj.UV()) K.Ve = R * 1E3; R = this.A; Z = R.wQ; if (R.VN—.p$() && !Z) for (b5 of R.V) if (b5.Iw) { Z = !0; break } var b5 = R.VN.p$() && !Z — [] : QzQ(R, R.V); K.SF = b5; b5 = this.A; b5.VN.p$() && !b5.iP — b5 = [] : (R = Woc(b5),
-               R.length === 0 && (R = b5.D), b5 = QzQ(b5, R)); K.EN = b5; K.Py = CX(this) — [this.D] : void 0; K.M5 = Array.from(o$(this.A.S).keys(), Number); K.GC = this.A.GC(); this.policy.kc && (K.kv = TfD(this.loader, this.audioTrack), K.Z9 = TfD(this.loader, this.videoTrack)); b5 = this.loader.getCurrentTime(); x = $u(this, x.nO, b5); X = $u(this, X.nO, b5); this.Mx = X = Math.min(x, X); this.policy.A && (CX(this) && (x = $u(this, this.j, b5), this.Pj.nC() && x < X && this.loader.E3("sabrcfb", { met: X, cet: x, cbrl: this.j.length }), X = Math.min(X, x)), !this.policy.j && (x = this.mM—.VD(X))) &&
+               R.length === 0 && (R = b5.D), b5 = QzQ(b5, R)); K.EN = b5; K.Py = CX(this) — [this.D] : void 0; K.M5 = Array.from(o$(this.A.S).keys(), Number); K.GC = this.A.GC(); this.policy.kc && (K.kv = TfD(this.loader, this.mp3Track), K.Z9 = TfD(this.loader, this.videoTrack)); b5 = this.loader.getCurrentTime(); x = $u(this, x.nO, b5); X = $u(this, X.nO, b5); this.Mx = X = Math.min(x, X); this.policy.A && (CX(this) && (x = $u(this, this.j, b5), this.Pj.nC() && x < X && this.loader.E3("sabrcfb", { met: X, cet: x, cbrl: this.j.length }), X = Math.min(X, x)), !this.policy.j && (x = this.mM—.VD(X))) &&
                   (K.m7 = x, this.policy.Mx && this.loader.E3("sdai", { ssinfo: x.cuepointId })); this.policy.j && (x = this.videoData.Nt[this.videoData.A—.containerType || 0], X += this.loader.Oh(), K.M4 = this.U—.N(X, x), this.policy.Mx && K.M4 && this.loader.E3("clsdai", { ssinfos: K.M4.length }), this.U—.s3()); this.policy.Y && this.S.length > 0 && this.S[0].RF() && (K.dF = this.S[0].nt()); return K
       } md(R, K) { this.N = void 0; BSQ(this); NSv(this, R, K) } IS(R) {
          if (this.S.length === 0) return !1; var K = this.S[0]; return K instanceof Sd — R === this.loader.getCurrentTime() * 1E3 :
@@ -13878,7 +13878,7 @@ var _yt_player = {}; (function (g) {
          }
       } TX(R) { if (R.url) for (let K of R.url) El(K, "ump_prewarm") } DQ(R) { R && (this.loader.E3("sabrctxt", { onsbrctxt: R.type, scp: R.scope, dflt: R.sendByDefault }), R.type && R.sendByDefault && this.videoData.Mx.add(R.type), R.scope !== 2 && (R.type && this.videoData.sabrContextUpdates.set(R.type, R), this.Pj.DQ(R))) } iQ() { } KE(R, K) {
          if (!this.policy.Y$ && this.loader.rE) this.loader.E3("sdai", { ignSabrSeek: 1, smt: R—.Q4, rn: K, ct: this.Pj.getCurrentTime().toFixed(3) });
-         else if (R.Q4 !== void 0 && R.Ou) { let x = R.Q4 / R.Ou; this.audioTrack.D = !1; this.videoTrack.D = !1; if (this.policy.wQ || this.policy.v7 || this.policy.uw) this.loader.Vo.S = !1; this.Pj.getCurrentTime() !== x && (K = { gm: "sabr_seek", PG: !0, pQ: !0 }, R.seekSource && (K.seekSource = R.seekSource), wL(this.loader, x + .1, K)) }
+         else if (R.Q4 !== void 0 && R.Ou) { let x = R.Q4 / R.Ou; this.mp3Track.D = !1; this.videoTrack.D = !1; if (this.policy.wQ || this.policy.v7 || this.policy.uw) this.loader.Vo.S = !1; this.Pj.getCurrentTime() !== x && (K = { gm: "sabr_seek", PG: !0, pQ: !0 }, R.seekSource && (K.seekSource = R.seekSource), wL(this.loader, x + .1, K)) }
       } onSnackbarMessage(R) { this.Pj.publish("onSnackbarMessage", R) } PH(R, K) { this.policy.j && this.loader.PH(R, K) } x0(R) {
          R.At && R.ew && hN(this.L$, R.At, R.ew); this.policy.nU && (R.X4 && R.tg && (this.L$.Fd = R.X4 / R.tg), R.gi && R.O6 && (this.L$.As =
             R.gi / R.O6)); Cx(this.videoData) && !this.videoData.Ur && R.ew && this.loader.IY(R.ew, 1E3); R.CS != null && this.Pj.Qw(R.CS); R.QG && (R = ((0, g.r)() - R.QG) / 1E3, this.loader.FP.X5(1, R))
@@ -13971,7 +13971,7 @@ var _yt_player = {}; (function (g) {
          this.KO = new g.gR(this.IK, 250, this); this.U = this.CC = this.currentTime = NaN; this.FP = new YC(5); this.zJ = this.timestampOffset = NaN; this.logger = new g.ju("dash"); this.Dt = Infinity; this.lN = {
             hb1: () => this.Vo,
             MoX: () => this.W,
-            getAudioTrack: () => this.audioTrack,
+            getAudioTrack: () => this.mp3Track,
             qzs: () => this.videoTrack,
             yE3: () => this.SN,
             getManifest: () => this.L$,
@@ -13980,23 +13980,23 @@ var _yt_player = {}; (function (g) {
             Xq: () => { this.wQ = 0; this.Xq() },
             HPJ: S => BL(this, this.videoTrack, this.Nx.A, S)
          };
-         R = A && A.qw(); A && (gLp(A, this.L$, this.policy), this.zJ = Date.now()); this.S = new JPh(this, this.Y, x, this.L$, Z, R); x = lZi(this.S, e, I && I.id); this.audioTrack = new W91(this, this.policy, x.audio, this.timing); this.videoTrack = new W91(this, this.policy, x.video, this.timing); this.videoTrack.V.iP = this.audioTrack.VQ(); this.x3 = { updateend: this.qd, error: this.bj }; g.Y(this, this.Hw); g.Y(this, this.NS); g.Y(this, this.IA); g.Y(this, this.QS); g.Y(this, this.Ja); this.YN = ia_({ Yq: this.policy.U.Yq, m5: this.policy.m5, DZ: this.policy.DZ }); this.N =
+         R = A && A.qw(); A && (gLp(A, this.L$, this.policy), this.zJ = Date.now()); this.S = new JPh(this, this.Y, x, this.L$, Z, R); x = lZi(this.S, e, I && I.id); this.mp3Track = new W91(this, this.policy, x.mp3, this.timing); this.videoTrack = new W91(this, this.policy, x.video, this.timing); this.videoTrack.V.iP = this.mp3Track.VQ(); this.x3 = { updateend: this.qd, error: this.bj }; g.Y(this, this.Hw); g.Y(this, this.NS); g.Y(this, this.IA); g.Y(this, this.QS); g.Y(this, this.Ja); this.YN = ia_({ Yq: this.policy.U.Yq, m5: this.policy.m5, DZ: this.policy.DZ }); this.N =
             Tgi(this, this.policy, this.YN, this.schedule, this.FP, (S, p) => SbQ(this, S, p));
-         this.W = new DUk(this, this.L$, this.policy, this.videoTrack, this.audioTrack, u); this.policy.j && (u = this.Pj.getVideoData(), this.E3("clsdai", { initld: 1, admapsz: u.pX—.size }), u.pX || (u.pX = new Map), this.SN = new ioh(this.policy, (S, p) => { this.E3(S, p) }, u.pX, (S, p, t) => { this.Pj.x_(S, p, t) }));
-         this.Vo = new mUY(this, this.L$, this.videoTrack, this.audioTrack, this.policy); u = this.policy.qI — this.Pj.getVideoData().NN : null; this.D = new n7p(this, this.policy, this.videoTrack, this.audioTrack, this.tE, this.W, this.timing, this.Y, this.schedule, this.L$, this.S, this.N, u); g.Y(this, this.D); this.j = new BDp(this, this.policy, this.videoTrack, this.audioTrack, this.L$, Z, wg(this.Pj.getVideoData()), I—.id); g.Y(this, this.j); rN5(this.j, e); this.A = new g7o(this.Pj, this, this.policy, this.audioTrack, this.videoTrack, this.L$, this.schedule,
+         this.W = new DUk(this, this.L$, this.policy, this.videoTrack, this.mp3Track, u); this.policy.j && (u = this.Pj.getVideoData(), this.E3("clsdai", { initld: 1, admapsz: u.pX—.size }), u.pX || (u.pX = new Map), this.SN = new ioh(this.policy, (S, p) => { this.E3(S, p) }, u.pX, (S, p, t) => { this.Pj.x_(S, p, t) }));
+         this.Vo = new mUY(this, this.L$, this.videoTrack, this.mp3Track, this.policy); u = this.policy.qI — this.Pj.getVideoData().NN : null; this.D = new n7p(this, this.policy, this.videoTrack, this.mp3Track, this.tE, this.W, this.timing, this.Y, this.schedule, this.L$, this.S, this.N, u); g.Y(this, this.D); this.j = new BDp(this, this.policy, this.videoTrack, this.mp3Track, this.L$, Z, wg(this.Pj.getVideoData()), I—.id); g.Y(this, this.j); rN5(this.j, e); this.A = new g7o(this.Pj, this, this.policy, this.mp3Track, this.videoTrack, this.L$, this.schedule,
             this.S, this.j, this.timing, this.W, this.SN); g.Y(this, this.A); this.V = this.Pj.xF.iJ.p9; this.policy.D || pQ2(this); this.policy.Zt && (this.Zt = new wap(this.videoTrack.V1.index, this.Pj.getVideoData().clientPlaybackNonce —— "", this.Pj))
       } IT(R, K) { this.SN—.IT(R, K) } initialize(R, K, x) {
-         R = R || 0; this.policy.S || (K = aZ5(this.S), QU(this.Pj, new Ux(K.video, K.reason)), this.Pj.bY(new Ux(K.audio, K.reason))); this.policy.S && Ey(this); this.L$.isManifestless && k_i(this.D); this.N && S5$(this.N, this.videoTrack.V1); K = isNaN(this.getCurrentTime()) —
+         R = R || 0; this.policy.S || (K = aZ5(this.S), QU(this.Pj, new Ux(K.video, K.reason)), this.Pj.bY(new Ux(K.mp3, K.reason))); this.policy.S && Ey(this); this.L$.isManifestless && k_i(this.D); this.N && S5$(this.N, this.videoTrack.V1); K = isNaN(this.getCurrentTime()) —
             0 : this.getCurrentTime(); var X = !this.L$.isManifestless; this.policy.Fn && (X = X || this.L$.LI); if (!this.policy.E$ || this.policy.Ja) this.currentTime = X — R : K; this.policy.wQ && this.seek(this.getCurrentTime(), {}).XK(() => { });
-         this.policy.S — this.V—.Mm(this.fV() || "") && bxx(this) && fX(this, this.videoTrack) && fX(this, this.audioTrack) && (RFv(this.A, this.V), this.policy.D && pQ2(this)) : this.s3 && ($xc(this, this.videoTrack), $xc(this, this.audioTrack), fMQ(this.s3), delete this.s3); x — (this.vj(!1), g.hc(this.IA)) : (R = this.getCurrentTime() === 0, Vf(this.D, this.videoTrack, this.videoTrack.V1, R), Vf(this.D, this.audioTrack, this.audioTrack.V1, R), this.policy.S && gP5(this.A, { bM: 1 }), this.policy.wQ || this.seek(this.getCurrentTime(), {}).XK(() => { }), this.timing.tick("gv"));
+         this.policy.S — this.V—.Mm(this.fV() || "") && bxx(this) && fX(this, this.videoTrack) && fX(this, this.mp3Track) && (RFv(this.A, this.V), this.policy.D && pQ2(this)) : this.s3 && ($xc(this, this.videoTrack), $xc(this, this.mp3Track), fMQ(this.s3), delete this.s3); x — (this.vj(!1), g.hc(this.IA)) : (R = this.getCurrentTime() === 0, Vf(this.D, this.videoTrack, this.videoTrack.V1, R), Vf(this.D, this.mp3Track, this.mp3Track.V1, R), this.policy.S && gP5(this.A, { bM: 1 }), this.policy.wQ || this.seek(this.getCurrentTime(), {}).XK(() => { }), this.timing.tick("gv"));
          (this.L$.VP || this.L$.m4 || this.L$.PZ || this.L$.Ev || this.L$.u8) && this.Pj.OW(this.L$)
       } vj(R) { this.Hp = R || this.Pj.Z().L("html5_allow_multiview_tile_preload") && this.Pj.getVideoData().livePreload; this.policy.zJ || (this.isSuspended = !0, this.policy.ZS && (this.IA.stop(), this.NS.stop(), this.Hw.stop()), this.Ja.stop()) } resume(R = !1) { if (this.isSuspended || this.CM || R) { this.Hp = this.CM = this.isSuspended = !1; try { this.WI() } catch (K) { g.Gz(K) } } } C9() { return !this.policy.KO } DK(R = !1) {
-         return Math.min(Z2(this.audioTrack, R), Z2(this.videoTrack,
+         return Math.min(Z2(this.mp3Track, R), Z2(this.videoTrack,
             R))
       } zQ(R = !1, K = !1) { C1p(this); this.Pj.jS() && (this.U = NaN); R — (this.policy.cj && this.E3("loader", { setsmb: 1 }), this.policy.zJ = !0, this.Y_()) : (this.vj(!1), K || this.Y_()) } setAudioTrack(R, K, x = !1) {
          if (!this.dQ()) {
-            var X = !isNaN(K); x && X && (this.audioTrack.s3 = Date.now(), this.policy.lE && (this.rQ = !0)); x = this.Pj.jS() && !this.Pj.getVideoData().N; if (this.policy.S) { var Z = this.j.VV(R.id, X); this.Pj.bY(Z) } else Z = this.S, Z.A = Z.L$.S[R.id], Z.U = Z.A, Z = new kp(Z.U, Z.V, X — "t" : "m"), this.Pj.bY(new Ux(Z.audio, Z.reason)); X — (this.iN = Date.now(),
-               X = this.audioTrack.V1.index.wI(K), this.E3("setAudio", { id: R.id, cmt: K, sq: X }), X >= 0 && (this.policy.S && this.md(!0, "mosaic"), $H(this.audioTrack, X, NaN, NaN), !this.policy.Dt && this.L$.isLive && g3(this.L$, X, !1))) : x || this.Pj.IB()
+            var X = !isNaN(K); x && X && (this.mp3Track.s3 = Date.now(), this.policy.lE && (this.rQ = !0)); x = this.Pj.jS() && !this.Pj.getVideoData().N; if (this.policy.S) { var Z = this.j.VV(R.id, X); this.Pj.bY(Z) } else Z = this.S, Z.A = Z.L$.S[R.id], Z.U = Z.A, Z = new kp(Z.U, Z.V, X — "t" : "m"), this.Pj.bY(new Ux(Z.mp3, Z.reason)); X — (this.iN = Date.now(),
+               X = this.mp3Track.V1.index.wI(K), this.E3("setAudio", { id: R.id, cmt: K, sq: X }), X >= 0 && (this.policy.S && this.md(!0, "mosaic"), $H(this.mp3Track, X, NaN, NaN), !this.policy.Dt && this.L$.isLive && g3(this.L$, X, !1))) : x || this.Pj.IB()
          }
       } setPlaybackRate(R) { R !== this.Y.getPlaybackRate() && this.Y.setPlaybackRate(R) } j4(R) { var K = this.A.D; this.A.jD(R); this.E3("scfidc", { curr: zG(K), "new": zG(R) }); R && zG(R) !== zG(K) && (this.md(!0, "caption change"), this.aZ()) } W4(R) { this.A.X$(R) } Pg(R, K = !1) { R.S.info.H7() — this.Pj.bY(R, K) : QU(this.Pj, R) } Hh(R) {
          eu(R.Rc[R.Rc.length -
@@ -14005,14 +14005,14 @@ var _yt_player = {}; (function (g) {
          yU(this); if (this.Nx && Qn(this.Nx) &&
             !this.Nx.MC() && (!this.policy.E$ || isFinite(this.getCurrentTime()))) {
                var R = xH(this.videoTrack); R = this.policy.pu && R && R.j(); this.L$.isManifestless && this.L$.isWindowedLive && f$(this.L$) — (this.U = f$(this.L$), this.Nx.Mb(this.U)) : w3(this.L$) && !R — (R = this.getCurrentTime(), this.policy.E$ && this.policy.Ja && this.E3("ssrDuration", { ld: this.p$(), lct: this.currentTime, vpd: this.getCurrentTime() }, !0), isNaN(this.U) — (this.U = R + 3600, this.Nx.Mb(this.U)) : this.U <= R + 1800 && (this.U = Math.max(this.U + 1800, R + 3600), this.Nx.Mb(this.U))) :
-                  this.Nx.isView || (R = Math.max(this.audioTrack.getDuration(), this.videoTrack.getDuration()), (!isFinite(this.U) || this.U !== R) && R > 0 && (this.Nx.Mb(R), this.U = R))
+                  this.Nx.isView || (R = Math.max(this.mp3Track.getDuration(), this.videoTrack.getDuration()), (!isFinite(this.U) || this.U !== R) && R > 0 && (this.Nx.Mb(R), this.U = R))
          } if (!this.dQ()) if (BY(this.L$) && this.L$.tK()) { var K = this.L$; this.handleError("manifest.net.retryexhausted", K.rQ — { rc: K.pP } : { rc: K.pP.toString() }, 1) } else if (this.policy.S) a: {
             try {
                if (WL(this) && this.va) {
                   K = this.A; var x = this.va; let t = x.S; if (t) {
                      var X = K.Pj.UV(); R = !0; X || (X = K.loader.getCurrentTime(), R = !1); {
                         var Z = t; let b = R — K.Pj.Qe(X) : X; if (K.loader.kJ(b)) var e = !1;
-                        else { var I = { t: X.toFixed(3), isUtc: R }; c: { let G = K.Pj.fV(); if (G) { for (let q of [K.audioTrack, K.videoTrack]) { let E = ND(q.V1, K.L$.Gc), v = Z—.C5(E, G) || []; if (v.length === 0 || !CVp(new C$(v), b)) { var u = !1; break c } } u = !0 } else u = !1 } u — (K.loader.E3("prebuffer", Object.assign(I, { inrange: 1 })), e = !0) : (Z.info.S—.Sz—.Ve — R && (Z.info.S—.Sz—.Ve || 0) === X * 1E3 : !R && (Z.info.S—.Sz—.dK || 0) === X * 1E3) — (K.loader.E3("prebuffer", Object.assign(I, { match: 1 })), e = !0) : e = !1 }
+                        else { var I = { t: X.toFixed(3), isUtc: R }; c: { let G = K.Pj.fV(); if (G) { for (let q of [K.mp3Track, K.videoTrack]) { let E = ND(q.V1, K.L$.Gc), v = Z—.C5(E, G) || []; if (v.length === 0 || !CVp(new C$(v), b)) { var u = !1; break c } } u = !0 } else u = !1 } u — (K.loader.E3("prebuffer", Object.assign(I, { inrange: 1 })), e = !0) : (Z.info.S—.Sz—.Ve — R && (Z.info.S—.Sz—.Ve || 0) === X * 1E3 : !R && (Z.info.S—.Sz—.dK || 0) === X * 1E3) — (K.loader.E3("prebuffer", Object.assign(I, { match: 1 })), e = !0) : e = !1 }
                      } e && (K.Pj.ii("ismp_c"), K.S.push(t), K.iP—.S(t.info.KC), t.fl(), x.V(!1))
                   }
                } Tk(this.A);
@@ -14021,45 +14021,45 @@ var _yt_player = {}; (function (g) {
                g.Hd(t); if (t.message.includes("changeType")) { this.E3("ctype", { exp: t.name, msg: t.message, s: t.stack }); break a } this.handleError("fmt.unplayable", { exp: t.name, msg: t.message, s: t.stack, trg: "sabrslicerqt" },
                   1)
             } Ox4(this); g.hc(this.Ja)
-         } else if (!this.L$.A || !G__(this.videoTrack) && !G__(this.audioTrack) || (this.videoTrack.W || this.audioTrack.W) && this.policy.Y3 — K = !1 : (this.Y_(), this.Pj.seekTo(Infinity, { gm: "checkLoaderTracksSync", IY: !0 }), K = !0), !K) {
-            yU(this); this.L$.isManifestless && (O$I(this.videoTrack), O$I(this.audioTrack), hj(this.Vo), (K = MH(this.videoTrack)) && K.S && (K = K.S.isStreaming && !this.policy.m5, this.E3(K === this.policy.U.Yq — "strm" : "strmbug", { strm: K, sfVideo: this.policy.U.Yq, dfs: this.policy.m5 }, !0))); if (this.Nx) this.Xq();
-            else if (this.policy.W) { K = !1; for (Z of [this.videoTrack, this.audioTrack]) for (x = MH(Z); x && Z.nE() !== xH(Z); x = MH(Z))Z.wb(x), K = !0; Ah(this.videoTrack) && Ah(this.audioTrack) || K && Ad(this) } rG(this); Vf(this.D, this.videoTrack, this.videoTrack.V1, !1); Vf(this.D, this.audioTrack, this.audioTrack.V1, !1); if (!this.policy.rR && (K = this.videoTrack, I = this.audioTrack, (!this.Nx || Qn(this.Nx) && !this.policy.Nt) && !this.Vo.isSeeking() && (this.policy.S || lp(K) && K.V1.S() && this.S.s3))) a: {
+         } else if (!this.L$.A || !G__(this.videoTrack) && !G__(this.mp3Track) || (this.videoTrack.W || this.mp3Track.W) && this.policy.Y3 — K = !1 : (this.Y_(), this.Pj.seekTo(Infinity, { gm: "checkLoaderTracksSync", IY: !0 }), K = !0), !K) {
+            yU(this); this.L$.isManifestless && (O$I(this.videoTrack), O$I(this.mp3Track), hj(this.Vo), (K = MH(this.videoTrack)) && K.S && (K = K.S.isStreaming && !this.policy.m5, this.E3(K === this.policy.U.Yq — "strm" : "strmbug", { strm: K, sfVideo: this.policy.U.Yq, dfs: this.policy.m5 }, !0))); if (this.Nx) this.Xq();
+            else if (this.policy.W) { K = !1; for (Z of [this.videoTrack, this.mp3Track]) for (x = MH(Z); x && Z.nE() !== xH(Z); x = MH(Z))Z.wb(x), K = !0; Ah(this.videoTrack) && Ah(this.mp3Track) || K && Ad(this) } rG(this); Vf(this.D, this.videoTrack, this.videoTrack.V1, !1); Vf(this.D, this.mp3Track, this.mp3Track.V1, !1); if (!this.policy.rR && (K = this.videoTrack, I = this.mp3Track, (!this.Nx || Qn(this.Nx) && !this.policy.Nt) && !this.Vo.isSeeking() && (this.policy.S || lp(K) && K.V1.S() && this.S.s3))) a: {
                if (x = this.getCurrentTime(), e = this.Y, u = Wo(e, K.V1.info.Eh,
                   I.V1.info.Eh, 0), I = LF(e.cw) + u / vo(e.cw), x += Math.max(I, I + e.policy.nx - u / K.V1.info.Eh), K.A.length) { if (K.A[0].info.Rc[0].startTime <= x) break a; fF(K) } e = K.V; for (I = e.S.length - 1; I >= 0; I--)e.S[I].info.startTime > x && e.S.pop(); cN4(K); K.S && x < K.S.startTime && (K.cj = 0, K.V1.S() — K.S = K.V1.D(x, !0).Rc[0] : K.S = null)
-            } dvI(this.D, this.videoTrack, this.audioTrack); dvI(this.D, this.audioTrack, this.videoTrack); Ox4(this); this.N && (K = this.N, K.W — (x = K.D + K.policy.bB, K.V || (x = Math.min(x, K.startTimeSecs + K.policy.bn)), K = Math.max(0, x * 1E3 - Date.now())) :
+            } dvI(this.D, this.videoTrack, this.mp3Track); dvI(this.D, this.mp3Track, this.videoTrack); Ox4(this); this.N && (K = this.N, K.W — (x = K.D + K.policy.bB, K.V || (x = Math.min(x, K.startTimeSecs + K.policy.bn)), K = Math.max(0, x * 1E3 - Date.now())) :
                K = NaN, isNaN(K) || g.hc(this.QS, K)); g.hc(this.Ja)
          }
       } UK(R) { this.Pj.UK(R) } o2() { return this.Pj.o2() } Xq() {
-         if (this.o2() && Ah(this.videoTrack) && Ah(this.audioTrack) && this.Pj.S2() && !this.Pj.XF()) if (this.iP) this.Pj.RN—.W(); else { var R = this.Pj.RN—.j(); if (R) { var K = this.audioTrack.V; K.S = K.Y; K.Y = []; K = this.videoTrack.V; K.S = K.Y; K.Y = []; this.iP = R } } if (this.Nx) {
-            R = this.iP || this.Nx; K = R.S; var x = R.A; aT$(this, this.audioTrack); aT$(this, this.videoTrack); var X = Fb4(this); if (X) {
+         if (this.o2() && Ah(this.videoTrack) && Ah(this.mp3Track) && this.Pj.S2() && !this.Pj.XF()) if (this.iP) this.Pj.RN—.W(); else { var R = this.Pj.RN—.j(); if (R) { var K = this.mp3Track.V; K.S = K.Y; K.Y = []; K = this.videoTrack.V; K.S = K.Y; K.Y = []; this.iP = R } } if (this.Nx) {
+            R = this.iP || this.Nx; K = R.S; var x = R.A; aT$(this, this.mp3Track); aT$(this, this.videoTrack); var X = Fb4(this); if (X) {
                if (this.policy.DZ) {
-                  if (!K.o3() && (R = MH(this.audioTrack))) {
+                  if (!K.o3() && (R = MH(this.mp3Track))) {
                      if (!BL(this,
-                        this.audioTrack, K, R.info)) return; gG(this, this.audioTrack, K, R)
+                        this.mp3Track, K, R.info)) return; gG(this, this.mp3Track, K, R)
                   } if (!x.o3() && (R = MH(this.videoTrack))) { if (!BL(this, this.videoTrack, x, R.info)) return; gG(this, this.videoTrack, x, R) }
                } this.wQ || (this.wQ = (0, g.r)(), this.policy.V && this.E3("apdps", { r: X }))
             } else {
                if (this.wQ) {
-                  X = this.wQ; var Z = (0, g.r)() - X; let e = Z2(this.audioTrack, !0) * 1E3, I = Z2(this.videoTrack, !0) * 1E3; this.policy.V && (this.E3("apdpe", { dur: Z.toFixed(), abuf: e.toFixed(), vbuf: I.toFixed() }), Gt(this.policy) && (Z = Qe(this.Y), this.E3("sdps", {
+                  X = this.wQ; var Z = (0, g.r)() - X; let e = Z2(this.mp3Track, !0) * 1E3, I = Z2(this.videoTrack, !0) * 1E3; this.policy.V && (this.E3("apdpe", { dur: Z.toFixed(), abuf: e.toFixed(), vbuf: I.toFixed() }), Gt(this.policy) && (Z = Qe(this.Y), this.E3("sdps", {
                      ct: X, ah: e.toFixed(), vh: I.toFixed(),
                      mr: Ul(this.Y, this.CM, Z), bw: Z.toFixed(), js: this.isSeeking(), re: +this.CM, ps: (this.policy.NF || "").toString(), rn: (this.policy.ud || "").toString()
                   }))); this.wQ = 0
-               } this.N && (X = this.N.WI(this.audioTrack, dH(this.Nx.A.Gn()))) && this.Pj.seekTo(X, { JU: !0, gm: "pollSubsegmentReadahead", IY: !0 }); X = !1; ix_(this, this.videoTrack, x) && (X = !0, x = this.timing, x.W || (x.W = (0, g.r)(), g.u8("vda", x.W, x.S), x.V && (g.Cr(), jA(4))), x = this.timing, x.Wj || (x.Wj = (0, g.r)(), g.u8("vrb_f", x.Wj, x.S))); R && !R.u7() && (ix_(this, this.audioTrack, K) && (X = !0, K =
-                  this.timing, K.V || (K.V = (0, g.r)(), g.u8("ada", K.V, K.S), K.W && (g.Cr(), jA(4))), K = this.timing, K.Y || (K.Y = (0, g.r)(), g.u8("arb_f", K.Y, K.S))), !this.dQ() && this.Nx && (!this.policy.KO && Ah(this.videoTrack) && Ah(this.audioTrack) && Qn(R) && !R.MC() && (K = xH(this.audioTrack).V1, K === this.L$.S[K.info.id] && (this.Pj.Z().nC() && this.Pj.E3("ses", { eos: 1 }), Qn(R) && (R.Nx — R.Nx.endOfStream() : R.My.webkitSourceEndOfStream(R.My.EOS_NO_ERROR)), K = this.schedule, rSc(w7(K)), K.SN = (0, g.r)(), K.s3 = !0, this.HN("e"))), X && (R.S — !R.S.supports(0) : !WB()) &&
+               } this.N && (X = this.N.WI(this.mp3Track, dH(this.Nx.A.Gn()))) && this.Pj.seekTo(X, { JU: !0, gm: "pollSubsegmentReadahead", IY: !0 }); X = !1; ix_(this, this.videoTrack, x) && (X = !0, x = this.timing, x.W || (x.W = (0, g.r)(), g.u8("vda", x.W, x.S), x.V && (g.Cr(), jA(4))), x = this.timing, x.Wj || (x.Wj = (0, g.r)(), g.u8("vrb_f", x.Wj, x.S))); R && !R.u7() && (ix_(this, this.mp3Track, K) && (X = !0, K =
+                  this.timing, K.V || (K.V = (0, g.r)(), g.u8("ada", K.V, K.S), K.W && (g.Cr(), jA(4))), K = this.timing, K.Y || (K.Y = (0, g.r)(), g.u8("arb_f", K.Y, K.S))), !this.dQ() && this.Nx && (!this.policy.KO && Ah(this.videoTrack) && Ah(this.mp3Track) && Qn(R) && !R.MC() && (K = xH(this.mp3Track).V1, K === this.L$.S[K.info.id] && (this.Pj.Z().nC() && this.Pj.E3("ses", { eos: 1 }), Qn(R) && (R.Nx — R.Nx.endOfStream() : R.My.webkitSourceEndOfStream(R.My.EOS_NO_ERROR)), K = this.schedule, rSc(w7(K)), K.SN = (0, g.r)(), K.s3 = !0, this.HN("e"))), X && (R.S — !R.S.supports(0) : !WB()) &&
                      Ad(this)))
             }
          }
       } HN(R) { if (this.L$.isManifestless) { var K = this.videoTrack.V1; if (K) { var x = K.index.li(), X = -1, Z = -1; K.index instanceof UNu && (X = K.index.kM(), Z = K.index.Da()); this.Pj.HN(R, x, X, Z) } } } l3() { return this.Mx !== 0 && this.cj !== 0 } VS(R) { this.policy.E$ && (this.U = R) } qd(R) {
-         var K = R === this.Nx—.S — this.audioTrack : this.videoTrack; MH(K)—.isLocked && (this.Pj.Z().nC() && this.E3("eosl", { ounlock: MH(K)—.info.W9() }), PL(this, R === this.Nx—.S)); if (this.policy.lE && R === this.Nx—.S && this.Y3) {
+         var K = R === this.Nx—.S — this.mp3Track : this.videoTrack; MH(K)—.isLocked && (this.Pj.Z().nC() && this.E3("eosl", { ounlock: MH(K)—.info.W9() }), PL(this, R === this.Nx—.S)); if (this.policy.lE && R === this.Nx—.S && this.Y3) {
             let x = this.Y3 - this.getCurrentTime(); this.Pj.E3("asl",
-               { l: x, xtag: xH(this.audioTrack)—.V1.info.A }); this.rQ = !1; this.Y3 = 0
+               { l: x, xtag: xH(this.mp3Track)—.V1.info.A }); this.rQ = !1; this.Y3 = 0
          } R.Ri() && R.Gn().length === 0 && (R.vT(), this.Nx && !this.Nx.Ri() && (this.Pj.Z().nC() && this.Pj.E3("rms", { ld: "seek" }), this.Nx.N = performance.now(), this.Pj.lc(), this.Pj.Z().nC() && g.hc(this.KO))); K.N—.s3(); this.policy.NS — Jh(this) : this.WI()
       } bj(R) {
          if (this.Nx) {
-            var K = xH(R === this.Nx.S — this.audioTrack : this.videoTrack); if (R = R.Kt()) for (let x = 0; x < R.length; x++)this.E3("appendedbuffer", { i: x, b: g.HG(R[x].subarray(0, 4096), 3) }); R = {}; K && (R = uW(K)); R.trg = "onappenderr";
+            var K = xH(R === this.Nx.S — this.mp3Track : this.videoTrack); if (R = R.Kt()) for (let x = 0; x < R.length; x++)this.E3("appendedbuffer", { i: x, b: g.HG(R[x].subarray(0, 4096), 3) }); R = {}; K && (R = uW(K)); R.trg = "onappenderr";
             this.handleError("fmt.unplayable", R, 1)
          }
-      } V3(R) { this.Pj.V3(R) } XR() { return Ah(this.videoTrack) && Ah(this.audioTrack) } m0(R, K, x) {
+      } V3(R) { this.Pj.V3(R) } XR() { return Ah(this.videoTrack) && Ah(this.mp3Track) } m0(R, K, x) {
          x && this.rE && this.E3("sdai", { skipadsvi: 1, rep: R.info.itag, sq: K.bP, acpn: x.S.join("-"), avids: x.ids.join("-") }); if (this.L$.isManifestless) {
             R = !!R.info.video; u2p(this, K, x, R, !0); !this.policy.s3 && this.policy.Zt && R && this.Zt—.U(K.bP, x); if (this.policy.A && K.w$) {
                let e = K.w$ || null; if (e—.event !== "predictStart") {
@@ -14068,36 +14068,36 @@ var _yt_player = {}; (function (g) {
                      evt: e—.event, id: e—.identifier, sq: K.bP, mt: K.startTime.toFixed(3), stif: !!x, rn: X
                   })
                }
-            } this.policy.s3 || (R = R — this.videoTrack : this.audioTrack, R.Y.push({ segmentNumber: K.bP, Le: x }), R.Y.length > 5 && R.Y.shift(), K = K.bP, this.Pj.getVideoData()—.enableServerStitchedDai && (x = Fo5(this.audioTrack, K), R = Fo5(this.videoTrack, K), x !== 0 && R !== 0 && x !== R && this.handleError("ssdai.avsync", { sq: K, a: x, v: R }, 0)))
+            } this.policy.s3 || (R = R — this.videoTrack : this.mp3Track, R.Y.push({ segmentNumber: K.bP, Le: x }), R.Y.length > 5 && R.Y.shift(), K = K.bP, this.Pj.getVideoData()—.enableServerStitchedDai && (x = Fo5(this.mp3Track, K), R = Fo5(this.videoTrack, K), x !== 0 && R !== 0 && x !== R && this.handleError("ssdai.avsync", { sq: K, a: x, v: R }, 0)))
          }
-      } G7(R, K, x, X) { R.info.video && this.W.G7(K, x, X) } LY(R) { this.S.LY(R) } A2() { return this.mM } pj() { return this.videoTrack.D || this.audioTrack.D } seek(R,
+      } G7(R, K, x, X) { R.info.video && this.W.G7(K, x, X) } LY(R) { this.S.LY(R) } A2() { return this.mM } pj() { return this.videoTrack.D || this.mp3Track.D } seek(R,
          K) {
             if (this.dQ()) return Br(); if (this.pj()) return Br("seeking to head"); if (this.policy.wQ && !isFinite(R)) return fxc(this.Vo), g.n0(Infinity); yU(this); vB$(this, R, !1, K.seekSource); Ey(this); this.policy.S || rG(this, R); this.Nx && this.Nx.S && this.Nx.A && !this.Pj.getVideoData().zG && (this.Nx.S.isLocked() || this.Nx.A.isLocked()) && this.Pj.IB({ reattachOnLockedBuffer: 1, vsb: `${this.Nx.A.isLocked()}`, asb: `${this.Nx.S.isLocked()}` }); var x = this.getCurrentTime(), X = this.Vo.seek(R, K); if (!this.policy.E$ || this.policy.Ja) this.currentTime =
                X; Fo(this.W, R, x, this.policy.bW && !K.PG); Ad(this); return g.n0(X)
-      } IS(R) { return this.policy.S && this.A.IS(R) } PL(R) { return this.A.PL(R) } md(R, K) { this.A.md(R, K) } getCurrentTime() { if (this.policy.E$) { let R = this.Oh() || 0; return this.Pj.getCurrentTime(!0) - R } return this.currentTime } p$() { return this.currentTime + this.timestampOffset } sb() { return this.audioTrack.V1.info } kY() { return this.videoTrack.V1.info } nG() { return this.audioTrack.V1.info.Bj } GQ() { return this.videoTrack.V1.info.Bj } f$() {
+      } IS(R) { return this.policy.S && this.A.IS(R) } PL(R) { return this.A.PL(R) } md(R, K) { this.A.md(R, K) } getCurrentTime() { if (this.policy.E$) { let R = this.Oh() || 0; return this.Pj.getCurrentTime(!0) - R } return this.currentTime } p$() { return this.currentTime + this.timestampOffset } sb() { return this.mp3Track.V1.info } kY() { return this.videoTrack.V1.info } nG() { return this.mp3Track.V1.info.Bj } GQ() { return this.videoTrack.V1.info.Bj } f$() {
          try {
-            this.zQ(), fF(this.audioTrack),
-            fF(this.videoTrack), jk(this.audioTrack), jk(this.videoTrack), this.audioTrack.dispose(), this.videoTrack.dispose(), super.f$()
+            this.zQ(), fF(this.mp3Track),
+            fF(this.videoTrack), jk(this.mp3Track), jk(this.videoTrack), this.mp3Track.dispose(), this.videoTrack.dispose(), super.f$()
          } catch (R) { g.Gz(R) }
       } handleError(R, K, x = 0) { var X = rT(x); R === "fmt.unplayable" && this.L$.isLive && (this.policy.DZ = !1, Mv(this.L$)); K = new g.yb(R, K, x); g.Y$(this); fm(K.details); this.Pj.handleError(K); R !== "html5.invalidstate" && K.errorCode !== "fmt.unplayable" && R !== "fmt.unparseable" && X && this.dispose() } Rw() {
-         var R = xH(this.audioTrack), K = xH(this.videoTrack); R = {
+         var R = xH(this.mp3Track), K = xH(this.videoTrack); R = {
             lct: this.getCurrentTime().toFixed(3),
-            lsk: this.Vo.isSeeking(), lmf: this.S.S.isLocked(), lbw: hH(this.schedule).toFixed(3), lhd: LF(this.schedule).toFixed(3), lst: ((this.schedule.U.NB() || 0) * 1E9).toFixed(3), laa: R — R.W9() : "", lva: K — K.W9() : "", lar: this.audioTrack.S — this.audioTrack.S.W9() : "", lvr: this.videoTrack.S — this.videoTrack.S.W9() : "", laq: `${bp(this.audioTrack)}`, lvq: `${bp(this.videoTrack)}`
+            lsk: this.Vo.isSeeking(), lmf: this.S.S.isLocked(), lbw: hH(this.schedule).toFixed(3), lhd: LF(this.schedule).toFixed(3), lst: ((this.schedule.U.NB() || 0) * 1E9).toFixed(3), laa: R — R.W9() : "", lva: K — K.W9() : "", lar: this.mp3Track.S — this.mp3Track.S.W9() : "", lvr: this.videoTrack.S — this.videoTrack.S.W9() : "", laq: `${bp(this.mp3Track)}`, lvq: `${bp(this.videoTrack)}`
          }; this.Nx && !this.Nx.u7() && this.Nx.S && this.Nx.A && (R.lab = Yv(this.Nx.S.Gn()), R.lvb = Yv(this.Nx.A.Gn())); this.wQ && (R.lapt = ((0, g.r)() - this.wQ).toFixed(0), R.lapr =
-            Fb4(this)); this.cj && (R.lapmabht = ((0, g.r)() - this.cj).toFixed(0), R.lapmabh = ye(this, this.audioTrack).toFixed(0)); (K = this.A.x3) && (R.reqBlocked = K); (K = this.A.iN) && (R.lsrt = ((0, g.r)() - K).toFixed(0)); this.Mx && (R.lapmvbht = ((0, g.r)() - this.Mx).toFixed(0), R.lapmvbh = ye(this, this.videoTrack).toFixed(0)); this.jN && (R.lapsdai = ((0, g.r)() - this.jN).toFixed(0)); return R
-      } Xf() { return this.S.S } Y_() { try { this.policy.S && this.A.md(!1, "pending"), this.audioTrack.Y_(), this.videoTrack.Y_() } catch (R) { g.Gz(R) } this.policy.W = "" } kJ(R) {
+            Fb4(this)); this.cj && (R.lapmabht = ((0, g.r)() - this.cj).toFixed(0), R.lapmabh = ye(this, this.mp3Track).toFixed(0)); (K = this.A.x3) && (R.reqBlocked = K); (K = this.A.iN) && (R.lsrt = ((0, g.r)() - K).toFixed(0)); this.Mx && (R.lapmvbht = ((0, g.r)() - this.Mx).toFixed(0), R.lapmvbh = ye(this, this.videoTrack).toFixed(0)); this.jN && (R.lapsdai = ((0, g.r)() - this.jN).toFixed(0)); return R
+      } Xf() { return this.S.S } Y_() { try { this.policy.S && this.A.md(!1, "pending"), this.mp3Track.Y_(), this.videoTrack.Y_() } catch (R) { g.Gz(R) } this.policy.W = "" } kJ(R) {
          return this.videoTrack &&
-            this.audioTrack — this.videoTrack.kJ(R) && this.audioTrack.kJ(R) : !0
+            this.mp3Track — this.videoTrack.kJ(R) && this.mp3Track.kJ(R) : !0
       } Rs() { return kl(this.Y) } E3(R, K, x = !1) { this.Pj.E3(R, K, x) } fV() { return this.Pj.fV() } IY(R, K) { R /= K; isNaN(this.timestampOffset) && wG(this, R - Math.min(R, this.policy.zu)); var x = R - this.timestampOffset; x < 0 && !this.Tc && (this.Tc = !0, this.E3("neg_ts", { ts: x.toFixed(3), offset: this.timestampOffset.toFixed(3), wnd: r3(this.L$) || this.L$.VP — "1" : "0" }), this.Pj.Z().ta().S.U3(Ap2) && (wG(this, R - Math.min(R, this.policy.zu)), x = R - this.timestampOffset)); return x * K } Oh() { return this.timestampOffset } isSeeking() { return this.Vo.isSeeking() } iz() { this.W.iz() } qk(R,
          K = !1, x = {}) { this.policy.S — this.j.qk(R, K, x) : this.S.qk(R, K, x) } lj() { this.policy.A && this.rE && (this.E3("sdai", { skipAdSked: "1" }), this.rE = !1) } Wa(R, K) {
             if (this.policy.A && (this.rE || this.isSeeking())) return this.E3("sdai", { ignoreSkip: "1", isSkip: this.rE, isSeek: this.isSeeking(), t: R.toFixed(3) }), !1; var x = this.policy.A && this.policy.j, X = this.videoTrack.V1.index.wI(R), Z = !1; if (x) { if (Z = !!this.SN—.L7(R, X, this.timestampOffset)) HS(this, R, R, X), this.mM && this.mM—.L7(R, X) } else this.mM && (Z = !!this.W.Wa(R, this.mM)); if (!Z) return this.handleError("ad.skipfailed",
-               { dec: !!this.mM, t: R.toFixed(3), sq: X }), !1; this.policy.A && (this.E3("sdai", { skipAdStd: "1" }), this.rE = !0); this.policy.Zt && this.Zt—.clear(); wG(this, this.timestampOffset - K); Ad(this); this.policy.A && (Mv(this.L$), jk(this.audioTrack), jk(this.videoTrack), this.Y_()); return !0
+               { dec: !!this.mM, t: R.toFixed(3), sq: X }), !1; this.policy.A && (this.E3("sdai", { skipAdStd: "1" }), this.rE = !0); this.policy.Zt && this.Zt—.clear(); wG(this, this.timestampOffset - K); Ad(this); this.policy.A && (Mv(this.L$), jk(this.mp3Track), jk(this.videoTrack), this.Y_()); return !0
          } i7() {
             wG(this, this.timestampOffset - 1E3); var R = this.L$, K = new Set; for (let X in R.S) {
                let Z = R.S[X].index; var x = Z.D3(); x && !K.has(x) && (x.startTime += 1E3, x.endTime = x.startTime + x.duration, K.add(x)); Z.segments.length && (x = Z.segments[Z.segments.length -
                   1], Z.segments = [], Z.segments.push(x))
             } this.mM && this.mM.bm(); this.policy.A && this.policy.j && this.SN—.bm(); Fo(this.W, 0, 0, !0); this.rE = !1
-         } getManifest() { return this.L$ } isOffline() { return !!this.Pj.getVideoData().cotn } NR(R, K) { this.Pj.NR(R, K) } U5(R, K) { if (this.policy.S) vB$(this, R, !0, K), this.A.md(!0, "utc"), this.aZ(); else if (K = this.Pj.getVideoData().NN) { var x = this.D; x.uE = R; x.NN = K; oH(this) } } E4(R) { this.videoTrack.D = !1; this.audioTrack.D = !1; this.Vo.S = !1; this.Pj.E4(R) } BO(R) { this.Vo.BO(R - this.Oh()) } Bb() { this.Pj.Bb() } zW(R) {
+         } getManifest() { return this.L$ } isOffline() { return !!this.Pj.getVideoData().cotn } NR(R, K) { this.Pj.NR(R, K) } U5(R, K) { if (this.policy.S) vB$(this, R, !0, K), this.A.md(!0, "utc"), this.aZ(); else if (K = this.Pj.getVideoData().NN) { var x = this.D; x.uE = R; x.NN = K; oH(this) } } E4(R) { this.videoTrack.D = !1; this.mp3Track.D = !1; this.Vo.S = !1; this.Pj.E4(R) } BO(R) { this.Vo.BO(R - this.Oh()) } Bb() { this.Pj.Bb() } zW(R) {
             R !==
             this.policy.IK && ((this.policy.IK = R) || this.WI())
          } IB(R) { this.Pj.IB(R) } t8(R) { this.Pj.t8(R) } JR(R, K, x) { this.SN—.JR(R, K, x); this.policy.j && (this.A.N = void 0, this.WI()) } p7(R) { this.SN—.p7(R) } wH(R) { this.policy.s3 && this.Pj.getVideoData().Gc() && !R.Jt && (this.E3("liveUmpMissing", { segmentNum: R.Ny, headerId: R.Ba, startMs: R.startMs, durationMs: R.durationMs }), this.policy.s3 = !1) } PH(R, K) {
@@ -14305,7 +14305,7 @@ var _yt_player = {}; (function (g) {
             cD3: () => this.serializedHeartbeatLoggingData,
             mHK: () => this.hostClientPlaybackNonce,
             Lh$: () => this.formatItag,
-            sxQ: () => this.audioFormatItag,
+            sxQ: () => this.mp3FormatItag,
             VKQ: () => this.segment,
             MK1: () => this.sequenceId
          };
@@ -14315,9 +14315,9 @@ var _yt_player = {}; (function (g) {
             clientPlaybackNonce: this.clientPlaybackNonce, endPlaybackState: this.endPlaybackState, docId: this.videoId, inview: this.inview, size: this.size, mediaLengthSec: this.mediaLengthSec, liveIngestionOffsetUsec: this.liveIngestionOffsetUsec—.toFixed(0), delayThresholdMet: this.delayThresholdMet, watchTimeMetadata: {
                sequenceId: this.sequenceId, isFinal: this.isFinal, isDoubleLogged: this.isDoubleLogged, segmentWallLengthMs: this.segment.D — (Date.now() - this.segment.D).toString() : void 0, scheduledSegmentMaximumLengthSecs: this.segment.scheduledSegmentMaximumLengthSecs,
                nextScheduledSegmentMaximumLengthSecs: this.segment.nextScheduledSegmentMaximumLengthSecs
-            }, serializedServerContextData: this.serializedServerContextData, serializedWatchEndpointLoggingContext: this.serializedWatchEndpointLoggingContext, serializedHeartbeatLoggingData: this.serializedHeartbeatLoggingData, hostClientPlaybackNonce: this.hostClientPlaybackNonce, formatItag: this.formatItag, audioFormatItag: this.audioFormatItag
+            }, serializedServerContextData: this.serializedServerContextData, serializedWatchEndpointLoggingContext: this.serializedWatchEndpointLoggingContext, serializedHeartbeatLoggingData: this.serializedHeartbeatLoggingData, hostClientPlaybackNonce: this.hostClientPlaybackNonce, formatItag: this.formatItag, audioFormatItag: this.mp3FormatItag
          }; R.startMediaTimeSec = this.segment.startTime; R.endMediaTimeSec = this.segment.endTime; R.volume =
-            this.segment.volume; R.isMuted = this.segment.muted; R.previouslyEnded = this.segment.previouslyEnded; this.segment.playbackRate !== 1 && (R.playbackRate = this.segment.playbackRate); this.segment.connectionType !== 0 && (R.conn = ZH4(this.segment.connectionType)); this.segment.visibilityState !== 0 && (R.vis = XSc(this.segment.visibilityState)); this.segment.V !== 0 && (R.isBlackedOut = !0); this.segment.A !== "-" && (R.captionTrack = this.segment.A); this.segment.audioId && (R.audioTrack = this.segment.audioId); this.segment.clipId !== "-" && (R.clipId =
+            this.segment.volume; R.isMuted = this.segment.muted; R.previouslyEnded = this.segment.previouslyEnded; this.segment.playbackRate !== 1 && (R.playbackRate = this.segment.playbackRate); this.segment.connectionType !== 0 && (R.conn = ZH4(this.segment.connectionType)); this.segment.visibilityState !== 0 && (R.vis = XSc(this.segment.visibilityState)); this.segment.V !== 0 && (R.isBlackedOut = !0); this.segment.A !== "-" && (R.captionTrack = this.segment.A); this.segment.mp3Id && (R.mp3Track = this.segment.mp3Id); this.segment.clipId !== "-" && (R.clipId =
                this.segment.clipId); this.segment.S !== "-" && (R.serializedAccountLinkState = this.segment.S); var K = {}; this.sendIsolatedPayload && (K.sendIsolatedPayload = !0); g.Ij("watchTimeSegment", R, K)
       }
    }; var CPs = class extends g.uX {
@@ -14347,7 +14347,7 @@ var _yt_player = {}; (function (g) {
          return wq(GP(this,
             "playback"))
       } w4(R) { var K = GP(this, "engage"); K.wQ = R; return s$$(K, $n4(this.provider)) } Ja() { var R = this.S.j, K = this.provider.B.ta().S.U3(oZc) || 4E3; R > K — this.U(!isNaN(this.A)).send() : this.S.update() } lP() { this.SN = 0 }
-   }; var mnc = class { constructor() { this.endTime = this.startTime = -1; this.A = "-"; this.playbackRate = 1; this.visibilityState = 0; this.audioId = ""; this.volume = this.connectionType = this.V = 0; this.muted = !1; this.S = this.clipId = "-"; this.W = this.previouslyEnded = !1; this.D = Date.now() } isEmpty() { return this.endTime === this.startTime } }; var lf$ = class { constructor(R, K, x) { this.videoData = R; this.B = K; this.Pj = x; this.S = void 0 } L(R) { return this.B.L(R) } getCurrentTime() { return this.Pj.getCurrentTime() } Di() { return this.Pj.Di() } ta() { return this.B.ta() } }, cm4 = { other: 1, none: 2, wifi: 3, cellular: 7, ethernet: 30 }; g.JU = class extends g.uX {
+   }; var mnc = class { constructor() { this.endTime = this.startTime = -1; this.A = "-"; this.playbackRate = 1; this.visibilityState = 0; this.mp3Id = ""; this.volume = this.connectionType = this.V = 0; this.muted = !1; this.S = this.clipId = "-"; this.W = this.previouslyEnded = !1; this.D = Date.now() } isEmpty() { return this.endTime === this.startTime } }; var lf$ = class { constructor(R, K, x) { this.videoData = R; this.B = K; this.Pj = x; this.S = void 0 } L(R) { return this.B.L(R) } getCurrentTime() { return this.Pj.getCurrentTime() } Di() { return this.Pj.Di() } ta() { return this.B.ta() } }, cm4 = { other: 1, none: 2, wifi: 3, cellular: 7, ethernet: 30 }; g.JU = class extends g.uX {
       constructor(R) {
          super(); this.provider = R; this.V = new Map; this.Zf = new g.h5; this.lN = {
             EHs: () => this.qoe,
@@ -14375,7 +14375,7 @@ var _yt_player = {}; (function (g) {
             K)
       } Wj() { return this.mediaElement.Wj() } activate(R) { this.mediaElement.activate(R) } AK() { return this.mediaElement.AK() } playVideo() { return this.mediaElement.playVideo() } vj() { this.mediaElement.vj() } Y3() { this.mediaElement.Y3() } D() { return this.mediaElement.D() } hh() { return this.mediaElement.hh() } fb() { return this.mediaElement.fb() } wQ() { return this.mediaElement.wQ() } lP(R) { this.mediaElement.lP(R) } x3() { this.mediaElement.x3() } Ja() { this.mediaElement.Ja() } getPlaybackRate() { return this.mediaElement.getPlaybackRate() } setPlaybackRate(R) { return this.mediaElement.setPlaybackRate(R) } CX() { return this.mediaElement.CX() } setLoop(R) { this.mediaElement.setLoop(R) } canPlayType(R,
          K) { return this.mediaElement.canPlayType(R, K) } isPaused() { return this.mediaElement.isPaused() } isSeeking() { return this.mediaElement.isSeeking() } isEnded() { return this.mediaElement.isEnded() } p$() { return this.mediaElement.p$() } Y(R) { this.mediaElement.Y(R) } jN() { return this.mediaElement.jN() } load() { this.mediaElement.load() } pause() { this.mediaElement.pause() } V() { return this.mediaElement.V() } oc() { return this.mediaElement.oc() } sD() { return this.mediaElement.sD() } YH() { return this.mediaElement.YH() } getVideoPlaybackQuality() { return this.mediaElement.getVideoPlaybackQuality() } Gx() { return this.mediaElement.Gx() } nL() { return this.mediaElement.nL() } togglePictureInPicture() { this.mediaElement.togglePictureInPicture() } xS() { return this.mediaElement.xS() } getSize() { return this.mediaElement.getSize() } setSize(R) { this.mediaElement.setSize(R) } getVolume() { return this.mediaElement.getVolume() } setVolume(R) { this.mediaElement.setVolume(R) } setAttribute(R,
-            K) { this.mediaElement.setAttribute(R, K) } removeAttribute(R) { this.mediaElement.removeAttribute(R) } hasAttribute(R) { return this.mediaElement.hasAttribute(R) } SN() { return this.mediaElement.SN() } sV(R) { this.mediaElement.sV(R) } iP(R) { return this.mediaElement.iP(R) } iN() { return this.mediaElement.iN() } stopVideo() { this.mediaElement.stopVideo() } wd(R) { this.mediaElement.wd(R) } audioTracks() { return this.mediaElement.audioTracks() } NS(R) { this.mediaElement.NS(R) }
+            K) { this.mediaElement.setAttribute(R, K) } removeAttribute(R) { this.mediaElement.removeAttribute(R) } hasAttribute(R) { return this.mediaElement.hasAttribute(R) } SN() { return this.mediaElement.SN() } sV(R) { this.mediaElement.sV(R) } iP(R) { return this.mediaElement.iP(R) } iN() { return this.mediaElement.iN() } stopVideo() { this.mediaElement.stopVideo() } wd(R) { this.mediaElement.wd(R) } audioTracks() { return this.mediaElement.mp3Tracks() } NS(R) { this.mediaElement.NS(R) }
    }; g.vF.prototype.U = Ky(55); g.vF.prototype.cj = Ky(53);
    g.vF.prototype.zJ = Ky(51); g.vF.prototype.s3 = Ky(49); var pe$ = class {
       constructor(R) { this.V = 0; this.A = this.S = null; this.Pj = R } j() {
@@ -14646,7 +14646,7 @@ var _yt_player = {}; (function (g) {
          } Vz(R, K) {
             if (this.dQ() || this.playerState.S(128)) return !1; var x = !!this.videoData.V—.S(), X = x && K — this.getCurrentTime() - this.Oh() : NaN; if (R.Iw && R.Iw.id) { var Z = this.uN; if (Z.qoe) { Z = Z.qoe; let I = [R.Iw.id, isNaN(X) — "m" : "t"]; g.VU(Z, g.DK(Z.provider), "afi", I) } } if (x) { if (K) { var e = hR(this.IR); this.E3("aswh", { id: R.id, xtags: R.xtags, bh: e.toFixed(3) }) } this.loader.setAudioTrack(R, X, K); return !0 } if (Kny(this)) {
                a: {
-                  e = this.mediaElement.audioTracks();
+                  e = this.mediaElement.mp3Tracks();
                   K = !1; for (X = 0; X < e.length; ++X)if (x = e[X], (H2[x.label] || x.label) === R.Iw.getName()) { if (x.enabled) { e = !1; break a } K = x.enabled = !0 } else x.enabled && (x.enabled = !1); e = K — !0 : void 0
                } e && this.E3("hlsaudio", { id: R.id })
             } else { a: if (K = this.videoData, K.W && !K.W.V() || R === K.k_ || !K.rQ || K.rQ.length <= 0) e = !1; else { for (e of K.rQ) { if (!(e instanceof Pm_)) { e = !1; break a } X = e; x = R.Iw.getId(); X.V && (kWQ(X.V, x), X.KC = null) } K.k_ = R; e = !0 } e && SX(this) && (this.publish("internalaudioformatchange", this.videoData, !0), this.E3("hlsaudio", { id: R.id })) } return !0
@@ -14668,7 +14668,7 @@ var _yt_player = {}; (function (g) {
                !1
          } Dy(R) { this.AE(new g.yb("staleconfig", { reason: R })) } handleError(R) { this.kT.handleError(R) } LA() { return this.kT.LA() } E4(R) { this.IR.E4(R) } async d4(R = !1, K = !1) {
             this.loader && this.loader.iz(); this.loader && this.loader.dQ() && bO(this); this.L("html5_enable_vp9_fairplay") && this.dA() && this.videoData.S—.vj(); this.wm(Np(this.playerState, 2048)); this.publish("newelementrequired"); R && await $1(this); this.videoData.Gc() && this.loader—.zJ && !y8(this) && (this.isAtLiveHead() && sb(this.videoData) — this.seekTo(Infinity, { gm: "videoPlayer_getNewElement" }) :
-               this.videoData.LI && this.loader && (R = this.loader, R.L$.Gc && (R.L$.LI || R.L$.isWindowedLive || R.L$.isPremiere — (R.seek(0, { gm: "loader_resetSqless" }), R.videoTrack.D = !0, R.audioTrack.D = !0, R.videoTrack.W = !0, R.audioTrack.W = !0) : w3(R.L$) && oH(R)))); K && this.seekTo(0, { seekSource: 105 }); this.playerState.S(8) && this.playVideo()
+               this.videoData.LI && this.loader && (R = this.loader, R.L$.Gc && (R.L$.LI || R.L$.isWindowedLive || R.L$.isPremiere — (R.seek(0, { gm: "loader_resetSqless" }), R.videoTrack.D = !0, R.mp3Track.D = !0, R.videoTrack.W = !0, R.mp3Track.W = !0) : w3(R.L$) && oH(R)))); K && this.seekTo(0, { seekSource: 105 }); this.playerState.S(8) && this.playVideo()
          } xB(R) { this.E3("hgte", { ne: +R }); this.videoData.U = !1; R && this.d4(); this.loader && mx2(this.loader) } WS(R) { this.E3("newelem", { r: R }); this.d4() } pauseVideo(R = !1, K) {
             if ((this.playerState.S(64) || this.playerState.S(2)) &&
                !R) if (this.playerState.S(8)) this.wm(K5(this.playerState, 4, 8, null, K)); else if (this.lK()) SX(this); else return; this.playerState.S(128) || (R — this.wm(Np(this.playerState, 256, null, K)) : this.wm(K5(this.playerState, 4, 8, null, K))); this.mediaElement && this.mediaElement.pause(); g.cQ(this.videoData) && this.loader && this.CE(!1)
@@ -14700,7 +14700,7 @@ var _yt_player = {}; (function (g) {
          } Q9() { var R = NaN; this.mediaElement && (R = this.mediaElement.Q9()); return R >= 0 — R : this.getCurrentTime() } zn() { if (this.videoData.S—.zn) return this.videoData.S.zn(this.getCurrentTime() - this.Oh()); if (this.mediaElement) { var R = this.mediaElement.jN(); if (R && (R = R.getTime(), !isNaN(R))) return R / 1E3 + this.getCurrentTime() } return NaN } getDuration() { return this.videoData.lengthSeconds — this.videoData.lengthSeconds + this.Oh() : this.XH() — this.XH() : 0 } Bi() {
             var R = new S1h; if (this.loader) {
                gJQ(this.cw, R, this.B.nC()); var K =
-                  this.loader; if (K.Nx && K.Nx.j && !K.Nx.u7() && (R.X9 = Z2(K.videoTrack), R.A = Z2(K.audioTrack), K.policy.V)) { let x = bp(K.videoTrack), X = bp(K.audioTrack), Z = Yv(K.Nx.A.Gn(), "_", 5), e = Yv(K.Nx.S.Gn(), "_", 5); Object.assign(R.S, { lvq: x, laq: X, lvb: Z, lab: e }) } R.bandwidthEstimate = kl(K.Y); K.audioTrack.N—.flush(); K.videoTrack.N—.flush()
+                  this.loader; if (K.Nx && K.Nx.j && !K.Nx.u7() && (R.X9 = Z2(K.videoTrack), R.A = Z2(K.mp3Track), K.policy.V)) { let x = bp(K.videoTrack), X = bp(K.mp3Track), Z = Yv(K.Nx.A.Gn(), "_", 5), e = Yv(K.Nx.S.Gn(), "_", 5); Object.assign(R.S, { lvq: x, laq: X, lvb: Z, lab: e }) } R.bandwidthEstimate = kl(K.Y); K.mp3Track.N—.flush(); K.videoTrack.N—.flush()
             } else this.mediaElement && (R.X9 = yn(this.mediaElement)); R.Us = this.Us; R.O4 = this.O4; R.V = this.isAtLiveHead() && this.isPlaying() — tf(this) : NaN; K = this.IR; K = K.S — LL(K.S) + kD(K.S) : 0; R.W = K; return R
          } NR(R, K) {
             this.O4 +=
@@ -14776,7 +14776,7 @@ var _yt_player = {}; (function (g) {
       } wm(R) {
          if (!g.sP(this.playerState, R)) {
             var K = new g.e8(R, this.playerState); this.playerState = R; pL2(this); var x = !this.EA.length; this.EA.push(K); var X = this.mediaElement && this.mediaElement.isSeeking(); K.LO(1) && this.loader && Ar4(this.loader); X = K.oldState.A() && !X; if (K.LO(1) && X && this.playerState.S(8) && !this.playerState.S(64) && this.loader && (X = this.loader, X.CM = !0, X.policy.iN && X.Nx && X.E3("lr_rb", {
-               c: X.getCurrentTime(), s: X.isSeeking(), ab: Yv(X.Nx.S.Gn()), ala: xH(X.audioTrack)—.W9(), alr: X.audioTrack.S—.W9(), vb: Yv(X.Nx.A.Gn()),
+               c: X.getCurrentTime(), s: X.isSeeking(), ab: Yv(X.Nx.S.Gn()), ala: xH(X.mp3Track)—.W9(), alr: X.mp3Track.S—.W9(), vb: Yv(X.Nx.A.Gn()),
                vla: xH(X.videoTrack)—.W9(), vlr: X.videoTrack.S—.W9()
             }), X.m2 !== 0 && X.E3("sps_rebuffer", { c: X.getCurrentTime() }), this.mediaElement && yn(this.mediaElement) >= 5)) { X = this.AA; var Z = this.hD; !Z.videoData.A || X.L("html5_disable_performance_downgrade") — X = !1 : (Date.now() - X.U > 6E4 && (X.A = 0), X.A++, X.U = Date.now(), X.A !== 4 — X = !1 : (nlQ(X, Z.videoData.A), X = !0)); X && Ty(this) } (X = g.JY(this.B.experiments, "html5_ad_timeout_ms")) && this.videoData.isAd() && R.S(1) && (R.S(8) || R.S(16)) — this.Do.start(X) : this.Do.stop(); (Er(K, 8) < 0 || K.LO(1024)) &&
                this.fn.stop(); !K.LO(8) || this.videoData.N || K.state.S(1024) || this.fn.start(); K.state.S(8) && Er(K, 16) < 0 && !K.state.S(32) && !K.state.S(2) && this.playVideo(); K.state.S(2) && Cx(this.videoData) && (this.Mb(this.getCurrentTime()), this.qO(!0)); K.LO(2) && (this.XN(!0), this.B.nC() && this.L("html5_sabr_parse_live_metadata_playback_boundaries") && pz(this.videoData) && this.videoData.S && (R = {
@@ -14847,7 +14847,7 @@ var _yt_player = {}; (function (g) {
          return this.mediaElement &&
             !g.Mc(this.B) — this.mediaElement.CX() : this.loop
       } O1(R) { this.E3("timestamp", { o: R.toString() }); this.IR.O1(R) } ii(R) { this.Ww.tick(R) } rA(R) { return this.Ww.rA(R) } gL(R) { this.Ww.gL(R) } E3(R, K, x = !1) { this.uN.E3(R, K, x) } jP(R, K, x = !1) { this.uN.E3(R, K, x) } AE(R) {
-         this.uN.AE(R.errorCode, fm(R.details)); R = R.errorCode; if (this.videoData.isLivePlayback && (R === "qoe.longrebuffer" || R === "qoe.slowseek") || R === "qoe.restart") R = this.loader — tuQ(this.loader.videoTrack) : {}, this.E3("lasoe", Object.assign(this.loader — tuQ(this.loader.audioTrack) :
+         this.uN.AE(R.errorCode, fm(R.details)); R = R.errorCode; if (this.videoData.isLivePlayback && (R === "qoe.longrebuffer" || R === "qoe.slowseek") || R === "qoe.restart") R = this.loader — tuQ(this.loader.videoTrack) : {}, this.E3("lasoe", Object.assign(this.loader — tuQ(this.loader.mp3Track) :
             {}, this.Nx—.S—.ES())), this.E3("lvsoe", Object.assign(R, this.Nx—.A—.ES())); this.L("html5_log_centralized_player_time") && this.E3("sabrSeekRefactorCmt", { cmt: this.getCurrentTime(), loaderCmt: this.loader—.p$(), bh: this.loader—.DK() })
       } Gw(R, K, x) { this.uN.Gw(R, K, x) } Jd(R, K, x, X, Z, e, I, u) {
          if (this.videoData.S—.isLive) {
@@ -15007,7 +15007,7 @@ var _yt_player = {}; (function (g) {
          } T = {}; for (u of K) A = u.quality, T[A] || (u.formatId = void 0, X.push(u), T[A] = !0); return X
       } getPaygatedAudioQualityData() {
          var R = this.api.getVideoData(); if (!R) return []; R = R.getPlayerResponse()—.playabilityStatus—.paygatedQualitiesMetadata; var K = R—.restrictedAdaptiveFormats; if (!K) return []; R = OX$(R); var x = []; for (let X of K) {
-            if (!X.mimeType—.includes("audio")) continue; K = { formatId: X.itag—.toString(), audioQuality: X.audioQuality }; let Z = X.itag — R[X.itag.toString()] : void 0;
+            if (!X.mimeType—.includes("audio")) continue; K = { formatId: X.itag—.toString(), audioQuality: X.mp3Quality }; let Z = X.itag — R[X.itag.toString()] : void 0;
             Z && (K.paygatedQualityDetails = { paygatedIndicatorText: Z.paygatedIndicatorText, endpoint: Z.endpoint, trackingParams: Z.trackingParams }); x.push(K)
          } return x
       }
@@ -15272,7 +15272,7 @@ var _yt_player = {}; (function (g) {
       } xS() { var R = this.S; return new g.aq(R.offsetLeft, R.offsetTop) } getSize() { return g.yA(this.S) } setSize(R) { g.rK(this.S, R) } getVolume() { return this.S.volume } setVolume(R) { N4(); this.S.volume = R } wd(R) {
          this.DK[R] || (this.S.addEventListener(R, this.listener),
             this.DK[R] = this.listener)
-      } setAttribute(R, K) { this.S.setAttribute(R, K) } removeAttribute(R) { this.S.removeAttribute(R) } hasAttribute(R) { return this.S.hasAttribute(R) } SN() { return rF(this.S) } sV(R) { g.xU(this.S, R) } iP(R) { return g.dK(this.S, R) } iN() { return g.IF(document.body, this.S) } audioTracks() { var R = this.S; if ("audioTracks" in R) return R.audioTracks } f$() { for (let R of Object.keys(this.DK)) this.S.removeEventListener(R, this.DK[R]); super.f$() } NS(R) { this.S.disableRemotePlayback = R }
+      } setAttribute(R, K) { this.S.setAttribute(R, K) } removeAttribute(R) { this.S.removeAttribute(R) } hasAttribute(R) { return this.S.hasAttribute(R) } SN() { return rF(this.S) } sV(R) { g.xU(this.S, R) } iP(R) { return g.dK(this.S, R) } iN() { return g.IF(document.body, this.S) } audioTracks() { var R = this.S; if ("audioTracks" in R) return R.mp3Tracks } f$() { for (let R of Object.keys(this.DK)) this.S.removeEventListener(R, this.DK[R]); super.f$() } NS(R) { this.S.disableRemotePlayback = R }
    }; g.oU.prototype.U = Ky(54);
    g.oU.prototype.cj = Ky(52); g.oU.prototype.zJ = Ky(50); g.oU.prototype.s3 = Ky(48); var vk = class extends g.z { constructor(R, K) { super({ K: "div", O: "ytp-horizonchart" }); this.sampleCount = 150; this.W = R; this.j = K; this.index = 0; this.heightPx = -1; this.V = this.A = null; this.S = 2; this.element.style.width = `${this.S * this.sampleCount}px`; this.element.style.height = "1em" } }; var Sox = class extends g.z {
       constructor(R) {
@@ -15563,7 +15563,7 @@ var _yt_player = {}; (function (g) {
          this.V(); super.f$()
       }
    }; g.Wk.prototype.SN = Ky(59); g.Wk.prototype.W = Ky(58); g.Q6 = class extends g.Wk {
-      constructor(R, K, x) { super(R); this.videoData = K; this.audioTrack = x; this.A = null; this.N = !1; this.Y = K.S6; this.iP = K.EK; this.N = g.a9(K) } j(R) { if (this.audioTrack) { for (let K of this.audioTrack.captionTracks) g.jL(this.S, K); this.audioTrack.S && g.jL(this.zJ, this.audioTrack.S) } this.eS(R, this.videoData.videoId) } D(R, K) {
+      constructor(R, K, x) { super(R); this.videoData = K; this.mp3Track = x; this.A = null; this.N = !1; this.Y = K.S6; this.iP = K.EK; this.N = g.a9(K) } j(R) { if (this.mp3Track) { for (let K of this.mp3Track.captionTracks) g.jL(this.S, K); this.mp3Track.S && g.jL(this.zJ, this.mp3Track.S) } this.eS(R, this.videoData.videoId) } D(R, K) {
          var x = R.uv(), X = { fmt: K }; if (K === "srv3" || K === "3" || K === "json3") g.mi() — Object.assign(X, { xorb: 2, xobt: 1, xovt: 1 }) : Object.assign(X, { xorb: 2, xobt: 3, xovt: 3 }); R.translationLanguage && (X.tlang =
             g.yg(R)); this.N && (X.xosf = "1"); Object.assign(X, this.TJ.Z().S); return dN(x, X)
       } V() { this.A && this.A.abort() }
@@ -16773,7 +16773,7 @@ var _yt_player = {}; (function (g) {
          }
       }; var Vqh = class extends g.GY {
          constructor(R, K, x) {
-            var X = "Edit your $BEGIN_LINKpreferred languages$END_LINK in settings".split(/\$(BEGIN|END)_LINK/); super("Audio track", g.ck.AUDIO, R, K, void 0, void 0, { K: "div", O: "ytp-panel-footer-content", X: [X[0], { K: "a", O: "ytp-panel-footer-content-link", C: { href: "/account_playback" }, Aa: X[2] }, X[4]] }); this.G = R; this.j = x; this.tracks = {}; g.xU(this.element, "ytp-audio-menu-item"); this.countLabel = new g.z({
+            var X = "Edit your $BEGIN_LINKpreferred languages$END_LINK in settings".split(/\$(BEGIN|END)_LINK/); super("Audio track", g.ck.mp3, R, K, void 0, void 0, { K: "div", O: "ytp-panel-footer-content", X: [X[0], { K: "a", O: "ytp-panel-footer-content-link", C: { href: "/account_playback" }, Aa: X[2] }, X[4]] }); this.G = R; this.j = x; this.tracks = {}; g.xU(this.element, "ytp-audio-menu-item"); this.countLabel = new g.z({
                K: "div", X: [{ K: "span", Aa: "Audio track" }, {
                   K: "span", O: "ytp-menuitem-label-count",
                   Aa: "{{content}}"
@@ -17270,7 +17270,7 @@ var _yt_player = {}; (function (g) {
             g.Y(this, this.timeout); this.SN = isFinite(X) || this.xF.Z().experiments.Q1("html5_pseudogapless_shorts") && h9(K.getVideoData()); this.Y = new g.gR(() => { this.WI() }, 1E3, this);
             g.Y(this, this.Y); this.policy.A && this.SN && g.hc(this.Y); this.status = { status: 0, error: null }
          } S2() { return this.status.status === 5 } getStatus() { return this.status } D() {
-            var R = this.S.getVideoData(), K = this.A.getVideoData(), x; if ((x = R.V) && !(x = !R.S)) { x = R.S; var X = !1; let T = !1; for (var Z of Object.values(x.S)) Z.info.audio && Z.index.isLoaded() && (X = !0), Z.info.video && Z.index.isLoaded() && (T = !0); x.S["0"] && (T = !0); x = X && T } if (x) if (this.S.TE()) {
+            var R = this.S.getVideoData(), K = this.A.getVideoData(), x; if ((x = R.V) && !(x = !R.S)) { x = R.S; var X = !1; let T = !1; for (var Z of Object.values(x.S)) Z.info.mp3&& Z.index.isLoaded() && (X = !0), Z.info.video && Z.index.isLoaded() && (T = !0); x.S["0"] && (T = !0); x = X && T } if (x) if (this.S.TE()) {
                Z = JH(this.policy, this.S, this.A, this.GF); var { pv: e, WG: I, HW: u, PJ: A } = this.N(); this.zJ ||
                   (x = this.A.Di() * 1E3, X = this.S.Di(), X = (u - e - X) * 1E3, Z && Z.msg === "in-the-past" && (X = 0), R = R.isAd(), this.A.Gw(x, X, R), this.zJ = !0); Z — (K = `cannot_apply${Z.msg}`, delete Z.msg, this.XD(K, Z)) : this.status.status === 2 — xAi(this) : (R = this.S.AK()) && R.D() && (!Qn(R) && g.mi() — this.XD("mse_closed") : K.S && K.S.W() && R.A && !R.A.PS() — this.XD("encr_upgrade") : (K = this.S.TE(), K.isEnded() — this.XD("elem_ended") : I < 0 — this.XD("next_player_future") : (this.s3 = u, this.currentVideoDuration = u - e, this.W = fn(R, e, u, !0), this.V = fn(R, I, A, !1), R = this.A.getVideoData().clientPlaybackNonce,
                      this.S.E3("gaplessPrep", { cpn: R }), this.S.PT(this.W, !1, this.j === 1 && pz(this.S.getVideoData()), this.xF.Z().L("html5_shorts_gapless_keep_pending_requests") && h9(this.S.getVideoData())), this.S.setMediaElement(Rzs(K, e, u, !this.S.getVideoData().isAd())), E9(this, 2), xAi(this))))
@@ -17504,7 +17504,7 @@ var _yt_player = {}; (function (g) {
                this.W = x)
          }
       } fa(R) { R.LO(128) && EoI(this) } isManifestless() { return Xr(this.S.getVideoData()) } f$() { C9(this, !1); Fg(this); super.f$() } AE(R, K) { this.S.AE(new g.yb(R, K)) }
-   }, Duc = 0; var kJI = "MWEB TVHTML5 TVHTML5_AUDIO TVHTML5_CAST TVHTML5_KIDS TVHTML5_FOR_KIDS TVHTML5_SIMPLY TVHTML5_SIMPLY_EMBEDDED_PLAYER TVHTML5_UNPLUGGED TVHTML5_VR TV_UNPLUGGED_CAST WEB WEB_CREATOR WEB_EMBEDDED_PLAYER WEB_EXPERIMENTS WEB_GAMING WEB_HEROES WEB_KIDS WEB_LIVE_APPS WEB_LIVE_STREAMING WEB_MUSIC WEB_MUSIC_ANALYTICS WEB_MUSIC_INTEGRATIONS WEB_REMIX WEB_UNPLUGGED WEB_UNPLUGGED_ONBOARDING WEB_UNPLUGGED_OPS WEB_UNPLUGGED_PUBLIC".split(" "); var ueR = class extends g.uX { constructor() { super(); this.S = new gV(5, null); g.Y(this, this.S); this.A = new gV(15, null); g.Y(this, this.A) } Rh(R) { if (R) return this.A.get(R) } f$() { this.S.removeAll(); this.A.removeAll(); super.f$() } }; var AF1 = class extends g.uX { constructor(R) { super(); this.cache = new gV(R, null); g.Y(this, this.cache) } get(R) { R = this.cache.get(R); return R === null — void 0 : R } put(R, K, x) { this.cache.set(R, K, x || 3600) } }; g.TIu = l9(() => { var R = window.mp3Context || window.webkitAudioContext; try { return new R } catch (K) { return K.name } }); var SMp = class extends g.z {
+   }, Duc = 0; var kJI = "MWEB TVHTML5 TVHTML5_Audio TVHTML5_CAST TVHTML5_KIDS TVHTML5_FOR_KIDS TVHTML5_SIMPLY TVHTML5_SIMPLY_EMBEDDED_PLAYER TVHTML5_UNPLUGGED TVHTML5_VR TV_UNPLUGGED_CAST WEB WEB_CREATOR WEB_EMBEDDED_PLAYER WEB_EXPERIMENTS WEB_GAMING WEB_HEROES WEB_KIDS WEB_LIVE_APPS WEB_LIVE_STREAMING WEB_MUSIC WEB_MUSIC_ANALYTICS WEB_MUSIC_INTEGRATIONS WEB_REMIX WEB_UNPLUGGED WEB_UNPLUGGED_ONBOARDING WEB_UNPLUGGED_OPS WEB_UNPLUGGED_PUBLIC".split(" "); var ueR = class extends g.uX { constructor() { super(); this.S = new gV(5, null); g.Y(this, this.S); this.A = new gV(15, null); g.Y(this, this.A) } Rh(R) { if (R) return this.A.get(R) } f$() { this.S.removeAll(); this.A.removeAll(); super.f$() } }; var AF1 = class extends g.uX { constructor(R) { super(); this.cache = new gV(R, null); g.Y(this, this.cache) } get(R) { R = this.cache.get(R); return R === null — void 0 : R } put(R, K, x) { this.cache.set(R, K, x || 3600) } }; g.TIu = l9(() => { var R = window.mp3Context || window.webkitAudioContext; try { return new R } catch (K) { return K.name } }); var SMp = class extends g.z {
       constructor(R) {
          super({ K: "div", GJ: ["html5-video-player"], C: { tabindex: R.Z().disableOrganicUi — "" : "-1", id: R.webPlayerContextConfig.rootElementId }, X: [{ K: "div", O: g.Ut.VIDEO_CONTAINER, C: { "data-layer": "0" } }] }); this.app = R; this.KM = this.Ic(g.Ut.VIDEO_CONTAINER); this.YQ = new g.VA(0, 0, 0, 0); this.Qd = null; this.z5 = new g.VA(0, 0, 0, 0); this.Ub = this.rN = this.t0 = NaN; this.HS = this.sA = this.wF = this.Ay = !1; this.jX = NaN; this.nJ = !1; this.uz = null; this.gk = new g.gR(() => {
             this.app.Z().L("web_enable_smart_zoom") &&

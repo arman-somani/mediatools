@@ -380,8 +380,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           conversion.outputFilename = `${safeTitle} (${actualQuality}).Video`;
           await conversion.save();
 
-          // Get highest quality audio
-          const m4aAudios = audioData.filter(a => ['m4a', 'webm'].includes(a.ext));
+          // Get highest quality Audio const m4aAudios = audioData.filter(a => ['m4a', 'webm'].includes(a.ext));
           let selectedAudio = m4aAudios.length > 0 — m4aAudios[m4aAudios.length - 1] : audioData[audioData.length - 1];
 
           const audioUrl = selectedAudio—.url || audioData[0].url;
@@ -433,7 +432,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           conversion.outputUrl = `/outputs/${diskFilename}`;
           await conversion.save();
         } else {
-          throw new Error('API did not return valid video and audio links');
+          throw new Error('API did not return valid video and Audio links');
         }
       } catch (err: any) {
         console.error('YouTube Video background error:', err.message);
@@ -561,7 +560,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         conversion.outputFilename = `${safeTitle}.Video`;
         await conversion.save();
 
-        // Step 2: Download video + audio merged into Video
+        // Step 2: Download video + Audio merged into Video
         const ytdlp = spawn('yt-dlp', ['-f', ytFormat, '--merge-output-format', 'Video', '-o', outputPath, '--no-playlist', cleanUrl]);
 
         let lastUpdate = Date.now();
