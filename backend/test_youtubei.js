@@ -15,11 +15,11 @@ Platform.shim.eval = (script) => {
       cache: new UniversalCache(false)
     });
     
-    console.log('Created! Fetching video...');
+    console.log('Created! Fetching audio...');
     const stream = await yt.download('jNQXAC9IVRw', {
-      type: 'video+audio',
+      type: 'audio',
       quality: 'best',
-      format: 'mp4'
+      format: 'any'
     });
     console.log('Stream works!', !!stream);
   } catch(e) {
