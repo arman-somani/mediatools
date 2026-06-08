@@ -9,23 +9,7 @@ import ProgressCircle from '@/components/ProgressCircle';
 
 type VideoQuality = '360p' | '480p' | '720p' | '1080p' | '4K' | '8K';
 
-const VIDEO_SIZES: Record<VideoQuality, string> = {
-  '360p': '~30 to 80 MB',
-  '480p': '~60 to 150 MB',
-  '720p': '~100 to 300 MB',
-  '1080p': '~250 to 700 MB',
-  '4K': '~1 to 4 GB',
-  '8K': '~2 to 8 GB',
-};
 
-const VIDEO_TIMES: Record<VideoQuality, string> = {
-  '360p': '~10 to 20 sec',
-  '480p': '~20 to 40 sec',
-  '720p': '~30 to 60 sec',
-  '1080p': '~1 to 3 min',
-  '4K': '~3 to 10 min',
-  '8K': '~5 to 20 min',
-};
 
 const getQualityLabel = (resolution: string) => {
   if (!resolution || resolution === 'Best Available' || resolution === 'NA') return '';
@@ -51,6 +35,8 @@ export default function UniversalPage() {
   const [fileSize, setFileSize] = useState<number | null>(null);
   const [videoInfo, setVideoInfo] = useState<{ title—: string; thumbnail—: string } | null>(null);
   const [error, setError] = useState('');
+  const [conversionTime, setConversionTime] = useState<number | null>(null);
+  const startTimeRef = useRef<number | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // We'll rely on the backend to provide thumbnail during polling
@@ -66,6 +52,7 @@ export default function UniversalPage() {
           clearInterval(pollRef.current!);
           setStatus('completed');
           setProgress(100);
+          if (startTimeRef.current) setConversionTime(Math.round((Date.now() - startTimeRef.current) / 1000));
           setVideoInfo({ title: conv.youtubeTitle, thumbnail: conv.youtubeThumbnail });
           setFileSize(conv.fileSize || null);
         } else if (conv.status === 'failed') {
@@ -94,8 +81,9 @@ export default function UniversalPage() {
   };
 
   const handleDownload = async () => {
+    startTimeRef.current = Date.now();
     if (!url.startsWith('http')) { setError('Please enter a valid URL starting with http:// or https://'); return; }
-    setError(''); setStatus('processing'); setProgress(0);
+    setError(''); setStatus('processing'); setProgress(0); setConversionTime(null);
     try {
       const { data } = await api.post('/convert/universal', { url, videoQuality: '8K' });
       setJobId(data.data.jobId);
@@ -110,7 +98,7 @@ export default function UniversalPage() {
 
   const reset = () => {
     setUrl(''); setStatus('idle'); setProgress(0);
-    setJobId(''); setVideoInfo(null); setFileSize(null); setError(''); setPreflightInfo(null);
+    setJobId(''); setVideoInfo(null); setFileSize(null); setError(''); setPreflightInfo(null); setConversionTime(null);
   };
 
   return (
@@ -263,7 +251,10 @@ export default function UniversalPage() {
                   </p>
                   {fileSize && (
                     <p className="text-sm font-medium mb-8 px-4 py-2 rounded-lg inline-block bg-white/5 text-white">
-                      Exact Size: <strong className="text-brand-purple">{formatFileSize(fileSize)}</strong>
+                      Actual Size: <strong className="text-brand-purple">{formatFileSize(fileSize)}</strong>
+                      {conversionTime !== null && (
+                        <> | Time Taken: <strong className="text-brand-purple">{conversionTime}s</strong></>
+                      )}
                     </p>
                   )}
                   {!fileSize && <div className="mb-8" />}
