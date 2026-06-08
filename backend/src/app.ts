@@ -4,18 +4,13 @@ import helmet from 'helmet';
 import path from 'path';
 import os from 'os';
 
-// Inject yt-dlp and ffmpeg-static into the system PATH so child_process tools can find them automatically
+// On Windows (local dev), inject the local yt-dlp binary dir into PATH
+// On Linux/Render, yt-dlp and ffmpeg are already installed system-wide via Dockerfile
 const isWin = os.platform() === 'win32';
-const ytDlpDir = path.join(process.cwd(), 'bin');
-let ffmpegDir = '';
-try {
-  const ffmpegStaticPath = require('ffmpeg-static');
-  ffmpegDir = path.dirname(ffmpegStaticPath || '');
-} catch (e) {
-  console.log('ffmpeg-static not found, skipping PATH injection for ffmpeg');
+if (isWin) {
+  const ytDlpDir = path.join(process.cwd(), 'bin');
+  process.env.PATH = `${ytDlpDir};${process.env.PATH}`;
 }
-const delimiter = isWin ? ';' : ':';
-process.env.PATH = `${ytDlpDir}${delimiter}${ffmpegDir}${delimiter}${process.env.PATH}`;
 
 import { connectDB } from './config/database';
 import { generalLimiter } from './middleware/rateLimiter';
