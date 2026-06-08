@@ -9,16 +9,12 @@ const fs = require('fs');
     
     const stream = await yt.download('jNQXAC9IVRw', {
       type: 'video+audio',
-      quality: '720p',
+      quality: 'best',
       format: 'mp4'
     });
     
-    // Check what stream is
     console.log('Stream constructor:', stream.constructor.name);
-    // Is it readable?
-    if (stream.getReader) {
-       console.log('It is a web stream');
-    }
+    // write to file using stream.pipeTo?
   } catch(e) {
     console.error(e);
   }
