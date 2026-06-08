@@ -299,7 +299,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         let durationSec = 0;
         try {
           const { stdout } = await execAsync(
-            `yt-dlp --extractor-args "youtube:player_client=android,web" --print title --print duration --no-playlist "${cleanUrl}"`
+            `yt-dlp --js-runtimes node --extractor-args "youtube:player_client=android,web" --print title --print duration --no-playlist "${cleanUrl}"`
           );
           const lines = stdout.trim().split('\n');
           videoTitle = (lines[0] || '').trim() || 'YouTube Audio';
@@ -317,7 +317,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         // Step 2: Download audio using yt-dlp
         try {
           await new Promise((resolve, reject) => {
-            const ytdlp = spawn('yt-dlp', ['--extractor-args', 'youtube:player_client=android,web', '-x', '--audio-format', 'mp3', '--audio-quality', `${audioQuality}K`, '-o', outputPath, '--no-playlist', cleanUrl]);
+            const ytdlp = spawn('yt-dlp', ['--js-runtimes', 'node', '--extractor-args', 'youtube:player_client=android,web', '-x', '--audio-format', 'mp3', '--audio-quality', `${audioQuality}K`, '-o', outputPath, '--no-playlist', cleanUrl]);
 
             let lastUpdate = Date.now();
             ytdlp.stdout.on('data', (data) => {
@@ -496,7 +496,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           let videoTitle = 'YouTube Video';
           try {
             const { stdout } = await execAsync(
-              `yt-dlp --extractor-args "youtube:player_client=android,web" --print title --no-playlist "${cleanUrl}"`
+              `yt-dlp --js-runtimes node --extractor-args "youtube:player_client=android,web" --print title --no-playlist "${cleanUrl}"`
             );
             const lines = stdout.trim().split('\n');
             videoTitle = (lines[0] || '').trim() || 'YouTube Video';
@@ -519,7 +519,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
 
           try {
             await new Promise((resolve, reject) => {
-              const ytdlp = spawn('yt-dlp', ['--extractor-args', 'youtube:player_client=android,web', '-S', ytSort, '-o', path.join(outputDir, `${fileId}.%(ext)s`), '--no-playlist', cleanUrl]);
+              const ytdlp = spawn('yt-dlp', ['--js-runtimes', 'node', '--extractor-args', 'youtube:player_client=android,web', '-S', ytSort, '-o', path.join(outputDir, `${fileId}.%(ext)s`), '--no-playlist', cleanUrl]);
     
               let lastUpdate = Date.now();
               ytdlp.stdout.on('data', (data) => {
@@ -634,7 +634,7 @@ router.post('/universal/metadata', async (req: Request, res: Response): Promise<
 
     // Run yt-dlp to print title, thumbnail, resolution, and filesize
     const { stdout } = await execAsync(
-      `yt-dlp --extractor-args "youtube:player_client=android,web" --print "%(title)s" --print "%(thumbnail)s" --print "%(resolution)s" --print "%(filesize_approx,filesize)s" --no-playlist "${cleanUrl}"`
+      `yt-dlp --js-runtimes node --extractor-args "youtube:player_client=android,web" --print "%(title)s" --print "%(thumbnail)s" --print "%(resolution)s" --print "%(filesize_approx,filesize)s" --no-playlist "${cleanUrl}"`
     );
 
     const lines = stdout.trim().split('\n');
@@ -720,7 +720,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         let thumbnail = '';
         try {
           const { stdout } = await execAsync(
-            `yt-dlp --extractor-args "youtube:player_client=android,web" --print title --print thumbnail --no-playlist "${cleanUrl}"`
+            `yt-dlp --js-runtimes node --extractor-args "youtube:player_client=android,web" --print title --print thumbnail --no-playlist "${cleanUrl}"`
           );
           const lines = stdout.trim().split('\n');
           videoTitle = (lines[0] || '').trim() || 'Downloaded Video';
@@ -735,7 +735,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
 
         // Step 2: Download video in its native format without remuxing
         // We use -S for sorting formats which is highly optimized for ANY website!
-        const ytdlp = spawn('yt-dlp', ['--extractor-args', 'youtube:player_client=android,web', '-S', ytSort, '-o', path.join(outputDir, `${fileId}.%(ext)s`), '--no-playlist', cleanUrl]);
+        const ytdlp = spawn('yt-dlp', ['--js-runtimes', 'node', '--extractor-args', 'youtube:player_client=android,web', '-S', ytSort, '-o', path.join(outputDir, `${fileId}.%(ext)s`), '--no-playlist', cleanUrl]);
 
         let lastUpdate = Date.now();
         ytdlp.stdout.on('data', (data) => {
@@ -810,7 +810,7 @@ router.post('/youtube-playlist/metadata', async (req: Request, res: Response): P
     // Fetch flat playlist JSON (fast, no extraction)
     // --dump-json outputs one JSON object per line per video
     const { stdout } = await execAsync(
-      `yt-dlp --extractor-args "youtube:player_client=android,web" --flat-playlist --dump-json "${cleanUrl}"`
+      `yt-dlp --js-runtimes node --extractor-args "youtube:player_client=android,web" --flat-playlist --dump-json "${cleanUrl}"`
     );
 
     const lines = stdout.trim().split('\n');
@@ -936,4 +936,5 @@ router.get('/public-file/:id', async (req: Request, res: Response): Promise<void
 });
 
 export default router;
+
 
