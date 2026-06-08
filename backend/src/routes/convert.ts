@@ -192,7 +192,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
       try {
         const headers = {
           'x-rapidapi-host': 'cloud-api-hub-youtube-downloader.p.rapidapi.com',
-          'x-rapidapi-key': process.env.RAPIDAPI_KEY || '425e2add9bmsh48be1a37a98d396p14a1c9jsnb614fa4d46e0'
+          'x-rapidapi-key': process.env.RAPIDAPI_KEY || ''
         };
 
         const [infoRes, response] = await Promise.all([
@@ -334,7 +334,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
       try {
         const headers = {
           'x-rapidapi-host': 'cloud-api-hub-youtube-downloader.p.rapidapi.com',
-          'x-rapidapi-key': process.env.RAPIDAPI_KEY || '425e2add9bmsh48be1a37a98d396p14a1c9jsnb614fa4d46e0'
+          'x-rapidapi-key': process.env.RAPIDAPI_KEY || ''
         };
 
         // Fetch video, audio, and metadata simultaneously
