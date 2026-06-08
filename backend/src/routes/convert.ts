@@ -132,6 +132,20 @@ router.post('/test-ytdlp', async (req: Request, res: Response): Promise<void> =>
   }
 });
 
+router.get('/test-ytdlcore', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const videoId = req.query.id as string || 'dQw4w9WgXcQ';
+    const info = await ytdl.getInfo(videoId);
+    const format = ytdl.chooseFormat(info.formats, { quality: 'highestaudio' });
+    
+    // Test the download url
+    const r = await fetch(format.url, { headers: { 'Range': 'bytes=0-99' }});
+    res.json({ success: true, title: info.videoDetails.title, formatUrl: format.url.slice(0, 50), downloadStatus: r.status });
+  } catch (e: any) {
+    res.json({ success: false, error: e.message });
+  }
+});
+
 const uploadDir = process.env.UPLOAD_DIR || './uploads';
 const outputDir = process.env.OUTPUT_DIR || './outputs';
 
