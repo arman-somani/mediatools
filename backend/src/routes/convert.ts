@@ -537,7 +537,6 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
 
             if (!videoDownloaded) throw new Error('All download methods failed for video');
           }
-          }
 
           // Find the actual downloaded file since the extension could be .webm, .mkv, or .mp4
           const files = fs.readdirSync(outputDir);
