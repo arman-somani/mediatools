@@ -18,8 +18,7 @@
     "moduleResolution": "node",
     "types": [
       "node"
-    ],
-    "ignoreDeprecations": "5.0"
+    ]
   },
   "include": [
     "src/**/*"
