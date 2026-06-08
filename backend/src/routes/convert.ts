@@ -1089,20 +1089,19 @@ router.post('/youtube-playlist/metadata', async (req: Request, res: Response): P
 
     // Fetch flat playlist JSON (fast, no extraction)
     // --dump-json outputs one JSON object per line per video
-    const { stdout } = await execAsync(
-      `yt-dlp --js-runtimes node --extractor-args "youtube:player_client=android,web" --flat-playlist --dump-json "${cleanUrl}"`
-    );
+    const { stdout } = await runYtDlp(['--flat-playlist', '--dump-json', cleanUrl]);
 
     const lines = stdout.trim().split('\n');
     const videos = lines.map(line => {
       try {
         const item = JSON.parse(line);
         // yt-dlp flat-playlist uses 'id', 'title', 'url'
+        const id = item.id || getYouTubeVideoId(item.url || '');
         return {
-          id: item.id,
+          id,
           title: item.title,
-          url: item.url || `https://www.youtube.com/watch?v=${item.id}`,
-          thumbnail: `https://img.youtube.com/vi/${item.id}/hqdefault.jpg`,
+          url: `https://www.youtube.com/watch?v=${id}`,
+          thumbnail: `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
         };
       } catch {
         return null;
