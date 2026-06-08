@@ -20,7 +20,7 @@ Platform.shim.eval = (script: any) => {
 };
 
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || '208e9bff95msh90b82e1f2353e90p17b16ejsn23f1054a290e';
-const YT_MEDIA_HOST = 'youtube-media-downloader.p.rapidapi.com';
+const YT_MEDIA_HOST = 'cloud-api-hub-youtube-downloader.p.rapidapi.com';
 
 /** Stream a URL response body into a local file */
 async function downloadStreamFromUrl(url: string, destPath: string): Promise<void> {
@@ -35,11 +35,7 @@ async function downloadStreamFromUrl(url: string, destPath: string): Promise<voi
 }
 
 /**
- * Uses youtube-media-downloader RapidAPI to get separate video-only + audio-only streams,
- * downloads them, then merges with ffmpeg for high-quality output.
- *
- * mode 'audio'  → downloads best m4a audio, writes to outputPath
- * mode 'video'  → downloads best video-only + best m4a audio, merges into outputPath (.mp4)
+ * Uses cloud-api-hub-youtube-downloader RapidAPI to get streams.
  */
 async function downloadAndMergeViaAPI(
   videoId: string,
@@ -48,29 +44,9 @@ async function downloadAndMergeViaAPI(
   targetHeight = 720,
   audioBitrate = '192'
 ): Promise<void> {
-  const apiUrl = `https://${YT_MEDIA_HOST}/v2/video/details?videoId=${videoId}`;
-  const resp = await fetch(apiUrl, {
-    headers: { 'x-rapidapi-key': RAPIDAPI_KEY, 'x-rapidapi-host': YT_MEDIA_HOST },
-  });
-  if (!resp.ok) throw new Error(`youtube-media-downloader API returned ${resp.status}`);
-  const data = (await resp.json()) as any;
-  if (data.errorId !== 'Success') throw new Error(`API error: ${data.errorId || 'unknown'}`);
-
-  const videos: any[] = data.videos?.items || [];
-  const audios: any[] = data.audios?.items || [];
-
-  // Best audio: prefer m4a
-  const bestAudio = audios.find(a => a.extension === 'm4a' && a.url) || audios.find(a => a.url);
-  if (!bestAudio?.url) throw new Error('API: no audio stream found');
+  const headers = { 'x-rapidapi-key': RAPIDAPI_KEY, 'x-rapidapi-host': YT_MEDIA_HOST };
 
   if (mode === 'audio') {
-    // Download m4a audio and convert to mp3
-    const tmpAudio = outputPath.replace('.mp3', '.m4a');
-    console.log(`API: downloading audio m4a`);
-    await downloadStreamFromUrl(bestAudio.url, tmpAudio);
-    await new Promise<void>((resolve, reject) => {
-      const ff = spawn('ffmpeg', ['-y', '-i', tmpAudio, '-vn', '-ab', `${audioBitrate}k`, outputPath]);
-      ff.on('close', code => {
         if (fs.existsSync(tmpAudio)) fs.unlinkSync(tmpAudio);
         if (code === 0) resolve(); else reject(new Error('ffmpeg audio conversion failed'));
       });
