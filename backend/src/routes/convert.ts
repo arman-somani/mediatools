@@ -512,6 +512,52 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
 
           let audioDownloaded = false;
 
+          // API Tier 1a: youtubei.js MWEB audio-only stream
+          if (!audioDownloaded) {
+            try {
+              console.log('Trying youtubei.js MWEB for audio...');
+              const yt = await Innertube.create({ generate_session_locally: true, fetch: fetch, cache: new UniversalCache(false), client_type: ClientType.MWEB });
+              const stream = await yt.download(videoId, { type: 'audio', quality: 'best', format: 'any' });
+              const fallbackAudioPath = outputPath.replace('.mp3', '.m4a');
+              await writeAsyncIterableToFile(stream, fallbackAudioPath);
+              await new Promise((resolve, reject) => {
+                const ffmpeg = spawn('ffmpeg', ['-y', '-i', fallbackAudioPath, '-vn', '-ab', `${audioQuality}k`, outputPath], { windowsHide: true });
+                ffmpeg.on('error', reject);
+                ffmpeg.on('close', (code) => {
+                  if (fs.existsSync(fallbackAudioPath)) fs.unlinkSync(fallbackAudioPath);
+                  if (code === 0) resolve(true); else reject(new Error('FFmpeg MWEB audio extraction failed'));
+                });
+              });
+              requireWrittenFile(outputPath, 'youtubei.js MWEB audio conversion');
+              audioDownloaded = true;
+            } catch (e: any) {
+              console.error('youtubei.js MWEB audio failed:', e.message);
+            }
+          }
+
+          // API Tier 1b: youtubei.js ANDROID video+audio to mp3
+          if (!audioDownloaded) {
+            try {
+              console.log('Trying youtubei.js ANDROID for video+audio to mp3...');
+              const yt = await Innertube.create({ generate_session_locally: true, fetch: fetch, cache: new UniversalCache(false), client_type: ClientType.ANDROID });
+              const stream = await yt.download(videoId, { type: 'video+audio', quality: 'best', format: 'mp4' });
+              const fallbackVideoPath = outputPath.replace('.mp3', '.mp4');
+              await writeAsyncIterableToFile(stream, fallbackVideoPath);
+              await new Promise((resolve, reject) => {
+                const ffmpeg = spawn('ffmpeg', ['-y', '-i', fallbackVideoPath, '-vn', '-ab', `${audioQuality}k`, outputPath], { windowsHide: true });
+                ffmpeg.on('error', reject);
+                ffmpeg.on('close', (code) => {
+                  if (fs.existsSync(fallbackVideoPath)) fs.unlinkSync(fallbackVideoPath);
+                  if (code === 0) resolve(true); else reject(new Error('FFmpeg ANDROID extraction failed'));
+                });
+              });
+              requireWrittenFile(outputPath, 'youtubei.js ANDROID audio conversion');
+              audioDownloaded = true;
+            } catch (e: any) {
+              console.error('youtubei.js ANDROID audio failed:', e.message);
+            }
+          }
+
           // Tier 2: Cobalt API
           if (!audioDownloaded) {
             try {
@@ -546,52 +592,6 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
               console.log('RapidAPI audio succeeded');
             } catch (e: any) {
               console.error('RapidAPI audio failed:', e.message);
-            }
-          }
-
-          // Tier 4a: youtubei.js MWEB audio-only stream
-          if (!audioDownloaded) {
-            try {
-              console.log('Trying youtubei.js MWEB for audio...');
-              const yt = await Innertube.create({ generate_session_locally: true, fetch: fetch, cache: new UniversalCache(false), client_type: ClientType.MWEB });
-              const stream = await yt.download(videoId, { type: 'audio', quality: 'best', format: 'any' });
-              const fallbackAudioPath = outputPath.replace('.mp3', '.m4a');
-              await writeAsyncIterableToFile(stream, fallbackAudioPath);
-              await new Promise((resolve, reject) => {
-                const ffmpeg = spawn('ffmpeg', ['-y', '-i', fallbackAudioPath, '-vn', '-ab', `${audioQuality}k`, outputPath], { windowsHide: true });
-                ffmpeg.on('error', reject);
-                ffmpeg.on('close', (code) => {
-                  if (fs.existsSync(fallbackAudioPath)) fs.unlinkSync(fallbackAudioPath);
-                  if (code === 0) resolve(true); else reject(new Error('FFmpeg MWEB audio extraction failed'));
-                });
-              });
-              requireWrittenFile(outputPath, 'youtubei.js MWEB audio conversion');
-              audioDownloaded = true;
-            } catch (e: any) {
-              console.error('youtubei.js MWEB audio failed:', e.message);
-            }
-          }
-
-          // Tier 4b: youtubei.js ANDROID video+audio to mp3
-          if (!audioDownloaded) {
-            try {
-              console.log('Trying youtubei.js ANDROID for video+audio to mp3...');
-              const yt = await Innertube.create({ generate_session_locally: true, fetch: fetch, cache: new UniversalCache(false), client_type: ClientType.ANDROID });
-              const stream = await yt.download(videoId, { type: 'video+audio', quality: 'best', format: 'mp4' });
-              const fallbackVideoPath = outputPath.replace('.mp3', '.mp4');
-              await writeAsyncIterableToFile(stream, fallbackVideoPath);
-              await new Promise((resolve, reject) => {
-                const ffmpeg = spawn('ffmpeg', ['-y', '-i', fallbackVideoPath, '-vn', '-ab', `${audioQuality}k`, outputPath], { windowsHide: true });
-                ffmpeg.on('error', reject);
-                ffmpeg.on('close', (code) => {
-                  if (fs.existsSync(fallbackVideoPath)) fs.unlinkSync(fallbackVideoPath);
-                  if (code === 0) resolve(true); else reject(new Error('FFmpeg ANDROID extraction failed'));
-                });
-              });
-              requireWrittenFile(outputPath, 'youtubei.js ANDROID audio conversion');
-              audioDownloaded = true;
-            } catch (e: any) {
-              console.error('youtubei.js ANDROID audio failed:', e.message);
             }
           }
 
