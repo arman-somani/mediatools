@@ -481,6 +481,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
             }
 
             if (!videoDownloaded) throw new Error('All download methods failed for video');
+          }
 
           // Find the actual downloaded file since the extension could be .webm, .mkv, or .mp4
           const files = fs.readdirSync(outputDir);
@@ -499,12 +500,12 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           conversion.outputUrl = `/outputs/${diskFilename}`;
           await conversion.save();
         } catch (err: any) {
-        console.error('YouTube Video background error:', err.message);
-        conversion.status = 'failed';
-        conversion.errorMessage = err.message || 'Download failed';
-        await conversion.save();
-      }
-    })();
+          console.error('YouTube Video background error:', err.message);
+          conversion.status = 'failed';
+          conversion.errorMessage = err.message || 'Download failed';
+          await conversion.save();
+        }
+      })();
 
   } catch (error: any) {
     console.error('YouTube Video route error:', error);
