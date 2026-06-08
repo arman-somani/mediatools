@@ -19,48 +19,101 @@ Platform.shim.eval = (script: any) => {
 };
 
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || '448df088femsh10889546dc271aap126ea2jsn1bec5c44767e';
-const RAPIDAPI_HOST = 'cloud-api-hub-youtube-downloader.p.rapidapi.com';
+const YT_MEDIA_HOST = 'youtube-media-downloader.p.rapidapi.com';
 
-/**
- * Downloads a YouTube video/audio via RapidAPI and streams the bytes into outputPath.
- * mode: 'audio' returns best m4a, 'video' returns best muxed mp4.
- */
-async function downloadViaRapidAPI(videoId: string, outputPath: string, mode: 'audio' | 'video', targetHeight = 720): Promise<void> {
-  const apiUrl = `https://${RAPIDAPI_HOST}/download?id=${videoId}&format=mp3`;
-  const resp = await fetch(apiUrl, {
-    headers: { 'x-rapidapi-key': RAPIDAPI_KEY, 'x-rapidapi-host': RAPIDAPI_HOST },
-  });
-  if (!resp.ok) throw new Error(`RapidAPI /download returned ${resp.status}`);
-  const formats = (await resp.json()) as any[];
-  if (!Array.isArray(formats) || formats.length === 0) throw new Error('RapidAPI returned no formats');
-
-  let chosen: any = null;
-  if (mode === 'audio') {
-    // Prefer m4a audio-only, fallback to any audio-only
-    const audioOnly = formats.filter(f => !f.height && f.url);
-    const m4a = audioOnly.filter(f => f.ext === 'm4a').sort((a: any, b: any) => (b.abr || 0) - (a.abr || 0));
-    chosen = m4a[0] || audioOnly.sort((a: any, b: any) => (b.abr || 0) - (a.abr || 0))[0];
-  } else {
-    // Prefer muxed mp4 close to target height, fallback to any video
-    const muxed = formats.filter(f => f.height && f.url && f.ext === 'mp4').sort((a: any, b: any) => {
-      return Math.abs(a.height - targetHeight) - Math.abs(b.height - targetHeight);
-    });
-    chosen = muxed[0] || formats.filter(f => f.height && f.url).sort((a: any, b: any) => (b.height || 0) - (a.height || 0))[0];
-  }
-
-  if (!chosen?.url) throw new Error('RapidAPI: no suitable format found');
-  console.log(`RapidAPI: downloading ${mode} format: ${chosen.ext} ${chosen.height || chosen.abr}`);
-
-  const fileResp = await fetch(chosen.url);
-  if (!fileResp.ok) throw new Error(`RapidAPI CDN fetch failed: ${fileResp.status}`);
-
+/** Stream a URL response body into a local file */
+async function downloadStreamFromUrl(url: string, destPath: string): Promise<void> {
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`CDN fetch failed: ${resp.status} for ${url.slice(0, 80)}`);
   await new Promise<void>((resolve, reject) => {
-    const fileStream = fs.createWriteStream(outputPath);
+    const fileStream = fs.createWriteStream(destPath);
     fileStream.on('finish', resolve);
     fileStream.on('error', reject);
-    (fileResp.body as any).pipe(fileStream);
+    (resp.body as any).pipe(fileStream);
   });
 }
+
+/**
+ * Uses youtube-media-downloader RapidAPI to get separate video-only + audio-only streams,
+ * downloads them, then merges with ffmpeg for high-quality output.
+ *
+ * mode 'audio'  → downloads best m4a audio, writes to outputPath
+ * mode 'video'  → downloads best video-only + best m4a audio, merges into outputPath (.mp4)
+ */
+async function downloadAndMergeViaAPI(
+  videoId: string,
+  outputPath: string,
+  mode: 'audio' | 'video',
+  targetHeight = 720,
+  audioBitrate = '192'
+): Promise<void> {
+  const apiUrl = `https://${YT_MEDIA_HOST}/v2/video/details?videoId=${videoId}`;
+  const resp = await fetch(apiUrl, {
+    headers: { 'x-rapidapi-key': RAPIDAPI_KEY, 'x-rapidapi-host': YT_MEDIA_HOST },
+  });
+  if (!resp.ok) throw new Error(`youtube-media-downloader API returned ${resp.status}`);
+  const data = (await resp.json()) as any;
+  if (data.errorId !== 'Success') throw new Error(`API error: ${data.errorId || 'unknown'}`);
+
+  const videos: any[] = data.videos?.items || [];
+  const audios: any[] = data.audios?.items || [];
+
+  // Best audio: prefer m4a
+  const bestAudio = audios.find(a => a.extension === 'm4a' && a.url) || audios.find(a => a.url);
+  if (!bestAudio?.url) throw new Error('API: no audio stream found');
+
+  if (mode === 'audio') {
+    // Download m4a audio and convert to mp3
+    const tmpAudio = outputPath.replace('.mp3', '.m4a');
+    console.log(`API: downloading audio m4a`);
+    await downloadStreamFromUrl(bestAudio.url, tmpAudio);
+    await new Promise<void>((resolve, reject) => {
+      const ff = spawn('ffmpeg', ['-y', '-i', tmpAudio, '-vn', '-ab', `${audioBitrate}k`, outputPath]);
+      ff.on('close', code => {
+        if (fs.existsSync(tmpAudio)) fs.unlinkSync(tmpAudio);
+        if (code === 0) resolve(); else reject(new Error('ffmpeg audio conversion failed'));
+      });
+    });
+    return;
+  }
+
+  // VIDEO mode: pick video-only stream closest to targetHeight (prefer mp4)
+  const videoOnly = videos.filter(v => !v.hasAudio && v.url);
+  const mp4Videos = videoOnly.filter(v => v.extension === 'mp4');
+  const pool = mp4Videos.length > 0 ? mp4Videos : videoOnly;
+  const parseH = (v: any) => parseInt(v.quality || v.qualityLabel || '0', 10);
+  const bestVideo = pool.sort((a, b) => Math.abs(parseH(a) - targetHeight) - Math.abs(parseH(b) - targetHeight))[0]
+    || videos.find(v => v.hasAudio && v.url); // muxed fallback
+  if (!bestVideo?.url) throw new Error('API: no video stream found');
+
+  const tmpVideo = outputPath.replace('.mp4', '.tmp_v.mp4');
+  const tmpAudio = outputPath.replace('.mp4', '.tmp_a.m4a');
+
+  console.log(`API: downloading video ${parseH(bestVideo)}p + audio`);
+  await Promise.all([
+    downloadStreamFromUrl(bestVideo.url, tmpVideo),
+    downloadStreamFromUrl(bestAudio.url, tmpAudio),
+  ]);
+
+  // Merge video + audio with ffmpeg
+  await new Promise<void>((resolve, reject) => {
+    const ff = spawn('ffmpeg', [
+      '-y',
+      '-i', tmpVideo,
+      '-i', tmpAudio,
+      '-c:v', 'copy',
+      '-c:a', 'aac',
+      '-shortest',
+      outputPath,
+    ]);
+    ff.on('close', code => {
+      if (fs.existsSync(tmpVideo)) fs.unlinkSync(tmpVideo);
+      if (fs.existsSync(tmpAudio)) fs.unlinkSync(tmpAudio);
+      if (code === 0) resolve(); else reject(new Error('ffmpeg merge failed'));
+    });
+  });
+}
+
 
 const router = Router();
 const execAsync = promisify(exec);
