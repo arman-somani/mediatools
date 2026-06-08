@@ -34,9 +34,7 @@
     "razorpay": "^2.9.6",
     "resend": "^6.12.4",
     "streamifier": "^0.1.1",
-    "uuid": "^14.0.0",
-    "youtube-dl-exec": "^3.1.7",
-    "yt-dlp-exec": "^1.0.2"
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
