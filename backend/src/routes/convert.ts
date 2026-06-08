@@ -11,6 +11,7 @@ import { authenticate, optionalAuth, AuthRequest } from '../middleware/auth';
 import { Conversion } from '../models/Conversion';
 import { User } from '../models/User';
 import { Innertube, UniversalCache, Platform, ClientType } from 'youtubei.js';
+import ytdl from '@distube/ytdl-core';
 import vm from 'vm';
 
 Platform.shim.eval = (script: any) => {
