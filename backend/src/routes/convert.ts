@@ -767,114 +767,119 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           };
           const ytSort = formatMap[videoQuality] || formatMap['720p'];
 
-          try {
-            await new Promise((resolve, reject) => {
-              const ytdlp = spawn(getYtDlpPath(), ytDlpArgs([
-                '--newline',
-                '-f', 'bv*+ba/b',
-                '-S', ytSort,
-                '--merge-output-format', 'mp4',
-                '-o', path.join(outputDir, `${fileId}.%(ext)s`),
-                '--no-playlist',
-                cleanUrl,
-              ]), { windowsHide: true });
-    
-              let lastUpdate = Date.now();
-              let stderr = '';
-              const handleProgress = (data: Buffer) => {
-                const output = data.toString();
-                const match = output.match(/\[download\]\s+([\d\.]+)%/);
-                if (match) {
-                  const progress = Math.round(parseFloat(match[1]));
-                  const now = Date.now();
-                  if (now - lastUpdate > 1000) {
-                    lastUpdate = now;
-                    Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
-                  }
-                }
-              };
+          let videoDownloaded = false;
+          const fallbackOutputPath = path.join(outputDir, `${fileId}.mp4`);
+          const targetHeightMap: Record<string, number> = { '360p': 360, '480p': 480, '720p': 720, '1080p': 1080, '4K': 2160, '8K': 4320 };
+          const targetH = targetHeightMap[videoQuality] || 720;
 
-              ytdlp.stdout.on('data', handleProgress);
-              ytdlp.stderr.on('data', (data) => {
-                stderr += data.toString();
-                handleProgress(data);
-              });
-    
-              ytdlp.on('error', reject);
-              ytdlp.on('close', (code) => {
-                if (code === 0) resolve(true);
-                else reject(new Error((stderr || `yt-dlp failed with code ${code}`).trim()));
-              });
+          // Helper: stream a youtubei.js iterable into a file
+          const streamToFile = async (stream: AsyncIterable<Uint8Array>, filePath: string) => {
+            await new Promise<void>((resolve, reject) => {
+              const fileStream = fs.createWriteStream(filePath);
+              fileStream.on('finish', resolve);
+              fileStream.on('error', reject);
+              (async () => {
+                try { for await (const chunk of stream) fileStream.write(chunk); fileStream.end(); }
+                catch (e) { reject(e); }
+              })();
             });
-          } catch (ytdlpError: any) {
-            console.error('yt-dlp failed for video, trying alternatives:', ytdlpError.message);
+          };
 
-            // Helper: stream a youtubei.js iterable into a file
-            const streamToFile = async (stream: AsyncIterable<Uint8Array>, filePath: string) => {
-              await new Promise<void>((resolve, reject) => {
-                const fileStream = fs.createWriteStream(filePath);
-                fileStream.on('finish', resolve);
-                fileStream.on('error', reject);
-                (async () => {
-                  try { for await (const chunk of stream) fileStream.write(chunk); fileStream.end(); }
-                  catch (e) { reject(e); }
-                })();
-              });
-            };
+          // API Tier 1: Cobalt API — dynamic instance discovery
+          if (!videoDownloaded) {
+            try {
+              console.log('Trying Cobalt API for video...');
+              const cobaltDownloadUrl = await downloadViaCobalt(cleanUrl, 'video', videoQuality);
+              
+              const videoResp = await downloadFromUrl(cobaltDownloadUrl);
+              await writeWebStreamToFile(videoResp, fallbackOutputPath);
+              requireWrittenFile(fallbackOutputPath, 'Cobalt video download');
 
-            let videoDownloaded = false;
-            const fallbackOutputPath = path.join(outputDir, `${fileId}.mp4`);
-            const targetHeightMap: Record<string, number> = { '360p': 360, '480p': 480, '720p': 720, '1080p': 1080, '4K': 2160, '8K': 4320 };
-            const targetH = targetHeightMap[videoQuality] || 720;
-
-            // Tier 2: Cobalt API — dynamic instance discovery
-            if (!videoDownloaded) {
-              try {
-                console.log('Trying Cobalt API for video...');
-                const cobaltDownloadUrl = await downloadViaCobalt(cleanUrl, 'video', videoQuality);
-                
-                const videoResp = await downloadFromUrl(cobaltDownloadUrl);
-                await writeWebStreamToFile(videoResp, fallbackOutputPath);
-                requireWrittenFile(fallbackOutputPath, 'Cobalt video download');
-
-                videoDownloaded = true;
-                console.log('Cobalt video download succeeded');
-              } catch (e: any) {
-                console.error('Cobalt video failed:', e.message);
-              }
+              videoDownloaded = true;
+              console.log('Cobalt video download succeeded');
+            } catch (e: any) {
+              console.error('Cobalt video failed:', e.message);
             }
-
-            // Tier 3: RapidAPI
-            if (!videoDownloaded) {
-              try {
-                console.log('Trying RapidAPI for video...');
-                await downloadAndMergeViaAPI(videoId, fallbackOutputPath, 'video', targetH);
-                requireWrittenFile(fallbackOutputPath, 'RapidAPI video download');
-                videoDownloaded = true;
-                console.log('RapidAPI video succeeded');
-              } catch (e: any) {
-                console.error('RapidAPI video failed:', e.message);
-              }
-            }
-
-            // Tier 4: youtubei.js cascade
-            for (const clientType of [ClientType.ANDROID, ClientType.TV, ClientType.MWEB]) {
-              if (videoDownloaded) break;
-              try {
-                console.log(`Trying youtubei.js ${clientType} for video...`);
-                const yt = await Innertube.create({ generate_session_locally: true, fetch: fetch, cache: new UniversalCache(false), client_type: clientType });
-                const stream = await yt.download(videoId, { type: 'video+audio', quality: 'best', format: 'mp4' });
-                await writeAsyncIterableToFile(stream, fallbackOutputPath);
-                requireWrittenFile(fallbackOutputPath, `youtubei.js ${clientType} video download`);
-                videoDownloaded = true;
-                console.log(`youtubei.js ${clientType} video succeeded`);
-              } catch (e: any) {
-                console.error(`youtubei.js ${clientType} video failed:`, e.message);
-              }
-            }
-
-            if (!videoDownloaded) throw new Error('All download methods failed for video');
           }
+
+          // API Tier 2: RapidAPI
+          if (!videoDownloaded) {
+            try {
+              console.log('Trying RapidAPI for video...');
+              await downloadAndMergeViaAPI(videoId, fallbackOutputPath, 'video', targetH);
+              requireWrittenFile(fallbackOutputPath, 'RapidAPI video download');
+              videoDownloaded = true;
+              console.log('RapidAPI video succeeded');
+            } catch (e: any) {
+              console.error('RapidAPI video failed:', e.message);
+            }
+          }
+
+          // Tier 3: yt-dlp
+          if (!videoDownloaded) {
+            try {
+              await new Promise((resolve, reject) => {
+                const ytdlp = spawn(getYtDlpPath(), ytDlpArgs([
+                  '--newline',
+                  '-f', 'bv*+ba/b',
+                  '-S', ytSort,
+                  '--merge-output-format', 'mp4',
+                  '-o', path.join(outputDir, `${fileId}.%(ext)s`),
+                  '--no-playlist',
+                  cleanUrl,
+                ]), { windowsHide: true });
+      
+                let lastUpdate = Date.now();
+                let stderr = '';
+                const handleProgress = (data: Buffer) => {
+                  const output = data.toString();
+                  const match = output.match(/\[download\]\s+([\d\.]+)%/);
+                  if (match) {
+                    const progress = Math.round(parseFloat(match[1]));
+                    const now = Date.now();
+                    if (now - lastUpdate > 1000) {
+                      lastUpdate = now;
+                      Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
+                    }
+                  }
+                };
+
+                ytdlp.stdout.on('data', handleProgress);
+                ytdlp.stderr.on('data', (data) => {
+                  stderr += data.toString();
+                  handleProgress(data);
+                });
+      
+                ytdlp.on('error', reject);
+                ytdlp.on('close', (code) => {
+                  if (code === 0) resolve(true);
+                  else reject(new Error((stderr || `yt-dlp failed with code ${code}`).trim()));
+                });
+              });
+              videoDownloaded = true;
+              console.log('yt-dlp video succeeded');
+            } catch (ytdlpError: any) {
+              console.error('yt-dlp failed for video:', ytdlpError.message);
+            }
+          }
+
+          // Tier 4: youtubei.js cascade
+          for (const clientType of [ClientType.ANDROID, ClientType.TV, ClientType.MWEB]) {
+            if (videoDownloaded) break;
+            try {
+              console.log(`Trying youtubei.js ${clientType} for video...`);
+              const yt = await Innertube.create({ generate_session_locally: true, fetch: fetch, cache: new UniversalCache(false), client_type: clientType });
+              const stream = await yt.download(videoId, { type: 'video+audio', quality: 'best', format: 'mp4' });
+              await writeAsyncIterableToFile(stream, fallbackOutputPath);
+              requireWrittenFile(fallbackOutputPath, `youtubei.js ${clientType} video download`);
+              videoDownloaded = true;
+              console.log(`youtubei.js ${clientType} video succeeded`);
+            } catch (e: any) {
+              console.error(`youtubei.js ${clientType} video failed:`, e.message);
+            }
+          }
+
+          if (!videoDownloaded) throw new Error('All download methods failed for video');
 
           // Find the actual downloaded file since the extension could be .webm, .mkv, or .mp4
           const downloadedFile = findDownloadedFile(fileId);
