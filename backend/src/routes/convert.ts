@@ -492,6 +492,91 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
 
           let audioDownloaded = false;
 
+          // Tier 2: Cobalt API
+          if (!audioDownloaded) {
+            try {
+              console.log('Trying Cobalt API for audio...');
+              const cobaltDownloadUrl = await downloadViaCobalt(cleanUrl, 'audio', audioQuality);
+              const audioResp = await downloadFromUrl(cobaltDownloadUrl);
+              await writeWebStreamToFile(audioResp, outputPath);
+              requireWrittenFile(outputPath, 'Cobalt audio download');
+              audioDownloaded = true;
+              console.log('Cobalt audio download succeeded');
+            } catch (e: any) {
+              console.error('Cobalt audio failed:', e.message);
+            }
+          }
+
+          // Tier 3: RapidAPI returns live signed Google CDN URLs.
+          if (!audioDownloaded) {
+            try {
+              console.log('Trying RapidAPI for audio...');
+              const rawPath = outputPath.replace('.mp3', '.m4a');
+              await downloadAndMergeViaAPI(videoId, rawPath, 'audio', 720, audioQuality);
+              await new Promise((resolve, reject) => {
+                const ffmpeg = spawn('ffmpeg', ['-y', '-i', rawPath, '-vn', '-ab', `${audioQuality}k`, outputPath], { windowsHide: true });
+                ffmpeg.on('error', reject);
+                ffmpeg.on('close', (code) => {
+                  if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath);
+                  if (code === 0) resolve(true); else reject(new Error('FFmpeg m4a to mp3 failed'));
+                });
+              });
+              requireWrittenFile(outputPath, 'RapidAPI audio conversion');
+              audioDownloaded = true;
+              console.log('RapidAPI audio succeeded');
+            } catch (e: any) {
+              console.error('RapidAPI audio failed:', e.message);
+            }
+          }
+
+          // Tier 4a: youtubei.js MWEB audio-only stream
+          if (!audioDownloaded) {
+            try {
+              console.log('Trying youtubei.js MWEB for audio...');
+              const yt = await Innertube.create({ generate_session_locally: true, fetch: fetch, cache: new UniversalCache(false), client_type: ClientType.MWEB });
+              const stream = await yt.download(videoId, { type: 'audio', quality: 'best', format: 'any' });
+              const fallbackAudioPath = outputPath.replace('.mp3', '.m4a');
+              await writeAsyncIterableToFile(stream, fallbackAudioPath);
+              await new Promise((resolve, reject) => {
+                const ffmpeg = spawn('ffmpeg', ['-y', '-i', fallbackAudioPath, '-vn', '-ab', `${audioQuality}k`, outputPath], { windowsHide: true });
+                ffmpeg.on('error', reject);
+                ffmpeg.on('close', (code) => {
+                  if (fs.existsSync(fallbackAudioPath)) fs.unlinkSync(fallbackAudioPath);
+                  if (code === 0) resolve(true); else reject(new Error('FFmpeg MWEB audio extraction failed'));
+                });
+              });
+              requireWrittenFile(outputPath, 'youtubei.js MWEB audio conversion');
+              audioDownloaded = true;
+            } catch (e: any) {
+              console.error('youtubei.js MWEB audio failed:', e.message);
+            }
+          }
+
+          // Tier 4b: youtubei.js ANDROID video+audio to mp3
+          if (!audioDownloaded) {
+            try {
+              console.log('Trying youtubei.js ANDROID for video+audio to mp3...');
+              const yt = await Innertube.create({ generate_session_locally: true, fetch: fetch, cache: new UniversalCache(false), client_type: ClientType.ANDROID });
+              const stream = await yt.download(videoId, { type: 'video+audio', quality: 'best', format: 'mp4' });
+              const fallbackVideoPath = outputPath.replace('.mp3', '.mp4');
+              await writeAsyncIterableToFile(stream, fallbackVideoPath);
+              await new Promise((resolve, reject) => {
+                const ffmpeg = spawn('ffmpeg', ['-y', '-i', fallbackVideoPath, '-vn', '-ab', `${audioQuality}k`, outputPath], { windowsHide: true });
+                ffmpeg.on('error', reject);
+                ffmpeg.on('close', (code) => {
+                  if (fs.existsSync(fallbackVideoPath)) fs.unlinkSync(fallbackVideoPath);
+                  if (code === 0) resolve(true); else reject(new Error('FFmpeg ANDROID extraction failed'));
+                });
+              });
+              requireWrittenFile(outputPath, 'youtubei.js ANDROID audio conversion');
+              audioDownloaded = true;
+            } catch (e: any) {
+              console.error('youtubei.js ANDROID audio failed:', e.message);
+            }
+          }
+
+          if (!audioDownloaded) throw new Error('All download methods failed for audio');
+
           // Tier 2: RapidAPI — returns live signed Google CDN URLs, bypasses IP blocks
           if (!audioDownloaded) {
             try {
@@ -581,10 +666,13 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
           if (!audioDownloaded) throw new Error('All download methods failed for audio');
         }
 
+        const downloadedFile = findDownloadedFile(fileId) || diskFilename;
+        conversion.outputPath = path.join(outputDir, downloadedFile);
+        conversion.outputUrl = `/outputs/${downloadedFile}`;
+        requireWrittenFile(conversion.outputPath, 'Audio download');
         conversion.status = 'completed';
         conversion.progress = 100;
-        conversion.fileSize = getFileSize(outputPath);
-        conversion.outputUrl = `/outputs/${diskFilename}`;
+        conversion.fileSize = getFileSize(conversion.outputPath);
         await conversion.save();
       } catch (err: any) {
         console.error('YouTube background error:', err.message);
@@ -605,7 +693,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
   try {
     const youtubeUrl = req.body.youtubeUrl || req.body.url;
     // Frontend might send 'quality' or 'videoQuality'
-    const reqQuality = String(req.body.mp4Quality || req.body.quality || '720p');
+    const reqQuality = String(req.body.mp4Quality || req.body.videoQuality || req.body.quality || '720p');
     const videoQuality: string = (['360p', '480p', '720p', '1080p', '4K', '8K'].includes(reqQuality))
       ? reqQuality : '720p';
 
@@ -615,7 +703,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
     }
 
     const cleanUrl = String(youtubeUrl).trim();
-    const videoId = cleanUrl.match(/(?:v=|\/)([0-9A-Za-z_-]{11}).*/)?.[1];
+    const videoId = getYouTubeVideoId(cleanUrl);
 
     if (!videoId) {
       res.status(400).json({ success: false, message: 'Invalid YouTube URL' });
@@ -654,12 +742,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           // Step 1: Get metadata
           let videoTitle = 'YouTube Video';
           try {
-            let ytdlpArgs = `--js-runtimes node --extractor-args "youtube:player_client=android,web" --print title --no-playlist`;
-            const cookiesFile = getCookiesPath();
-            if (cookiesFile) {
-              ytdlpArgs += ` --cookies ${cookiesFile}`;
-            }
-            const { stdout } = await execAsync(`yt-dlp ${ytdlpArgs} "${cleanUrl}"`);
+            const { stdout } = await runYtDlp(['--print', 'title', '--no-playlist', cleanUrl]);
             const lines = stdout.trim().split('\n');
             videoTitle = (lines[0] || '').trim() || 'YouTube Video';
           } catch { /* keep defaults */ }
@@ -681,16 +764,19 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
 
           try {
             await new Promise((resolve, reject) => {
-              const ytdlpArgs = ['--js-runtimes', 'node', '--extractor-args', 'youtube:player_client=android,web', '-S', ytSort, '-o', path.join(outputDir, `${fileId}.%(ext)s`), '--no-playlist'];
-              const cookiesFile = getCookiesPath();
-              if (cookiesFile) {
-                ytdlpArgs.push('--cookies', cookiesFile);
-              }
-              ytdlpArgs.push(cleanUrl);
-              const ytdlp = spawn('yt-dlp', ytdlpArgs);
+              const ytdlp = spawn('yt-dlp', ytDlpArgs([
+                '--newline',
+                '-f', 'bv*+ba/b',
+                '-S', ytSort,
+                '--merge-output-format', 'mp4',
+                '-o', path.join(outputDir, `${fileId}.%(ext)s`),
+                '--no-playlist',
+                cleanUrl,
+              ]), { windowsHide: true });
     
               let lastUpdate = Date.now();
-              ytdlp.stdout.on('data', (data) => {
+              let stderr = '';
+              const handleProgress = (data: Buffer) => {
                 const output = data.toString();
                 const match = output.match(/\[download\]\s+([\d\.]+)%/);
                 if (match) {
@@ -701,11 +787,18 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
                     Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
                   }
                 }
+              };
+
+              ytdlp.stdout.on('data', handleProgress);
+              ytdlp.stderr.on('data', (data) => {
+                stderr += data.toString();
+                handleProgress(data);
               });
     
+              ytdlp.on('error', reject);
               ytdlp.on('close', (code) => {
                 if (code === 0) resolve(true);
-                else reject(new Error('yt-dlp failed with code ' + code));
+                else reject(new Error((stderr || `yt-dlp failed with code ${code}`).trim()));
               });
             });
           } catch (ytdlpError: any) {
@@ -736,15 +829,9 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
                 const cobaltDownloadUrl = await downloadViaCobalt(cleanUrl, 'video', videoQuality);
                 
                 const videoResp = await downloadFromUrl(cobaltDownloadUrl);
-                const fileStream = fs.createWriteStream(fallbackOutputPath);
-                const { Readable } = require('stream');
-                await new Promise((resolve, reject) => {
-                  const readable = Readable.fromWeb(videoResp as any);
-                  readable.pipe(fileStream);
-                  readable.on('error', reject);
-                  fileStream.on('finish', resolve);
-                });
-                
+                await writeWebStreamToFile(videoResp, fallbackOutputPath);
+                requireWrittenFile(fallbackOutputPath, 'Cobalt video download');
+
                 videoDownloaded = true;
                 console.log('Cobalt video download succeeded');
               } catch (e: any) {
@@ -757,6 +844,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
               try {
                 console.log('Trying RapidAPI for video...');
                 await downloadAndMergeViaAPI(videoId, fallbackOutputPath, 'video', targetH);
+                requireWrittenFile(fallbackOutputPath, 'RapidAPI video download');
                 videoDownloaded = true;
                 console.log('RapidAPI video succeeded');
               } catch (e: any) {
@@ -771,7 +859,8 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
                 console.log(`Trying youtubei.js ${clientType} for video...`);
                 const yt = await Innertube.create({ generate_session_locally: true, fetch: fetch, cache: new UniversalCache(false), client_type: clientType });
                 const stream = await yt.download(videoId, { type: 'video+audio', quality: 'best', format: 'mp4' });
-                await streamToFile(stream, fallbackOutputPath);
+                await writeAsyncIterableToFile(stream, fallbackOutputPath);
+                requireWrittenFile(fallbackOutputPath, `youtubei.js ${clientType} video download`);
                 videoDownloaded = true;
                 console.log(`youtubei.js ${clientType} video succeeded`);
               } catch (e: any) {
@@ -783,20 +872,20 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           }
 
           // Find the actual downloaded file since the extension could be .webm, .mkv, or .mp4
-          const files = fs.readdirSync(outputDir);
-          const downloadedFile = files.find(f => f.startsWith(fileId + '.') && !f.endsWith('.part') && !f.endsWith('.ytdl'));
+          const downloadedFile = findDownloadedFile(fileId);
           
           if (downloadedFile) {
             const actualExt = path.extname(downloadedFile);
             conversion.outputPath = path.join(outputDir, downloadedFile);
             conversion.outputFilename = `${safeTitle} (${videoQuality})${actualExt}`;
           }
+          requireWrittenFile(conversion.outputPath, 'Video download');
 
           // Step 3: Mark complete
           conversion.status = 'completed';
           conversion.progress = 100;
           conversion.fileSize = getFileSize(conversion.outputPath);
-          conversion.outputUrl = `/outputs/${diskFilename}`;
+          conversion.outputUrl = `/outputs/${path.basename(conversion.outputPath)}`;
           await conversion.save();
         } catch (err: any) {
           console.error('YouTube Video background error:', err.message);
