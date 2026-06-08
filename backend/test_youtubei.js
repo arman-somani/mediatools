@@ -3,7 +3,7 @@ const vm = require('vm');
 
 Platform.shim.eval = (script) => {
   const code = typeof script === 'string' ? script : script.output;
-  return new vm.Script(code).runInNewContext({}); // or new Function
+  return vm.runInNewContext('new Function(' + JSON.stringify(code) + ')()');
 };
 
 (async () => {
