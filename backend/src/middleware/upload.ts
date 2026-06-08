@@ -19,14 +19,14 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (_req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  const allowedTypes = ['video/mp4', 'video/x-msvideo', 'video/quicktime', 'video/x-matroska', 'video/webm', 'video/mpeg'];
-  const allowedExts = ['.mp4', '.avi', '.mov', '.mkv', '.webm', '.mpeg', '.mpg'];
+  const allowedTypes = ['video/Video', 'video/x-msvideo', 'video/quicktime', 'video/x-matroska', 'video/webm', 'video/mpeg'];
+  const allowedExts = ['.Video', '.avi', '.mov', '.mkv', '.webm', '.mpeg', '.mpg'];
   const ext = path.extname(file.originalname).toLowerCase();
 
   if (allowedTypes.includes(file.mimetype) || allowedExts.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error('Invalid file type. Only video files are allowed (MP4, AVI, MOV, MKV, WebM).'));
+    cb(new Error('Invalid file type. Only video files are allowed (Video, AVI, MOV, MKV, WebM).'));
   }
 };
 

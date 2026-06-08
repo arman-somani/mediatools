@@ -41,7 +41,7 @@ export default function ConverterPage() {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { 'video/*': ['.mp4', '.avi', '.mov', '.mkv', '.webm'] },
+    accept: { 'video/*': ['.Video', '.avi', '.mov', '.mkv', '.webm'] },
     maxFiles: 1,
     maxSize: 250 * 1024 * 1024,
     onDropRejected: (r) => {
@@ -146,7 +146,7 @@ export default function ConverterPage() {
                             <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-slate-300" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
                           </div>
                           <h3 className="text-lg font-semibold text-white mb-2">{isDragActive ? 'Drop to upload' : 'Drag & drop your video'}</h3>
-                          <p className="text-white text-sm">or click to browse files (MP4, AVI, MKV up to 250MB)</p>
+                          <p className="text-white text-sm">or click to browse files (Video, AVI, MKV up to 250MB)</p>
                         </motion.div>
                       )}
                     </AnimatePresence>

@@ -48,7 +48,7 @@ function sanitizeFilename(name: string): string {
     .slice(0, 200);
 }
 
-/* ── MP4 TO Audio  ─────────────────────────────────────────── */
+/* ── Video TO Audio  ─────────────────────────────────────────── */
 router.post(
   '/upload',
   authenticate,
@@ -67,7 +67,7 @@ router.post(
 
       const conversion: any = await Conversion.create({
         userId,
-        type: 'mp4',
+        type: 'Video',
         status: 'processing',
         originalName: file.originalname,
         outputFilename: file.originalname.replace(/\.[^.]+$/, '') + '.Audio ', // user-facing name
@@ -139,7 +139,7 @@ router.post(
         },
       });
     } catch (error: any) {
-      console.error('MP4 error:', error);
+      console.error('Video error:', error);
       res.status(500).json({ success: false, message: error.message || 'Conversion failed' });
     }
   }
@@ -281,8 +281,8 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
   }
 });
 
-/* ── YOUTUBE TO MP4 ─────────────────────────────────────── */
-router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response): Promise<void> => {
+/* ── YOUTUBE TO Video ─────────────────────────────────────── */
+router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const youtubeUrl = req.body.youtubeUrl || req.body.url;
     // Frontend might send 'quality' or 'videoQuality'
@@ -304,16 +304,16 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
     }
 
     const fileId = uuidv4();
-    const diskFilename = `${fileId}.mp4`;
+    const diskFilename = `${fileId}.Video`;
     const outputPath = path.join(outputDir, diskFilename);
 
     const conversion: any = await Conversion.create({
       userId: req.user?.id,
-      type: 'youtube-mp4',
+      type: 'youtube-Video',
       status: 'processing',
       youtubeUrl: cleanUrl,
       youtubeTitle: 'YouTube Video',
-      outputFilename: `video.mp4`,
+      outputFilename: `video.Video`,
       outputPath: outputPath,
       outputUrl: `/outputs/${diskFilename}`,
       quality: '192',
@@ -323,7 +323,7 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
 
     res.json({
       success: true,
-      message: 'YouTube MP4 download started',
+      message: 'YouTube Video download started',
       data: {
         jobId: conversion._id.toString(),
         conversionId: conversion._id.toString(),
@@ -359,8 +359,8 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
             return parseInt(resHeight || v.format_note?.replace(/[^0-9]/g, '') || '0', 10);
           };
 
-          // Filter to mp4/webm and sort from HIGHEST to LOWEST resolution
-          const compatibleVideos = videoData.filter(v => ['mp4', 'webm'].includes(v.ext)).sort((a, b) => getHeight(b) - getHeight(a));
+          // Filter to Video/webm and sort from HIGHEST to LOWEST resolution
+          const compatibleVideos = videoData.filter(v => ['Video', 'webm'].includes(v.ext)).sort((a, b) => getHeight(b) - getHeight(a));
 
           // Translate UI quality to RapidAPI quality format for searching
           let searchQuality = videoQuality;
@@ -377,7 +377,7 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
           const actualQuality = selectedVideo?.format_note || videoQuality;
 
           conversion.youtubeTitle = videoTitle;
-          conversion.outputFilename = `${safeTitle} (${actualQuality}).mp4`;
+          conversion.outputFilename = `${safeTitle} (${actualQuality}).Video`;
           await conversion.save();
 
           // Get highest quality audio
@@ -386,7 +386,7 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
 
           const audioUrl = selectedAudio?.url || audioData[0].url;
 
-          // Merge them using FFmpeg (adding -strict experimental for AV1/VP9 compatibility in MP4)
+          // Merge them using FFmpeg (adding -strict experimental for AV1/VP9 compatibility in Video)
           const ffmpeg = spawn('ffmpeg', ['-y', '-i', videoUrl, '-i', audioUrl, '-c:v', 'copy', '-c:a', 'aac', '-strict', 'experimental', outputPath]);
 
           let lastUpdate = Date.now();
@@ -436,7 +436,7 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
           throw new Error('API did not return valid video and audio links');
         }
       } catch (err: any) {
-        console.error('YouTube MP4 background error:', err.message);
+        console.error('YouTube Video background error:', err.message);
         conversion.status = 'failed';
         conversion.errorMessage = err.message || 'Download failed';
         await conversion.save();
@@ -444,8 +444,8 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
     })();
 
   } catch (error: any) {
-    console.error('YouTube MP4 route error:', error);
-    res.status(500).json({ success: false, message: error.message || 'YouTube MP4 download failed' });
+    console.error('YouTube Video route error:', error);
+    res.status(500).json({ success: false, message: error.message || 'YouTube Video download failed' });
   }
 });
 
@@ -502,7 +502,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
 
     const cleanUrl = String(videoUrl).trim();
     const fileId = uuidv4();
-    const diskFilename = `${fileId}.mp4`;
+    const diskFilename = `${fileId}.Video`;
     const outputPath = path.join(outputDir, diskFilename);
 
     // Map quality label to yt-dlp format filter
@@ -558,11 +558,11 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         const safeTitle = sanitizeFilename(videoTitle) || 'Downloaded Video';
         conversion.youtubeTitle = videoTitle;
         conversion.youtubeThumbnail = thumbnail;
-        conversion.outputFilename = `${safeTitle}.mp4`;
+        conversion.outputFilename = `${safeTitle}.Video`;
         await conversion.save();
 
-        // Step 2: Download video + audio merged into mp4
-        const ytdlp = spawn('yt-dlp', ['-f', ytFormat, '--merge-output-format', 'mp4', '-o', outputPath, '--no-playlist', cleanUrl]);
+        // Step 2: Download video + audio merged into Video
+        const ytdlp = spawn('yt-dlp', ['-f', ytFormat, '--merge-output-format', 'Video', '-o', outputPath, '--no-playlist', cleanUrl]);
 
         let lastUpdate = Date.now();
         ytdlp.stdout.on('data', (data) => {

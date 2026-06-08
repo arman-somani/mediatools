@@ -2,7 +2,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IConversion extends Document {
   userId?: string;
-  type: 'mp4' | 'youtube' | 'youtube-mp4' | 'universal';
+  type: 'Video' | 'youtube' | 'youtube-Video' | 'universal';
   status: 'pending' | 'processing' | 'completed' | 'failed';
   originalName?: string;
   youtubeUrl?: string;
@@ -31,7 +31,7 @@ const conversionSchema = new Schema<IConversion>(
     },
     type: {
       type: String,
-      enum: ['mp4', 'youtube', 'youtube-mp4', 'universal'],
+      enum: ['Video', 'youtube', 'youtube-Video', 'universal'],
       required: true,
     },
     status: {

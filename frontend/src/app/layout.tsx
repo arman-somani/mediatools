@@ -10,7 +10,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' });
 
 export const metadata: Metadata = {
-  title: 'MediaTools — Premium MP4 to Audio  & YouTube Converter',
+  title: 'MediaTools — Premium Video to Audio  & YouTube Converter',
   description: 'Convert videos to high-quality audio instantly with our modern suite of tools.',
 };
 

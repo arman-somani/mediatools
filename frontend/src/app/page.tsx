@@ -25,14 +25,14 @@ export default function HomePage() {
             </h1>
 
             <p className="text-white/60 text-lg md:text-xl lg:text-2xl max-w-2xl mx-auto mb-10 md:mb-12 leading-relaxed px-4 sm:px-0">
-              The fastest way to extract audio from MP4 files or YouTube URL's, Universal URL Downloader and
+              The fastest way to extract audio from Video files or YouTube URL's, Universal URL Downloader and
               Zero quality loss.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 items-center justify-center flex-wrap w-full px-4 sm:px-0">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.9 }} className="w-full sm:w-auto">
                 <Link href="/converter" className="btn-primary-glow px-6 md:px-8 py-3 md:py-4 text-base md:text-lg rounded-xl block w-full text-center">
-                  Convert MP4 to Audio
+                  Convert Video to Audio
                 </Link>
               </motion.div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.9 }} className="w-full sm:w-auto">
@@ -48,7 +48,7 @@ export default function HomePage() {
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="text-red-500">
                     <path d="M23.495 6.205a3.007 3.007 0 00-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 00.527 6.205a31.247 31.247 0 00-.522 5.805 31.247 31.247 0 00.522 5.783 3.007 3.007 0 002.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 002.088-2.088 31.247 31.247 0 00.5-5.783 31.247 31.247 0 00-.5-5.805zM9.609 15.601V8.408l6.264 3.602z" />
                   </svg>
-                  YouTube to MP4
+                  YouTube to Video
                 </Link>
               </motion.div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.9 }} className="w-full sm:w-auto">
@@ -168,7 +168,7 @@ export default function HomePage() {
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-red-500">
                     <path d="M23.495 6.205a3.007 3.007 0 00-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 00.527 6.205a31.247 31.247 0 00-.522 5.805 31.247 31.247 0 00.522 5.783 3.007 3.007 0 002.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 002.088-2.088 31.247 31.247 0 00.5-5.783 31.247 31.247 0 00-.5-5.805zM9.609 15.601V8.408l6.264 3.602z" />
                   </svg>
-                  YouTube to MP4
+                  YouTube to Video
                 </Link>
                 <Link href="/universal" className="btn-secondary px-6 md:px-8 py-3 rounded-xl flex items-center gap-2 justify-center w-full sm:w-auto">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-brand-cyan">

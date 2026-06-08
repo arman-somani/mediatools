@@ -43,7 +43,7 @@ const TOOLS = [
         badgeColor: 'bg-red-500/20 text-red-400',
     },
     {
-        label: 'YouTube to MP4',
+        label: 'YouTube to Video',
         description: 'Download YouTube videos in HD, 4K or 8K quality',
         href: '/yt-video',
         gradient: 'from-violet-600 to-purple-500',
@@ -59,7 +59,7 @@ const TOOLS = [
         badgeColor: 'bg-violet-500/20 text-violet-400',
     },
     {
-        label: 'MP4 to Audio ',
+        label: 'Video to Audio ',
         description: 'Convert any local video file to high-quality Audio ',
         href: '/converter',
         gradient: 'from-brand-violet to-brand-purple',
@@ -252,13 +252,13 @@ export default function DashboardPage() {
                                 recentConversions.map((conversion, index) => {
                                     const typeLabel =
                                         conversion.type === 'youtube' ? 'YouTube Audio ' :
-                                            conversion.type === 'youtube-mp4' ? 'YouTube MP4' :
+                                            conversion.type === 'youtube-Video' ? 'YouTube Video' :
                                                 conversion.type === 'universal' ? 'Universal Video' :
-                                                    'MP4 Audio ';
+                                                    'Video Audio ';
 
                                     const typeHref =
                                         conversion.type === 'youtube' ? '/youtube' :
-                                            conversion.type === 'youtube-mp4' ? '/yt-video' :
+                                            conversion.type === 'youtube-Video' ? '/yt-video' :
                                                 conversion.type === 'universal' ? '/universal' :
                                                     '/converter';
 

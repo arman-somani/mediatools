@@ -68,7 +68,7 @@ export default function YtVideoPage() {
     if (!isValidYouTubeUrl(url)) { setError('Please enter a valid YouTube URL'); return; }
     setError(''); setStatus('processing'); setProgress(0);
     try {
-      const { data } = await api.post('/convert/youtube-mp4', { url, videoQuality: quality });
+      const { data } = await api.post('/convert/youtube-Video', { url, videoQuality: quality });
       setJobId(data.data.jobId);
       if (data.data.title) setVideoInfo({ title: data.data.title });
       poll(data.data.jobId);
@@ -93,7 +93,7 @@ export default function YtVideoPage() {
             Download <span className="text-gradient">YouTube Video</span>
           </h1>
           <p className="text-white max-w-2x2 mx-auto text-lg">
-            Paste any YouTube Video Link, select preferred quality, and download the full video as an MP4 file.
+            Paste any YouTube Video Link, select preferred quality, and download the full video as an Video file.
           </p>
         </motion.div>
 
@@ -169,7 +169,7 @@ export default function YtVideoPage() {
                         disabled={!url}
                         className={`min-w-[200px] h-[46px] rounded-xl font-semibold text-base transition-all duration-300 flex-shrink-0 ${!url ? 'bg-white/5 text-white/40 cursor-not-allowed' : 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg hover:shadow-violet-500/25 active:scale-95'}`}
                       >
-                        Download MP4
+                        Download Video
                       </button>
                     </div>
                   </div>
@@ -210,7 +210,7 @@ export default function YtVideoPage() {
                     <p className="max-w-sm truncate mb-2 text-sm text-white">{videoInfo.title}</p>
                   )}
                   <p className="text-white mb-2 text-lg">
-                    Your <strong className="text-brand-purple">{quality}</strong> MP4 video is ready to download.
+                    Your <strong className="text-brand-purple">{quality}</strong> Video video is ready to download.
                   </p>
                   {fileSize && (
                     <p className="text-sm font-medium mb-8 px-4 py-2 rounded-lg inline-block bg-white/5 text-white">
@@ -230,7 +230,7 @@ export default function YtVideoPage() {
                         <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
-                        Download MP4
+                        Download Video
                       </button>
                     </a>
                     <button onClick={reset} className="btn-secondary h-14 w-full sm:w-auto px-8 whitespace-nowrap bg-black/5 hover:bg-white/20 text-white">

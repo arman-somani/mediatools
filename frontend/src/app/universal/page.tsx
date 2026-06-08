@@ -122,7 +122,7 @@ export default function UniversalPage() {
             Download <span className="text-gradient">Any Video</span>
           </h1>
           <p className="text-white max-w-4xl mx-auto text-lg">
-            Paste a link of Instagram, TikTok, Reddit, or any Video URL and download the video as an MP4 file.
+            Paste a link of Instagram, TikTok, Reddit, or any Video URL and download the video as an Video file.
           </p>
         </motion.div>
 
@@ -210,7 +210,7 @@ export default function UniversalPage() {
                           disabled={!url}
                           className={`w-full sm:w-[280px] h-14 rounded-xl font-semibold text-lg transition-all duration-300 bg-gradient-to-r from-emerald-500 to-emerald-400 text-white shadow-[0_0_20px_rgba(52,211,153,0.3)] hover:shadow-[0_0_30px_rgba(52,211,153,0.5)] active:scale-95`}
                         >
-                          Download MP4
+                          Download Video
                         </motion.button>
                         <motion.button
                           initial={{ opacity: 0, scale: 0.9 }}
@@ -260,7 +260,7 @@ export default function UniversalPage() {
                     <p className="max-w-sm truncate mb-2 text-sm text-white">{videoInfo.title}</p>
                   )}
                   <p className="text-white mb-2 text-lg">
-                    Your <strong className="text-brand-purple">Highest Quality</strong> MP4 video is ready to download.
+                    Your <strong className="text-brand-purple">Highest Quality</strong> Video video is ready to download.
                   </p>
                   {fileSize && (
                     <p className="text-sm font-medium mb-8 px-4 py-2 rounded-lg inline-block bg-white/5 text-white">
@@ -280,7 +280,7 @@ export default function UniversalPage() {
                         <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
-                        Download MP4
+                        Download Video
                       </button>
                     </a>
                     <button onClick={reset} className="btn-secondary h-14 w-full sm:w-auto px-8 whitespace-nowrap bg-black/5 hover:bg-white/20 text-white">
