@@ -20,6 +20,19 @@ interface CobaltResponse {
 let instancesCache: { instances: CobaltInstance[], timestamp: number } | null = null;
 const CACHE_TTL = 3600000; // 1 hour
 
+function normalizeVideoQuality(quality?: string): string {
+  const map: Record<string, string> = {
+    '360p': '360',
+    '480p': '480',
+    '720p': '720',
+    '1080p': '1080',
+    '4K': '2160',
+    '8K': '4320',
+  };
+
+  return map[quality || ''] || quality?.replace(/p$/i, '') || '720';
+}
+
 /**
  * Fetches available Cobalt instances from the registry
  */
@@ -97,7 +110,7 @@ async function tryDownloadFromInstance(
       reqBody.audioFormat = 'mp3';
       reqBody.audioBitrate = quality || '192';
     } else {
-      reqBody.videoQuality = quality || '720';
+      reqBody.videoQuality = normalizeVideoQuality(quality);
       reqBody.videoCodec = 'h264';
       reqBody.audioCodec = 'aac';
       reqBody.filenamePattern = 'pretty';
