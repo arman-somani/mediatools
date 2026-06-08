@@ -57,16 +57,7 @@ async function downloadAndMergeViaAPI(
     const bestAudio = data.find(f => f.ext === 'm4a' || f.acodec !== 'none') || data[0];
     if (!bestAudio.url) throw new Error('No audio URL found in API response');
     
-    const tmpAudio = outputPath.replace('.mp3', '.m4a');
-    await downloadStreamFromUrl(bestAudio.url, tmpAudio);
-    
-    await new Promise<void>((resolve, reject) => {
-      const ff = spawn('ffmpeg', ['-y', '-i', tmpAudio, '-vn', '-ab', `${audioBitrate}k`, outputPath]);
-      ff.on('close', code => {
-        if (fs.existsSync(tmpAudio)) fs.unlinkSync(tmpAudio);
-        if (code === 0) resolve(); else reject(new Error('ffmpeg audio conversion failed'));
-      });
-    });
+    await downloadStreamFromUrl(bestAudio.url, outputPath);
     return;
   }
 
