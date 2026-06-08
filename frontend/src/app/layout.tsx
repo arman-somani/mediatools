@@ -20,12 +20,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="overflow-x-hidden max-w-full">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
-      <body className={`${inter.variable} ${outfit.variable} antialiased min-h-screen flex flex-col bg-gradient-mesh relative`}>
+      <body className={`${inter.variable} ${outfit.variable} antialiased min-h-screen flex flex-col bg-gradient-mesh relative overflow-x-hidden max-w-full`}>
         {/* Glow orbs for deep background depth */}
         <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand-violet/20 blur-[120px] rounded-full pointer-events-none" />
         <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-brand-cyan/10 blur-[120px] rounded-full pointer-events-none" />
