@@ -561,9 +561,9 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         conversion.outputFilename = `${safeTitle}.mp4`;
         await conversion.save();
 
-        // Step 2: Download video + Audio merged into mp4
+        // Step 2: Download video in its native format without remuxing
         // We use -S for sorting formats which is highly optimized for ANY website!
-        const ytdlp = spawn('yt-dlp', ['-S', ytSort, '--merge-output-format', 'mp4', '--remux-video', 'mp4', '-o', outputPath, '--no-playlist', cleanUrl]);
+        const ytdlp = spawn('yt-dlp', ['-S', ytSort, '-o', path.join(outputDir, `${fileId}.%(ext)s`), '--no-playlist', cleanUrl]);
 
         let lastUpdate = Date.now();
         ytdlp.stdout.on('data', (data) => {
@@ -592,10 +592,20 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
           });
         });
 
+        // Find the actual downloaded file since the extension could be .webm, .mkv, or .mp4
+        const files = fs.readdirSync(outputDir);
+        const downloadedFile = files.find(f => f.startsWith(fileId + '.') && !f.endsWith('.part') && !f.endsWith('.ytdl'));
+        
+        if (downloadedFile) {
+          const actualExt = path.extname(downloadedFile);
+          conversion.outputPath = path.join(outputDir, downloadedFile);
+          conversion.outputFilename = safeTitle + actualExt;
+        }
+
         // Step 3: Mark complete
         conversion.status = 'completed';
         conversion.progress = 100;
-        conversion.fileSize = getFileSize(outputPath);
+        conversion.fileSize = getFileSize(conversion.outputPath);
         await conversion.save();
 
       } catch (err: any) {
