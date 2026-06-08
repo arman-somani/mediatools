@@ -16,7 +16,8 @@ Platform.shim.eval = (script) => {
     });
     
     console.log('Created! Fetching audio...');
-    const stream = await yt.download('jNQXAC9IVRw', {
+    // test with a recent video ID (e.g. Rick Roll)
+    const stream = await yt.download('dQw4w9WgXcQ', {
       type: 'audio',
       quality: 'best',
       format: 'any'
