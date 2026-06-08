@@ -14,6 +14,24 @@ import { Innertube, UniversalCache, Platform, ClientType } from 'youtubei.js';
 import ytdl from '@distube/ytdl-core';
 import vm from 'vm';
 
+// Determine the path to a cookies file for yt-dlp to bypass YouTube bot restrictions
+function getCookiesPath(): string | null {
+  if (fs.existsSync('/etc/secrets/cookies.txt')) {
+    return '/etc/secrets/cookies.txt';
+  }
+  if (process.env.YOUTUBE_COOKIES) {
+    const tmpPath = '/tmp/youtube_cookies.txt';
+    try {
+      if (!fs.existsSync('/tmp')) fs.mkdirSync('/tmp');
+      fs.writeFileSync(tmpPath, process.env.YOUTUBE_COOKIES);
+      return tmpPath;
+    } catch (e) {
+      console.error('Failed to write YOUTUBE_COOKIES to /tmp:', e);
+    }
+  }
+  return null;
+}
+
 Platform.shim.eval = (script: any) => {
   const code = typeof script === 'string' ? script : script.output;
   return vm.runInNewContext('new Function(' + JSON.stringify(code) + ')()');
