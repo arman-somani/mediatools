@@ -563,7 +563,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
 
         // Step 2: Download video + Audio merged into mp4
         // We use -S for sorting formats which is highly optimized for ANY website!
-        const ytdlp = spawn('yt-dlp', ['-S', ytSort, '--merge-output-format', 'mp4', '-o', outputPath, '--no-playlist', cleanUrl]);
+        const ytdlp = spawn('yt-dlp', ['-S', ytSort, '--merge-output-format', 'mp4', '--remux-video', 'mp4', '-o', outputPath, '--no-playlist', cleanUrl]);
 
         let lastUpdate = Date.now();
         ytdlp.stdout.on('data', (data) => {
