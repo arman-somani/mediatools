@@ -118,6 +118,16 @@ async function downloadAndMergeViaAPI(
 const router = Router();
 const execAsync = promisify(exec);
 
+router.post('/test-ytdlp', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { args } = req.body;
+    const { stdout, stderr } = await execAsync(`yt-dlp ${args}`);
+    res.json({ stdout, stderr });
+  } catch (e: any) {
+    res.json({ error: e.message, stdout: e.stdout?.toString(), stderr: e.stderr?.toString() });
+  }
+});
+
 const uploadDir = process.env.UPLOAD_DIR || './uploads';
 const outputDir = process.env.OUTPUT_DIR || './outputs';
 
