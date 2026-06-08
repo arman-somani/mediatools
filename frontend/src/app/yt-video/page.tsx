@@ -134,10 +134,43 @@ export default function YtVideoPage() {
                       value={url}
                       onChange={(e) => { setUrl(e.target.value); setError(''); }}
                       onKeyDown={(e) => e.key === 'Enter' && handleDownload()}
-                      placeholder="https://www.youtube.com/watch?v=..."
+                      placeholder="Search YouTube or paste URL..."
                       className="url-input-field"
                     />
                   </div>
+
+                  <AnimatePresence>
+                    {(isSearching || searchResults.length > 0) && !isValidYouTubeUrl(url) && url.length > 2 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute w-full mt-2 bg-[#1E1B2E]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-50 max-h-[400px] overflow-y-auto overflow-x-hidden p-2 custom-scrollbar"
+                      >
+                        {isSearching && (
+                          <div className="p-4 text-center text-white/50">Searching YouTube...</div>
+                        )}
+                        {!isSearching && searchResults.map((video) => (
+                          <button
+                            key={video.videoId}
+                            onClick={() => {
+                              setUrl(`https://www.youtube.com/watch?v=${video.videoId}`);
+                              setSearchResults([]);
+                            }}
+                            className="w-full flex items-center gap-4 p-3 hover:bg-white/5 rounded-xl transition-colors text-left"
+                          >
+                            <div className="w-32 aspect-video bg-black/50 rounded-lg overflow-hidden flex-shrink-0 relative">
+                              <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover" />
+                            </div>
+                            <div className="flex-1 overflow-hidden">
+                              <h4 className="text-white font-medium text-sm line-clamp-2" dangerouslySetInnerHTML={{ __html: video.title }} />
+                              <p className="text-white/50 text-xs mt-1">{video.channelTitle}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
                   <AnimatePresence>
                     {thumbnailPreview && url && (
