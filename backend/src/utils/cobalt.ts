@@ -1,6 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 
+// Ensure fetch and AbortController are available globally
+declare const fetch: typeof global.fetch;
+declare const AbortController: typeof global.AbortController;
+
 interface CobaltInstance {
   domain: string;
   score: number;
@@ -30,26 +34,35 @@ async function fetchCobaltInstances(): Promise<CobaltInstance[]> {
 
   try {
     console.log('Fetching fresh Cobalt instances...');
-    const resp = await fetch('https://instances.cobalt.tools/api/instances', {
-      headers: { 'User-Agent': 'Mozilla/5.0' },
-      timeout: 10000,
-    } as any);
-
-    if (!resp.ok) throw new Error(`Status ${resp.status}`);
-
-    const data: CobaltInstance[] = await resp.json();
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     
-    // Filter for recent, high-score instances
-    const filtered = data
-      .filter(i => i.score > 85 && i.version.startsWith('10.'))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 10);
+    try {
+      const resp = await fetch('https://instances.cobalt.tools/api/instances', {
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+        signal: controller.signal,
+      });
 
-    // Cache the results
-    instancesCache = { instances: filtered, timestamp: now };
-    console.log(`Fetched ${filtered.length} working Cobalt instances`);
-    
-    return filtered;
+      clearTimeout(timeoutId);
+      if (!resp.ok) throw new Error(`Status ${resp.status}`);
+
+      const data = (await resp.json()) as CobaltInstance[];
+      
+      // Filter for recent, high-score instances
+      const filtered = data
+        .filter(i => i.score > 85 && i.version.startsWith('10.'))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 10);
+
+      // Cache the results
+      instancesCache = { instances: filtered, timestamp: now };
+      console.log(`Fetched ${filtered.length} working Cobalt instances`);
+      
+      return filtered;
+    } catch (e) {
+      clearTimeout(timeoutId);
+      throw e;
+    }
   } catch (e: any) {
     console.error('Failed to fetch Cobalt instances:', e.message);
     
@@ -92,33 +105,43 @@ async function tryDownloadFromInstance(
 
     console.log(`Trying Cobalt instance: ${instance.domain}`);
     
-    const cobaltResp = await fetch(cobaltUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      },
-      timeout: 15000,
-      body: JSON.stringify(reqBody),
-    } as any);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    
+    try {
+      const cobaltResp = await fetch(cobaltUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        },
+        signal: controller.signal,
+        body: JSON.stringify(reqBody),
+      });
 
-    if (!cobaltResp.ok) {
-      throw new Error(`Cobalt returned ${cobaltResp.status}`);
+      clearTimeout(timeoutId);
+
+      if (!cobaltResp.ok) {
+        throw new Error(`Cobalt returned ${cobaltResp.status}`);
+      }
+
+      const data = (await cobaltResp.json()) as CobaltResponse;
+
+      if (data.error) {
+        throw new Error(`Cobalt error: ${data.error}`);
+      }
+
+      if (!data.url) {
+        throw new Error('No download URL in response');
+      }
+
+      console.log(`SUCCESS from ${instance.domain}!`);
+      return data;
+    } catch (e) {
+      clearTimeout(timeoutId);
+      throw e;
     }
-
-    const data: CobaltResponse = await cobaltResp.json();
-
-    if (data.error) {
-      throw new Error(`Cobalt error: ${data.error}`);
-    }
-
-    if (!data.url) {
-      throw new Error('No download URL in response');
-    }
-
-    console.log(`SUCCESS from ${instance.domain}!`);
-    return data;
   } catch (e: any) {
     console.log(`Failed on ${instance.domain}: ${e.message}`);
     return { error: e.message };
@@ -147,14 +170,23 @@ export async function downloadViaCobalt(
       if (result.url) {
         // Verify the URL is accessible
         try {
-          const headResp = await fetch(result.url, {
-            method: 'HEAD',
-            timeout: 5000,
-          } as any);
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
           
-          if (headResp.ok || headResp.status === 206) {
-            console.log(`Download URL verified: ${result.url.slice(0, 80)}`);
-            return result.url;
+          try {
+            const headResp = await fetch(result.url, {
+              method: 'HEAD',
+              signal: controller.signal,
+            });
+            
+            clearTimeout(timeoutId);
+            if (headResp.ok || headResp.status === 206) {
+              console.log(`Download URL verified: ${result.url.slice(0, 80)}`);
+              return result.url;
+            }
+          } catch (e) {
+            clearTimeout(timeoutId);
+            throw e;
           }
         } catch (e: any) {
           console.warn(`URL verification failed: ${e.message}`);
@@ -176,24 +208,34 @@ export async function downloadViaCobalt(
  * Get download stream from a Cobalt download URL
  */
 export async function downloadFromUrl(url: string): Promise<ReadableStream<Uint8Array>> {
-  const resp = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      'Referer': 'https://cobalt.tools/',
-      'Range': 'bytes=0-',
-    },
-    timeout: 30000,
-  } as any);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
+  
+  try {
+    const resp = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Referer': 'https://cobalt.tools/',
+        'Range': 'bytes=0-',
+      },
+      signal: controller.signal,
+    });
 
-  if (!resp.ok) {
-    throw new Error(`Download failed: ${resp.status}`);
+    clearTimeout(timeoutId);
+
+    if (!resp.ok) {
+      throw new Error(`Download failed: ${resp.status}`);
+    }
+
+    if (!resp.body) {
+      throw new Error('No response body');
+    }
+
+    return resp.body as any;
+  } catch (e) {
+    clearTimeout(timeoutId);
+    throw e;
   }
-
-  if (!resp.body) {
-    throw new Error('No response body');
-  }
-
-  return resp.body as any;
 }
 
 /**
