@@ -16,10 +16,10 @@ let ytUrl = '';
 let ytName = 'yt-dlp';
 
 if (platform === 'win32') {
-    ytUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe';
+    ytUrl = 'https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download/yt-dlp.exe';
     ytName = 'yt-dlp.exe';
 } else if (platform === 'darwin') {
-    ytUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos';
+    ytUrl = 'https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download/yt-dlp_macos';
 }
 
 const destDir = path.join(__dirname, '..', 'bin');
