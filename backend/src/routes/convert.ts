@@ -18,6 +18,50 @@ Platform.shim.eval = (script: any) => {
   return vm.runInNewContext('new Function(' + JSON.stringify(code) + ')()');
 };
 
+const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || '448df088femsh10889546dc271aap126ea2jsn1bec5c44767e';
+const RAPIDAPI_HOST = 'cloud-api-hub-youtube-downloader.p.rapidapi.com';
+
+/**
+ * Downloads a YouTube video/audio via RapidAPI and streams the bytes into outputPath.
+ * mode: 'audio' returns best m4a, 'video' returns best muxed mp4.
+ */
+async function downloadViaRapidAPI(videoId: string, outputPath: string, mode: 'audio' | 'video', targetHeight = 720): Promise<void> {
+  const apiUrl = `https://${RAPIDAPI_HOST}/download?id=${videoId}&format=mp3`;
+  const resp = await fetch(apiUrl, {
+    headers: { 'x-rapidapi-key': RAPIDAPI_KEY, 'x-rapidapi-host': RAPIDAPI_HOST },
+  });
+  if (!resp.ok) throw new Error(`RapidAPI /download returned ${resp.status}`);
+  const formats: any[] = await resp.json();
+  if (!Array.isArray(formats) || formats.length === 0) throw new Error('RapidAPI returned no formats');
+
+  let chosen: any = null;
+  if (mode === 'audio') {
+    // Prefer m4a audio-only, fallback to any audio-only
+    const audioOnly = formats.filter(f => !f.height && f.url);
+    const m4a = audioOnly.filter(f => f.ext === 'm4a').sort((a: any, b: any) => (b.abr || 0) - (a.abr || 0));
+    chosen = m4a[0] || audioOnly.sort((a: any, b: any) => (b.abr || 0) - (a.abr || 0))[0];
+  } else {
+    // Prefer muxed mp4 close to target height, fallback to any video
+    const muxed = formats.filter(f => f.height && f.url && f.ext === 'mp4').sort((a: any, b: any) => {
+      return Math.abs(a.height - targetHeight) - Math.abs(b.height - targetHeight);
+    });
+    chosen = muxed[0] || formats.filter(f => f.height && f.url).sort((a: any, b: any) => (b.height || 0) - (a.height || 0))[0];
+  }
+
+  if (!chosen?.url) throw new Error('RapidAPI: no suitable format found');
+  console.log(`RapidAPI: downloading ${mode} format: ${chosen.ext} ${chosen.height || chosen.abr}`);
+
+  const fileResp = await fetch(chosen.url);
+  if (!fileResp.ok) throw new Error(`RapidAPI CDN fetch failed: ${fileResp.status}`);
+
+  await new Promise<void>((resolve, reject) => {
+    const fileStream = fs.createWriteStream(outputPath);
+    fileStream.on('finish', resolve);
+    fileStream.on('error', reject);
+    (fileResp.body as any).pipe(fileStream);
+  });
+}
+
 const router = Router();
 const execAsync = promisify(exec);
 
@@ -259,7 +303,28 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
 
           let audioDownloaded = false;
 
-          // Tier 2a: youtubei.js MWEB client — works for audio-only streams
+          // Tier 2: RapidAPI — returns live signed Google CDN URLs, bypasses IP blocks
+          if (!audioDownloaded) {
+            try {
+              console.log('Trying RapidAPI for audio...');
+              const rawPath = outputPath.replace('.mp3', '.m4a');
+              await downloadViaRapidAPI(videoId, rawPath, 'audio');
+              // Convert m4a → mp3
+              await new Promise((resolve, reject) => {
+                const ffmpeg = spawn('ffmpeg', ['-y', '-i', rawPath, '-vn', '-ab', `${audioQuality}k`, outputPath]);
+                ffmpeg.on('close', (code) => {
+                  if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath);
+                  if (code === 0) resolve(true); else reject(new Error('FFmpeg m4a→mp3 failed'));
+                });
+              });
+              audioDownloaded = true;
+              console.log('RapidAPI audio succeeded');
+            } catch (e: any) {
+              console.error('RapidAPI audio failed:', e.message);
+            }
+          }
+
+          // Tier 3a: youtubei.js MWEB — audio-only stream
           if (!audioDownloaded) {
             try {
               console.log('Trying youtubei.js MWEB for audio...');
@@ -275,13 +340,12 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
                 });
               });
               audioDownloaded = true;
-              console.log('youtubei.js MWEB audio succeeded');
             } catch (e: any) {
               console.error('youtubei.js MWEB audio failed:', e.message);
             }
           }
 
-          // Tier 2b: youtubei.js ANDROID client — downloads video+audio, then extracts audio
+          // Tier 3b: youtubei.js ANDROID — video+audio → extract audio
           if (!audioDownloaded) {
             try {
               console.log('Trying youtubei.js ANDROID for video+audio→mp3...');
@@ -297,31 +361,8 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
                 });
               });
               audioDownloaded = true;
-              console.log('youtubei.js ANDROID audio extraction succeeded');
             } catch (e: any) {
               console.error('youtubei.js ANDROID audio failed:', e.message);
-            }
-          }
-
-          // Tier 2c: youtubei.js TV client
-          if (!audioDownloaded) {
-            try {
-              console.log('Trying youtubei.js TV for video+audio→mp3...');
-              const yt = await Innertube.create({ generate_session_locally: true, fetch: fetch, cache: new UniversalCache(false), client_type: ClientType.TV });
-              const stream = await yt.download(videoId, { type: 'video+audio', quality: 'best', format: 'mp4' });
-              const fallbackVideoPath = outputPath.replace('.mp3', '.mp4');
-              await streamToFile(stream, fallbackVideoPath);
-              await new Promise((resolve, reject) => {
-                const ffmpeg = spawn('ffmpeg', ['-y', '-i', fallbackVideoPath, '-vn', '-ab', `${audioQuality}k`, outputPath]);
-                ffmpeg.on('close', (code) => {
-                  if (fs.existsSync(fallbackVideoPath)) fs.unlinkSync(fallbackVideoPath);
-                  if (code === 0) resolve(true); else reject(new Error('FFmpeg TV extraction failed'));
-                });
-              });
-              audioDownloaded = true;
-              console.log('youtubei.js TV audio extraction succeeded');
-            } catch (e: any) {
-              console.error('youtubei.js TV audio failed:', e.message);
             }
           }
 
@@ -464,8 +505,22 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
 
             let videoDownloaded = false;
             const fallbackOutputPath = path.join(outputDir, `${fileId}.mp4`);
+            const targetHeightMap: Record<string, number> = { '360p': 360, '480p': 480, '720p': 720, '1080p': 1080, '4K': 2160, '8K': 4320 };
+            const targetH = targetHeightMap[videoQuality] || 720;
 
-            // Try each client type in order
+            // Tier 2: RapidAPI
+            if (!videoDownloaded) {
+              try {
+                console.log('Trying RapidAPI for video...');
+                await downloadViaRapidAPI(videoId, fallbackOutputPath, 'video', targetH);
+                videoDownloaded = true;
+                console.log('RapidAPI video succeeded');
+              } catch (e: any) {
+                console.error('RapidAPI video failed:', e.message);
+              }
+            }
+
+            // Tier 3: youtubei.js cascade
             for (const clientType of [ClientType.ANDROID, ClientType.TV, ClientType.MWEB]) {
               if (videoDownloaded) break;
               try {
@@ -481,6 +536,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
             }
 
             if (!videoDownloaded) throw new Error('All download methods failed for video');
+          }
           }
 
           // Find the actual downloaded file since the extension could be .webm, .mkv, or .mp4
