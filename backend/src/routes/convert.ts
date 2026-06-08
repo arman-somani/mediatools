@@ -244,7 +244,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         } catch (ytdlpError: any) {
           console.error('yt-dlp failed for audio, falling back to youtubei.js:', ytdlpError.message);
           const yt = await Innertube.create({ generate_session_locally: true, fetch: fetch, cache: new UniversalCache(false) });
-          const stream = await yt.download(cleanUrl, { type: 'video+audio', quality: 'best', format: 'mp4' });
+          const stream = await yt.download(videoId, { type: 'video+audio', quality: 'best', format: 'mp4' });
           
           const fallbackVideoPath = outputPath.replace('.mp3', '.mp4');
           await new Promise<void>((resolve, reject) => {
@@ -395,7 +395,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           } catch (ytdlpError: any) {
             console.error('yt-dlp failed for video, falling back to youtubei.js:', ytdlpError.message);
             const yt = await Innertube.create({ generate_session_locally: true, fetch: fetch, cache: new UniversalCache(false) });
-            const stream = await yt.download(cleanUrl, { type: 'video+audio', quality: 'best', format: 'mp4' });
+            const stream = await yt.download(videoId, { type: 'video+audio', quality: 'best', format: 'mp4' });
             
             const fallbackOutputPath = path.join(outputDir, `${fileId}.mp4`);
             await new Promise<void>((resolve, reject) => {
