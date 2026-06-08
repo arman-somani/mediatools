@@ -31,7 +31,7 @@ async function downloadViaRapidAPI(videoId: string, outputPath: string, mode: 'a
     headers: { 'x-rapidapi-key': RAPIDAPI_KEY, 'x-rapidapi-host': RAPIDAPI_HOST },
   });
   if (!resp.ok) throw new Error(`RapidAPI /download returned ${resp.status}`);
-  const formats: any[] = await resp.json();
+  const formats = (await resp.json()) as any[];
   if (!Array.isArray(formats) || formats.length === 0) throw new Error('RapidAPI returned no formats');
 
   let chosen: any = null;
