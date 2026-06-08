@@ -113,23 +113,38 @@ async function downloadAndMergeViaAPI(
     if (!bestVideo || !bestAudio || !bestVideo.url || !bestAudio.url) throw new Error('Missing URL for video or audio');
     
     const tempVideo = outputPath.replace('.mp4', '_api_v.mp4');
-    const tempAudio = outputPath.replace('.mp4', '_api_a.m4a');
     
     try {
-      await Promise.all([
-        downloadStreamFromUrl(bestVideo.url, tempVideo),
-        downloadStreamFromUrl(bestAudio.url, tempAudio)
-      ]);
-      
+      console.log('Downloading video via yt-dlp from API link...');
       await new Promise<void>((resolve, reject) => {
-        const ff = spawn('ffmpeg', ['-y', '-i', tempVideo, '-i', tempAudio, '-c:v', 'copy', '-c:a', 'aac', '-b:a', `${audioBitrate}k`, '-shortest', outputPath]);
-        ff.on('close', code => {
-          if (code === 0) resolve(); else reject(new Error('ffmpeg merge failed'));
+        const ytdlp = spawn(getYtDlpPath(), ['--newline', bestVideo.url, '-o', tempVideo], { windowsHide: true });
+        ytdlp.on('close', code => {
+          if (code === 0) resolve(); else reject(new Error(`yt-dlp failed to download video with code ${code}`));
         });
+        ytdlp.on('error', reject);
+      });
+      
+      console.log('Downloading audio and merging via ffmpeg...');
+      await new Promise<void>((resolve, reject) => {
+        const ff = spawn('ffmpeg', [
+          '-y', 
+          '-user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          '-i', tempVideo, 
+          '-i', bestAudio.url, 
+          '-c:v', 'copy', 
+          '-c:a', 'aac', 
+          '-b:a', `${audioBitrate}k`, 
+          '-shortest', 
+          outputPath
+        ], { windowsHide: true });
+        
+        ff.on('close', code => {
+          if (code === 0) resolve(); else reject(new Error(`ffmpeg merge failed with code ${code}`));
+        });
+        ff.on('error', reject);
       });
     } finally {
       if (fs.existsSync(tempVideo)) fs.unlinkSync(tempVideo);
-      if (fs.existsSync(tempAudio)) fs.unlinkSync(tempAudio);
     }
   }
 }
