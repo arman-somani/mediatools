@@ -1,6 +1,3 @@
-import fs from 'fs';
-import path from 'path';
-
 // Ensure fetch and AbortController are available globally
 declare const fetch: typeof global.fetch;
 declare const AbortController: typeof global.AbortController;
@@ -9,16 +6,20 @@ interface CobaltInstance {
   domain: string;
   score: number;
   version: string;
+  protocol?: string;
 }
 
 interface CobaltResponse {
+  status?: 'tunnel' | 'redirect' | 'local-processing' | 'picker' | 'error';
   url?: string;
+  tunnel?: string[];
   text?: string;
-  error?: string;
+  error?: string | { code?: string; context?: unknown };
 }
 
 let instancesCache: { instances: CobaltInstance[], timestamp: number } | null = null;
 const CACHE_TTL = 3600000; // 1 hour
+const USER_AGENT = 'MediaTools/1.0 (+https://localhost)';
 
 function normalizeVideoQuality(quality?: string): string {
   const map: Record<string, string> = {
@@ -33,11 +34,70 @@ function normalizeVideoQuality(quality?: string): string {
   return map[quality || ''] || quality?.replace(/p$/i, '') || '720';
 }
 
+function getConfiguredInstances(): CobaltInstance[] {
+  return (process.env.COBALT_INSTANCES || '')
+    .split(',')
+    .map(value => value.trim())
+    .filter(Boolean)
+    .map((value, index) => {
+      const parsed = value.match(/^(https?):\/\/(.+)$/i);
+      return {
+        domain: parsed ? parsed[2].replace(/\/$/, '') : value.replace(/\/$/, ''),
+        protocol: parsed ? parsed[1].toLowerCase() : 'https',
+        score: 100 - index,
+        version: 'configured',
+      };
+    });
+}
+
+function normalizeRegistryInstance(item: any): CobaltInstance | null {
+  if (item?.api) {
+    const supportsYouTube = item.services?.youtube === true || item.services?.['youtube shorts'] === true;
+    const needsAuth = item.info?.auth === true;
+    if (!item.online || !supportsYouTube || needsAuth) return null;
+    return {
+      domain: String(item.api).replace(/\/$/, ''),
+      protocol: item.protocol || 'https',
+      score: Number(item.score || 0),
+      version: String(item.version || 'unknown'),
+    };
+  }
+
+  if (item?.domain) {
+    return {
+      domain: String(item.domain).replace(/\/$/, ''),
+      protocol: 'https',
+      score: Number(item.score || 0),
+      version: String(item.version || 'unknown'),
+    };
+  }
+
+  return null;
+}
+
+function cobaltBaseUrl(instance: CobaltInstance): string {
+  return `${instance.protocol || 'https'}://${instance.domain}`;
+}
+
+function cobaltErrorMessage(error: CobaltResponse['error']): string {
+  if (!error) return 'unknown error';
+  if (typeof error === 'string') return error;
+  return error.code || JSON.stringify(error);
+}
+
+function cobaltAuthorizationHeader(): string | null {
+  if (process.env.COBALT_AUTHORIZATION) return process.env.COBALT_AUTHORIZATION;
+  if (process.env.COBALT_API_KEY) return `Api-Key ${process.env.COBALT_API_KEY}`;
+  if (process.env.COBALT_BEARER_TOKEN) return `Bearer ${process.env.COBALT_BEARER_TOKEN}`;
+  return null;
+}
+
 /**
  * Fetches available Cobalt instances from the registry
  */
 async function fetchCobaltInstances(): Promise<CobaltInstance[]> {
   const now = Date.now();
+  const configuredInstances = getConfiguredInstances();
   
   // Return cached instances if still valid
   if (instancesCache && (now - instancesCache.timestamp) < CACHE_TTL) {
@@ -51,27 +111,29 @@ async function fetchCobaltInstances(): Promise<CobaltInstance[]> {
     const timeoutId = setTimeout(() => controller.abort(), 10000);
     
     try {
-      const resp = await fetch('https://instances.cobalt.tools/api/instances', {
-        headers: { 'User-Agent': 'Mozilla/5.0' },
+      const resp = await fetch('https://instances.cobalt.best/api/instances.json', {
+        headers: { 'User-Agent': USER_AGENT },
         signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
       if (!resp.ok) throw new Error(`Status ${resp.status}`);
 
-      const data = (await resp.json()) as CobaltInstance[];
+      const data = (await resp.json()) as any[];
       
-      // Filter for recent, high-score instances
+      // Filter for online, unauthenticated, YouTube-capable instances.
       const filtered = data
-        .filter(i => i.score > 85 && i.version.startsWith('10.'))
+        .map(normalizeRegistryInstance)
+        .filter((i): i is CobaltInstance => Boolean(i))
         .sort((a, b) => b.score - a.score)
         .slice(0, 10);
 
       // Cache the results
-      instancesCache = { instances: filtered, timestamp: now };
-      console.log(`Fetched ${filtered.length} working Cobalt instances`);
+      const instances = [...configuredInstances, ...filtered];
+      instancesCache = { instances, timestamp: now };
+      console.log(`Fetched ${instances.length} Cobalt instances`);
       
-      return filtered;
+      return instances;
     } catch (e) {
       clearTimeout(timeoutId);
       throw e;
@@ -81,9 +143,12 @@ async function fetchCobaltInstances(): Promise<CobaltInstance[]> {
     
     // Return fallback hardcoded instances
     return [
-      { domain: 'co.wuk.sh', score: 100, version: '10.0' },
-      { domain: 'api.cobalt.tools', score: 100, version: '10.0' },
-      { domain: 'cobalt.q0.is', score: 95, version: '10.0' },
+      ...configuredInstances,
+      { domain: 'cobalt-backend.canine.tools', score: 95, version: 'fallback', protocol: 'https' },
+      { domain: 'capi.3kh0.net', score: 92, version: 'fallback', protocol: 'https' },
+      { domain: 'cobalt-api.meowing.de', score: 90, version: 'fallback', protocol: 'https' },
+      { domain: 'cobalt-api.kwiatekmiki.com', score: 85, version: 'fallback', protocol: 'https' },
+      { domain: 'api.cobalt.tools', score: 60, version: 'fallback', protocol: 'https' },
     ];
   }
 }
@@ -98,22 +163,22 @@ async function tryDownloadFromInstance(
   quality?: string
 ): Promise<CobaltResponse> {
   try {
-    const cobaltUrl = `https://${instance.domain}/api/json`;
+    const cobaltUrl = `${cobaltBaseUrl(instance)}/`;
     
     const reqBody: any = {
       url,
-      downloadMode: format,
-      vimeoDuplicate: false,
+      filenameStyle: 'pretty',
     };
 
     if (format === 'audio') {
+      reqBody.downloadMode = 'audio';
       reqBody.audioFormat = 'mp3';
       reqBody.audioBitrate = quality || '192';
     } else {
+      reqBody.downloadMode = 'auto';
       reqBody.videoQuality = normalizeVideoQuality(quality);
-      reqBody.videoCodec = 'h264';
-      reqBody.audioCodec = 'aac';
-      reqBody.filenamePattern = 'pretty';
+      reqBody.youtubeVideoCodec = 'h264';
+      reqBody.youtubeVideoContainer = 'mp4';
     }
 
     console.log(`Trying Cobalt instance: ${instance.domain}`);
@@ -127,7 +192,8 @@ async function tryDownloadFromInstance(
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          'User-Agent': USER_AGENT,
+          ...(cobaltAuthorizationHeader() ? { Authorization: cobaltAuthorizationHeader() as string } : {}),
         },
         signal: controller.signal,
         body: JSON.stringify(reqBody),
@@ -136,21 +202,25 @@ async function tryDownloadFromInstance(
       clearTimeout(timeoutId);
 
       if (!cobaltResp.ok) {
-        throw new Error(`Cobalt returned ${cobaltResp.status}`);
+        let body = '';
+        try { body = await cobaltResp.text(); } catch { /* ignore */ }
+        throw new Error(`Cobalt returned ${cobaltResp.status}${body ? `: ${body.slice(0, 200)}` : ''}`);
       }
 
       const data = (await cobaltResp.json()) as CobaltResponse;
 
-      if (data.error) {
-        throw new Error(`Cobalt error: ${data.error}`);
+      if (data.status === 'error' || data.error) {
+        throw new Error(`Cobalt error: ${cobaltErrorMessage(data.error)}`);
       }
 
-      if (!data.url) {
+      const downloadUrl = data.url || (Array.isArray(data.tunnel) ? data.tunnel[0] : undefined);
+
+      if (!downloadUrl) {
         throw new Error('No download URL in response');
       }
 
       console.log(`SUCCESS from ${instance.domain}!`);
-      return data;
+      return { ...data, url: downloadUrl };
     } catch (e) {
       clearTimeout(timeoutId);
       throw e;
