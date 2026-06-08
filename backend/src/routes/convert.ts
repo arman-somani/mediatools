@@ -359,8 +359,8 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
             return parseInt(resHeight || v.format_note?.replace(/[^0-9]/g, '') || '0', 10);
           };
 
-          // Filter to Video/webm and sort from HIGHEST to LOWEST resolution
-          const compatibleVideos = videoData.filter(v => ['Video', 'webm'].includes(v.ext)).sort((a, b) => getHeight(b) - getHeight(a));
+          // Filter to mp4/webm and sort from HIGHEST to LOWEST resolution
+          const compatibleVideos = videoData.filter(v => ['mp4', 'webm'].includes(v.ext)).sort((a, b) => getHeight(b) - getHeight(a));
 
           // Translate UI quality to RapidAPI quality format for searching
           let searchQuality = videoQuality;
@@ -380,7 +380,8 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           conversion.outputFilename = `${safeTitle} (${actualQuality}).mp4`;
           await conversion.save();
 
-          // Get highest quality Audio const m4aAudios = audioData.filter(a => ['m4a', 'webm'].includes(a.ext));
+          // Get highest quality Audio 
+          const m4aAudios = audioData.filter(a => ['m4a', 'webm'].includes(a.ext));
           let selectedAudio = m4aAudios.length > 0 ? m4aAudios[m4aAudios.length - 1] : audioData[audioData.length - 1];
 
           const audioUrl = selectedAudio?.url || audioData[0].url;
@@ -560,7 +561,8 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         conversion.outputFilename = `${safeTitle}.mp4`;
         await conversion.save();
 
-        // Step 2: Download video + Audio merged into Video const ytdlp = spawn('yt-dlp', ['-f', ytFormat, '--merge-output-format', 'Video', '-o', outputPath, '--no-playlist', cleanUrl]);
+        // Step 2: Download video + Audio merged into mp4
+        const ytdlp = spawn('yt-dlp', ['-f', ytFormat, '--merge-output-format', 'mp4', '-o', outputPath, '--no-playlist', cleanUrl]);
 
         let lastUpdate = Date.now();
         ytdlp.stdout.on('data', (data) => {
