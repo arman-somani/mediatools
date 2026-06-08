@@ -1,38 +1,25 @@
-// Test Cobalt API
 (async () => {
-  console.log('=== Testing Cobalt API ===');
-  try {
-    const resp = await fetch('https://api.cobalt.tools/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({
-        url: 'https://www.youtube.com/watch?v=jNQXAC9IVRw',
-        downloadMode: 'audio',
-        audioFormat: 'mp3',
-        audioBitrate: '192'
-      })
-    });
-    const data = await resp.json();
-    console.log('Status:', resp.status, '| Response:', JSON.stringify(data).slice(0, 200));
-  } catch(e) {
-    console.error('Cobalt FAILED:', e.message);
+  // Get the full info
+  const resp = await fetch('https://cloud-api-hub-youtube-downloader.p.rapidapi.com/info?id=jNQXAC9IVRw', {
+    headers: {
+      'x-rapidapi-key': '448df088femsh10889546dc271aap126ea2jsn1bec5c44767e',
+      'x-rapidapi-host': 'cloud-api-hub-youtube-downloader.p.rapidapi.com'
+    }
+  });
+  const data = await resp.json();
+  
+  // Check formats array
+  if (data.formats) {
+    console.log('formats count:', data.formats.length);
+    const mp4Audio = data.formats.filter(f => f.ext === 'm4a' || (f.acodec && f.acodec !== 'none' && !f.vcodec));
+    const mp4Video = data.formats.filter(f => f.ext === 'mp4' && f.vcodec && f.vcodec !== 'none');
+    console.log('Audio-only formats:', mp4Audio.length);
+    console.log('Video formats:', mp4Video.length);
+    if (mp4Audio[0]) console.log('Best audio:', JSON.stringify({url: mp4Audio[0].url?.slice(0,80), abr: mp4Audio[0].abr, ext: mp4Audio[0].ext}));
+    if (mp4Video[0]) console.log('Best video:', JSON.stringify({url: mp4Video[0].url?.slice(0,80), height: mp4Video[0].height, ext: mp4Video[0].ext}));
   }
-
-  console.log('\n=== Testing RapidAPI ===');
-  try {
-    const resp = await fetch('https://cloud-api-hub-youtube-downloader.p.rapidapi.com/info?id=jNQXAC9IVRw', {
-      headers: {
-        'x-rapidapi-key': '448df088femsh10889546dc271aap126ea2jsn1bec5c44767e',
-        'x-rapidapi-host': 'cloud-api-hub-youtube-downloader.p.rapidapi.com'
-      }
-    });
-    const data = await resp.json();
-    console.log('Status:', resp.status, '| Keys:', Object.keys(data));
-    if (data.audios) console.log('Audio formats:', data.audios.length);
-    if (data.videos) console.log('Video formats:', data.videos.length);
-    if (data.audios?.[0]) console.log('Sample audio:', JSON.stringify(data.audios[0]).slice(0, 150));
-    if (data.videos?.[0]) console.log('Sample video:', JSON.stringify(data.videos[0]).slice(0, 150));
-  } catch(e) {
-    console.error('RapidAPI FAILED:', e.message);
-  }
+  
+  // Check for direct url field
+  if (data.url) console.log('Direct URL available:', data.url.slice(0, 100));
+  if (data.audio) console.log('Audio field:', typeof data.audio);
 })();
