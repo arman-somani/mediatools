@@ -54,7 +54,7 @@ export default function RegisterPage() {
             <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
           </div>
           <h1 className="font-display font-bold text-3xl tracking-tight text-white mb-2">Create an Account</h1>
-          <p className="text-white/60">Start converting your audio for free.</p>
+          <p className="text-white/60">Start converting your Audio for free.</p>
         </div>
 
         <div className="glass-panel p-8">

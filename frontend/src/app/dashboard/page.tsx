@@ -28,7 +28,7 @@ function formatBytes(bytes—: number) {
 const TOOLS = [
     {
         label: 'YouTube to Audio ',
-        description: 'Extract audio from any YouTube video or playlist',
+        description: 'Extract Audio from any YouTube video or playlist',
         href: '/youtube',
         gradient: 'from-red-600 to-rose-500',
         shadow: 'hover:shadow-[0_0_30px_rgba(239,68,68,0.35)]',

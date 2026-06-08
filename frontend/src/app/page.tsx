@@ -25,7 +25,7 @@ export default function HomePage() {
             </h1>
 
             <p className="text-white/60 text-lg md:text-xl lg:text-2xl max-w-2xl mx-auto mb-10 md:mb-12 leading-relaxed px-4 sm:px-0">
-              The fastest way to extract audio from Video files or YouTube URL's, Universal URL Downloader and
+              The fastest way to extract Audio from Video files or YouTube URL's, Universal URL Downloader and
               Zero quality loss.
             </p>
 
@@ -73,7 +73,7 @@ export default function HomePage() {
               Everything You Need to <span className="text-gradient">Extract Audio</span>
             </h2>
             <p className="text-white/60 text-base md:text-lg max-w-xl mx-auto px-4">
-              Professional-grade audio extraction tools, built for everyone.
+              Professional-grade Audio extraction tools, built for everyone.
             </p>
           </motion.div>
 

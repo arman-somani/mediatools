@@ -31,7 +31,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">3. Use of Service</h2>
             <p>
-              MediaTools provides tools to convert video and audio files for personal, non-commercial use. You agree to use the Service only for lawful purposes and in compliance with all applicable laws and regulations.
+              MediaTools provides tools to convert video and Audio files for personal, non-commercial use. You agree to use the Service only for lawful purposes and in compliance with all applicable laws and regulations.
             </p>
           </section>
 

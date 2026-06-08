@@ -84,7 +84,7 @@ export default function YouTubePage() {
             Download <span className="text-gradient">YouTube Audio</span>
           </h1>
           <p className="text-white max-w-2xl mx-auto text-lg">
-            Extract high-quality audio from any YouTube video or entire playlists instantly.
+            Extract high-quality Audio from any YouTube video or entire playlists instantly.
           </p>
         </motion.div>
 

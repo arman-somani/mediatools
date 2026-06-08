@@ -12,17 +12,7 @@ import PageWrapper from '@/components/PageWrapper';
 type Quality = '128' | '192' | '320';
 type Status = 'idle' | 'uploading' | 'processing' | 'completed' | 'failed';
 
-const AUDIO_SIZES: Record<Quality, string> = {
-  '128': '~1 MB/min',
-  '192': '~1.5 MB/min',
-  '320': '~2.4 MB/min',
-};
 
-const AUDIO_TIMES: Record<Quality, string> = {
-  '128': '~5 to 10 sec',
-  '192': '~10 to 15 sec',
-  '320': '~15 to 20 sec',
-};
 
 export default function ConverterPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -33,6 +23,8 @@ export default function ConverterPage() {
   const [outputUrl, setOutputUrl] = useState('');
   const [fileSize, setFileSize] = useState<number | null>(null);
   const [error, setError] = useState('');
+  const [conversionTime, setConversionTime] = useState<number | null>(null);
+  const startTimeRef = useRef<number | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const onDrop = useCallback((accepted: File[]) => {
@@ -65,6 +57,7 @@ export default function ConverterPage() {
           clearInterval(pollRef.current!);
           setStatus('completed');
           setProgress(100);
+          if (startTimeRef.current) setConversionTime(Math.round((Date.now() - startTimeRef.current) / 1000));
           setOutputUrl(conv.outputUrl || '');
           setFileSize(conv.fileSize || null);
         } else if (conv.status === 'failed') {
@@ -79,8 +72,9 @@ export default function ConverterPage() {
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 
   const handleConvert = async () => {
+    startTimeRef.current = Date.now();
     if (!file) return;
-    setStatus('uploading'); setProgress(0); setError(''); setJobId(''); setOutputUrl(''); setFileSize(null);
+    setStatus('uploading'); setProgress(0); setError(''); setJobId(''); setOutputUrl(''); setFileSize(null); setConversionTime(null);
     const formData = new FormData();
     formData.append('file', file);
     formData.append('quality', quality);
@@ -103,7 +97,7 @@ export default function ConverterPage() {
     }
   };
 
-  const reset = () => { setFile(null); setStatus('idle'); setProgress(0); setJobId(''); setOutputUrl(''); setFileSize(null); setError(''); };
+  const reset = () => { setFile(null); setStatus('idle'); setProgress(0); setJobId(''); setOutputUrl(''); setFileSize(null); setError(''); setConversionTime(null); };
 
   return (
     <ProtectedRoute>
@@ -114,7 +108,7 @@ export default function ConverterPage() {
               High-Fidelity <span className="text-gradient">Audio Extraction</span>
             </h1>
             <p className="text-white max-w-2x.5 mx-auto text-lg">
-              Drop your video file below. Our cloud cluster will extract the audio track without losing quality.
+              Drop your video file below. Our cloud cluster will extract the Audio track without losing quality.
             </p>
           </motion.div>
 
@@ -162,15 +156,11 @@ export default function ConverterPage() {
                           <button
                             key={q}
                             onClick={() => setQuality(q)}
-                            className={`quality-btn${quality === q — ' active' : ''}`}
+                            className={`quality-btn${quality === q ? ' active' : ''}`}
                           >
                             {q}k
                           </button>
                         ))}
-                      </div>
-                      <div className="mt-2 flex items-center justify-between text-xs font-medium w-full" style={{ color: 'var(--quality-btn-idle-color)' }}>
-                        <span>Size: <span className="text-brand-purple">{AUDIO_SIZES[quality]}</span></span>
-                        <span>Time: <span className="text-brand-purple">{AUDIO_TIMES[quality]}</span></span>
                       </div>
                     </div>
 
@@ -201,10 +191,13 @@ export default function ConverterPage() {
                     <svg width="40" height="40" fill="none" stroke="#10b981" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                   </div>
                   <h3 className="text-3xl font-display font-bold text-white mb-3">Conversion Complete!</h3>
-                  <p className="text-white mb-2 text-lg">Your audio file is successfully extracted and ready for download.</p>
+                  <p className="text-white mb-2 text-lg">Your Audio file is successfully extracted and ready for download.</p>
                   {fileSize && (
                     <p className="text-sm font-medium mb-8 px-4 py-2 rounded-lg inline-block" style={{ background: 'var(--quality-track-bg)', color: 'var(--quality-btn-idle-color)' }}>
-                      Exact Size: <strong className="text-brand-purple">{formatFileSize(fileSize)}</strong>
+                      Actual Size: <strong className="text-brand-purple">{formatFileSize(fileSize)}</strong>
+                      {conversionTime !== null && (
+                        <> | Time Taken: <strong className="text-brand-purple">{conversionTime}s</strong></>
+                      )}
                     </p>
                   )}
                   {!fileSize && <div className="mb-8" />}

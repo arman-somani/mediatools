@@ -11,7 +11,7 @@ const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' });
 
 export const metadata: Metadata = {
   title: 'MediaTools — Premium Video to Audio & YouTube Converter',
-  description: 'Convert videos to high-quality audio instantly with our modern suite of tools.',
+  description: 'Convert videos to high-quality Audio instantly with our modern suite of tools.',
 };
 
 export default function RootLayout({
