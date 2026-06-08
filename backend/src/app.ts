@@ -18,6 +18,7 @@ import authRoutes from './routes/auth';
 import convertRoutes from './routes/convert';
 import userRoutes from './routes/user';
 import contactRoutes from './routes/contact';
+import searchRoutes from './routes/search';
 import { errorHandler } from './middleware/errorHandler';
 import { cleanupOldFiles } from './utils/cleanup';
 
@@ -54,6 +55,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/convert', convertRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/search', searchRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);
