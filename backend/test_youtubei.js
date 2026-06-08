@@ -1,11 +1,13 @@
 const { Innertube, UniversalCache } = require('youtubei.js');
+const { Jinter } = require('jintr');
 
 (async () => {
   try {
     const yt = await Innertube.create({
       generate_session_locally: true,
       fetch: fetch,
-      cache: new UniversalCache(false)
+      cache: new UniversalCache(false),
+      js_evaluator: (script) => new Jinter().evaluate(script)
     });
     
     console.log('Created! Fetching video...');
