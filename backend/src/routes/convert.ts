@@ -1,4 +1,4 @@
-﻿import { Router, Response, Request } from 'express';
+import { Router, Response, Request } from 'express';
 import multer from 'multer';
 import path from 'path';
 import os from 'os';
@@ -10,6 +10,13 @@ import { v4 as uuidv4 } from 'uuid';
 import { authenticate, optionalAuth, AuthRequest } from '../middleware/auth';
 import { Conversion } from '../models/Conversion';
 import { User } from '../models/User';
+import { Innertube, UniversalCache, Platform } from 'youtubei.js';
+import vm from 'vm';
+
+Platform.shim.eval = (script: any) => {
+  const code = typeof script === 'string' ? script : script.output;
+  return vm.runInNewContext('new Function(' + JSON.stringify(code) + ')()');
+};
 
 const router = Router();
 const execAsync = promisify(exec);
@@ -211,28 +218,50 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         await conversion.save();
 
         // Step 2: Download audio using yt-dlp
-        const ytdlp = spawn('yt-dlp', ['-x', '--audio-format', 'mp3', '--audio-quality', `${audioQuality}K`, '-o', outputPath, '--no-playlist', cleanUrl]);
+        try {
+          await new Promise((resolve, reject) => {
+            const ytdlp = spawn('yt-dlp', ['-x', '--audio-format', 'mp3', '--audio-quality', `${audioQuality}K`, '-o', outputPath, '--no-playlist', cleanUrl]);
 
-        let lastUpdate = Date.now();
-        ytdlp.stdout.on('data', (data) => {
-          const output = data.toString();
-          const match = output.match(/\[download\]\s+([\d\.]+)%/);
-          if (match) {
-            const progress = Math.round(parseFloat(match[1]));
-            const now = Date.now();
-            if (now - lastUpdate > 1000) {
-              lastUpdate = now;
-              Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
-            }
-          }
-        });
+            let lastUpdate = Date.now();
+            ytdlp.stdout.on('data', (data) => {
+              const output = data.toString();
+              const match = output.match(/\[download\]\s+([\d\.]+)%/);
+              if (match) {
+                const progress = Math.round(parseFloat(match[1]));
+                const now = Date.now();
+                if (now - lastUpdate > 1000) {
+                  lastUpdate = now;
+                  Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
+                }
+              }
+            });
 
-        await new Promise((resolve, reject) => {
-          ytdlp.on('close', (code) => {
-            if (code === 0) resolve(true);
-            else reject(new Error('yt-dlp failed with code ' + code));
+            ytdlp.on('close', (code) => {
+              if (code === 0) resolve(true);
+              else reject(new Error('yt-dlp failed with code ' + code));
+            });
           });
-        });
+        } catch (ytdlpError: any) {
+          console.error('yt-dlp failed for audio, falling back to youtubei.js:', ytdlpError.message);
+          const yt = await Innertube.create({ generate_session_locally: true, fetch: fetch, cache: new UniversalCache(false) });
+          const stream = await yt.download(cleanUrl, { type: 'audio', quality: 'best', format: 'mp4' });
+          
+          await new Promise<void>((resolve, reject) => {
+            const fileStream = fs.createWriteStream(outputPath);
+            fileStream.on('finish', () => resolve());
+            fileStream.on('error', reject);
+            (async () => {
+              try {
+                for await (const chunk of stream) {
+                  fileStream.write(chunk);
+                }
+                fileStream.end();
+              } catch (e) {
+                reject(e);
+              }
+            })();
+          });
+        }
 
         conversion.status = 'completed';
         conversion.progress = 100;
@@ -329,28 +358,51 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           };
           const ytSort = formatMap[videoQuality] || formatMap['720p'];
 
-          const ytdlp = spawn('yt-dlp', ['-S', ytSort, '-o', path.join(outputDir, `${fileId}.%(ext)s`), '--no-playlist', cleanUrl]);
-
-          let lastUpdate = Date.now();
-          ytdlp.stdout.on('data', (data) => {
-            const output = data.toString();
-            const match = output.match(/\[download\]\s+([\d\.]+)%/);
-            if (match) {
-              const progress = Math.round(parseFloat(match[1]));
-              const now = Date.now();
-              if (now - lastUpdate > 1000) {
-                lastUpdate = now;
-                Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
-              }
-            }
-          });
-
-          await new Promise((resolve, reject) => {
-            ytdlp.on('close', (code) => {
-              if (code === 0) resolve(true);
-              else reject(new Error('yt-dlp failed with code ' + code));
+          try {
+            await new Promise((resolve, reject) => {
+              const ytdlp = spawn('yt-dlp', ['-S', ytSort, '-o', path.join(outputDir, `${fileId}.%(ext)s`), '--no-playlist', cleanUrl]);
+    
+              let lastUpdate = Date.now();
+              ytdlp.stdout.on('data', (data) => {
+                const output = data.toString();
+                const match = output.match(/\[download\]\s+([\d\.]+)%/);
+                if (match) {
+                  const progress = Math.round(parseFloat(match[1]));
+                  const now = Date.now();
+                  if (now - lastUpdate > 1000) {
+                    lastUpdate = now;
+                    Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
+                  }
+                }
+              });
+    
+              ytdlp.on('close', (code) => {
+                if (code === 0) resolve(true);
+                else reject(new Error('yt-dlp failed with code ' + code));
+              });
             });
-          });
+          } catch (ytdlpError: any) {
+            console.error('yt-dlp failed for video, falling back to youtubei.js:', ytdlpError.message);
+            const yt = await Innertube.create({ generate_session_locally: true, fetch: fetch, cache: new UniversalCache(false) });
+            const stream = await yt.download(cleanUrl, { type: 'video+audio', quality: 'best', format: 'mp4' });
+            
+            const fallbackOutputPath = path.join(outputDir, `${fileId}.mp4`);
+            await new Promise<void>((resolve, reject) => {
+              const fileStream = fs.createWriteStream(fallbackOutputPath);
+              fileStream.on('finish', () => resolve());
+              fileStream.on('error', reject);
+              (async () => {
+                try {
+                  for await (const chunk of stream) {
+                    fileStream.write(chunk);
+                  }
+                  fileStream.end();
+                } catch (e) {
+                  reject(e);
+                }
+              })();
+            });
+          }
 
           // Find the actual downloaded file since the extension could be .webm, .mkv, or .mp4
           const files = fs.readdirSync(outputDir);
