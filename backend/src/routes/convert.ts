@@ -260,9 +260,9 @@ function getFileSize(filePath: string): number | undefined {
   return fs.statSync(filePath).size;
 }
 
-function safeAudioQuality(value: unknown): string {
+function safeAudioQuality(value: unknown): '128' | '192' | '320' {
   const q = String(value || '192');
-  return ['128', '192', '320'].includes(q) ? q : '192';
+  return ['128', '192', '320'].includes(q) ? q as '128' | '192' | '320' : '192';
 }
 
 function sanitizeFilename(name: string): string {
