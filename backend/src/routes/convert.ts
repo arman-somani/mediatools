@@ -9,6 +9,11 @@ import { pipeline } from 'stream/promises';
 import { promisify } from 'util';
 import { v4 as uuidv4 } from 'uuid';
 
+function getYtDlpPath(): string {
+  const binPath = path.join(__dirname, '..', '..', 'bin', os.platform() === 'win32' ? 'yt-dlp.exe' : 'yt-dlp');
+  return fs.existsSync(binPath) ? binPath : 'yt-dlp';
+}
+
 import { authenticate, optionalAuth, AuthRequest } from '../middleware/auth';
 import { Conversion } from '../models/Conversion';
 import { User } from '../models/User';
@@ -173,7 +178,7 @@ function ytDlpArgs(args: string[]): string[] {
 
 function runYtDlp(args: string[]): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
-    const child = spawn('yt-dlp', ytDlpArgs(args), { windowsHide: true });
+    const child = spawn(getYtDlpPath(), ytDlpArgs(args), { windowsHide: true });
     let stdout = '';
     let stderr = '';
 
@@ -218,7 +223,7 @@ router.get('/version', (req: Request, res: Response) => {
 router.post('/test-ytdlp', async (req: Request, res: Response): Promise<void> => {
   try {
     const { args } = req.body;
-    const { stdout, stderr } = await execAsync(`yt-dlp ${args}`);
+    const { stdout, stderr } = await execAsync(`"${getYtDlpPath()}" ${args}`);
     res.json({ stdout, stderr });
   } catch (e: any) {
     res.json({ error: e.message, stdout: e.stdout?.toString(), stderr: e.stderr?.toString() });
@@ -436,7 +441,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         try {
           await new Promise((resolve, reject) => {
             const outputTemplate = path.join(outputDir, `${fileId}.%(ext)s`);
-            const ytdlp = spawn('yt-dlp', ytDlpArgs([
+            const ytdlp = spawn(getYtDlpPath(), ytDlpArgs([
               '--newline',
               '-f', 'bestaudio/best',
               '-x',
@@ -764,7 +769,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
 
           try {
             await new Promise((resolve, reject) => {
-              const ytdlp = spawn('yt-dlp', ytDlpArgs([
+              const ytdlp = spawn(getYtDlpPath(), ytDlpArgs([
                 '--newline',
                 '-f', 'bv*+ba/b',
                 '-S', ytSort,
@@ -1019,7 +1024,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
 
         // Step 2: Download video in its native format without remuxing
         // We use -S for sorting formats which is highly optimized for ANY website!
-        const ytdlp = spawn('yt-dlp', ytDlpArgs([
+        const ytdlp = spawn(getYtDlpPath(), ytDlpArgs([
           '--newline',
           '-f', 'bv*+ba/b',
           '-S', ytSort,
