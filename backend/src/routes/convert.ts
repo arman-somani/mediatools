@@ -48,7 +48,7 @@ function sanitizeFilename(name: string): string {
     .slice(0, 200);
 }
 
-/* ── MP4 TO MP3 ─────────────────────────────────────────── */
+/* ── MP4 TO Audio  ─────────────────────────────────────────── */
 router.post(
   '/upload',
   authenticate,
@@ -60,9 +60,9 @@ router.post(
       const quality = safeAudioQuality(req.body.quality);
 
       if (!userId) { res.status(401).json({ success: false, message: 'Unauthorized' }); return; }
-      if (!file)   { res.status(400).json({ success: false, message: 'No file uploaded' }); return; }
+      if (!file) { res.status(400).json({ success: false, message: 'No file uploaded' }); return; }
 
-      const outputFilename = `${uuidv4()}.mp3`;
+      const outputFilename = `${uuidv4()}.Audio `;
       const outputPath = path.join(outputDir, outputFilename);
 
       const conversion: any = await Conversion.create({
@@ -70,7 +70,7 @@ router.post(
         type: 'mp4',
         status: 'processing',
         originalName: file.originalname,
-        outputFilename: file.originalname.replace(/\.[^.]+$/, '') + '.mp3', // user-facing name
+        outputFilename: file.originalname.replace(/\.[^.]+$/, '') + '.Audio ', // user-facing name
         outputPath,
         outputUrl: `/outputs/${outputFilename}`,
         quality: quality as '128' | '192' | '320',
@@ -87,7 +87,7 @@ router.post(
         }
 
         const ffmpeg = spawn('ffmpeg', ['-y', '-i', file.path, '-vn', '-ab', `${quality}k`, outputPath]);
-        
+
         let lastUpdate = Date.now();
         ffmpeg.stderr.on('data', (data) => {
           if (!totalDurationSecs || totalDurationSecs <= 0) return;
@@ -99,11 +99,11 @@ router.post(
             const s = parseFloat(match[3]);
             const currentSecs = h * 3600 + m * 60 + s;
             const progress = Math.min(Math.round((currentSecs / totalDurationSecs) * 100), 99);
-            
+
             const now = Date.now();
             if (now - lastUpdate > 1000) {
               lastUpdate = now;
-              Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => {});
+              Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
             }
           }
         });
@@ -145,7 +145,7 @@ router.post(
   }
 );
 
-/* ── YOUTUBE TO MP3 ─────────────────────────────────────── */
+/* ── YOUTUBE TO Audio  ─────────────────────────────────────── */
 router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const youtubeUrl = req.body.youtubeUrl || req.body.url;
@@ -156,14 +156,14 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
 
     const cleanUrl = String(youtubeUrl).trim();
     const videoId = cleanUrl.match(/(?:v=|\/)([0-9A-Za-z_-]{11}).*/)?.[1];
-    
+
     if (!videoId) {
       res.status(400).json({ success: false, message: 'Invalid YouTube URL' });
       return;
     }
 
     const fileId = uuidv4();
-    const diskFilename = `${fileId}.mp3`;
+    const diskFilename = `${fileId}.Audio `;
     const outputPath = path.join(outputDir, diskFilename);
 
     const conversion: any = await Conversion.create({
@@ -172,7 +172,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
       status: 'processing',
       youtubeUrl: cleanUrl,
       youtubeTitle: 'YouTube Audio',
-      outputFilename: `audio.mp3`,
+      outputFilename: `audio.Audio `,
       outputPath: outputPath,
       outputUrl: `/outputs/${diskFilename}`,
       quality: '192',
@@ -209,23 +209,23 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         const safeTitle = sanitizeFilename(videoTitle) || 'YouTube Audio';
         const reqQuality = String(req.body.quality || '192');
         const audioQuality: string = (['128', '192', '320'].includes(reqQuality)) ? reqQuality : '192';
-        
+
         conversion.youtubeTitle = videoTitle;
-        conversion.outputFilename = `${safeTitle} (${audioQuality}kbps).mp3`;
+        conversion.outputFilename = `${safeTitle} (${audioQuality}kbps).Audio `;
         await conversion.save();
-        
+
         if (Array.isArray(data) && data.length > 0 && data[0].url) {
           const audioUrl = data[0].url;
-          
+
           const ffmpeg = spawn('ffmpeg', ['-y', '-i', audioUrl, '-vn', '-ab', `${audioQuality}k`, outputPath]);
-          
+
           let lastUpdate = Date.now();
           let fakeProgress = 0;
-          
+
           const fallbackInterval = durationSec <= 0 ? setInterval(() => {
             if (fakeProgress < 95) {
               fakeProgress += 5;
-              Conversion.findByIdAndUpdate(conversion._id, { progress: fakeProgress }).catch(() => {});
+              Conversion.findByIdAndUpdate(conversion._id, { progress: fakeProgress }).catch(() => { });
             }
           }, 2000) : null;
 
@@ -239,12 +239,12 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
                 const s = parseFloat(timeMatch[3]);
                 const currentTime = (h * 3600) + (m * 60) + s;
                 let progress = Math.min(99, Math.round((currentTime / durationSec) * 100));
-                
+
                 // Ensure it doesn't jump backwards
                 const now = Date.now();
                 if (now - lastUpdate > 1000) {
                   lastUpdate = now;
-                  Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => {});
+                  Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
                 }
               }
             }
@@ -287,7 +287,7 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
     const youtubeUrl = req.body.youtubeUrl || req.body.url;
     // Frontend might send 'quality' or 'videoQuality'
     const reqQuality = String(req.body.videoQuality || req.body.quality || '720p');
-    const videoQuality: string = (['360p', '480p', '720p', '1080p', '4K', '8K'].includes(reqQuality)) 
+    const videoQuality: string = (['360p', '480p', '720p', '1080p', '4K', '8K'].includes(reqQuality))
       ? reqQuality : '720p';
 
     if (!youtubeUrl) {
@@ -316,7 +316,7 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
       outputFilename: `video.mp4`,
       outputPath: outputPath,
       outputUrl: `/outputs/${diskFilename}`,
-      quality: '192',         
+      quality: '192',
       videoQuality: videoQuality as any,
       progress: 0,
     });
@@ -352,16 +352,16 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
         const durationSec = infoData?.duration || 0;
 
         if (Array.isArray(videoData) && videoData.length > 0 && Array.isArray(audioData) && audioData.length > 0) {
-          
+
           // Helper to get video height for strict sorting safely
           const getHeight = (v: any) => {
             const resHeight = v.resolution ? v.resolution.split('x')[1] : null;
             return parseInt(resHeight || v.format_note?.replace(/[^0-9]/g, '') || '0', 10);
           };
-          
+
           // Filter to mp4/webm and sort from HIGHEST to LOWEST resolution
           const compatibleVideos = videoData.filter(v => ['mp4', 'webm'].includes(v.ext)).sort((a, b) => getHeight(b) - getHeight(a));
-          
+
           // Translate UI quality to RapidAPI quality format for searching
           let searchQuality = videoQuality;
           if (searchQuality === '4K') searchQuality = '2160p';
@@ -370,16 +370,16 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
           // Try to find the exact requested quality, else fallback to the absolute highest available
           let selectedVideo = compatibleVideos.find(v => v.format_note?.includes(searchQuality));
           if (!selectedVideo) selectedVideo = compatibleVideos[0];
-          
+
           const videoUrl = selectedVideo?.url || videoData[0].url;
-          
+
           const safeTitle = sanitizeFilename(videoTitle) || 'YouTube Video';
           const actualQuality = selectedVideo?.format_note || videoQuality;
-          
+
           conversion.youtubeTitle = videoTitle;
           conversion.outputFilename = `${safeTitle} (${actualQuality}).mp4`;
           await conversion.save();
-          
+
           // Get highest quality audio
           const m4aAudios = audioData.filter(a => ['m4a', 'webm'].includes(a.ext));
           let selectedAudio = m4aAudios.length > 0 ? m4aAudios[m4aAudios.length - 1] : audioData[audioData.length - 1];
@@ -388,14 +388,14 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
 
           // Merge them using FFmpeg (adding -strict experimental for AV1/VP9 compatibility in MP4)
           const ffmpeg = spawn('ffmpeg', ['-y', '-i', videoUrl, '-i', audioUrl, '-c:v', 'copy', '-c:a', 'aac', '-strict', 'experimental', outputPath]);
-          
+
           let lastUpdate = Date.now();
           let fakeProgress = 0;
-          
+
           const fallbackInterval = durationSec <= 0 ? setInterval(() => {
             if (fakeProgress < 95) {
               fakeProgress += 5;
-              Conversion.findByIdAndUpdate(conversion._id, { progress: fakeProgress }).catch(() => {});
+              Conversion.findByIdAndUpdate(conversion._id, { progress: fakeProgress }).catch(() => { });
             }
           }, 3000) : null;
 
@@ -409,11 +409,11 @@ router.post('/youtube-mp4', optionalAuth, async (req: AuthRequest, res: Response
                 const s = parseFloat(timeMatch[3]);
                 const currentTime = (h * 3600) + (m * 60) + s;
                 let progress = Math.min(99, Math.round((currentTime / durationSec) * 100));
-                
+
                 const now = Date.now();
                 if (now - lastUpdate > 1000) {
                   lastUpdate = now;
-                  Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => {});
+                  Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
                 }
               }
             }
@@ -470,7 +470,7 @@ router.post('/universal/metadata', async (req: Request, res: Response): Promise<
     const thumbnail = (lines[1] || '').trim();
     const resolution = (lines[2] || '').trim() || 'Best Available';
     let sizeBytes = parseInt((lines[3] || '').trim(), 10);
-    
+
     if (isNaN(sizeBytes)) sizeBytes = 0;
 
     res.json({
@@ -507,12 +507,12 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
 
     // Map quality label to yt-dlp format filter
     const formatMap: Record<string, string> = {
-      '360p':  'bestvideo[height<=360]+bestaudio/best[height<=360]/bestvideo+bestaudio/best',
-      '480p':  'bestvideo[height<=480]+bestaudio/best[height<=480]/bestvideo+bestaudio/best',
-      '720p':  'bestvideo[height<=720]+bestaudio/best[height<=720]/bestvideo+bestaudio/best',
+      '360p': 'bestvideo[height<=360]+bestaudio/best[height<=360]/bestvideo+bestaudio/best',
+      '480p': 'bestvideo[height<=480]+bestaudio/best[height<=480]/bestvideo+bestaudio/best',
+      '720p': 'bestvideo[height<=720]+bestaudio/best[height<=720]/bestvideo+bestaudio/best',
       '1080p': 'bestvideo[height<=1080]+bestaudio/best[height<=1080]/bestvideo+bestaudio/best',
-      '4K':    'bestvideo[height<=2160]+bestaudio/best[height<=2160]/bestvideo+bestaudio/best',
-      '8K':    'bestvideo[height<=4320]+bestaudio/best[height<=4320]/bestvideo+bestaudio/best',
+      '4K': 'bestvideo[height<=2160]+bestaudio/best[height<=2160]/bestvideo+bestaudio/best',
+      '8K': 'bestvideo[height<=4320]+bestaudio/best[height<=4320]/bestvideo+bestaudio/best',
     };
     const ytFormat = formatMap[videoQuality] || formatMap['720p'];
 
@@ -525,7 +525,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
       outputFilename: diskFilename,
       outputPath,
       outputUrl: `/outputs/${diskFilename}`,
-      quality: '192',         
+      quality: '192',
       videoQuality: videoQuality as any,
       progress: 0,
     });
@@ -552,18 +552,18 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
           );
           const lines = stdout.trim().split('\n');
           videoTitle = (lines[0] || '').trim() || 'Downloaded Video';
-          thumbnail  = (lines[1] || '').trim();
+          thumbnail = (lines[1] || '').trim();
         } catch { /* keep defaults */ }
 
         const safeTitle = sanitizeFilename(videoTitle) || 'Downloaded Video';
-        conversion.youtubeTitle     = videoTitle;
+        conversion.youtubeTitle = videoTitle;
         conversion.youtubeThumbnail = thumbnail;
-        conversion.outputFilename   = `${safeTitle}.mp4`;
+        conversion.outputFilename = `${safeTitle}.mp4`;
         await conversion.save();
 
         // Step 2: Download video + audio merged into mp4
         const ytdlp = spawn('yt-dlp', ['-f', ytFormat, '--merge-output-format', 'mp4', '-o', outputPath, '--no-playlist', cleanUrl]);
-        
+
         let lastUpdate = Date.now();
         ytdlp.stdout.on('data', (data) => {
           const output = data.toString();
@@ -574,7 +574,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
               const now = Date.now();
               if (now - lastUpdate > 1000) {
                 lastUpdate = now;
-                Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => {});
+                Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
               }
             }
           }
@@ -592,7 +592,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         });
 
         // Step 3: Mark complete
-        conversion.status   = 'completed';
+        conversion.status = 'completed';
         conversion.progress = 100;
         conversion.fileSize = getFileSize(outputPath);
         await conversion.save();
@@ -600,10 +600,10 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
       } catch (err: any) {
         console.error('Universal video background error:', err.message);
         try {
-          conversion.status       = 'failed';
+          conversion.status = 'failed';
           conversion.errorMessage = err.message || 'Download failed';
           await conversion.save();
-        } catch {}
+        } catch { }
       }
     })();
 
@@ -667,15 +667,15 @@ router.get('/status/:id', async (req: Request, res: Response): Promise<void> => 
     res.json({
       success: true,
       data: {
-        jobId:            conversion._id.toString(),
-        status:           conversion.status,
-        progress:         conversion.progress,
-        outputFilename:   conversion.outputFilename,
-        outputUrl:        conversion.outputUrl,
-        fileSize:         conversion.fileSize,
-        youtubeTitle:     conversion.youtubeTitle,
+        jobId: conversion._id.toString(),
+        status: conversion.status,
+        progress: conversion.progress,
+        outputFilename: conversion.outputFilename,
+        outputUrl: conversion.outputUrl,
+        fileSize: conversion.fileSize,
+        youtubeTitle: conversion.youtubeTitle,
         youtubeThumbnail: conversion.youtubeThumbnail,
-        errorMessage:     conversion.errorMessage,
+        errorMessage: conversion.errorMessage,
       },
     });
   } catch (error: any) {
@@ -703,9 +703,9 @@ router.get('/download/:id', async (req: Request, res: Response): Promise<void> =
     if (!conversion.outputPath || !fs.existsSync(conversion.outputPath)) {
       res.status(404).json({ success: false, message: 'File expired or deleted' }); return;
     }
-    
-    // outputFilename = "Song Title.mp3" (user-facing), outputPath = UUID file on disk
-    res.download(conversion.outputPath, conversion.outputFilename || 'download.mp3', (err) => {
+
+    // outputFilename = "Song Title.Audio " (user-facing), outputPath = UUID file on disk
+    res.download(conversion.outputPath, conversion.outputFilename || 'download.Audio ', (err) => {
       // Schedule cleanup exactly 1 minute after download finishes (or fails)
       setTimeout(async () => {
         try {

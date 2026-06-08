@@ -17,8 +17,8 @@ export default function Navbar() {
 
   const links = [
     { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Video to MP3', href: '/converter' },
-    { name: 'YouTube to MP3', href: '/youtube' },
+    { name: 'Video to Audio ', href: '/converter' },
+    { name: 'YouTube to Audio ', href: '/youtube' },
     { name: 'YT Video', href: '/yt-video' },
     { name: 'Universal Downloader', href: '/universal' },
   ];

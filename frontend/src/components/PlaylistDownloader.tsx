@@ -222,8 +222,8 @@ export default function PlaylistDownloader() {
               whileHover={{ y: -2 }}
               onClick={toggleAllSelection}
               className={`flex items-center justify-between px-4 py-3 rounded-xl border cursor-pointer transition-all duration-200 ${selectedIds.size > 0
-                  ? 'bg-brand-purple/10 border-brand-purple/40 shadow-[0_0_15px_rgba(168,85,247,0.15)]'
-                  : 'bg-white/5 border-white/10 hover:bg-white/10'
+                ? 'bg-brand-purple/10 border-brand-purple/40 shadow-[0_0_15px_rgba(168,85,247,0.15)]'
+                : 'bg-white/5 border-white/10 hover:bg-white/10'
                 }`}
             >
               <div className="flex items-center gap-3">
@@ -257,8 +257,8 @@ export default function PlaylistDownloader() {
                     key={video.id + idx}
                     whileHover={{ y: -2 }}
                     className={`border rounded-xl p-3 flex items-center gap-3 transition-all duration-200 ${isSelected
-                        ? 'border-brand-purple/50 bg-brand-purple/5 shadow-[0_0_12px_rgba(168,85,247,0.1)]'
-                        : 'bg-white/5 border-white/10 hover:bg-white/10'
+                      ? 'border-brand-purple/50 bg-brand-purple/5 shadow-[0_0_12px_rgba(168,85,247,0.1)]'
+                      : 'bg-white/5 border-white/10 hover:bg-white/10'
                       }`}
                   >
                     {/* Checkbox */}
@@ -349,7 +349,7 @@ export default function PlaylistDownloader() {
               </div>
               <h3 className="text-2xl font-bold text-white mb-2">Error Occurred</h3>
               <p className="text-white/70 mb-8">
-                Playlist can't be converted for MP3, or playlist is not available. Please check the URL you pasted.
+                Playlist can't be converted for Audio , or playlist is not available. Please check the URL you pasted.
               </p>
               <button
                 onClick={() => { setError(''); setStatus('idle'); }}

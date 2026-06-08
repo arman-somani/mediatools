@@ -10,7 +10,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' });
 
 export const metadata: Metadata = {
-  title: 'MediaTools — Premium MP4 to MP3 & YouTube Converter',
+  title: 'MediaTools — Premium MP4 to Audio  & YouTube Converter',
   description: 'Convert videos to high-quality audio instantly with our modern suite of tools.',
 };
 
@@ -29,7 +29,7 @@ export default function RootLayout({
         {/* Glow orbs for deep background depth */}
         <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand-violet/20 blur-[120px] rounded-full pointer-events-none" />
         <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-brand-cyan/10 blur-[120px] rounded-full pointer-events-none" />
-        
+
         <GoogleAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}>
           <ThemeProvider>
             <Navbar />
