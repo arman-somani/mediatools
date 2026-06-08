@@ -1,6 +1,5 @@
 const { Innertube, UniversalCache, Platform } = require('youtubei.js');
 const vm = require('vm');
-const fs = require('fs');
 
 Platform.shim.eval = (script) => {
   const code = typeof script === 'string' ? script : script.output;
@@ -12,11 +11,11 @@ Platform.shim.eval = (script) => {
     const yt = await Innertube.create({
       generate_session_locally: true,
       fetch: fetch,
+      client_type: 'ANDROID',
       cache: new UniversalCache(false)
     });
     
     console.log('Created! Fetching audio...');
-    // test with a recent video ID (e.g. Rick Roll)
     const stream = await yt.download('dQw4w9WgXcQ', {
       type: 'audio',
       quality: 'best',
