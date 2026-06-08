@@ -785,7 +785,20 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
             });
           };
 
-          // API Tier 1: Cobalt API — dynamic instance discovery
+          // API Tier 1: RapidAPI
+          if (!videoDownloaded) {
+            try {
+              console.log('Trying RapidAPI for video...');
+              await downloadAndMergeViaAPI(videoId, fallbackOutputPath, 'video', targetH);
+              requireWrittenFile(fallbackOutputPath, 'RapidAPI video download');
+              videoDownloaded = true;
+              console.log('RapidAPI video succeeded');
+            } catch (e: any) {
+              console.error('RapidAPI video failed:', e.message);
+            }
+          }
+
+          // API Tier 2: Cobalt API — dynamic instance discovery
           if (!videoDownloaded) {
             try {
               console.log('Trying Cobalt API for video...');
@@ -799,19 +812,6 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
               console.log('Cobalt video download succeeded');
             } catch (e: any) {
               console.error('Cobalt video failed:', e.message);
-            }
-          }
-
-          // API Tier 2: RapidAPI
-          if (!videoDownloaded) {
-            try {
-              console.log('Trying RapidAPI for video...');
-              await downloadAndMergeViaAPI(videoId, fallbackOutputPath, 'video', targetH);
-              requireWrittenFile(fallbackOutputPath, 'RapidAPI video download');
-              videoDownloaded = true;
-              console.log('RapidAPI video succeeded');
-            } catch (e: any) {
-              console.error('RapidAPI video failed:', e.message);
             }
           }
 
