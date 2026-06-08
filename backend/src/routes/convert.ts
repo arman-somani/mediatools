@@ -505,16 +505,16 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
     const diskFilename = `${fileId}.mp4`;
     const outputPath = path.join(outputDir, diskFilename);
 
-    // Map quality label to yt-dlp format filter
+    // Map quality label to yt-dlp sort filter for maximum compatibility across all platforms
     const formatMap: Record<string, string> = {
-      '360p': 'bestvideo[height<=360]+bestaudio/best[height<=360]/bestvideo+bestaudio/best',
-      '480p': 'bestvideo[height<=480]+bestaudio/best[height<=480]/bestvideo+bestaudio/best',
-      '720p': 'bestvideo[height<=720]+bestaudio/best[height<=720]/bestvideo+bestaudio/best',
-      '1080p': 'bestvideo[height<=1080]+bestaudio/best[height<=1080]/bestvideo+bestaudio/best',
-      '4K': 'bestvideo[height<=2160]+bestaudio/best[height<=2160]/bestvideo+bestaudio/best',
-      '8K': 'bestvideo[height<=4320]+bestaudio/best[height<=4320]/bestvideo+bestaudio/best',
+      '360p': 'res:360,ext:mp4:m4a',
+      '480p': 'res:480,ext:mp4:m4a',
+      '720p': 'res:720,ext:mp4:m4a',
+      '1080p': 'res:1080,ext:mp4:m4a',
+      '4K': 'res:2160,ext:mp4:m4a',
+      '8K': 'res:4320,ext:mp4:m4a',
     };
-    const ytFormat = formatMap[videoQuality] || formatMap['720p'];
+    const ytSort = formatMap[videoQuality] || formatMap['720p'];
 
     const conversion: any = await Conversion.create({
       userId: req.user?.id,
@@ -562,7 +562,8 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         await conversion.save();
 
         // Step 2: Download video + Audio merged into mp4
-        const ytdlp = spawn('yt-dlp', ['-f', ytFormat, '--merge-output-format', 'mp4', '-o', outputPath, '--no-playlist', cleanUrl]);
+        // We use -S for sorting formats which is highly optimized for ANY website!
+        const ytdlp = spawn('yt-dlp', ['-S', ytSort, '--merge-output-format', 'mp4', '-o', outputPath, '--no-playlist', cleanUrl]);
 
         let lastUpdate = Date.now();
         ytdlp.stdout.on('data', (data) => {
