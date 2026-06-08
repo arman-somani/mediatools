@@ -47,6 +47,22 @@ async function downloadAndMergeViaAPI(
   const headers = { 'x-rapidapi-key': RAPIDAPI_KEY, 'x-rapidapi-host': YT_MEDIA_HOST };
 
   if (mode === 'audio') {
+    const audioUrl = `https://${YT_MEDIA_HOST}/download?id=${videoId}&filter=audioonly`;
+    const resp = await fetch(audioUrl, { headers });
+    if (!resp.ok) throw new Error(`API returned ${resp.status}`);
+    const data = (await resp.json()) as any[];
+    if (!Array.isArray(data) || data.length === 0) throw new Error('API returned no audio formats');
+    
+    // Pick the best audio format
+    const bestAudio = data.find(f => f.ext === 'm4a' || f.acodec !== 'none') || data[0];
+    if (!bestAudio.url) throw new Error('No audio URL found in API response');
+    
+    const tmpAudio = outputPath.replace('.mp3', '.m4a');
+    await downloadStreamFromUrl(bestAudio.url, tmpAudio);
+    
+    await new Promise<void>((resolve, reject) => {
+      const ff = spawn('ffmpeg', ['-y', '-i', tmpAudio, '-vn', '-ab', `${audioBitrate}k`, outputPath]);
+      ff.on('close', code => {
         if (fs.existsSync(tmpAudio)) fs.unlinkSync(tmpAudio);
         if (code === 0) resolve(); else reject(new Error('ffmpeg audio conversion failed'));
       });
@@ -54,41 +70,51 @@ async function downloadAndMergeViaAPI(
     return;
   }
 
-  // VIDEO mode: pick video-only stream closest to targetHeight (prefer mp4)
-  const videoOnly = videos.filter(v => !v.hasAudio && v.url);
-  const mp4Videos = videoOnly.filter(v => v.extension === 'mp4');
-  const pool = mp4Videos.length > 0 ? mp4Videos : videoOnly;
-  const parseH = (v: any) => parseInt(v.quality || v.qualityLabel || '0', 10);
-  const bestVideo = pool.sort((a, b) => Math.abs(parseH(a) - targetHeight) - Math.abs(parseH(b) - targetHeight))[0]
-    || videos.find(v => v.hasAudio && v.url); // muxed fallback
-  if (!bestVideo?.url) throw new Error('API: no video stream found');
-
-  const tmpVideo = outputPath.replace('.mp4', '.tmp_v.mp4');
-  const tmpAudio = outputPath.replace('.mp4', '.tmp_a.m4a');
-
-  console.log(`API: downloading video ${parseH(bestVideo)}p + audio`);
-  await Promise.all([
-    downloadStreamFromUrl(bestVideo.url, tmpVideo),
-    downloadStreamFromUrl(bestAudio.url, tmpAudio),
-  ]);
-
-  // Merge video + audio with ffmpeg
-  await new Promise<void>((resolve, reject) => {
-    const ff = spawn('ffmpeg', [
-      '-y',
-      '-i', tmpVideo,
-      '-i', tmpAudio,
-      '-c:v', 'copy',
-      '-c:a', 'aac',
-      '-shortest',
-      outputPath,
+  if (mode === 'video') {
+    const videoUrl = `https://${YT_MEDIA_HOST}/download?id=${videoId}&filter=videoonly`;
+    const audioUrl = `https://${YT_MEDIA_HOST}/download?id=${videoId}&filter=audioonly`;
+    
+    const [vResp, aResp] = await Promise.all([
+      fetch(videoUrl, { headers }),
+      fetch(audioUrl, { headers })
     ]);
-    ff.on('close', code => {
-      if (fs.existsSync(tmpVideo)) fs.unlinkSync(tmpVideo);
-      if (fs.existsSync(tmpAudio)) fs.unlinkSync(tmpAudio);
-      if (code === 0) resolve(); else reject(new Error('ffmpeg merge failed'));
-    });
-  });
+    
+    if (!vResp.ok || !aResp.ok) throw new Error('API request failed for video or audio');
+    
+    const vData = (await vResp.json()) as any[];
+    const aData = (await aResp.json()) as any[];
+    
+    if (!Array.isArray(vData) || vData.length === 0) throw new Error('API returned no video formats');
+    if (!Array.isArray(aData) || aData.length === 0) throw new Error('API returned no audio formats');
+    
+    // Sort video formats by height, find best matching targetHeight
+    const sortedVideos = vData.filter(f => f.height).sort((a, b) => b.height - a.height);
+    const bestVideo = sortedVideos.find(f => f.height <= targetHeight) || sortedVideos[0];
+    
+    const bestAudio = aData.find(f => f.ext === 'm4a' || f.acodec !== 'none') || aData[0];
+    
+    if (!bestVideo.url || !bestAudio.url) throw new Error('Missing URL for video or audio');
+    
+    const tempVideo = outputPath.replace('.mp4', '_api_v.mp4');
+    const tempAudio = outputPath.replace('.mp4', '_api_a.m4a');
+    
+    try {
+      await Promise.all([
+        downloadStreamFromUrl(bestVideo.url, tempVideo),
+        downloadStreamFromUrl(bestAudio.url, tempAudio)
+      ]);
+      
+      await new Promise<void>((resolve, reject) => {
+        const ff = spawn('ffmpeg', ['-y', '-i', tempVideo, '-i', tempAudio, '-c:v', 'copy', '-c:a', 'aac', '-b:a', `${audioBitrate}k`, '-shortest', outputPath]);
+        ff.on('close', code => {
+          if (code === 0) resolve(); else reject(new Error('ffmpeg merge failed'));
+        });
+      });
+    } finally {
+      if (fs.existsSync(tempVideo)) fs.unlinkSync(tempVideo);
+      if (fs.existsSync(tempAudio)) fs.unlinkSync(tempAudio);
+    }
+  }
 }
 
 
