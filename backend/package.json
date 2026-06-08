@@ -5,7 +5,7 @@
     "main":  "index.js",
     "scripts":  {
                     "dev":  "nodemon --watch src --ext ts --exec \"ts-node -r dotenv/config src/app.ts\"",
-                    "build":  "node scripts/download-ytdlp.js \u0026\u0026 tsc",
+                    "build":  "node scripts/download-ytdlp.js && tsc",
                     "start":  "node -r dotenv/config dist/app.js",
                     "postinstall":  "node scripts/download-ytdlp.js"
                 },
