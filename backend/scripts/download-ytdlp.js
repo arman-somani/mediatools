@@ -4,6 +4,14 @@ const os = require('os');
 const { execSync } = require('child_process');
 
 const platform = os.platform();
+
+// On Render (Linux), yt-dlp is already installed globally by the Dockerfile!
+// We only need to download it for local Windows development.
+if (platform === 'linux') {
+    console.log('Skipping yt-dlp download on Linux because it is already installed by Dockerfile.');
+    process.exit(0);
+}
+
 let ytUrl = '';
 let ytName = 'yt-dlp';
 
@@ -12,8 +20,6 @@ if (platform === 'win32') {
     ytName = 'yt-dlp.exe';
 } else if (platform === 'darwin') {
     ytUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos';
-} else {
-    ytUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux';
 }
 
 const destDir = path.join(__dirname, '..', 'bin');
