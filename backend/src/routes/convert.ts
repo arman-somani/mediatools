@@ -244,10 +244,11 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         } catch (ytdlpError: any) {
           console.error('yt-dlp failed for audio, falling back to youtubei.js:', ytdlpError.message);
           const yt = await Innertube.create({ generate_session_locally: true, fetch: fetch, cache: new UniversalCache(false) });
-          const stream = await yt.download(cleanUrl, { type: 'audio', quality: 'best', format: 'mp4' });
+          const stream = await yt.download(cleanUrl, { type: 'video+audio', quality: 'best', format: 'mp4' });
           
+          const fallbackVideoPath = outputPath.replace('.mp3', '.mp4');
           await new Promise<void>((resolve, reject) => {
-            const fileStream = fs.createWriteStream(outputPath);
+            const fileStream = fs.createWriteStream(fallbackVideoPath);
             fileStream.on('finish', () => resolve());
             fileStream.on('error', reject);
             (async () => {
@@ -260,6 +261,16 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
                 reject(e);
               }
             })();
+          });
+
+          // Convert the fallback video to mp3
+          await new Promise((resolve, reject) => {
+            const ffmpeg = spawn('ffmpeg', ['-y', '-i', fallbackVideoPath, '-vn', '-ab', `${audioQuality}k`, outputPath]);
+            ffmpeg.on('close', (code) => {
+              if (fs.existsSync(fallbackVideoPath)) fs.unlinkSync(fallbackVideoPath);
+              if (code === 0) resolve(true);
+              else reject(new Error('FFmpeg failed to extract audio from fallback video'));
+            });
           });
         }
 
