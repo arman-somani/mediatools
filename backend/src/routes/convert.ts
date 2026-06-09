@@ -582,48 +582,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         // Step 2: Download audio
         let audioDownloaded = false;
 
-        // API Tier 1: RapidAPI
-        if (!audioDownloaded) {
-          try {
-            console.log('Trying RapidAPI for audio...');
-            await downloadAndMergeViaAPI(videoId, outputPath, 'audio', 720, audioQuality, (progress) => {
-              Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
-            });
-            requireWrittenFile(outputPath, 'RapidAPI audio conversion');
-            audioDownloaded = true;
-            console.log('RapidAPI audio succeeded');
-          } catch (e: any) {
-            console.error('RapidAPI audio failed:', e.message);
-          }
-        }
-
-        // API Tier 2: Cobalt API
-        if (!audioDownloaded) {
-          try {
-            console.log('Trying Cobalt API for audio...');
-            const cobaltDownloadUrl = await downloadViaCobalt(cleanUrl, 'audio', audioQuality);
-            console.log('Downloading audio via ffmpeg from Cobalt link...');
-            await new Promise<void>((resolve, reject) => {
-              const ff = spawn('ffmpeg', [
-                '-y', 
-                '-user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-                '-i', cobaltDownloadUrl, 
-                '-c:a', 'libmp3lame', 
-                '-b:a', `${audioQuality}k`, 
-                outputPath
-              ], { windowsHide: true });
-              ff.on('close', code => { if (code === 0) resolve(); else reject(new Error(`FFmpeg Cobalt audio failed with code ${code}`)); });
-              ff.on('error', reject);
-            });
-            requireWrittenFile(outputPath, 'Cobalt audio download');
-            audioDownloaded = true;
-            console.log('Cobalt audio download succeeded');
-          } catch (e: any) {
-            console.error('Cobalt audio failed:', e.message);
-          }
-        }
-
-        // API Tier 3: Native yt-dlp fallback
+        // Native yt-dlp downloader
         if (!audioDownloaded) {
           try {
             console.log('Trying Native yt-dlp for audio...');
@@ -775,48 +734,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           const targetHeightMap: Record<string, number> = { '360p': 360, '480p': 480, '720p': 720, '1080p': 1080, '4K': 2160, '8K': 4320 };
           const targetH = targetHeightMap[videoQuality] || 720;
 
-          // API Tier 1: RapidAPI
-          if (!videoDownloaded) {
-            try {
-              console.log('Trying RapidAPI for video...');
-              await downloadAndMergeViaAPI(videoId, fallbackOutputPath, 'video', targetH, '192', (progress) => {
-                Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
-              });
-              requireWrittenFile(fallbackOutputPath, 'RapidAPI video download');
-              videoDownloaded = true;
-              console.log('RapidAPI video succeeded');
-            } catch (e: any) {
-              console.error('RapidAPI video failed:', e.message);
-            }
-          }
-
-          // API Tier 2: Cobalt API
-          if (!videoDownloaded) {
-            try {
-              console.log('Trying Cobalt API for video...');
-              const cobaltDownloadUrl = await downloadViaCobalt(cleanUrl, 'video', videoQuality);
-              console.log('Downloading video via ffmpeg from Cobalt link...');
-              await new Promise<void>((resolve, reject) => {
-                const ff = spawn('ffmpeg', [
-                  '-y', 
-                  '-user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-                  '-i', cobaltDownloadUrl, 
-                  '-c', 'copy', 
-                  fallbackOutputPath
-                ], { windowsHide: true });
-                ff.on('close', code => { if (code === 0) resolve(); else reject(new Error(`FFmpeg Cobalt video failed with code ${code}`)); });
-                ff.on('error', reject);
-              });
-              requireWrittenFile(fallbackOutputPath, 'Cobalt video download');
-
-              videoDownloaded = true;
-              console.log('Cobalt video download succeeded');
-            } catch (e: any) {
-              console.error('Cobalt video failed:', e.message);
-            }
-          }
-
-          // API Tier 3: Native yt-dlp fallback
+          // Native yt-dlp downloader
           if (!videoDownloaded) {
             try {
               console.log('Trying Native yt-dlp for video...');
