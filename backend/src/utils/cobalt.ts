@@ -193,6 +193,7 @@ async function tryDownloadFromInstance(
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'User-Agent': USER_AGENT,
+          'Accept-Language': 'en-US,en;q=0.9',
           ...(cobaltAuthorizationHeader() ? { Authorization: cobaltAuthorizationHeader() as string } : {}),
         },
         signal: controller.signal,
