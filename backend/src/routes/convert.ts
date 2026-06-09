@@ -351,6 +351,74 @@ async function downloadAndMergeViaAlternativeAPI(
       }
     }
   }
+/**
+ * Uses youtube-video-fast-downloader-24-7 RapidAPI as Tier 5 Async Fallback.
+ */
+async function downloadAndMergeViaPollingAPI(
+  videoId: string,
+  outputPath: string,
+  mode: 'audio' | 'video',
+  targetHeight = 720,
+  audioBitrate = '192',
+  onProgress?: (progress: number) => void
+): Promise<void> {
+  const headers = { 'x-rapidapi-key': getRapidApiKey(), 'x-rapidapi-host': YT_POLLING_HOST };
+  
+  // Try to map qualities to itags if possible, otherwise just use string. 
+  // 18=360p, 22=720p, 247=720p (video only usually, but this API seems to handle it), 137=1080p
+  let qualityStr = targetHeight.toString();
+  if (mode === 'video') {
+    if (targetHeight >= 1080) qualityStr = '137';
+    else if (targetHeight >= 720) qualityStr = '247';
+    else qualityStr = '18';
+  }
+
+  const endpoint = mode === 'video' ? `/download_video/${videoId}?quality=${qualityStr}` : `/download_audio/${videoId}`;
+  
+  const resp = await fetch(`https://${YT_POLLING_HOST}${endpoint}`, { headers });
+  if (!resp.ok) throw new Error(`Polling API returned ${resp.status}`);
+  const data = await resp.json() as any;
+  
+  if (!data.file) throw new Error('No file URL found in Polling API response');
+
+  const fileUrl = data.file;
+  console.log(`Polling API initiated for ${mode}. Waiting for file to be ready (up to 80s)...`);
+
+  // Poll for up to 80 seconds (16 attempts * 5s) to avoid Render 100s timeout
+  let isReady = false;
+  for (let i = 0; i < 16; i++) {
+    try {
+      const check = await fetch(fileUrl, { method: 'HEAD' });
+      if (check.ok || check.status === 200 || check.status === 206) {
+        isReady = true;
+        break;
+      }
+    } catch (e) {
+      // ignore network errors during polling
+    }
+    await new Promise(r => setTimeout(r, 5000));
+  }
+
+  if (!isReady) throw new Error('Polling API timed out waiting for file after 80 seconds');
+
+  console.log('Polling API file is ready! Downloading...');
+  const fetchHeaders = { 'User-Agent': 'Mozilla/5.0' };
+  
+  if (mode === 'video') {
+    // Assuming this API returns a pre-merged video or video-only file. 
+    await downloadFileWithResume(fileUrl, outputPath, fetchHeaders, 0, onProgress);
+  } else {
+    const tempAudio = outputPath.replace('.mp3', '_poll_a.m4a');
+    try {
+      await downloadFileWithResume(fileUrl, tempAudio, fetchHeaders, 0, onProgress);
+      await new Promise<void>((resolve, reject) => {
+        const ff = spawn('ffmpeg', ['-y', '-i', tempAudio, '-c:a', 'libmp3lame', '-b:a', `${audioBitrate}k`, outputPath], { windowsHide: true });
+        ff.on('close', (code) => code === 0 ? resolve() : reject(new Error('ffmpeg failed')));
+      });
+    } finally {
+      if (fs.existsSync(tempAudio)) fs.unlinkSync(tempAudio);
+    }
+  }
 }
 
 const router = Router();
