@@ -102,14 +102,19 @@ async function downloadFileWithResume(
         (async () => {
           try {
             for await (const chunk of resp.body as any) {
-              fileStream.write(chunk);
+              const canWrite = fileStream.write(chunk);
               downloaded += chunk.length;
+              
               if (totalSize > 0 && onProgress) {
                 const now = Date.now();
                 if (now - lastUpdate > 1000) {
                   lastUpdate = now;
                   onProgress(Math.round((downloaded / totalSize) * 100));
                 }
+              }
+
+              if (!canWrite) {
+                await new Promise(r => fileStream.once('drain', r));
               }
             }
             fileStream.end();
