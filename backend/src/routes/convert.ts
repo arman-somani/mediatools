@@ -523,11 +523,16 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
       return;
     }
 
-    const cleanUrl = String(youtubeUrl).trim();
-    const videoId = getYouTubeVideoId(cleanUrl);
+    const rawInput = String(youtubeUrl).trim();
+    const videoId = getYouTubeVideoId(rawInput);
 
     if (!videoId) {
       res.status(400).json({ success: false, message: 'Invalid YouTube URL' });
+      return;
+    }
+    
+    // Always force a valid canonical URL to guarantee compatibility with all fallback tiers
+    const cleanUrl = `https://www.youtube.com/watch?v=${videoId}`;
       return;
     }
 
@@ -713,8 +718,8 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
       return;
     }
 
-    const cleanUrl = String(youtubeUrl).trim();
-    const videoId = getYouTubeVideoId(cleanUrl);
+    const rawInput = String(youtubeUrl).trim();
+    const videoId = getYouTubeVideoId(rawInput);
 
     if (!videoId) {
       res.status(400).json({ success: false, message: 'Invalid YouTube URL' });
