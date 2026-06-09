@@ -581,17 +581,8 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         if (!audioDownloaded) {
           try {
             console.log('Trying RapidAPI for audio...');
-            const rawPath = outputPath.replace('.mp3', '.m4a');
-            await downloadAndMergeViaAPI(videoId, rawPath, 'audio', 720, audioQuality, (progress) => {
+            await downloadAndMergeViaAPI(videoId, outputPath, 'audio', 720, audioQuality, (progress) => {
               Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
-            });
-            await new Promise((resolve, reject) => {
-              const ffmpeg = spawn('ffmpeg', ['-y', '-i', rawPath, '-vn', '-ab', `${audioQuality}k`, outputPath], { windowsHide: true });
-              ffmpeg.on('error', reject);
-              ffmpeg.on('close', (code) => {
-                if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath);
-                if (code === 0) resolve(true); else reject(new Error('FFmpeg m4a to mp3 failed'));
-              });
             });
             requireWrittenFile(outputPath, 'RapidAPI audio conversion');
             audioDownloaded = true;
