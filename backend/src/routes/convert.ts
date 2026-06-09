@@ -635,22 +635,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
           }
         }
 
-        // API Tier 2: RapidAPI
-        if (!audioDownloaded) {
-          try {
-            console.log('Trying RapidAPI for audio...');
-            await downloadAndMergeViaAPI(videoId, outputPath, 'audio', 720, audioQuality, (progress) => {
-              Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
-            });
-            requireWrittenFile(outputPath, 'RapidAPI audio conversion');
-            audioDownloaded = true;
-            console.log('RapidAPI audio succeeded');
-          } catch (e: any) {
-            console.error('RapidAPI audio failed:', e.message);
-          }
-        }
-
-        // API Tier 3: Cobalt API
+        // API Tier 2: Cobalt API
         if (!audioDownloaded) {
           try {
             console.log('Trying Cobalt API for audio...');
@@ -673,6 +658,21 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
             console.log('Cobalt audio download succeeded');
           } catch (e: any) {
             console.error('Cobalt audio failed:', e.message);
+          }
+        }
+
+        // API Tier 3: RapidAPI
+        if (!audioDownloaded) {
+          try {
+            console.log('Trying RapidAPI for audio...');
+            await downloadAndMergeViaAPI(videoId, outputPath, 'audio', 720, audioQuality, (progress) => {
+              Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
+            });
+            requireWrittenFile(outputPath, 'RapidAPI audio conversion');
+            audioDownloaded = true;
+            console.log('RapidAPI audio succeeded');
+          } catch (e: any) {
+            console.error('RapidAPI audio failed:', e.message);
           }
         }
 
