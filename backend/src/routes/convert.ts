@@ -816,6 +816,16 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         // Step 1: Get metadata
         let videoTitle = 'YouTube Audio';
         let durationSec = 0;
+        
+        // Pre-fetch title via public OEmbed API (fast and completely unblocked)
+        try {
+          const oembedResp = await fetch(`https://www.youtube.com/oembed?url=${cleanUrl}&format=json`);
+          if (oembedResp.ok) {
+            const oembedData = await oembedResp.json() as any;
+            if (oembedData && oembedData.title) videoTitle = oembedData.title;
+          }
+        } catch (e) { /* ignore */ }
+
         try {
           const { stdout } = await runYtDlp(['--print', 'title', '--print', 'duration', '--no-playlist', cleanUrl]);
           const lines = stdout.trim().split('\n');
