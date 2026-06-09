@@ -787,7 +787,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           if (downloadedFile) {
             const actualExt = path.extname(downloadedFile);
             conversion.outputPath = path.join(outputDir, downloadedFile);
-            conversion.outputFilename = `${safeTitle} (${videoQuality})${actualExt}`;
+            conversion.outputFilename = `${safeTitle}${actualExt}`;
           }
           requireWrittenFile(conversion.outputPath, 'Video download');
 
