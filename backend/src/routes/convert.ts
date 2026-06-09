@@ -533,8 +533,6 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
     
     // Always force a valid canonical URL to guarantee compatibility with all fallback tiers
     const cleanUrl = `https://www.youtube.com/watch?v=${videoId}`;
-      return;
-    }
 
     const audioQuality = safeAudioQuality(req.body.quality);
     const fileId = uuidv4();
