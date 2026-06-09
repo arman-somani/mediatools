@@ -153,8 +153,9 @@ async function downloadAndMergeViaAPI(
     const data = (await resp.json()) as any[];
     if (!Array.isArray(data) || data.length === 0) throw new Error('API returned no audio formats');
     
-    // Pick the best audio format
-    const bestAudio = data.find(f => f.ext === 'm4a' || f.acodec !== 'none') || data[0];
+    // Pick the best audio format by audio bitrate
+    const sortedAudio = data.filter(f => f.ext === 'm4a' || f.acodec !== 'none').sort((a, b) => (b.abr || 0) - (a.abr || 0));
+    const bestAudio = sortedAudio[0] || data[0];
     if (!bestAudio.url) throw new Error('No audio URL found in API response');
     
     console.log('Downloading audio via fetch from API link...');
