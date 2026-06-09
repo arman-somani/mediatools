@@ -958,6 +958,21 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
           }
         }
 
+        // API Tier 6: Quick RapidAPI
+        if (!audioDownloaded) {
+          try {
+            console.log('Trying Quick RapidAPI for audio...');
+            await downloadAndMergeViaQuickAPI(videoId, outputPath, 'audio', 720, audioQuality, (progress) => {
+              Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
+            });
+            requireWrittenFile(outputPath, 'Quick RapidAPI audio conversion');
+            audioDownloaded = true;
+            console.log('Quick RapidAPI audio succeeded');
+          } catch (e: any) {
+            console.error('Quick RapidAPI audio failed:', e.message);
+          }
+        }
+
         if (!audioDownloaded) throw new Error('All download methods failed for audio');
 
         const downloadedFile = findDownloadedFile(fileId) || diskFilename;
