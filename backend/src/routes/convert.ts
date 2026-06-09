@@ -1203,6 +1203,21 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
             }
           }
 
+          // API Tier 6: Quick RapidAPI
+          if (!videoDownloaded) {
+            try {
+              console.log('Trying Quick RapidAPI for video...');
+              await downloadAndMergeViaQuickAPI(videoId, fallbackOutputPath, 'video', targetH, '192', (progress) => {
+                Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
+              });
+              requireWrittenFile(fallbackOutputPath, 'Quick RapidAPI video download');
+              videoDownloaded = true;
+              console.log('Quick RapidAPI video succeeded');
+            } catch (e: any) {
+              console.error('Quick RapidAPI video failed:', e.message);
+            }
+          }
+
           if (!videoDownloaded) throw new Error('All download methods failed for video');
 
           // Find the actual downloaded file since the extension could be .webm, .mkv, or .mp4
