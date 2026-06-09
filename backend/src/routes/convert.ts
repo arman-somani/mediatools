@@ -187,7 +187,12 @@ function getYouTubeVideoId(input: string): string | null {
 }
 
 function ytDlpArgs(args: string[]): string[] {
-  const base = ['--js-runtimes', 'node', '--extractor-args', 'youtube:player_client=android,web'];
+  const base = [
+    '--js-runtimes', 'node', 
+    '--extractor-args', 'youtubetab:skip=webpage',
+    '--extractor-args', 'youtube:player_skip=webpage,configs',
+    '--extractor-args', 'youtube:player_client=android,web'
+  ];
   const cookiesFile = getCookiesPath();
   if (cookiesFile) base.push('--cookies', cookiesFile);
   return [...base, ...args];
