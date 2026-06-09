@@ -15,10 +15,11 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "types": [
       "node"
     ]
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "src/**/*"
