@@ -204,14 +204,17 @@ async function downloadAndMergeViaAPI(
     if (!Array.isArray(vData) || vData.length === 0) throw new Error('API returned no video formats');
     if (!Array.isArray(aData) || aData.length === 0) throw new Error('API returned no audio formats');
     
-    // Sort video formats by height, then by fps, find best matching targetHeight
+    // Sort video formats by height, then by fps, then by bitrate
     const sortedVideos = vData.filter(f => f.height).sort((a, b) => {
       if (b.height !== a.height) return b.height - a.height;
-      return (b.fps || 0) - (a.fps || 0);
+      if (b.fps !== a.fps) return (b.fps || 0) - (a.fps || 0);
+      return (b.vbr || 0) - (a.vbr || 0);
     });
     const bestVideo = sortedVideos.find(f => f.height <= targetHeight) || sortedVideos[0] || vData[0];
     
-    const bestAudio = aData.find(f => f.ext === 'm4a' || f.acodec !== 'none') || aData[0];
+    // Sort audio formats by highest audio bitrate (abr)
+    const sortedAudio = aData.filter(f => f.ext === 'm4a' || f.acodec !== 'none').sort((a, b) => (b.abr || 0) - (a.abr || 0));
+    const bestAudio = sortedAudio[0] || aData[0];
     
     if (!bestVideo || !bestAudio || !bestVideo.url || !bestAudio.url) throw new Error('Missing URL for video or audio');
     
