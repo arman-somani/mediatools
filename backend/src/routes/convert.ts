@@ -428,6 +428,91 @@ async function downloadAndMergeViaPollingAPI(
   }
 }
 
+/**
+ * Uses youtube-quick-video-downloader RapidAPI as Tier 6 Quick Fallback.
+ */
+async function downloadAndMergeViaQuickAPI(
+  videoId: string,
+  outputPath: string,
+  mode: 'audio' | 'video',
+  targetHeight = 720,
+  audioBitrate = '192',
+  onProgress?: (progress: number) => void
+): Promise<void> {
+  const headers = { 
+    'x-rapidapi-key': getRapidApiKey(), 
+    'x-rapidapi-host': YT_QUICK_HOST,
+    'Content-Type': 'application/json'
+  };
+  
+  const payload = { url: `https://www.youtube.com/watch?v=${videoId}` };
+
+  const resp = await fetch(`https://${YT_QUICK_HOST}/api/youtube/links`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload)
+  });
+  
+  if (!resp.ok) throw new Error(`Quick API returned ${resp.status}`);
+  const data = await resp.json() as any;
+  if (!data.results || !Array.isArray(data.results)) throw new Error('Quick API returned invalid results array');
+
+  // Find Audio stream
+  const audioStream = data.results.find((r: any) => r.has_audio === true || r.quality === 'M4A' || String(r.mime).includes('audio'));
+  if (!audioStream || !audioStream.url) throw new Error('No audio stream found in Quick API');
+
+  const fetchHeaders = { 'User-Agent': 'Mozilla/5.0' };
+
+  if (mode === 'audio') {
+    const tempAudio = outputPath.replace('.mp3', '_quick_a.m4a');
+    try {
+      console.log('Downloading audio via Quick API...');
+      await downloadFileWithResume(audioStream.url, tempAudio, fetchHeaders, 0, onProgress);
+      
+      await new Promise<void>((resolve, reject) => {
+        const ff = spawn('ffmpeg', ['-y', '-i', tempAudio, '-c:a', 'libmp3lame', '-b:a', `${audioBitrate}k`, outputPath], { windowsHide: true });
+        ff.on('close', (code) => code === 0 ? resolve() : reject(new Error('ffmpeg failed')));
+      });
+    } finally {
+      if (fs.existsSync(tempAudio)) fs.unlinkSync(tempAudio);
+    }
+    return;
+  }
+
+  if (mode === 'video') {
+    let videoStream = null;
+    const requestedQualityStr = targetHeight >= 1080 ? '1080p' : targetHeight >= 720 ? '720p' : '480p';
+    videoStream = data.results.find((r: any) => !r.has_audio && r.quality === requestedQualityStr);
+    
+    if (!videoStream) {
+      const videoStreams = data.results.filter((r: any) => !r.has_audio && String(r.mime).includes('video'));
+      if (videoStreams.length > 0) videoStream = videoStreams[0]; 
+    }
+
+    if (!videoStream || !videoStream.url) throw new Error('No video stream found in Quick API');
+
+    const tempVideo = outputPath.replace('.mp4', '_quick_v.mp4');
+    const tempAudio = outputPath.replace('.mp4', '_quick_a.m4a');
+    try {
+      console.log('Downloading video via Quick API...');
+      await downloadFileWithResume(videoStream.url, tempVideo, fetchHeaders, 0, (p) => onProgress?.(Math.floor(p * 0.5)));
+      
+      console.log('Downloading audio via Quick API...');
+      await downloadFileWithResume(audioStream.url, tempAudio, fetchHeaders, 0, (p) => onProgress?.(50 + Math.floor(p * 0.4)));
+
+      console.log('Merging via ffmpeg...');
+      await new Promise<void>((resolve, reject) => {
+        const ff = spawn('ffmpeg', ['-y', '-i', tempVideo, '-i', tempAudio, '-c:v', 'copy', '-c:a', 'aac', '-b:a', `${audioBitrate}k`, '-shortest', outputPath], { windowsHide: true });
+        ff.on('close', (code) => code === 0 ? resolve() : reject(new Error('ffmpeg failed')));
+      });
+      onProgress?.(100);
+    } finally {
+      if (fs.existsSync(tempVideo)) fs.unlinkSync(tempVideo);
+      if (fs.existsSync(tempAudio)) fs.unlinkSync(tempAudio);
+    }
+  }
+}
+
 const router = Router();
 const execAsync = promisify(exec);
 
