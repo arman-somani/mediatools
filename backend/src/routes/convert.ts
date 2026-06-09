@@ -83,21 +83,36 @@ async function downloadAndMergeViaAPI(
     const bestAudio = data.find(f => f.ext === 'm4a' || f.acodec !== 'none') || data[0];
     if (!bestAudio.url) throw new Error('No audio URL found in API response');
     
-    console.log('Downloading audio directly via ffmpeg from API link...');
-    await new Promise<void>((resolve, reject) => {
-      const headers = 'Referer: https://www.youtube.com/\r\nOrigin: https://www.youtube.com/\r\n';
-      const ff = spawn('ffmpeg', [
-        '-y', 
-        '-headers', headers,
-        '-user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        '-i', bestAudio.url, 
-        '-c:a', 'libmp3lame', 
-        '-b:a', `${audioBitrate}k`, 
-        outputPath
-      ], { windowsHide: true });
-      ff.on('close', code => { if (code === 0) resolve(); else reject(new Error(`ffmpeg audio conversion failed with code ${code}`)); });
-      ff.on('error', reject);
-    });
+    console.log('Downloading audio via fetch from API link...');
+    const tempAudio = outputPath.replace('.mp3', '_api_a.m4a');
+    try {
+      const aResp = await fetch(bestAudio.url);
+      if (!aResp.ok || !aResp.body) throw new Error('Failed to fetch audio stream');
+      await new Promise<void>((resolve, reject) => {
+        const fileStream = fs.createWriteStream(tempAudio);
+        fileStream.on('finish', resolve);
+        fileStream.on('error', reject);
+        (async () => {
+          try { for await (const chunk of aResp.body as any) fileStream.write(chunk); fileStream.end(); }
+          catch (e) { reject(e); }
+        })();
+      });
+
+      console.log('Converting downloaded audio via ffmpeg...');
+      await new Promise<void>((resolve, reject) => {
+        const ff = spawn('ffmpeg', [
+          '-y', 
+          '-i', tempAudio, 
+          '-c:a', 'libmp3lame', 
+          '-b:a', `${audioBitrate}k`, 
+          outputPath
+        ], { windowsHide: true });
+        ff.on('close', code => { if (code === 0) resolve(); else reject(new Error(`ffmpeg audio conversion failed with code ${code}`)); });
+        ff.on('error', reject);
+      });
+    } finally {
+      if (fs.existsSync(tempAudio)) fs.unlinkSync(tempAudio);
+    }
     return;
   }
 
@@ -126,28 +141,62 @@ async function downloadAndMergeViaAPI(
     
     if (!bestVideo || !bestAudio || !bestVideo.url || !bestAudio.url) throw new Error('Missing URL for video or audio');
     
-    console.log('Downloading and merging video+audio directly via ffmpeg from API links...');
-    await new Promise<void>((resolve, reject) => {
-      const headers = 'Referer: https://www.youtube.com/\r\nOrigin: https://www.youtube.com/\r\n';
-      const ff = spawn('ffmpeg', [
-        '-y', 
-        '-headers', headers,
-        '-user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        '-i', bestVideo.url, 
-        '-headers', headers,
-        '-i', bestAudio.url, 
-        '-c:v', 'copy', 
-        '-c:a', 'aac', 
-        '-b:a', `${audioBitrate}k`, 
-        '-shortest', 
-        outputPath
-      ], { windowsHide: true });
-      
-      ff.on('close', code => {
-        if (code === 0) resolve(); else reject(new Error(`ffmpeg merge failed with code ${code}`));
+    console.log('Downloading video and audio concurrently from API links...');
+    const tempVideo = outputPath.replace('.mp4', '_api_v.mp4');
+    const tempAudio = outputPath.replace('.mp4', '_api_a.m4a');
+    
+    try {
+      await Promise.all([
+        (async () => {
+          const vResp = await fetch(bestVideo.url);
+          if (!vResp.ok || !vResp.body) throw new Error('Failed to fetch video stream');
+          await new Promise<void>((resolve, reject) => {
+            const fileStream = fs.createWriteStream(tempVideo);
+            fileStream.on('finish', resolve);
+            fileStream.on('error', reject);
+            (async () => {
+              try { for await (const chunk of vResp.body as any) fileStream.write(chunk); fileStream.end(); }
+              catch (e) { reject(e); }
+            })();
+          });
+        })(),
+        (async () => {
+          const aResp = await fetch(bestAudio.url);
+          if (!aResp.ok || !aResp.body) throw new Error('Failed to fetch audio stream');
+          await new Promise<void>((resolve, reject) => {
+            const fileStream = fs.createWriteStream(tempAudio);
+            fileStream.on('finish', resolve);
+            fileStream.on('error', reject);
+            (async () => {
+              try { for await (const chunk of aResp.body as any) fileStream.write(chunk); fileStream.end(); }
+              catch (e) { reject(e); }
+            })();
+          });
+        })()
+      ]);
+
+      console.log('Merging video and audio via ffmpeg...');
+      await new Promise<void>((resolve, reject) => {
+        const ff = spawn('ffmpeg', [
+          '-y', 
+          '-i', tempVideo, 
+          '-i', tempAudio, 
+          '-c:v', 'copy', 
+          '-c:a', 'aac', 
+          '-b:a', `${audioBitrate}k`, 
+          '-shortest', 
+          outputPath
+        ], { windowsHide: true });
+        
+        ff.on('close', code => {
+          if (code === 0) resolve(); else reject(new Error(`ffmpeg merge failed with code ${code}`));
+        });
+        ff.on('error', reject);
       });
-      ff.on('error', reject);
-    });
+    } finally {
+      if (fs.existsSync(tempVideo)) fs.unlinkSync(tempVideo);
+      if (fs.existsSync(tempAudio)) fs.unlinkSync(tempAudio);
+    }
   }
 }
 
