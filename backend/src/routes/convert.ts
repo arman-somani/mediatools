@@ -594,7 +594,9 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
               '--audio-quality', `${audioQuality}k`,
               '-o', outputPath,
               '--no-playlist',
-              '--concurrent-fragments', '4',
+              '--concurrent-fragments', '10',
+              '--http-chunk-size', '10M',
+              '--hls-prefer-native',
               cleanUrl,
             ]), { windowsHide: true });
 
@@ -794,7 +796,9 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
                 '--merge-output-format', 'mp4',
                 '-o', path.join(outputDir, `${fileId}.%(ext)s`),
                 '--no-playlist',
-                '--concurrent-fragments', '4',
+                '--concurrent-fragments', '10',
+                '--http-chunk-size', '10M',
+                '--hls-prefer-native',
                 cleanUrl,
               ]), { windowsHide: true });
 
