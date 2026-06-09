@@ -376,7 +376,7 @@ async function downloadAndMergeViaPollingAPI(
     else qualityStr = '18';
   }
 
-  let endpoint = `/download_audio/${videoId}`;
+  let endpoint = `/download_audio/${videoId}?quality=251`;
   if (mode === 'video') {
     endpoint = isShorts ? `/download_short/${videoId}?quality=${qualityStr}` : `/download_video/${videoId}?quality=${qualityStr}`;
   }
