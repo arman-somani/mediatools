@@ -351,6 +351,8 @@ async function downloadAndMergeViaAlternativeAPI(
       }
     }
   }
+}
+
 /**
  * Uses youtube-video-fast-downloader-24-7 RapidAPI as Tier 5 Async Fallback.
  */
