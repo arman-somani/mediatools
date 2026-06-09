@@ -68,7 +68,8 @@ async function downloadAndMergeViaAPI(
   outputPath: string,
   mode: 'audio' | 'video',
   targetHeight = 720,
-  audioBitrate = '192'
+  audioBitrate = '192',
+  onProgress?: (progress: number) => void
 ): Promise<void> {
   const headers = { 'x-rapidapi-key': RAPIDAPI_KEY, 'x-rapidapi-host': YT_MEDIA_HOST };
 
@@ -86,14 +87,36 @@ async function downloadAndMergeViaAPI(
     console.log('Downloading audio via fetch from API link...');
     const tempAudio = outputPath.replace('.mp3', '_api_a.m4a');
     try {
-      const aResp = await fetch(bestAudio.url);
-      if (!aResp.ok || !aResp.body) throw new Error('Failed to fetch audio stream');
+      const fetchHeaders = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://www.youtube.com/'
+      };
+      const aResp = await fetch(bestAudio.url, { headers: fetchHeaders });
+      if (!aResp.ok || !aResp.body) throw new Error(`Failed to fetch audio stream (${aResp.status})`);
+      
+      const totalSize = parseInt(aResp.headers.get('content-length') || '0', 10);
+      let downloaded = 0;
+      let lastUpdate = Date.now();
+
       await new Promise<void>((resolve, reject) => {
         const fileStream = fs.createWriteStream(tempAudio);
         fileStream.on('finish', resolve);
         fileStream.on('error', reject);
         (async () => {
-          try { for await (const chunk of aResp.body as any) fileStream.write(chunk); fileStream.end(); }
+          try { 
+            for await (const chunk of aResp.body as any) {
+              fileStream.write(chunk);
+              downloaded += chunk.length;
+              if (totalSize > 0 && onProgress) {
+                const now = Date.now();
+                if (now - lastUpdate > 1000) {
+                  lastUpdate = now;
+                  onProgress(Math.round((downloaded / totalSize) * 100));
+                }
+              }
+            } 
+            fileStream.end(); 
+          }
           catch (e) { reject(e); }
         })();
       });
@@ -107,7 +130,9 @@ async function downloadAndMergeViaAPI(
           '-b:a', `${audioBitrate}k`, 
           outputPath
         ], { windowsHide: true });
-        ff.on('close', code => { if (code === 0) resolve(); else reject(new Error(`ffmpeg audio conversion failed with code ${code}`)); });
+        let stderr = '';
+        ff.stderr.on('data', d => stderr += d.toString());
+        ff.on('close', code => { if (code === 0) resolve(); else reject(new Error(`ffmpeg audio conversion failed with code ${code}. ${stderr}`)); });
         ff.on('error', reject);
       });
     } finally {
@@ -146,22 +171,43 @@ async function downloadAndMergeViaAPI(
     const tempAudio = outputPath.replace('.mp4', '_api_a.m4a');
     
     try {
+      const fetchHeaders = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Referer': 'https://www.youtube.com/'
+      };
       await Promise.all([
         (async () => {
-          const vResp = await fetch(bestVideo.url);
+          const vResp = await fetch(bestVideo.url, { headers: fetchHeaders });
           if (!vResp.ok || !vResp.body) throw new Error('Failed to fetch video stream');
+          const totalSize = parseInt(vResp.headers.get('content-length') || '0', 10);
+          let downloaded = 0;
+          let lastUpdate = Date.now();
+
           await new Promise<void>((resolve, reject) => {
             const fileStream = fs.createWriteStream(tempVideo);
             fileStream.on('finish', resolve);
             fileStream.on('error', reject);
             (async () => {
-              try { for await (const chunk of vResp.body as any) fileStream.write(chunk); fileStream.end(); }
+              try { 
+                for await (const chunk of vResp.body as any) {
+                  fileStream.write(chunk); 
+                  downloaded += chunk.length;
+                  if (totalSize > 0 && onProgress) {
+                    const now = Date.now();
+                    if (now - lastUpdate > 1000) {
+                      lastUpdate = now;
+                      onProgress(Math.round((downloaded / totalSize) * 100));
+                    }
+                  }
+                } 
+                fileStream.end(); 
+              }
               catch (e) { reject(e); }
             })();
           });
         })(),
         (async () => {
-          const aResp = await fetch(bestAudio.url);
+          const aResp = await fetch(bestAudio.url, { headers: fetchHeaders });
           if (!aResp.ok || !aResp.body) throw new Error('Failed to fetch audio stream');
           await new Promise<void>((resolve, reject) => {
             const fileStream = fs.createWriteStream(tempAudio);
@@ -188,8 +234,10 @@ async function downloadAndMergeViaAPI(
           outputPath
         ], { windowsHide: true });
         
+        let stderr = '';
+        ff.stderr.on('data', d => stderr += d.toString());
         ff.on('close', code => {
-          if (code === 0) resolve(); else reject(new Error(`ffmpeg merge failed with code ${code}`));
+          if (code === 0) resolve(); else reject(new Error(`ffmpeg merge failed with code ${code}. ${stderr}`));
         });
         ff.on('error', reject);
       });
