@@ -24,19 +24,6 @@ import { downloadViaCobalt, downloadFromUrl } from '../utils/cobalt';
 
 // Determine the path to a cookies file for yt-dlp to bypass YouTube bot restrictions
 function getCookiesPath(): string | null {
-  if (fs.existsSync('/etc/secrets/cookies.txt')) {
-    return '/etc/secrets/cookies.txt';
-  }
-  if (process.env.YOUTUBE_COOKIES) {
-    const tmpPath = '/tmp/youtube_cookies.txt';
-    try {
-      if (!fs.existsSync('/tmp')) fs.mkdirSync('/tmp');
-      fs.writeFileSync(tmpPath, process.env.YOUTUBE_COOKIES);
-      return tmpPath;
-    } catch (e) {
-      console.error('Failed to write YOUTUBE_COOKIES to /tmp:', e);
-    }
-  }
   return null;
 }
 
