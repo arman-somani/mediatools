@@ -571,7 +571,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         const safeTitle = sanitizeFilename(videoTitle) || 'YouTube Audio';
 
         conversion.youtubeTitle = videoTitle;
-        conversion.outputFilename = `${safeTitle} (${audioQuality}kbps).mp3`;
+        conversion.outputFilename = `${safeTitle}.mp3`;
         await conversion.save();
 
         // Step 2: Download audio
@@ -714,7 +714,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
 
           const safeTitle = sanitizeFilename(videoTitle) || 'YouTube Video';
           conversion.youtubeTitle = videoTitle;
-          conversion.outputFilename = `${safeTitle} (${videoQuality}).mp4`;
+          conversion.outputFilename = `${safeTitle}.mp4`;
           await conversion.save();
 
           // Step 2: Download video in its native format without remuxing
