@@ -1093,7 +1093,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
               console.log('Trying Async Polling RapidAPI for video...');
               await downloadAndMergeViaPollingAPI(videoId, fallbackOutputPath, 'video', targetH, '192', (progress) => {
                 Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
-              });
+              }, rawInput.includes('/shorts/'));
               requireWrittenFile(fallbackOutputPath, 'Async Polling RapidAPI video download');
               videoDownloaded = true;
               console.log('Async Polling RapidAPI video succeeded');
