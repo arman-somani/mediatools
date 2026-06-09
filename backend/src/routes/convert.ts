@@ -94,7 +94,7 @@ async function downloadAndMergeViaAPI(
       const aResp = await fetch(bestAudio.url, { headers: fetchHeaders });
       if (!aResp.ok || !aResp.body) throw new Error(`Failed to fetch audio stream (${aResp.status})`);
       
-      const totalSize = parseInt(aResp.headers.get('content-length') || '0', 10);
+      const totalSize = parseInt(aResp.headers.get('content-length') || '0', 10) || bestAudio.filesize || bestAudio.filesize_approx || 0;
       let downloaded = 0;
       let lastUpdate = Date.now();
 
@@ -179,7 +179,7 @@ async function downloadAndMergeViaAPI(
         (async () => {
           const vResp = await fetch(bestVideo.url, { headers: fetchHeaders });
           if (!vResp.ok || !vResp.body) throw new Error('Failed to fetch video stream');
-          const totalSize = parseInt(vResp.headers.get('content-length') || '0', 10);
+          const totalSize = parseInt(vResp.headers.get('content-length') || '0', 10) || bestVideo.filesize || bestVideo.filesize_approx || 0;
           let downloaded = 0;
           let lastUpdate = Date.now();
 
