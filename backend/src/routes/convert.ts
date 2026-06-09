@@ -38,6 +38,7 @@ function getRapidApiKey(): string {
   return keys[Math.floor(Math.random() * keys.length)];
 }
 const YT_MEDIA_HOST = 'cloud-api-hub-youtube-downloader.p.rapidapi.com';
+const YT_ALTERNATIVE_HOST = 'youtube-media-downloader.p.rapidapi.com';
 
 /** Stream a URL response body into a local file */
 async function downloadStreamFromUrl(url: string, destPath: string): Promise<void> {
