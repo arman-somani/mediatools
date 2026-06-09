@@ -516,7 +516,9 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
           try {
             console.log('Trying RapidAPI for audio...');
             const rawPath = outputPath.replace('.mp3', '.m4a');
-            await downloadAndMergeViaAPI(videoId, rawPath, 'audio', 720, audioQuality);
+            await downloadAndMergeViaAPI(videoId, rawPath, 'audio', 720, audioQuality, (progress) => {
+              Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
+            });
             await new Promise((resolve, reject) => {
               const ffmpeg = spawn('ffmpeg', ['-y', '-i', rawPath, '-vn', '-ab', `${audioQuality}k`, outputPath], { windowsHide: true });
               ffmpeg.on('error', reject);
@@ -668,7 +670,9 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           if (!videoDownloaded) {
             try {
               console.log('Trying RapidAPI for video...');
-              await downloadAndMergeViaAPI(videoId, fallbackOutputPath, 'video', targetH);
+              await downloadAndMergeViaAPI(videoId, fallbackOutputPath, 'video', targetH, '192', (progress) => {
+                Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
+              });
               requireWrittenFile(fallbackOutputPath, 'RapidAPI video download');
               videoDownloaded = true;
               console.log('RapidAPI video succeeded');
