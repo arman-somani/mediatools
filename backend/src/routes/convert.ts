@@ -563,8 +563,19 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
             try {
               console.log('Trying Cobalt API for audio...');
               const cobaltDownloadUrl = await downloadViaCobalt(cleanUrl, 'audio', audioQuality);
-              const audioResp = await downloadFromUrl(cobaltDownloadUrl);
-              await writeWebStreamToFile(audioResp, outputPath);
+              console.log('Downloading audio via ffmpeg from Cobalt link...');
+              await new Promise<void>((resolve, reject) => {
+                const ff = spawn('ffmpeg', [
+                  '-y', 
+                  '-user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+                  '-i', cobaltDownloadUrl, 
+                  '-c:a', 'libmp3lame', 
+                  '-b:a', `${audioQuality}k`, 
+                  outputPath
+                ], { windowsHide: true });
+                ff.on('close', code => { if (code === 0) resolve(); else reject(new Error(`FFmpeg Cobalt audio failed with code ${code}`)); });
+                ff.on('error', reject);
+              });
               requireWrittenFile(outputPath, 'Cobalt audio download');
               audioDownloaded = true;
               console.log('Cobalt audio download succeeded');
@@ -759,9 +770,18 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
             try {
               console.log('Trying Cobalt API for video...');
               const cobaltDownloadUrl = await downloadViaCobalt(cleanUrl, 'video', videoQuality);
-              
-              const videoResp = await downloadFromUrl(cobaltDownloadUrl);
-              await writeWebStreamToFile(videoResp, fallbackOutputPath);
+              console.log('Downloading video via ffmpeg from Cobalt link...');
+              await new Promise<void>((resolve, reject) => {
+                const ff = spawn('ffmpeg', [
+                  '-y', 
+                  '-user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+                  '-i', cobaltDownloadUrl, 
+                  '-c', 'copy', 
+                  fallbackOutputPath
+                ], { windowsHide: true });
+                ff.on('close', code => { if (code === 0) resolve(); else reject(new Error(`FFmpeg Cobalt video failed with code ${code}`)); });
+                ff.on('error', reject);
+              });
               requireWrittenFile(fallbackOutputPath, 'Cobalt video download');
 
               videoDownloaded = true;
