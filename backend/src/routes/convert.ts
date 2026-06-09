@@ -623,6 +623,52 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
           }
         }
 
+        // API Tier 3: Native yt-dlp fallback
+        if (!audioDownloaded) {
+          try {
+            console.log('Trying Native yt-dlp for audio...');
+            const ytdlp = spawn(getYtDlpPath(), ytDlpArgs([
+              '--newline',
+              '-f', 'ba/b',
+              '--extract-audio',
+              '--audio-format', 'mp3',
+              '--audio-quality', `${audioQuality}k`,
+              '-o', outputPath,
+              '--no-playlist',
+              cleanUrl,
+            ]), { windowsHide: true });
+
+            let lastUpdate = Date.now();
+            ytdlp.stdout.on('data', (data) => {
+              const output = data.toString();
+              const match = output.match(/\[download\]\s+([\d.]+)%/);
+              if (match) {
+                const progress = parseFloat(match[1]);
+                if (!isNaN(progress)) {
+                  const now = Date.now();
+                  if (now - lastUpdate > 1000) {
+                    lastUpdate = now;
+                    Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
+                  }
+                }
+              }
+            });
+
+            await new Promise((resolve, reject) => {
+              ytdlp.on('close', (code) => {
+                if (code === 0) resolve(true);
+                else reject(new Error('Native yt-dlp failed with code ' + code));
+              });
+            });
+
+            requireWrittenFile(outputPath, 'Native yt-dlp audio download');
+            audioDownloaded = true;
+            console.log('Native yt-dlp audio succeeded');
+          } catch (e: any) {
+            console.error('Native yt-dlp audio failed:', e.message);
+          }
+        }
+
 
 
         if (!audioDownloaded) throw new Error('All download methods failed for audio');
@@ -767,6 +813,51 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
               console.log('Cobalt video download succeeded');
             } catch (e: any) {
               console.error('Cobalt video failed:', e.message);
+            }
+          }
+
+          // API Tier 3: Native yt-dlp fallback
+          if (!videoDownloaded) {
+            try {
+              console.log('Trying Native yt-dlp for video...');
+              const ytdlp = spawn(getYtDlpPath(), ytDlpArgs([
+                '--newline',
+                '-f', 'bv*+ba/b',
+                '-S', ytSort,
+                '--merge-output-format', 'mp4',
+                '-o', path.join(outputDir, `${fileId}.%(ext)s`),
+                '--no-playlist',
+                cleanUrl,
+              ]), { windowsHide: true });
+
+              let lastUpdate = Date.now();
+              ytdlp.stdout.on('data', (data) => {
+                const output = data.toString();
+                const match = output.match(/\[download\]\s+([\d.]+)%/);
+                if (match) {
+                  const progress = parseFloat(match[1]);
+                  if (!isNaN(progress)) {
+                    const now = Date.now();
+                    if (now - lastUpdate > 1000) {
+                      lastUpdate = now;
+                      Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
+                    }
+                  }
+                }
+              });
+
+              await new Promise((resolve, reject) => {
+                ytdlp.on('close', (code) => {
+                  if (code === 0) resolve(true);
+                  else reject(new Error('Native yt-dlp failed with code ' + code));
+                });
+              });
+
+              requireWrittenFile(fallbackOutputPath, 'Native yt-dlp video download');
+              videoDownloaded = true;
+              console.log('Native yt-dlp video succeeded');
+            } catch (e: any) {
+              console.error('Native yt-dlp video failed:', e.message);
             }
           }
 
