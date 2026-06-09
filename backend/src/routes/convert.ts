@@ -60,6 +60,79 @@ async function downloadStreamFromUrl(url: string, destPath: string): Promise<voi
   });
 }
 
+async function downloadFileWithResume(
+  url: string,
+  destPath: string,
+  headers: Record<string, string>,
+  fallbackTotalSize: number,
+  onProgress?: (progress: number) => void
+): Promise<void> {
+  const maxRetries = 10;
+  let retries = 0;
+  let downloaded = 0;
+  let totalSize = fallbackTotalSize;
+  let lastUpdate = Date.now();
+
+  if (fs.existsSync(destPath)) {
+    fs.unlinkSync(destPath);
+  }
+
+  while (retries < maxRetries) {
+    try {
+      const fetchHeaders: any = { ...headers };
+      if (downloaded > 0) {
+        fetchHeaders['Range'] = `bytes=${downloaded}-`;
+      }
+
+      const resp = await fetch(url, { headers: fetchHeaders });
+      if (!resp.ok) {
+        if (resp.status === 416) return; // Range Not Satisfiable -> Done
+        throw new Error(`Fetch failed: ${resp.status}`);
+      }
+
+      if (downloaded === 0) {
+        const cl = parseInt(resp.headers.get('content-length') || '0', 10);
+        if (cl > 0) totalSize = cl;
+      }
+
+      await new Promise<void>((resolve, reject) => {
+        const fileStream = fs.createWriteStream(destPath, { flags: downloaded > 0 ? 'a' : 'w' });
+        fileStream.on('finish', resolve);
+        fileStream.on('error', reject);
+        (async () => {
+          try {
+            for await (const chunk of resp.body as any) {
+              fileStream.write(chunk);
+              downloaded += chunk.length;
+              if (totalSize > 0 && onProgress) {
+                const now = Date.now();
+                if (now - lastUpdate > 1000) {
+                  lastUpdate = now;
+                  onProgress(Math.round((downloaded / totalSize) * 100));
+                }
+              }
+            }
+            fileStream.end();
+          } catch (e) {
+            fileStream.destroy();
+            reject(e);
+          }
+        })();
+      });
+
+      if (totalSize > 0 && downloaded < totalSize) {
+        throw new Error('Stream ended prematurely');
+      }
+      return; 
+    } catch (err: any) {
+      console.warn(`Download interrupted (${downloaded}/${totalSize}): ${err.message}. Retrying...`);
+      retries++;
+      if (retries >= maxRetries) throw new Error(`Failed after ${maxRetries} retries: ${err.message}`);
+      await new Promise(r => setTimeout(r, 2000));
+    }
+  }
+}
+
 /**
  * Uses cloud-api-hub-youtube-downloader RapidAPI to get streams.
  */
@@ -91,35 +164,8 @@ async function downloadAndMergeViaAPI(
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Referer': 'https://www.youtube.com/'
       };
-      const aResp = await fetch(bestAudio.url, { headers: fetchHeaders });
-      if (!aResp.ok || !aResp.body) throw new Error(`Failed to fetch audio stream (${aResp.status})`);
-      
-      const totalSize = parseInt(aResp.headers.get('content-length') || '0', 10) || bestAudio.filesize || bestAudio.filesize_approx || 0;
-      let downloaded = 0;
-      let lastUpdate = Date.now();
-
-      await new Promise<void>((resolve, reject) => {
-        const fileStream = fs.createWriteStream(tempAudio);
-        fileStream.on('finish', resolve);
-        fileStream.on('error', reject);
-        (async () => {
-          try { 
-            for await (const chunk of aResp.body as any) {
-              fileStream.write(chunk);
-              downloaded += chunk.length;
-              if (totalSize > 0 && onProgress) {
-                const now = Date.now();
-                if (now - lastUpdate > 1000) {
-                  lastUpdate = now;
-                  onProgress(Math.round((downloaded / totalSize) * 100));
-                }
-              }
-            } 
-            fileStream.end(); 
-          }
-          catch (e) { reject(e); }
-        })();
-      });
+      const fallbackSize = bestAudio.filesize || bestAudio.filesize_approx || 0;
+      await downloadFileWithResume(bestAudio.url, tempAudio, fetchHeaders, fallbackSize, onProgress);
 
       console.log('Converting downloaded audio via ffmpeg...');
       await new Promise<void>((resolve, reject) => {
@@ -177,47 +223,12 @@ async function downloadAndMergeViaAPI(
       };
       await Promise.all([
         (async () => {
-          const vResp = await fetch(bestVideo.url, { headers: fetchHeaders });
-          if (!vResp.ok || !vResp.body) throw new Error('Failed to fetch video stream');
-          const totalSize = parseInt(vResp.headers.get('content-length') || '0', 10) || bestVideo.filesize || bestVideo.filesize_approx || 0;
-          let downloaded = 0;
-          let lastUpdate = Date.now();
-
-          await new Promise<void>((resolve, reject) => {
-            const fileStream = fs.createWriteStream(tempVideo);
-            fileStream.on('finish', resolve);
-            fileStream.on('error', reject);
-            (async () => {
-              try { 
-                for await (const chunk of vResp.body as any) {
-                  fileStream.write(chunk); 
-                  downloaded += chunk.length;
-                  if (totalSize > 0 && onProgress) {
-                    const now = Date.now();
-                    if (now - lastUpdate > 1000) {
-                      lastUpdate = now;
-                      onProgress(Math.round((downloaded / totalSize) * 100));
-                    }
-                  }
-                } 
-                fileStream.end(); 
-              }
-              catch (e) { reject(e); }
-            })();
-          });
+          const fallbackSize = bestVideo.filesize || bestVideo.filesize_approx || 0;
+          await downloadFileWithResume(bestVideo.url, tempVideo, fetchHeaders, fallbackSize, onProgress);
         })(),
         (async () => {
-          const aResp = await fetch(bestAudio.url, { headers: fetchHeaders });
-          if (!aResp.ok || !aResp.body) throw new Error('Failed to fetch audio stream');
-          await new Promise<void>((resolve, reject) => {
-            const fileStream = fs.createWriteStream(tempAudio);
-            fileStream.on('finish', resolve);
-            fileStream.on('error', reject);
-            (async () => {
-              try { for await (const chunk of aResp.body as any) fileStream.write(chunk); fileStream.end(); }
-              catch (e) { reject(e); }
-            })();
-          });
+          const fallbackSize = bestAudio.filesize || bestAudio.filesize_approx || 0;
+          await downloadFileWithResume(bestAudio.url, tempAudio, fetchHeaders, fallbackSize);
         })()
       ]);
 
