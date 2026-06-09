@@ -226,7 +226,7 @@ export default function YtVideoPage() {
                 <ProgressCircle
                   progress={progress}
                   statusText="Downloading & Encoding..."
-                  subText={`Fetching ${quality} video - this may take a minute for larger files.`}
+                  subText={`Fetching ${quality} video - wait for a while for larger files.`}
                 />
 
               ) : (
