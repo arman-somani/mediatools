@@ -262,7 +262,95 @@ async function downloadAndMergeViaAPI(
     }
   }
 }
+/**
+ * Uses youtube-media-downloader RapidAPI as Tier 4 Fallback.
+ */
+async function downloadAndMergeViaAlternativeAPI(
+  videoId: string,
+  outputPath: string,
+  mode: 'audio' | 'video',
+  targetHeight = 720,
+  audioBitrate = '192',
+  onProgress?: (progress: number) => void
+): Promise<void> {
+  const headers = { 'x-rapidapi-key': getRapidApiKey(), 'x-rapidapi-host': YT_ALTERNATIVE_HOST };
+  
+  const resp = await fetch(`https://${YT_ALTERNATIVE_HOST}/v2/video/details?videoId=${videoId}`, { headers });
+  if (!resp.ok) throw new Error(`Alternative API returned ${resp.status}`);
+  const data = await resp.json() as any;
+  
+  if (data.errorId && data.errorId !== 'Success') throw new Error(`Alternative API Error: ${data.reason}`);
 
+  if (mode === 'audio') {
+    if (!data.audios || !data.audios.items || data.audios.items.length === 0) throw new Error('No audio formats found');
+    const sortedAudio = data.audios.items.filter((a: any) => a.extension === 'm4a').sort((a: any, b: any) => (b.bitrate || 0) - (a.bitrate || 0));
+    const bestAudio = sortedAudio[0] || data.audios.items[0];
+    if (!bestAudio.url) throw new Error('No audio URL found in Alternative API');
+    
+    console.log('Downloading audio via Alternative API...');
+    const tempAudio = outputPath.replace('.mp3', '_alt_a.m4a');
+    try {
+      const fetchHeaders = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://www.youtube.com/'
+      };
+      await downloadFileWithResume(bestAudio.url, tempAudio, fetchHeaders, 0, onProgress);
+      
+      console.log('Converting Alternative API audio via ffmpeg...');
+      await new Promise<void>((resolve, reject) => {
+        const ff = spawn('ffmpeg', ['-y', '-i', tempAudio, '-c:a', 'libmp3lame', '-b:a', `${audioBitrate}k`, outputPath], { windowsHide: true });
+        ff.on('close', (code) => {
+          if (code === 0) resolve(); else reject(new Error('ffmpeg failed'));
+        });
+      });
+    } finally {
+      if (fs.existsSync(tempAudio)) fs.unlinkSync(tempAudio);
+    }
+    return;
+  }
+
+  if (mode === 'video') {
+    if (!data.videos || !data.videos.items || data.videos.items.length === 0) throw new Error('No video formats found');
+    const mp4Videos = data.videos.items.filter((v: any) => v.extension === 'mp4');
+    let bestVideo = mp4Videos.find((v: any) => parseInt(v.quality) === targetHeight);
+    if (!bestVideo) bestVideo = mp4Videos.find((v: any) => parseInt(v.quality) <= targetHeight) || mp4Videos[0];
+    if (!bestVideo) bestVideo = data.videos.items[0];
+
+    const sortedAudio = (data.audios?.items || []).filter((a: any) => a.extension === 'm4a').sort((a: any, b: any) => (b.bitrate || 0) - (a.bitrate || 0));
+    const bestAudio = sortedAudio[0] || data.audios?.items?.[0];
+
+    if (!bestVideo.url) throw new Error('Missing video URL in Alternative API');
+
+    console.log('Downloading video via Alternative API...');
+    if (!bestAudio || !bestAudio.url) {
+      const fetchHeaders = { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://www.youtube.com/' };
+      await downloadFileWithResume(bestVideo.url, outputPath, fetchHeaders, 0, onProgress);
+    } else {
+      const tempVideo = outputPath.replace('.mp4', '_alt_v.mp4');
+      const tempAudio = outputPath.replace('.mp4', '_alt_a.m4a');
+      
+      try {
+        const fetchHeaders = { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://www.youtube.com/' };
+        await Promise.all([
+          downloadFileWithResume(bestVideo.url, tempVideo, fetchHeaders, 0, (p) => onProgress?.(Math.floor(p * 0.7))),
+          downloadFileWithResume(bestAudio.url, tempAudio, fetchHeaders, 0)
+        ]);
+
+        console.log('Merging Alternative API video and audio via ffmpeg...');
+        await new Promise<void>((resolve, reject) => {
+          const ff = spawn('ffmpeg', ['-y', '-i', tempVideo, '-i', tempAudio, '-c:v', 'copy', '-c:a', 'aac', '-b:a', `${audioBitrate}k`, '-shortest', outputPath], { windowsHide: true });
+          ff.on('close', (code) => {
+            code === 0 ? resolve() : reject(new Error('ffmpeg merge failed'));
+          });
+        });
+        onProgress?.(100);
+      } finally {
+        if (fs.existsSync(tempVideo)) fs.unlinkSync(tempVideo);
+        if (fs.existsSync(tempAudio)) fs.unlinkSync(tempAudio);
+      }
+    }
+  }
+}
 
 const router = Router();
 const execAsync = promisify(exec);
