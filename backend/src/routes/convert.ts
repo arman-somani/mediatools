@@ -83,7 +83,22 @@ async function downloadAndMergeViaAPI(
     const bestAudio = data.find(f => f.ext === 'm4a' || f.acodec !== 'none') || data[0];
     if (!bestAudio.url) throw new Error('No audio URL found in API response');
     
-    await downloadStreamFromUrl(bestAudio.url, outputPath);
+    console.log('Downloading audio directly via ffmpeg from API link...');
+    await new Promise<void>((resolve, reject) => {
+      const ff = spawn('ffmpeg', [
+        '-y', 
+        '-user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        '-i', bestAudio.url, 
+        '-c:a', 'libmp3lame', 
+        '-b:a', `${audioBitrate}k`, 
+        outputPath
+      ], { windowsHide: true });
+      
+      ff.on('close', code => {
+        if (code === 0) resolve(); else reject(new Error(`ffmpeg audio download failed with code ${code}`));
+      });
+      ff.on('error', reject);
+    });
     return;
   }
 
@@ -112,40 +127,25 @@ async function downloadAndMergeViaAPI(
     
     if (!bestVideo || !bestAudio || !bestVideo.url || !bestAudio.url) throw new Error('Missing URL for video or audio');
     
-    const tempVideo = outputPath.replace('.mp4', '_api_v.mp4');
-    
-    try {
-      console.log('Downloading video via yt-dlp from API link...');
-      await new Promise<void>((resolve, reject) => {
-        const ytdlp = spawn(getYtDlpPath(), ['--newline', bestVideo.url, '-o', tempVideo], { windowsHide: true });
-        ytdlp.on('close', code => {
-          if (code === 0) resolve(); else reject(new Error(`yt-dlp failed to download video with code ${code}`));
-        });
-        ytdlp.on('error', reject);
-      });
+    console.log('Downloading and merging video+audio directly via ffmpeg from API links...');
+    await new Promise<void>((resolve, reject) => {
+      const ff = spawn('ffmpeg', [
+        '-y', 
+        '-user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        '-i', bestVideo.url, 
+        '-i', bestAudio.url, 
+        '-c:v', 'copy', 
+        '-c:a', 'aac', 
+        '-b:a', `${audioBitrate}k`, 
+        '-shortest', 
+        outputPath
+      ], { windowsHide: true });
       
-      console.log('Downloading audio and merging via ffmpeg...');
-      await new Promise<void>((resolve, reject) => {
-        const ff = spawn('ffmpeg', [
-          '-y', 
-          '-user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          '-i', tempVideo, 
-          '-i', bestAudio.url, 
-          '-c:v', 'copy', 
-          '-c:a', 'aac', 
-          '-b:a', `${audioBitrate}k`, 
-          '-shortest', 
-          outputPath
-        ], { windowsHide: true });
-        
-        ff.on('close', code => {
-          if (code === 0) resolve(); else reject(new Error(`ffmpeg merge failed with code ${code}`));
-        });
-        ff.on('error', reject);
+      ff.on('close', code => {
+        if (code === 0) resolve(); else reject(new Error(`ffmpeg merge failed with code ${code}`));
       });
-    } finally {
-      if (fs.existsSync(tempVideo)) fs.unlinkSync(tempVideo);
-    }
+      ff.on('error', reject);
+    });
   }
 }
 
