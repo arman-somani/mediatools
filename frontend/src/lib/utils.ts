@@ -49,6 +49,10 @@ export function getYouTubeVideoId(url: string): string | null {
   const trimmed = url.trim();
   if (!trimmed) return null;
 
+  if (/^[0-9A-Za-z_-]{11}$/.test(trimmed)) {
+    return trimmed;
+  }
+
   try {
     const parsed = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
     const host = parsed.hostname.replace(/^www\./, '').replace(/^m\./, '');
