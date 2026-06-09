@@ -767,7 +767,20 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
           }
         }
 
-
+        // API Tier 4: Alternative RapidAPI
+        if (!audioDownloaded) {
+          try {
+            console.log('Trying Alternative RapidAPI for audio...');
+            await downloadAndMergeViaAlternativeAPI(videoId, outputPath, 'audio', 720, audioQuality, (progress) => {
+              Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
+            });
+            requireWrittenFile(outputPath, 'Alternative RapidAPI audio conversion');
+            audioDownloaded = true;
+            console.log('Alternative RapidAPI audio succeeded');
+          } catch (e: any) {
+            console.error('Alternative RapidAPI audio failed:', e.message);
+          }
+        }
 
         if (!audioDownloaded) throw new Error('All download methods failed for audio');
 
