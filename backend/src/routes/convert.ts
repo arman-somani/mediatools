@@ -1081,6 +1081,21 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
             }
           }
 
+          // API Tier 5: Async Polling RapidAPI
+          if (!videoDownloaded) {
+            try {
+              console.log('Trying Async Polling RapidAPI for video...');
+              await downloadAndMergeViaPollingAPI(videoId, fallbackOutputPath, 'video', targetH, '192', (progress) => {
+                Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
+              });
+              requireWrittenFile(fallbackOutputPath, 'Async Polling RapidAPI video download');
+              videoDownloaded = true;
+              console.log('Async Polling RapidAPI video succeeded');
+            } catch (e: any) {
+              console.error('Async Polling RapidAPI video failed:', e.message);
+            }
+          }
+
           if (!videoDownloaded) throw new Error('All download methods failed for video');
 
           // Find the actual downloaded file since the extension could be .webm, .mkv, or .mp4
