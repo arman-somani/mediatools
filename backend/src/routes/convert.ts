@@ -362,7 +362,8 @@ async function downloadAndMergeViaPollingAPI(
   mode: 'audio' | 'video',
   targetHeight = 720,
   audioBitrate = '192',
-  onProgress?: (progress: number) => void
+  onProgress?: (progress: number) => void,
+  isShorts?: boolean
 ): Promise<void> {
   const headers = { 'x-rapidapi-key': getRapidApiKey(), 'x-rapidapi-host': YT_POLLING_HOST };
   
@@ -375,7 +376,10 @@ async function downloadAndMergeViaPollingAPI(
     else qualityStr = '18';
   }
 
-  const endpoint = mode === 'video' ? `/download_video/${videoId}?quality=${qualityStr}` : `/download_audio/${videoId}`;
+  let endpoint = `/download_audio/${videoId}`;
+  if (mode === 'video') {
+    endpoint = isShorts ? `/download_short/${videoId}?quality=${qualityStr}` : `/download_video/${videoId}?quality=${qualityStr}`;
+  }
   
   const resp = await fetch(`https://${YT_POLLING_HOST}${endpoint}`, { headers });
   if (!resp.ok) throw new Error(`Polling API returned ${resp.status}`);
