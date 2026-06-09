@@ -270,6 +270,11 @@ function getYouTubeVideoId(input: string): string | null {
   const trimmed = input.trim();
   if (!trimmed) return null;
 
+  // Instantly return if it's already a raw 11-character Video ID
+  if (/^[0-9A-Za-z_-]{11}$/.test(trimmed)) {
+    return trimmed;
+  }
+
   try {
     const parsed = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
     const host = parsed.hostname.replace(/^www\./, '').replace(/^m\./, '');
