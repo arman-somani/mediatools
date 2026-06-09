@@ -714,6 +714,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
 
           const safeTitle = sanitizeFilename(videoTitle) || 'YouTube Video';
           conversion.youtubeTitle = videoTitle;
+          conversion.outputFilename = `${safeTitle} (${videoQuality}).mp4`;
           await conversion.save();
 
           // Step 2: Download video in its native format without remuxing
