@@ -851,6 +851,21 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
           }
         }
 
+        // API Tier 5: Async Polling RapidAPI
+        if (!audioDownloaded) {
+          try {
+            console.log('Trying Async Polling RapidAPI for audio...');
+            await downloadAndMergeViaPollingAPI(videoId, outputPath, 'audio', 720, audioQuality, (progress) => {
+              Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
+            });
+            requireWrittenFile(outputPath, 'Async Polling RapidAPI audio conversion');
+            audioDownloaded = true;
+            console.log('Async Polling RapidAPI audio succeeded');
+          } catch (e: any) {
+            console.error('Async Polling RapidAPI audio failed:', e.message);
+          }
+        }
+
         if (!audioDownloaded) throw new Error('All download methods failed for audio');
 
         const downloadedFile = findDownloadedFile(fileId) || diskFilename;
