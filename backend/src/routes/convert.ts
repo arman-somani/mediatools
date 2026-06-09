@@ -190,7 +190,7 @@ function ytDlpArgs(args: string[]): string[] {
   const base = [
     '--js-runtimes', 'node', 
     '--extractor-args', 'youtubetab:skip=webpage',
-    '--extractor-args', 'youtube:player_skip=webpage,configs',
+    '--extractor-args', 'youtube:player_skip=webpage,configs;visitor_data=VISITOR_DATA_VALUE_HERE',
     '--extractor-args', 'youtube:player_client=android,web'
   ];
   const cookiesFile = getCookiesPath();
