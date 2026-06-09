@@ -594,10 +594,17 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
               '--audio-quality', `${audioQuality}k`,
               '-o', outputPath,
               '--no-playlist',
+              '--concurrent-fragments', '4',
               cleanUrl,
             ]), { windowsHide: true });
 
             let lastUpdate = Date.now();
+            let stderrLog = '';
+            ytdlp.stderr.on('data', (d) => {
+              const str = d.toString();
+              stderrLog += str;
+              console.error('[yt-dlp AUDIO stderr]', str);
+            });
             ytdlp.stdout.on('data', (data) => {
               const output = data.toString();
               const match = output.match(/\[download\]\s+([\d.]+)%/);
@@ -616,7 +623,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
             await new Promise((resolve, reject) => {
               ytdlp.on('close', (code) => {
                 if (code === 0) resolve(true);
-                else reject(new Error('Native yt-dlp failed with code ' + code));
+                else reject(new Error('Native yt-dlp failed with code ' + code + ' | ' + stderrLog));
               });
             });
 
@@ -745,10 +752,17 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
                 '--merge-output-format', 'mp4',
                 '-o', path.join(outputDir, `${fileId}.%(ext)s`),
                 '--no-playlist',
+                '--concurrent-fragments', '4',
                 cleanUrl,
               ]), { windowsHide: true });
 
               let lastUpdate = Date.now();
+              let stderrLog = '';
+              ytdlp.stderr.on('data', (d) => {
+                const str = d.toString();
+                stderrLog += str;
+                console.error('[yt-dlp VIDEO stderr]', str);
+              });
               ytdlp.stdout.on('data', (data) => {
                 const output = data.toString();
                 const match = output.match(/\[download\]\s+([\d.]+)%/);
@@ -767,7 +781,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
               await new Promise((resolve, reject) => {
                 ytdlp.on('close', (code) => {
                   if (code === 0) resolve(true);
-                  else reject(new Error('Native yt-dlp failed with code ' + code));
+                  else reject(new Error('Native yt-dlp failed with code ' + code + ' | ' + stderrLog));
                 });
               });
 
