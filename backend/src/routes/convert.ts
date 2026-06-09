@@ -726,6 +726,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
       return;
     }
 
+    const cleanUrl = `https://www.youtube.com/watch?v=${videoId}`;
     const fileId = uuidv4();
     const diskFilename = `${fileId}.mp4`;
     const outputPath = path.join(outputDir, diskFilename);
