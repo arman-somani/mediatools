@@ -32,7 +32,11 @@ Platform.shim.eval = (script: any) => {
   return vm.runInNewContext('new Function(' + JSON.stringify(code) + ')()');
 };
 
-const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || '208e9bff95msh90b82e1f2353e90p17b16ejsn23f1054a290e';
+function getRapidApiKey(): string {
+  const keysStr = process.env.RAPIDAPI_KEYS || process.env.RAPIDAPI_KEY || '208e9bff95msh90b82e1f2353e90p17b16ejsn23f1054a290e';
+  const keys = keysStr.split(',').map(k => k.trim()).filter(Boolean);
+  return keys[Math.floor(Math.random() * keys.length)];
+}
 const YT_MEDIA_HOST = 'cloud-api-hub-youtube-downloader.p.rapidapi.com';
 
 /** Stream a URL response body into a local file */
@@ -136,7 +140,7 @@ async function downloadAndMergeViaAPI(
   audioBitrate = '192',
   onProgress?: (progress: number) => void
 ): Promise<void> {
-  const headers = { 'x-rapidapi-key': RAPIDAPI_KEY, 'x-rapidapi-host': YT_MEDIA_HOST };
+  const headers = { 'x-rapidapi-key': getRapidApiKey(), 'x-rapidapi-host': YT_MEDIA_HOST };
 
   if (mode === 'audio') {
     const audioUrl = `https://${YT_MEDIA_HOST}/download?id=${videoId}&filter=audioonly`;
