@@ -7,6 +7,7 @@ import Image from 'next/image';
 import PlaylistDownloader from '@/components/PlaylistDownloader';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ProgressCircle from '@/components/ProgressCircle';
+import { requestNotificationPermission, sendNotification } from '@/lib/notifications';
 
 type Quality = '128' | '192' | '320';
 
@@ -79,6 +80,7 @@ export default function YouTubePage() {
           if (startTimeRef.current) setConversionTime(Math.round((Date.now() - startTimeRef.current) / 1000));
           setVideoInfo({ title: conv.youtubeTitle, thumbnail: conv.youtubeThumbnail });
           setFileSize(conv.fileSize || null);
+          sendNotification('Video Ready! 🎬', 'Your YouTube video has finished converting and is ready to save.');
         } else if (conv.status === 'failed') {
           clearInterval(pollRef.current!);
           setStatus('failed');
@@ -93,6 +95,7 @@ export default function YouTubePage() {
   const handleConvert = async () => {
     startTimeRef.current = Date.now();
     if (!isValidYouTubeUrl(url)) { setError('Please enter a valid YouTube URL'); return; }
+    requestNotificationPermission();
     setError(''); setStatus('processing'); setProgress(0); setConversionTime(null);
     try {
       const { data } = await api.post('/convert/youtube', { url, quality });
