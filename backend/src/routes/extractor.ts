@@ -125,6 +125,7 @@ router.get('/info', async (req: Request, res: Response): Promise<void> => {
       title,
       thumbnail,
       duration,
+      videoUrl: data.url || videoFormats[0]?.url || '',
       formats: {
         video: videoFormats,
         audio: audioFormats
