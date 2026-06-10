@@ -278,7 +278,7 @@ async function downloadAndMergeViaAllMedia(
   targetHeight = 720,
   audioBitrate = '192',
   onProgress?: (progress: number) => void
-): Promise<void> {
+): Promise<string | undefined> {
   const headers = { 'x-rapidapi-key': getRapidApiKey(), 'x-rapidapi-host': YT_ALL_MEDIA_HOST };
   const resp = await fetch(`https://${YT_ALL_MEDIA_HOST}/api/youtube/download?id=${videoId}`, { headers });
   if (!resp.ok) throw new Error(`AllMedia API returned ${resp.status}`);
@@ -293,10 +293,11 @@ async function downloadAndMergeViaAllMedia(
     if (!audioFormats.length) throw new Error('No audio streams found');
     const bestAudio = audioFormats[0];
     await downloadFileWithResume(bestAudio.url, outputPath, {}, 0, onProgress);
+    return data.title;
   } else {
     const videoFormats = data.results.filter((f: any) => f.mime.includes('video/mp4'));
-    let bestVideo = videoFormats.find((f: any) => f.quality === targetHeight + 'p') || videoFormats.find((f: any) => f.quality === '1080p') || videoFormats.find((f: any) => f.quality === '720p') || videoFormats[0];
-    if (!bestVideo) throw new Error('No video streams found');
+    let bestVideo = videoFormats.find((f: any) => f.quality === targetHeight + 'p');
+    if (!bestVideo) throw new Error(`Requested quality ${targetHeight}p not found`);
     
     if (bestVideo.has_audio) {
       await downloadFileWithResume(bestVideo.url, outputPath, {}, 0, onProgress);
@@ -355,7 +356,7 @@ async function downloadAndMergeViaCDN(
   targetHeight = 720,
   audioBitrate = '192',
   onProgress?: (progress: number) => void
-): Promise<void> {
+): Promise<string | undefined> {
   const headers = { 'x-rapidapi-key': getRapidApiKey(), 'x-rapidapi-host': YT_CDN_HOST };
   const resp = await fetch(`https://${YT_CDN_HOST}/stream?id=${videoId}`, { headers });
   if (!resp.ok) throw new Error(`CDN API returned ${resp.status}`);
@@ -370,10 +371,11 @@ async function downloadAndMergeViaCDN(
     if (!audioFormats.length) throw new Error('No audio streams found');
     const bestAudio = audioFormats[0];
     await downloadFileWithResume(bestAudio.url, outputPath, {}, 0, onProgress);
+    return data.title;
   } else {
     const videoFormats = data.formats.filter((f: any) => f.type === 'video_only' || f.type === 'video_with_audio');
-    let bestVideo = videoFormats.find((f: any) => f.quality === targetHeight + 'p') || videoFormats.find((f: any) => f.quality === '1080p') || videoFormats.find((f: any) => f.quality === '720p') || videoFormats[0];
-    if (!bestVideo) throw new Error('No video streams found');
+    let bestVideo = videoFormats.find((f: any) => f.quality === targetHeight + 'p');
+    if (!bestVideo) throw new Error(`Requested quality ${targetHeight}p not found`);
     
     if (bestVideo.type === 'video_with_audio') {
       await downloadFileWithResume(bestVideo.url, outputPath, {}, 0, onProgress);
@@ -432,7 +434,7 @@ async function downloadAndMergeViaAlternativeAPI(
   targetHeight = 720,
   audioBitrate = '192',
   onProgress?: (progress: number) => void
-): Promise<void> {
+): Promise<string | undefined> {
   const headers = { 'x-rapidapi-key': getRapidApiKey(), 'x-rapidapi-host': YT_ALTERNATIVE_HOST };
   
   const resp = await fetch(`https://${YT_ALTERNATIVE_HOST}/v2/video/details?videoId=${videoId}`, { headers });
@@ -473,8 +475,7 @@ async function downloadAndMergeViaAlternativeAPI(
     if (!data.videos || !data.videos.items || data.videos.items.length === 0) throw new Error('No video formats found');
     const mp4Videos = data.videos.items.filter((v: any) => v.extension === 'mp4');
     let bestVideo = mp4Videos.find((v: any) => parseInt(v.quality) === targetHeight);
-    if (!bestVideo) bestVideo = mp4Videos.find((v: any) => parseInt(v.quality) <= targetHeight) || mp4Videos[0];
-    if (!bestVideo) bestVideo = data.videos.items[0];
+    if (!bestVideo) throw new Error(`Requested quality ${targetHeight}p not found`);
 
     const sortedAudio = (data.audios?.items || []).filter((a: any) => a.extension === 'm4a').sort((a: any, b: any) => (b.bitrate || 0) - (a.bitrate || 0));
     const bestAudio = sortedAudio[0] || data.audios?.items?.[0];
@@ -506,9 +507,9 @@ async function downloadAndMergeViaAlternativeAPI(
         onProgress?.(100);
       } finally {
         if (fs.existsSync(tempVideo)) fs.unlinkSync(tempVideo);
-        if (fs.existsSync(tempAudio)) fs.unlinkSync(tempAudio);
       }
     }
+    return data.title;
   }
 }
 
@@ -523,7 +524,7 @@ async function downloadAndMergeViaPollingAPI(
   audioBitrate = '192',
   onProgress?: (progress: number) => void,
   isShorts?: boolean
-): Promise<void> {
+): Promise<string | undefined> {
   const headers = { 'x-rapidapi-key': getRapidApiKey(), 'x-rapidapi-host': YT_POLLING_HOST };
   
   // Try to map qualities to itags if possible, otherwise just use string. 
@@ -584,6 +585,7 @@ async function downloadAndMergeViaPollingAPI(
       if (fs.existsSync(tempAudio)) fs.unlinkSync(tempAudio);
     }
   }
+  return data.title;
 }
 
 /**
@@ -596,7 +598,7 @@ async function downloadAndMergeViaQuickAPI(
   targetHeight = 720,
   audioBitrate = '192',
   onProgress?: (progress: number) => void
-): Promise<void> {
+): Promise<string | undefined> {
   const headers = { 
     'x-rapidapi-key': getRapidApiKey(), 
     'x-rapidapi-host': YT_QUICK_HOST,
@@ -638,14 +640,8 @@ async function downloadAndMergeViaQuickAPI(
   }
 
   if (mode === 'video') {
-    let videoStream = null;
-    const requestedQualityStr = targetHeight >= 1080 ? '1080p' : targetHeight >= 720 ? '720p' : '480p';
-    videoStream = data.results.find((r: any) => !r.has_audio && r.quality === requestedQualityStr);
-    
-    if (!videoStream) {
-      const videoStreams = data.results.filter((r: any) => !r.has_audio && String(r.mime).includes('video'));
-      if (videoStreams.length > 0) videoStream = videoStreams[0]; 
-    }
+    let videoStream = data.results.find((r: any) => !r.has_audio && r.quality === targetHeight + 'p');
+    if (!videoStream) throw new Error(`Requested quality ${targetHeight}p not found in Quick API`);
 
     if (!videoStream || !videoStream.url) throw new Error('No video stream found in Quick API');
 
@@ -1017,10 +1013,11 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
           const dlTitle = (lines[0] || '').trim();
           if (dlTitle && dlTitle !== 'YouTube Audio') videoTitle = dlTitle;
           durationSec = parseInt((lines[1] || '').trim(), 10) || 0;
-        } catch { /* keep defaults */ }
+        } catch (e) {
+          console.error('Title pre-fetch failed:', e);
+        }
 
-        const safeTitle = sanitizeFilename(videoTitle) || 'YouTube Audio';
-
+        let safeTitle = sanitizeFilename(videoTitle) || 'YouTube Audio';
         conversion.youtubeTitle = videoTitle;
         conversion.outputFilename = `${safeTitle}.mp3`;
         await conversion.save();
@@ -1114,10 +1111,15 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         if (!audioDownloaded) {
           try {
             console.log('Trying AllMedia API for audio...');
-            await downloadAndMergeViaAllMedia(videoId, outputPath, 'audio', 720, audioQuality, (progress) => {
+            const apiTitle = await downloadAndMergeViaAllMedia(videoId, outputPath, 'audio', 720, audioQuality, (progress) => {
               Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
             });
             requireWrittenFile(outputPath, 'AllMedia audio conversion');
+            if (apiTitle && videoTitle === 'YouTube Audio') {
+              safeTitle = sanitizeFilename(apiTitle);
+              conversion.youtubeTitle = apiTitle;
+              conversion.outputFilename = `${safeTitle}.mp3`;
+            }
             audioDownloaded = true;
             console.log('AllMedia audio succeeded');
           } catch (e: any) {
@@ -1129,10 +1131,15 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         if (!audioDownloaded) {
           try {
             console.log('Trying CDN API for audio...');
-            await downloadAndMergeViaCDN(videoId, outputPath, 'audio', 720, audioQuality, (progress) => {
+            const apiTitle = await downloadAndMergeViaCDN(videoId, outputPath, 'audio', 720, audioQuality, (progress) => {
               Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
             });
             requireWrittenFile(outputPath, 'CDN API audio conversion');
+            if (apiTitle && videoTitle === 'YouTube Audio') {
+              safeTitle = sanitizeFilename(apiTitle);
+              conversion.youtubeTitle = apiTitle;
+              conversion.outputFilename = `${safeTitle}.mp3`;
+            }
             audioDownloaded = true;
             console.log('CDN API audio succeeded');
           } catch (e: any) {
@@ -1312,9 +1319,11 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
             const lines = stdout.trim().split('\n');
             const dlTitle = (lines[0] || '').trim();
             if (dlTitle && dlTitle !== 'YouTube Video') videoTitle = dlTitle;
-          } catch { /* keep defaults */ }
+          } catch (e) {
+            console.error('Title pre-fetch failed:', e);
+          }
 
-          const safeTitle = sanitizeFilename(videoTitle) || 'YouTube Video';
+          let safeTitle = sanitizeFilename(videoTitle) || 'YouTube Video';
           conversion.youtubeTitle = videoTitle;
           conversion.outputFilename = `${safeTitle}.mp4`;
           await conversion.save();
@@ -1420,10 +1429,14 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           if (!videoDownloaded) {
             try {
               console.log('Trying AllMedia API for video...');
-              await downloadAndMergeViaAllMedia(videoId, fallbackOutputPath, 'video', targetH, '192', (progress) => {
+              const apiTitle = await downloadAndMergeViaAllMedia(videoId, fallbackOutputPath, 'video', targetH, '192', (progress) => {
                 Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
               });
               requireWrittenFile(fallbackOutputPath, 'AllMedia video download');
+              if (apiTitle && videoTitle === 'Downloaded Video') {
+                safeTitle = sanitizeFilename(apiTitle);
+                conversion.youtubeTitle = apiTitle;
+              }
               videoDownloaded = true;
               console.log('AllMedia video succeeded');
             } catch (e: any) {
@@ -1435,10 +1448,14 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           if (!videoDownloaded) {
             try {
               console.log('Trying CDN API for video...');
-              await downloadAndMergeViaCDN(videoId, fallbackOutputPath, 'video', targetH, '192', (progress) => {
+              const apiTitle = await downloadAndMergeViaCDN(videoId, fallbackOutputPath, 'video', targetH, '192', (progress) => {
                 Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
               });
               requireWrittenFile(fallbackOutputPath, 'CDN API video download');
+              if (apiTitle && videoTitle === 'Downloaded Video') {
+                safeTitle = sanitizeFilename(apiTitle);
+                conversion.youtubeTitle = apiTitle;
+              }
               videoDownloaded = true;
               console.log('CDN API video succeeded');
             } catch (e: any) {
