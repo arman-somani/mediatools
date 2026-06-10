@@ -61,6 +61,11 @@ router.get('/info', async (req: Request, res: Response): Promise<void> => {
 
     const data = await runYtDlpJson(url);
 
+    if (!data) {
+      res.status(400).json({ success: false, message: 'No media found at this URL' });
+      return;
+    }
+
     const title = data.title || 'Downloaded Video';
     const thumbnail = data.thumbnail || '';
     const duration = data.duration || 0;
