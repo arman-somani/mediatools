@@ -161,26 +161,6 @@ export default function DashboardPage() {
                         </div>
                     )}
 
-                    {/* â”€â”€ Stats â”€â”€ */}
-                    <div className="grid gap-6 md:grid-cols-2 mb-10">
-                        {[
-                            { label: 'Your Conversions', value: userConversions, color: 'text-brand-purple' },
-                            { label: 'Your Downloads', value: userDownloads, color: 'text-emerald-400' },
-                        ].map((stat, i) => (
-                            <motion.div
-                                key={stat.label}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ type: "spring", stiffness: 300, damping: 15, delay: 0.1 + i * 0.1 }}
-                                whileHover={{ y: -6, scale: 1.03 }}
-                                className="glass-panel rounded-2xl p-6"
-                            >
-                                <p className="text-white/50 text-sm mb-1">{stat.label}</p>
-                                <h2 className={`mt-2 text-4xl font-bold ${stat.color}`}>{stat.value}</h2>
-                            </motion.div>
-                        ))}
-                    </div>
-
                     {/* â”€â”€ Start New Conversion â€” Tool Picker â”€â”€ */}
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
