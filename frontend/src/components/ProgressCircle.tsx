@@ -35,7 +35,7 @@ export default function ProgressCircle({ progress, statusText, subText }: Progre
         {statusText}
       </h3>
       {subText && (
-        <p className="text-white/60 max-w-sm truncate">
+        <p className="text-white/60 text-sm sm:text-base px-4 max-w-sm w-full leading-relaxed break-words">
           {subText}
         </p>
       )}
