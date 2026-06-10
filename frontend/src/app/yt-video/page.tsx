@@ -113,22 +113,19 @@ export default function YtVideoPage() {
   return (
     <ProtectedRoute>
       <div className="w-full max-w-4xl mx-auto px-6 py-20 flex flex-col items-center">
-      <div className="w-full max-w-6xl mx-auto px-6 py-20 flex flex-col items-center">
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full text-center mb-12 pt-8">
           <h1 className="font-display font-bold text-4xl md:text-5xl tracking-tight mb-4 text-white">
             Download <span className="text-gradient">YouTube Video</span>
           </h1>
-          <p className="text-white max-w-2x2 mx-auto text-lg">
-            Paste any YouTube Video Link, select preferred quality, and download the full video as an Video file.
+          <p className="text-white max-w-2xl mx-auto text-lg">
+            Paste any YouTube Video Link, select preferred quality, and download the full video as an MP4 file.
           </p>
         </motion.div>
 
-        <div className="w-full grid grid-cols-1 xl:grid-cols-2 gap-8 items-stretch">
-          {/* LEFT COLUMN: SINGLE DOWNLOADER */}
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="w-full h-full">
-            <div className="glass-panel p-5 sm:p-8 md:p-10 relative overflow-hidden h-full flex flex-col">
-              <div className="absolute top-0 left-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl -ml-20 -mt-20 pointer-events-none" />
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }} className="w-full">
+          <div className="glass-panel p-5 sm:p-8 md:p-12 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-brand-cyan/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
 
             <AnimatePresence mode="wait">
               {status === 'idle' || status === 'failed' ? (
