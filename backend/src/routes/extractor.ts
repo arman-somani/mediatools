@@ -3,6 +3,7 @@ import { spawn } from 'child_process';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
+import { getRandomFreeProxies } from '../utils/freeproxy';
 
 const router = Router();
 
@@ -11,7 +12,7 @@ function getYtDlpPath(): string {
   return fs.existsSync(binPath) ? binPath : 'yt-dlp';
 }
 
-function ytDlpArgs(args: string[], useProxy: boolean = false): string[] {
+function ytDlpArgs(args: string[], useProxy: boolean | string = false): string[] {
   const base = [
     '--js-runtimes', 'node', 
     '--remote-components', 'ejs:github',
@@ -20,14 +21,17 @@ function ytDlpArgs(args: string[], useProxy: boolean = false): string[] {
     '--extractor-args', 'youtube:player_client=android,web'
   ];
   
-  if (useProxy && process.env.PROXY_URL) {
-    base.unshift('--proxy', process.env.PROXY_URL, '--no-check-certificates');
+  if (useProxy) {
+    const proxyUrl = typeof useProxy === 'string' ? useProxy : process.env.PROXY_URL;
+    if (proxyUrl) {
+      base.unshift('--proxy', proxyUrl, '--no-check-certificates');
+    }
   }
   
   return [...base, ...args];
 }
 
-function runYtDlpJson(url: string, useProxy: boolean = false): Promise<any> {
+function runYtDlpJson(url: string, useProxy: boolean | string = false): Promise<any> {
   return new Promise((resolve, reject) => {
     const child = spawn(getYtDlpPath(), ytDlpArgs(['-J', '--no-playlist', url], useProxy), { windowsHide: true });
     const stdoutChunks: Buffer[] = [];
@@ -70,8 +74,27 @@ router.get('/info', async (req: Request, res: Response): Promise<void> => {
       data = await runYtDlpJson(url, false);
       if (!data || !data.formats) throw new Error('Invalid metadata returned natively');
     } catch (err: any) {
-      console.warn(`[Extractor] Tier 1 failed: ${err.message}. Falling back to Tier 2 (Proxy)...`);
-      data = await runYtDlpJson(url, true);
+      console.warn(`[Extractor] Tier 1 failed: ${err.message}. Trying Tier 1.5 (Free Proxies)...`);
+      let success = false;
+      
+      const freeProxies = await getRandomFreeProxies(2);
+      for (const freeProxy of freeProxies) {
+        try {
+          console.log(`[Extractor] Trying Free Proxy: ${freeProxy}`);
+          data = await runYtDlpJson(url, freeProxy);
+          if (data && data.formats) {
+            success = true;
+            break;
+          }
+        } catch (e) {
+          console.warn(`[Extractor] Free proxy ${freeProxy} failed.`);
+        }
+      }
+
+      if (!success) {
+        console.warn(`[Extractor] Tier 1.5 failed. Falling back to Tier 2 (ScraperAPI Proxy)...`);
+        data = await runYtDlpJson(url, true);
+      }
     }
 
     if (!data) {
