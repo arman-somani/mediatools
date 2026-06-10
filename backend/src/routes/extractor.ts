@@ -21,7 +21,7 @@ function ytDlpArgs(args: string[], useProxy: boolean = false): string[] {
   ];
   
   if (useProxy && process.env.PROXY_URL) {
-    base.unshift('--proxy', process.env.PROXY_URL);
+    base.unshift('--proxy', process.env.PROXY_URL, '--no-check-certificates');
   }
   
   return [...base, ...args];
