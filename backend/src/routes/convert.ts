@@ -829,7 +829,8 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         try {
           const { stdout } = await runYtDlp(['--print', 'title', '--print', 'duration', '--no-playlist', cleanUrl]);
           const lines = stdout.trim().split('\n');
-          videoTitle = (lines[0] || '').trim() || 'YouTube Audio';
+          const dlTitle = (lines[0] || '').trim();
+          if (dlTitle && dlTitle !== 'YouTube Audio') videoTitle = dlTitle;
           durationSec = parseInt((lines[1] || '').trim(), 10) || 0;
         } catch { /* keep defaults */ }
 
@@ -1074,7 +1075,8 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           try {
             const { stdout } = await runYtDlp(['--print', 'title', '--no-playlist', cleanUrl]);
             const lines = stdout.trim().split('\n');
-            videoTitle = (lines[0] || '').trim() || 'YouTube Video';
+            const dlTitle = (lines[0] || '').trim();
+            if (dlTitle && dlTitle !== 'YouTube Video') videoTitle = dlTitle;
           } catch { /* keep defaults */ }
 
           const safeTitle = sanitizeFilename(videoTitle) || 'YouTube Video';
@@ -1376,8 +1378,10 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         try {
           const { stdout } = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--no-playlist', cleanUrl]);
           const lines = stdout.trim().split('\n');
-          videoTitle = (lines[0] || '').trim() || 'Downloaded Video';
-          thumbnail = (lines[1] || '').trim();
+          const dlTitle = (lines[0] || '').trim();
+          if (dlTitle && dlTitle !== 'Downloaded Video') videoTitle = dlTitle;
+          const dlThumb = (lines[1] || '').trim();
+          if (dlThumb) thumbnail = dlThumb;
         } catch { /* keep defaults */ }
 
         const safeTitle = sanitizeFilename(videoTitle) || 'Downloaded Video';
