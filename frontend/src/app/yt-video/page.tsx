@@ -113,6 +113,7 @@ export default function YtVideoPage() {
   return (
     <ProtectedRoute>
       <div className="w-full max-w-4xl mx-auto px-6 py-20 flex flex-col items-center">
+      <div className="w-full max-w-6xl mx-auto px-6 py-20 flex flex-col items-center">
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full text-center mb-12 pt-8">
           <h1 className="font-display font-bold text-4xl md:text-5xl tracking-tight mb-4 text-white">
@@ -123,9 +124,11 @@ export default function YtVideoPage() {
           </p>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }} className="w-full">
-          <div className="glass-panel p-8 md:p-12 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-brand-violet/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+        <div className="w-full grid grid-cols-1 xl:grid-cols-2 gap-8 items-stretch">
+          {/* LEFT COLUMN: SINGLE DOWNLOADER */}
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="w-full h-full">
+            <div className="glass-panel p-5 sm:p-8 md:p-10 relative overflow-hidden h-full flex flex-col">
+              <div className="absolute top-0 left-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl -ml-20 -mt-20 pointer-events-none" />
 
             <AnimatePresence mode="wait">
               {status === 'idle' || status === 'failed' ? (
@@ -259,20 +262,21 @@ export default function YtVideoPage() {
                     </div>
                   )}
 
-                  <h3 className="text-3xl font-display font-bold text-white mb-3">Video is Ready!</h3>
+                  <h3 className="text-2xl sm:text-3xl font-display font-bold text-white mb-2 sm:mb-3">Video is Ready!</h3>
                   {videoInfo?.title && (
                     <p className="max-w-sm truncate mb-2 text-sm text-white">{videoInfo.title}</p>
                   )}
-                  <p className="text-white mb-2 text-lg">
-                    Your <strong className="text-brand-purple">{quality}</strong> Video video is ready to download.
-                  </p>
+                  <p className="text-white mb-4 text-base sm:text-lg px-2">Your high-quality {quality} Video is ready to download.</p>
                   {fileSize && (
-                    <p className="text-sm font-medium mb-8 px-4 py-2 rounded-lg inline-block bg-white/5 text-white">
-                      Actual Size: <strong className="text-brand-purple">{formatFileSize(fileSize)}</strong>
+                    <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-sm font-medium mb-8 px-4 py-2 rounded-lg bg-white/5 text-white">
+                      <span>Actual Size: <strong className="text-brand-cyan">{formatFileSize(fileSize)}</strong></span>
                       {conversionTime !== null && (
-                        <> | Time Taken: <strong className="text-brand-purple">{conversionTime}s</strong></>
+                        <span className="hidden sm:inline">|</span>
                       )}
-                    </p>
+                      {conversionTime !== null && (
+                        <span>Time Taken: <strong className="text-brand-cyan">{conversionTime}s</strong></span>
+                      )}
+                    </div>
                   )}
                   {!fileSize && <div className="mb-8" />}
 
