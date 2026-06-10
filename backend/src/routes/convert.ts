@@ -1482,10 +1482,14 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           if (!videoDownloaded) {
             try {
               console.log('Trying Alternative RapidAPI for video...');
-              await downloadAndMergeViaAlternativeAPI(videoId, fallbackOutputPath, 'video', targetH, '192', (progress) => {
+              const apiTitle = await downloadAndMergeViaAlternativeAPI(videoId, fallbackOutputPath, 'video', targetH, '192', (progress) => {
                 Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
               });
               requireWrittenFile(fallbackOutputPath, 'Alternative RapidAPI video download');
+              if (apiTitle && videoTitle === 'Downloaded Video') {
+                safeTitle = sanitizeFilename(apiTitle);
+                conversion.youtubeTitle = apiTitle;
+              }
               videoDownloaded = true;
               console.log('Alternative RapidAPI video succeeded');
             } catch (e: any) {
@@ -1497,10 +1501,14 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           if (!videoDownloaded) {
             try {
               console.log('Trying Async Polling RapidAPI for video...');
-              await downloadAndMergeViaPollingAPI(videoId, fallbackOutputPath, 'video', targetH, '192', (progress) => {
+              const apiTitle = await downloadAndMergeViaPollingAPI(videoId, fallbackOutputPath, 'video', targetH, '192', (progress) => {
                 Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
               }, rawInput.includes('/shorts/'));
               requireWrittenFile(fallbackOutputPath, 'Async Polling RapidAPI video download');
+              if (apiTitle && videoTitle === 'Downloaded Video') {
+                safeTitle = sanitizeFilename(apiTitle);
+                conversion.youtubeTitle = apiTitle;
+              }
               videoDownloaded = true;
               console.log('Async Polling RapidAPI video succeeded');
             } catch (e: any) {
@@ -1512,10 +1520,14 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           if (!videoDownloaded) {
             try {
               console.log('Trying Quick RapidAPI for video...');
-              await downloadAndMergeViaQuickAPI(videoId, fallbackOutputPath, 'video', targetH, '192', (progress) => {
+              const apiTitle = await downloadAndMergeViaQuickAPI(videoId, fallbackOutputPath, 'video', targetH, '192', (progress) => {
                 Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
               });
               requireWrittenFile(fallbackOutputPath, 'Quick RapidAPI video download');
+              if (apiTitle && videoTitle === 'Downloaded Video') {
+                safeTitle = sanitizeFilename(apiTitle);
+                conversion.youtubeTitle = apiTitle;
+              }
               videoDownloaded = true;
               console.log('Quick RapidAPI video succeeded');
             } catch (e: any) {
