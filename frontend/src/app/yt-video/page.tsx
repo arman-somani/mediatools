@@ -22,6 +22,14 @@ export default function YtVideoPage() {
   const [error, setError] = useState('');
   const [conversionTime, setConversionTime] = useState<number | null>(null);
   
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const queryUrl = params.get('url');
+      if (queryUrl) setUrl(queryUrl);
+    }
+  }, []);
+  
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
