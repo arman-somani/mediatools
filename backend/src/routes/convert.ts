@@ -1295,7 +1295,8 @@ router.post('/universal/metadata', async (req: Request, res: Response): Promise<
 
     const lines = stdout.trim().split('\n');
     const title = (lines[0] || '').trim() || 'Downloaded Video';
-    const thumbnail = (lines[1] || '').trim();
+    let thumbnail = (lines[1] || '').trim();
+    if (thumbnail === 'NA') thumbnail = '';
     const resolution = (lines[2] || '').trim() || 'Best Available';
     let sizeBytes = parseInt((lines[3] || '').trim(), 10);
 
