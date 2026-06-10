@@ -1563,12 +1563,12 @@ router.get('/download/:id', async (req: Request, res: Response): Promise<void> =
 
     // outputFilename = "Song Title.mp3" (user-facing), outputPath = UUID file on disk
     res.download(conversion.outputPath, conversion.outputFilename || 'download.mp3', (err) => {
-      let delayMs = 60 * 1000; // 1 min default
+      let delayMs = 21 * 60 * 1000; // 21 min default
       try {
         if (fs.existsSync(conversion.outputPath)) {
           const stats = fs.statSync(conversion.outputPath);
           if (stats.size > 500 * 1024 * 1024) { // > 500MB
-            delayMs = 15 * 60 * 1000; // 15 mins
+            delayMs = 35 * 60 * 1000; // 35 mins
           }
         }
       } catch (e) {}
@@ -1602,12 +1602,12 @@ router.get('/public-file/:id', async (req: Request, res: Response): Promise<void
       res.status(404).json({ success: false, message: 'File expired or deleted' }); return;
     }
     res.download(conversion.outputPath, conversion.outputFilename || 'download', (err) => {
-      let delayMs = 60 * 1000; // 1 min default
+      let delayMs = 21 * 60 * 1000; // 21 min default
       try {
         if (fs.existsSync(conversion.outputPath)) {
           const stats = fs.statSync(conversion.outputPath);
           if (stats.size > 500 * 1024 * 1024) { // > 500MB
-            delayMs = 15 * 60 * 1000; // 15 mins
+            delayMs = 35 * 60 * 1000; // 35 mins
           }
         }
       } catch (e) {}
