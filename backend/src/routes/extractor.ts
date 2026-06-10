@@ -25,23 +25,27 @@ function ytDlpArgs(args: string[]): string[] {
 function runYtDlpJson(url: string): Promise<any> {
   return new Promise((resolve, reject) => {
     const child = spawn(getYtDlpPath(), ytDlpArgs(['-J', '--no-playlist', url]), { windowsHide: true });
-    let stdout = '';
+    const stdoutChunks: Buffer[] = [];
     let stderr = '';
 
-    child.stdout.on('data', data => { stdout += data.toString(); });
+    child.stdout.on('data', chunk => stdoutChunks.push(chunk));
     child.stderr.on('data', data => { stderr += data.toString(); });
     
     child.on('error', reject);
     child.on('close', code => {
       if (code === 0) {
         try {
-          const json = JSON.parse(stdout);
+          const stdoutStr = Buffer.concat(stdoutChunks).toString('utf-8');
+          // yt-dlp sometimes prints warnings to stdout before the JSON blob
+          const lines = stdoutStr.trim().split('\n');
+          const jsonLine = lines.reverse().find(l => l.trim().startsWith('{')) || stdoutStr;
+          const json = JSON.parse(jsonLine);
           resolve(json);
         } catch (e) {
           reject(new Error('Failed to parse yt-dlp JSON output'));
         }
       } else {
-        reject(new Error((stderr || stdout || `yt-dlp failed with code ${code}`).trim()));
+        reject(new Error((stderr || `yt-dlp failed with code ${code}`).trim()));
       }
     });
   });
