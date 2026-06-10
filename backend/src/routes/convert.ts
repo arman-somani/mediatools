@@ -1283,12 +1283,13 @@ router.post('/universal/metadata', async (req: Request, res: Response): Promise<
 
     const cleanUrl = String(videoUrl).trim();
 
-    // Run yt-dlp to print title, thumbnail, resolution, and filesize
+    // Run yt-dlp to print title, thumbnail, resolution, filesize, and direct url
     const { stdout } = await runYtDlp([
       '--print', '%(title)s',
       '--print', '%(thumbnail)s',
       '--print', '%(resolution)s',
       '--print', '%(filesize_approx,filesize)s',
+      '--print', '%(url)s',
       '--no-playlist',
       cleanUrl,
     ]);
@@ -1299,6 +1300,7 @@ router.post('/universal/metadata', async (req: Request, res: Response): Promise<
     if (thumbnail === 'NA') thumbnail = '';
     const resolution = (lines[2] || '').trim() || 'Best Available';
     let sizeBytes = parseInt((lines[3] || '').trim(), 10);
+    const videoUrl = (lines[4] || '').trim();
 
     if (isNaN(sizeBytes)) sizeBytes = 0;
 
@@ -1308,7 +1310,8 @@ router.post('/universal/metadata', async (req: Request, res: Response): Promise<
         title,
         thumbnail,
         resolution: resolution === 'NA' ? 'Best Available' : resolution,
-        sizeBytes
+        sizeBytes,
+        videoUrl: videoUrl === 'NA' ? '' : videoUrl
       },
     });
   } catch (error: any) {
