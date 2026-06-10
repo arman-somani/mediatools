@@ -1558,18 +1558,28 @@ router.get('/download/:id', async (req: Request, res: Response): Promise<void> =
 
     // outputFilename = "Song Title.mp3" (user-facing), outputPath = UUID file on disk
     res.download(conversion.outputPath, conversion.outputFilename || 'download.mp3', (err) => {
-      // Schedule cleanup exactly 1 minute after download finishes (or fails)
+      let delayMs = 60 * 1000; // 1 min default
+      try {
+        if (fs.existsSync(conversion.outputPath)) {
+          const stats = fs.statSync(conversion.outputPath);
+          if (stats.size > 500 * 1024 * 1024) { // > 500MB
+            delayMs = 15 * 60 * 1000; // 15 mins
+          }
+        }
+      } catch (e) {}
+
+      // Schedule cleanup
       setTimeout(async () => {
         try {
           if (fs.existsSync(conversion.outputPath)) {
             fs.unlinkSync(conversion.outputPath);
           }
           // Do NOT delete the database record so it stays in user's history
-          console.log(`[CLEANUP] Deleted file for conversion ${conversion._id} 1 min after download.`);
+          console.log(`[CLEANUP] Deleted file for conversion ${conversion._id} after ${delayMs / 60000} mins.`);
         } catch (e) {
           console.error('Cleanup error:', e);
         }
-      }, 60 * 1000);
+      }, delayMs);
     });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message || 'Download failed' });
@@ -1587,18 +1597,28 @@ router.get('/public-file/:id', async (req: Request, res: Response): Promise<void
       res.status(404).json({ success: false, message: 'File expired or deleted' }); return;
     }
     res.download(conversion.outputPath, conversion.outputFilename || 'download', (err) => {
-      // Schedule cleanup exactly 1 minute after download finishes
+      let delayMs = 60 * 1000; // 1 min default
+      try {
+        if (fs.existsSync(conversion.outputPath)) {
+          const stats = fs.statSync(conversion.outputPath);
+          if (stats.size > 500 * 1024 * 1024) { // > 500MB
+            delayMs = 15 * 60 * 1000; // 15 mins
+          }
+        }
+      } catch (e) {}
+
+      // Schedule cleanup
       setTimeout(async () => {
         try {
           if (fs.existsSync(conversion.outputPath)) {
             fs.unlinkSync(conversion.outputPath);
           }
           // Do NOT delete the database record so it stays in user's history
-          console.log(`[CLEANUP] Deleted file for public-file ${conversion._id} 1 min after download.`);
+          console.log(`[CLEANUP] Deleted file for public-file ${conversion._id} after ${delayMs / 60000} mins.`);
         } catch (e) {
           console.error('Cleanup error:', e);
         }
-      }, 60 * 1000);
+      }, delayMs);
     });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message || 'Download failed' });
