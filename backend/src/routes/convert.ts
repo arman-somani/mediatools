@@ -670,6 +670,8 @@ async function downloadAndMergeViaQuickAPI(
 const router = Router();
 const execAsync = promisify(exec);
 
+// Dummy comment to trigger GitHub auto-sync test 1
+
 function getYouTubeVideoId(input: string): string | null {
   const trimmed = input.trim();
   if (!trimmed) return null;
