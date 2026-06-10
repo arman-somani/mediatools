@@ -133,4 +133,28 @@ router.get('/dashboard', authenticate, async (req: AuthRequest, res: Response): 
   });
 });
 
+// DELETE /api/user/history
+router.delete('/history', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    await Conversion.deleteMany({ userId: req.user!.id });
+    res.json({ success: true, message: 'History cleared' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message || 'Failed to clear history' });
+  }
+});
+
+// DELETE /api/user/history/:id
+router.delete('/history/:id', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const deleted = await Conversion.findOneAndDelete({ _id: req.params.id, userId: req.user!.id });
+    if (!deleted) {
+      res.status(404).json({ success: false, message: 'Conversion not found' });
+      return;
+    }
+    res.json({ success: true, message: 'Conversion deleted' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message || 'Failed to delete conversion' });
+  }
+});
+
 export default router;
