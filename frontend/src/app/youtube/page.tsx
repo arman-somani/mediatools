@@ -255,15 +255,18 @@ export default function YouTubePage() {
                       </div>
                     )}
 
-                    <h3 className="text-3xl font-display font-bold text-white mb-3">Audio is Ready!</h3>
-                    <p className="text-white mb-2 text-lg">Your high-quality {quality}kbps Audio is ready to download.</p>
+                    <h3 className="text-2xl sm:text-3xl font-display font-bold text-white mb-2 sm:mb-3">Audio is Ready!</h3>
+                    <p className="text-white mb-4 text-base sm:text-lg px-2">Your high-quality {quality}kbps Audio is ready to download.</p>
                     {fileSize && (
-                      <p className="text-sm font-medium mb-8 px-4 py-2 rounded-lg inline-block" style={{ background: 'var(--quality-track-bg)', color: 'var(--quality-btn-idle-color)' }}>
-                        Actual Size: <strong className="text-red-400">{formatFileSize(fileSize)}</strong>
+                      <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-sm font-medium mb-8 px-4 py-2 rounded-lg" style={{ background: 'var(--quality-track-bg)', color: 'var(--quality-btn-idle-color)' }}>
+                        <span>Actual Size: <strong className="text-red-400">{formatFileSize(fileSize)}</strong></span>
                         {conversionTime !== null && (
-                          <> | Time Taken: <strong className="text-red-400">{conversionTime}s</strong></>
+                          <span className="hidden sm:inline">|</span>
                         )}
-                      </p>
+                        {conversionTime !== null && (
+                          <span>Time Taken: <strong className="text-red-400">{conversionTime}s</strong></span>
+                        )}
+                      </div>
                     )}
                     {!fileSize && <div className="mb-8" />}
 
@@ -284,8 +287,8 @@ export default function YouTubePage() {
           </motion.div>
 
           {/* RIGHT COLUMN: PLAYLIST DOWNLOADER */}
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="w-full h-full">
-            <div className="glass-panel p-8 md:p-10 relative overflow-hidden h-full flex flex-col border-[2px] border-brand-purple/40 shadow-[0_0_40px_rgba(168,85,247,0.15)] bg-gradient-to-b from-brand-purple/[0.03] to-transparent">
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }} className="w-full h-full">
+            <div className="glass-panel p-5 sm:p-8 md:p-10 relative overflow-hidden h-full flex flex-col border-[2px] border-red-500/20 shadow-[0_0_40px_rgba(239,68,68,0.1)] bg-gradient-to-b from-red-500/[0.03] to-transparent">
               {/* Highlight glow */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-brand-purple/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
 
