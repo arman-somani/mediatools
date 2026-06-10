@@ -261,7 +261,7 @@ export default function YtVideoPage() {
 
                   <h3 className="text-2xl sm:text-3xl font-display font-bold text-white mb-2 sm:mb-3">Video is Ready!</h3>
                   {videoInfo?.title && (
-                    <p className="max-w-sm truncate mb-2 text-sm text-white">{videoInfo.title}</p>
+                    <p className="max-w-sm w-full line-clamp-2 mb-2 text-xs sm:text-sm text-white px-4">{videoInfo.title}</p>
                   )}
                   <p className="text-white mb-4 text-base sm:text-lg px-2">Your high-quality {quality} Video is ready to download.</p>
                   {fileSize && (
