@@ -1560,8 +1560,8 @@ router.get('/download/:id', async (req: Request, res: Response): Promise<void> =
           if (fs.existsSync(conversion.outputPath)) {
             fs.unlinkSync(conversion.outputPath);
           }
-          await Conversion.findByIdAndDelete(conversion._id);
-          console.log(`[CLEANUP] Deleted conversion ${conversion._id} and files 1 min after download.`);
+          // Do NOT delete the database record so it stays in user's history
+          console.log(`[CLEANUP] Deleted file for conversion ${conversion._id} 1 min after download.`);
         } catch (e) {
           console.error('Cleanup error:', e);
         }
@@ -1589,7 +1589,8 @@ router.get('/public-file/:id', async (req: Request, res: Response): Promise<void
           if (fs.existsSync(conversion.outputPath)) {
             fs.unlinkSync(conversion.outputPath);
           }
-          await Conversion.findByIdAndDelete(conversion._id);
+          // Do NOT delete the database record so it stays in user's history
+          console.log(`[CLEANUP] Deleted file for public-file ${conversion._id} 1 min after download.`);
         } catch (e) {
           console.error('Cleanup error:', e);
         }
