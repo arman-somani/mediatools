@@ -128,6 +128,29 @@ export default function DashboardPage() {
         loadDashboard();
     }, [accessToken, user]);
 
+    const handleDelete = async (id: string) => {
+        try {
+            const { data } = await api.delete(`/user/history/${id}`);
+            if (data.success) {
+                setRecentConversions(prev => prev.filter(c => c._id !== id));
+            }
+        } catch (err) {
+            console.error('Failed to delete conversion', err);
+        }
+    };
+
+    const handleDeleteAll = async () => {
+        if (!confirm('Are you sure you want to clear your entire conversion history?')) return;
+        try {
+            const { data } = await api.delete('/user/history');
+            if (data.success) {
+                setRecentConversions([]);
+            }
+        } catch (err) {
+            console.error('Failed to clear history', err);
+        }
+    };
+
     return (
         <PageWrapper>
             <main className="min-h-screen w-full px-6 pt-32 pb-20 text-white">
@@ -226,7 +249,20 @@ export default function DashboardPage() {
                         transition={{ delay: 0.65 }}
                         className="glass-panel rounded-3xl p-8"
                     >
-                        <h2 className="mb-6 text-2xl font-bold text-white">Recent Conversions & Downloads</h2>
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-2xl font-bold text-white">Recent Conversions & Downloads</h2>
+                            {recentConversions.length > 0 && (
+                                <button
+                                    onClick={handleDeleteAll}
+                                    className="text-xs font-semibold text-red-400 hover:text-red-300 bg-red-400/10 hover:bg-red-400/20 px-3 py-1.5 rounded-lg border border-red-400/20 transition-all flex items-center gap-1"
+                                >
+                                    <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                    Delete All
+                                </button>
+                            )}
+                        </div>
 
                         <div className="space-y-3">
                             {recentConversions.length > 0 ? (
@@ -291,6 +327,15 @@ export default function DashboardPage() {
                                                         </svg>
                                                     </Link>
                                                 )}
+                                                <button
+                                                    onClick={(e) => { e.preventDefault(); handleDelete(conversion._id!); }}
+                                                    title="Delete from history"
+                                                    className="w-8 h-8 rounded-full bg-white/5 border border-white/10 hover:bg-red-500/80 hover:border-red-500 flex items-center justify-center transition-all group"
+                                                >
+                                                    <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-white group-hover:scale-110 transition-transform">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
                                             </div>
                                         </motion.div>
                                     );
