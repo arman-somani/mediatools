@@ -76,8 +76,16 @@ export default function UniversalPage() {
     setError('');
     setIsFetchingInfo(true);
     try {
-      const { data } = await api.post('/convert/universal/metadata', { url });
-      setPreflightInfo(data.data);
+      const { data } = await api.get(`/extractor/info?url=${encodeURIComponent(url)}`);
+      const info = data.data;
+      const bestVideo = info.formats?.video?.[0];
+      setPreflightInfo({
+        title: info.title || 'Video',
+        thumbnail: info.thumbnail || '',
+        resolution: bestVideo?.quality || 'Best Available',
+        sizeBytes: bestVideo?.filesize || 0,
+        videoUrl: info.videoUrl || bestVideo?.url
+      });
     } catch (err: unknown) {
       const apiError = err as ApiError;
       setError(apiError.response?.data?.message || 'Failed to fetch video info');
