@@ -1092,14 +1092,8 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
               }
             });
 
-            const timeoutHandle = setTimeout(() => {
-              console.error(`Native yt-dlp audio timeout! Killing process...`);
-              ytdlp.kill('SIGKILL');
-            }, 45000);
-
             await new Promise((resolve, reject) => {
               ytdlp.on('close', (code) => {
-                clearTimeout(timeoutHandle);
                 if (code === 0) resolve(true);
                 else reject(new Error('Native yt-dlp failed with code ' + code + ' | ' + stderrLog));
               });
@@ -1416,14 +1410,8 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
                 }
               });
 
-              const timeoutHandle = setTimeout(() => {
-                console.error(`Native yt-dlp video timeout! Killing process...`);
-                ytdlp.kill('SIGKILL');
-              }, 45000);
-
               await new Promise((resolve, reject) => {
                 ytdlp.on('close', (code) => {
-                  clearTimeout(timeoutHandle);
                   if (code === 0) resolve(true);
                   else reject(new Error('Native yt-dlp failed with code ' + code + ' | ' + stderrLog));
                 });
