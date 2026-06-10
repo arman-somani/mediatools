@@ -550,9 +550,9 @@ async function downloadAndMergeViaPollingAPI(
   const fileUrl = data.file;
   console.log(`Polling API initiated for ${mode}. Waiting for file to be ready (up to 80s)...`);
 
-  // Poll for up to 80 seconds (16 attempts * 5s) to avoid Render 100s timeout
+  // Poll for up to 25 seconds (5 attempts * 5s) to avoid long waits
   let isReady = false;
-  for (let i = 0; i < 16; i++) {
+  for (let i = 0; i < 5; i++) {
     try {
       const check = await fetch(fileUrl, { method: 'HEAD' });
       if (check.ok || check.status === 200 || check.status === 206) {
@@ -565,7 +565,7 @@ async function downloadAndMergeViaPollingAPI(
     await new Promise(r => setTimeout(r, 5000));
   }
 
-  if (!isReady) throw new Error('Polling API timed out waiting for file after 80 seconds');
+  if (!isReady) throw new Error('Polling API timed out waiting for file after 25 seconds');
 
   console.log('Polling API file is ready! Downloading...');
   const fetchHeaders = { 'User-Agent': 'Mozilla/5.0' };
@@ -1025,7 +1025,33 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         // Step 2: Download audio
         let audioDownloaded = false;
 
-        // API Tier 1 & 2: Native yt-dlp downloader (without proxy, then with proxy)
+        // API Tier 1: Cobalt API
+        if (!audioDownloaded) {
+          try {
+            console.log('Trying Cobalt API for audio...');
+            const cobaltDownloadUrl = await downloadViaCobalt(cleanUrl, 'audio', audioQuality);
+            console.log('Downloading audio via ffmpeg from Cobalt link...');
+            await new Promise<void>((resolve, reject) => {
+              const ff = spawn('ffmpeg', [
+                '-y', 
+                '-user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+                '-i', cobaltDownloadUrl, 
+                '-c:a', 'libmp3lame', 
+                '-b:a', `${audioQuality}k`, 
+                outputPath
+              ], { windowsHide: true });
+              ff.on('close', code => { if (code === 0) resolve(); else reject(new Error(`FFmpeg Cobalt audio failed with code ${code}`)); });
+              ff.on('error', reject);
+            });
+            requireWrittenFile(outputPath, 'Cobalt audio download');
+            audioDownloaded = true;
+            console.log('Cobalt audio download succeeded');
+          } catch (e: any) {
+            console.error('Cobalt audio failed:', e.message);
+          }
+        }
+
+        // API Tier 2: Native yt-dlp downloader (without proxy, then with proxy)
         for (const useProxy of [false, true]) {
           if (audioDownloaded) break;
           try {
@@ -1066,8 +1092,14 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
               }
             });
 
+            const timeoutHandle = setTimeout(() => {
+              console.error(`Native yt-dlp audio timeout! Killing process...`);
+              ytdlp.kill('SIGKILL');
+            }, 45000);
+
             await new Promise((resolve, reject) => {
               ytdlp.on('close', (code) => {
+                clearTimeout(timeoutHandle);
                 if (code === 0) resolve(true);
                 else reject(new Error('Native yt-dlp failed with code ' + code + ' | ' + stderrLog));
               });
@@ -1078,32 +1110,6 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
             console.log(`Native yt-dlp audio succeeded (Proxy: ${useProxy})`);
           } catch (e: any) {
             console.error(`Native yt-dlp audio failed (Proxy: ${useProxy}):`, e.message);
-          }
-        }
-
-        // API Tier 2: Cobalt API
-        if (!audioDownloaded) {
-          try {
-            console.log('Trying Cobalt API for audio...');
-            const cobaltDownloadUrl = await downloadViaCobalt(cleanUrl, 'audio', audioQuality);
-            console.log('Downloading audio via ffmpeg from Cobalt link...');
-            await new Promise<void>((resolve, reject) => {
-              const ff = spawn('ffmpeg', [
-                '-y', 
-                '-user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-                '-i', cobaltDownloadUrl, 
-                '-c:a', 'libmp3lame', 
-                '-b:a', `${audioQuality}k`, 
-                outputPath
-              ], { windowsHide: true });
-              ff.on('close', code => { if (code === 0) resolve(); else reject(new Error(`FFmpeg Cobalt audio failed with code ${code}`)); });
-              ff.on('error', reject);
-            });
-            requireWrittenFile(outputPath, 'Cobalt audio download');
-            audioDownloaded = true;
-            console.log('Cobalt audio download succeeded');
-          } catch (e: any) {
-            console.error('Cobalt audio failed:', e.message);
           }
         }
 
@@ -1344,7 +1350,33 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           const targetHeightMap: Record<string, number> = { '360p': 360, '480p': 480, '720p': 720, '1080p': 1080, '4K': 2160, '8K': 4320 };
           const targetH = targetHeightMap[videoQuality] || 720;
 
-          // API Tier 1 & 2: Native yt-dlp downloader (without proxy, then with proxy)
+          // API Tier 1: Cobalt API
+          if (!videoDownloaded) {
+            try {
+              console.log('Trying Cobalt API for video...');
+              const cobaltDownloadUrl = await downloadViaCobalt(cleanUrl, 'video', videoQuality);
+              console.log('Downloading video via ffmpeg from Cobalt link...');
+              await new Promise<void>((resolve, reject) => {
+                const ff = spawn('ffmpeg', [
+                  '-y', 
+                  '-user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+                  '-i', cobaltDownloadUrl, 
+                  '-c', 'copy', 
+                  fallbackOutputPath
+                ], { windowsHide: true });
+                ff.on('close', code => { if (code === 0) resolve(); else reject(new Error(`FFmpeg Cobalt video failed with code ${code}`)); });
+                ff.on('error', reject);
+              });
+              requireWrittenFile(fallbackOutputPath, 'Cobalt video download');
+
+              videoDownloaded = true;
+              console.log('Cobalt video download succeeded');
+            } catch (e: any) {
+              console.error('Cobalt video failed:', e.message);
+            }
+          }
+
+          // API Tier 2: Native yt-dlp downloader (without proxy, then with proxy)
           for (const useProxy of [false, true]) {
             if (videoDownloaded) break;
             try {
@@ -1384,8 +1416,14 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
                 }
               });
 
+              const timeoutHandle = setTimeout(() => {
+                console.error(`Native yt-dlp video timeout! Killing process...`);
+                ytdlp.kill('SIGKILL');
+              }, 45000);
+
               await new Promise((resolve, reject) => {
                 ytdlp.on('close', (code) => {
+                  clearTimeout(timeoutHandle);
                   if (code === 0) resolve(true);
                   else reject(new Error('Native yt-dlp failed with code ' + code + ' | ' + stderrLog));
                 });
@@ -1396,32 +1434,6 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
               console.log(`Native yt-dlp video succeeded (Proxy: ${useProxy})`);
             } catch (e: any) {
               console.error(`Native yt-dlp video failed (Proxy: ${useProxy}):`, e.message);
-            }
-          }
-
-          // API Tier 2: Cobalt API
-          if (!videoDownloaded) {
-            try {
-              console.log('Trying Cobalt API for video...');
-              const cobaltDownloadUrl = await downloadViaCobalt(cleanUrl, 'video', videoQuality);
-              console.log('Downloading video via ffmpeg from Cobalt link...');
-              await new Promise<void>((resolve, reject) => {
-                const ff = spawn('ffmpeg', [
-                  '-y', 
-                  '-user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-                  '-i', cobaltDownloadUrl, 
-                  '-c', 'copy', 
-                  fallbackOutputPath
-                ], { windowsHide: true });
-                ff.on('close', code => { if (code === 0) resolve(); else reject(new Error(`FFmpeg Cobalt video failed with code ${code}`)); });
-                ff.on('error', reject);
-              });
-              requireWrittenFile(fallbackOutputPath, 'Cobalt video download');
-
-              videoDownloaded = true;
-              console.log('Cobalt video download succeeded');
-            } catch (e: any) {
-              console.error('Cobalt video failed:', e.message);
             }
           }
 
