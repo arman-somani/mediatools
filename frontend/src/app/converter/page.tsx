@@ -6,6 +6,7 @@ import api, { apiUrl } from '@/lib/api';
 import { formatFileSize } from '@/lib/utils';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ProgressCircle from '@/components/ProgressCircle';
+import { requestNotificationPermission, sendNotification } from '@/lib/notifications';
 import PageWrapper from '@/components/PageWrapper';
 
 type Quality = '128' | '192' | '320';
@@ -57,6 +58,7 @@ export default function ConverterPage() {
           setProgress(100);
           if (startTimeRef.current) setConversionTime(Math.round((Date.now() - startTimeRef.current) / 1000));
           setFileSize(conv.fileSize || null);
+          sendNotification('Conversion Complete! 🔄', 'Your local file has finished converting and is ready to save.');
         } else if (conv.status === 'failed') {
           clearInterval(pollRef.current!);
           setStatus('failed');
@@ -71,6 +73,7 @@ export default function ConverterPage() {
   const handleConvert = async () => {
     startTimeRef.current = Date.now();
     if (!file) return;
+    requestNotificationPermission();
     setStatus('uploading'); setProgress(0); setError(''); setJobId(''); setFileSize(null); setConversionTime(null);
     const formData = new FormData();
     formData.append('file', file);
