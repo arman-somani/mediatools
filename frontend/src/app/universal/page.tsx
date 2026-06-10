@@ -6,6 +6,7 @@ import { formatFileSize } from '@/lib/utils';
 import Image from 'next/image';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ProgressCircle from '@/components/ProgressCircle';
+import { requestNotificationPermission, sendNotification } from '@/lib/notifications';
 
 type ApiError = { response?: { data?: { message?: string } } };
 
@@ -58,6 +59,7 @@ export default function UniversalPage() {
           if (startTimeRef.current) setConversionTime(Math.round((Date.now() - startTimeRef.current) / 1000));
           setVideoInfo({ title: conv.youtubeTitle, thumbnail: conv.youtubeThumbnail });
           setFileSize(conv.fileSize || null);
+          sendNotification('Download Complete! 🎉', 'Your video has finished downloading and is ready to save.');
         } else if (conv.status === 'failed') {
           clearInterval(pollRef.current!);
           setStatus('failed');
@@ -87,6 +89,7 @@ export default function UniversalPage() {
   const handleDownload = async () => {
     startTimeRef.current = Date.now();
     if (!url.startsWith('http')) { setError('Please enter a valid URL starting with http:// or https://'); return; }
+    requestNotificationPermission();
     setError(''); setStatus('processing'); setProgress(0); setConversionTime(null);
     try {
       const { data } = await api.post('/convert/universal', { url, videoQuality: '8K' });
