@@ -1300,7 +1300,7 @@ router.post('/universal/metadata', async (req: Request, res: Response): Promise<
     if (thumbnail === 'NA') thumbnail = '';
     const resolution = (lines[2] || '').trim() || 'Best Available';
     let sizeBytes = parseInt((lines[3] || '').trim(), 10);
-    const videoUrl = (lines[4] || '').trim();
+    const directVideoUrl = (lines[4] || '').trim();
 
     if (isNaN(sizeBytes)) sizeBytes = 0;
 
@@ -1311,7 +1311,7 @@ router.post('/universal/metadata', async (req: Request, res: Response): Promise<
         thumbnail,
         resolution: resolution === 'NA' ? 'Best Available' : resolution,
         sizeBytes,
-        videoUrl: videoUrl === 'NA' ? '' : videoUrl
+        videoUrl: directVideoUrl === 'NA' ? '' : directVideoUrl
       },
     });
   } catch (error: any) {
