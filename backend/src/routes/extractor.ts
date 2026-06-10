@@ -11,7 +11,7 @@ function getYtDlpPath(): string {
   return fs.existsSync(binPath) ? binPath : 'yt-dlp';
 }
 
-function ytDlpArgs(args: string[]): string[] {
+function ytDlpArgs(args: string[], useProxy: boolean = false): string[] {
   const base = [
     '--js-runtimes', 'node', 
     '--remote-components', 'ejs:github',
@@ -20,16 +20,16 @@ function ytDlpArgs(args: string[]): string[] {
     '--extractor-args', 'youtube:player_client=android,web'
   ];
   
-  if (process.env.PROXY_URL) {
+  if (useProxy && process.env.PROXY_URL) {
     base.unshift('--proxy', process.env.PROXY_URL);
   }
   
   return [...base, ...args];
 }
 
-function runYtDlpJson(url: string): Promise<any> {
+function runYtDlpJson(url: string, useProxy: boolean = false): Promise<any> {
   return new Promise((resolve, reject) => {
-    const child = spawn(getYtDlpPath(), ytDlpArgs(['-J', '--no-playlist', url]), { windowsHide: true });
+    const child = spawn(getYtDlpPath(), ytDlpArgs(['-J', '--no-playlist', url], useProxy), { windowsHide: true });
     const stdoutChunks: Buffer[] = [];
     let stderr = '';
 
@@ -64,10 +64,18 @@ router.get('/info', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const data = await runYtDlpJson(url);
+    let data;
+    try {
+      console.log(`[Extractor] Tier 1: Fetching metadata natively for ${url}`);
+      data = await runYtDlpJson(url, false);
+      if (!data || !data.formats) throw new Error('Invalid metadata returned natively');
+    } catch (err: any) {
+      console.warn(`[Extractor] Tier 1 failed: ${err.message}. Falling back to Tier 2 (Proxy)...`);
+      data = await runYtDlpJson(url, true);
+    }
 
     if (!data) {
-      res.status(400).json({ success: false, message: 'No media found at this URL' });
+      res.status(500).json({ success: false, message: 'Failed to extract video data (null returned)' });
       return;
     }
 

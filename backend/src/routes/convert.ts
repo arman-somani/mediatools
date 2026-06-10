@@ -552,7 +552,7 @@ function getYouTubeVideoId(input: string): string | null {
   return null;
 }
 
-function ytDlpArgs(args: string[]): string[] {
+function ytDlpArgs(args: string[], useProxy: boolean = false): string[] {
   const base = [
     '--js-runtimes', 'node', 
     '--remote-components', 'ejs:github',
@@ -561,7 +561,7 @@ function ytDlpArgs(args: string[]): string[] {
     '--extractor-args', 'youtube:player_client=android,web'
   ];
   
-  if (process.env.PROXY_URL) {
+  if (useProxy && process.env.PROXY_URL) {
     base.unshift('--proxy', process.env.PROXY_URL);
   }
   
@@ -570,9 +570,9 @@ function ytDlpArgs(args: string[]): string[] {
   return [...base, ...args];
 }
 
-function runYtDlp(args: string[]): Promise<{ stdout: string; stderr: string }> {
+function runYtDlp(args: string[], useProxy: boolean = false): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
-    const child = spawn(getYtDlpPath(), ytDlpArgs(args), { windowsHide: true });
+    const child = spawn(getYtDlpPath(), ytDlpArgs(args, useProxy), { windowsHide: true });
     let stdout = '';
     let stderr = '';
 
@@ -832,7 +832,14 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         } catch (e) { /* ignore */ }
 
         try {
-          const { stdout } = await runYtDlp(['--print', 'title', '--print', 'duration', '--no-playlist', cleanUrl]);
+          let stdout = '';
+          try {
+            const res = await runYtDlp(['--print', 'title', '--print', 'duration', '--no-playlist', cleanUrl], false);
+            stdout = res.stdout;
+          } catch (e) {
+            const res = await runYtDlp(['--print', 'title', '--print', 'duration', '--no-playlist', cleanUrl], true);
+            stdout = res.stdout;
+          }
           const lines = stdout.trim().split('\n');
           const dlTitle = (lines[0] || '').trim();
           if (dlTitle && dlTitle !== 'YouTube Audio') videoTitle = dlTitle;
@@ -848,10 +855,11 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         // Step 2: Download audio
         let audioDownloaded = false;
 
-        // API Tier 1: Native yt-dlp downloader
-        if (!audioDownloaded) {
+        // API Tier 1 & 2: Native yt-dlp downloader (without proxy, then with proxy)
+        for (const useProxy of [false, true]) {
+          if (audioDownloaded) break;
           try {
-            console.log('Trying Native yt-dlp for audio...');
+            console.log(`Trying Native yt-dlp for audio... (Proxy: ${useProxy})`);
             const ytdlp = spawn(getYtDlpPath(), ytDlpArgs([
               '--newline',
               '-f', 'ba/b',
@@ -864,14 +872,14 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
               '--http-chunk-size', '10M',
               '--hls-prefer-native',
               cleanUrl,
-            ]), { windowsHide: true });
+            ], useProxy), { windowsHide: true });
 
             let lastUpdate = Date.now();
             let stderrLog = '';
             ytdlp.stderr.on('data', (d) => {
               const str = d.toString();
               stderrLog += str;
-              console.error('[yt-dlp AUDIO stderr]', str);
+              console.error(`[yt-dlp AUDIO stderr (Proxy: ${useProxy})]`, str);
             });
             ytdlp.stdout.on('data', (data) => {
               const output = data.toString();
@@ -895,11 +903,11 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
               });
             });
 
-            requireWrittenFile(outputPath, 'Native yt-dlp audio download');
+            requireWrittenFile(outputPath, `Native yt-dlp audio download (Proxy: ${useProxy})`);
             audioDownloaded = true;
-            console.log('Native yt-dlp audio succeeded');
+            console.log(`Native yt-dlp audio succeeded (Proxy: ${useProxy})`);
           } catch (e: any) {
-            console.error('Native yt-dlp audio failed:', e.message);
+            console.error(`Native yt-dlp audio failed (Proxy: ${useProxy}):`, e.message);
           }
         }
 
@@ -1078,7 +1086,14 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           } catch (e) { /* ignore */ }
 
           try {
-            const { stdout } = await runYtDlp(['--print', 'title', '--no-playlist', cleanUrl]);
+            let stdout = '';
+            try {
+              const res = await runYtDlp(['--print', 'title', '--no-playlist', cleanUrl], false);
+              stdout = res.stdout;
+            } catch (e) {
+              const res = await runYtDlp(['--print', 'title', '--no-playlist', cleanUrl], true);
+              stdout = res.stdout;
+            }
             const lines = stdout.trim().split('\n');
             const dlTitle = (lines[0] || '').trim();
             if (dlTitle && dlTitle !== 'YouTube Video') videoTitle = dlTitle;
@@ -1105,10 +1120,11 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           const targetHeightMap: Record<string, number> = { '360p': 360, '480p': 480, '720p': 720, '1080p': 1080, '4K': 2160, '8K': 4320 };
           const targetH = targetHeightMap[videoQuality] || 720;
 
-          // API Tier 1: Native yt-dlp downloader
-          if (!videoDownloaded) {
+          // API Tier 1 & 2: Native yt-dlp downloader (without proxy, then with proxy)
+          for (const useProxy of [false, true]) {
+            if (videoDownloaded) break;
             try {
-              console.log('Trying Native yt-dlp for video...');
+              console.log(`Trying Native yt-dlp for video... (Proxy: ${useProxy})`);
               const ytdlp = spawn(getYtDlpPath(), ytDlpArgs([
                 '--newline',
                 '-f', 'bv*+ba/b',
@@ -1120,14 +1136,14 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
                 '--http-chunk-size', '10M',
                 '--hls-prefer-native',
                 cleanUrl,
-              ]), { windowsHide: true });
+              ], useProxy), { windowsHide: true });
 
               let lastUpdate = Date.now();
               let stderrLog = '';
               ytdlp.stderr.on('data', (d) => {
                 const str = d.toString();
                 stderrLog += str;
-                console.error('[yt-dlp VIDEO stderr]', str);
+                console.error(`[yt-dlp VIDEO stderr (Proxy: ${useProxy})]`, str);
               });
               ytdlp.stdout.on('data', (data) => {
                 const output = data.toString();
@@ -1151,11 +1167,11 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
                 });
               });
 
-              requireWrittenFile(fallbackOutputPath, 'Native yt-dlp video download');
+              requireWrittenFile(fallbackOutputPath, `Native yt-dlp video download (Proxy: ${useProxy})`);
               videoDownloaded = true;
-              console.log('Native yt-dlp video succeeded');
+              console.log(`Native yt-dlp video succeeded (Proxy: ${useProxy})`);
             } catch (e: any) {
-              console.error('Native yt-dlp video failed:', e.message);
+              console.error(`Native yt-dlp video failed (Proxy: ${useProxy}):`, e.message);
             }
           }
 
@@ -1289,7 +1305,8 @@ router.post('/universal/metadata', async (req: Request, res: Response): Promise<
     const cleanUrl = String(videoUrl).trim();
 
     // Run yt-dlp to print title, thumbnail, resolution, filesize, and direct url
-    const { stdout } = await runYtDlp([
+    let stdout = '';
+    const args = [
       '--print', '%(title)s',
       '--print', '%(thumbnail)s',
       '--print', '%(resolution)s',
@@ -1297,7 +1314,16 @@ router.post('/universal/metadata', async (req: Request, res: Response): Promise<
       '--print', '%(url)s',
       '--no-playlist',
       cleanUrl,
-    ]);
+    ];
+
+    try {
+      const res = await runYtDlp(args, false);
+      stdout = res.stdout;
+    } catch (e) {
+      console.warn('Universal metadata native fetch failed, trying proxy...');
+      const res = await runYtDlp(args, true);
+      stdout = res.stdout;
+    }
 
     const lines = stdout.trim().split('\n');
     const title = (lines[0] || '').trim() || 'Downloaded Video';
@@ -1385,7 +1411,14 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         let videoTitle = 'Downloaded Video';
         let thumbnail = '';
         try {
-          const { stdout } = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--no-playlist', cleanUrl]);
+          let stdout = '';
+          try {
+            const res = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--no-playlist', cleanUrl], false);
+            stdout = res.stdout;
+          } catch (e) {
+            const res = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--no-playlist', cleanUrl], true);
+            stdout = res.stdout;
+          }
           const lines = stdout.trim().split('\n');
           const dlTitle = (lines[0] || '').trim();
           if (dlTitle && dlTitle !== 'Downloaded Video') videoTitle = dlTitle;
@@ -1401,42 +1434,59 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
 
         // Step 2: Download video in its native format without remuxing
         // We use -S for sorting formats which is highly optimized for ANY website!
-        const ytdlp = spawn(getYtDlpPath(), ytDlpArgs([
-          '--newline',
-          '-f', 'bv*+ba/b',
-          '-S', ytSort,
-          '--merge-output-format', 'mp4',
-          '-o', path.join(outputDir, `${fileId}.%(ext)s`),
-          '--no-playlist',
-          cleanUrl,
-        ]), { windowsHide: true });
+        let videoDownloaded = false;
+        
+        for (const useProxy of [false, true]) {
+          if (videoDownloaded) break;
+          try {
+            console.log(`Trying yt-dlp UNIVERSAL for video... (Proxy: ${useProxy})`);
+            const ytdlp = spawn(getYtDlpPath(), ytDlpArgs([
+              '--newline',
+              '-f', 'bv*+ba/b',
+              '-S', ytSort,
+              '--merge-output-format', 'mp4',
+              '-o', path.join(outputDir, `${fileId}.%(ext)s`),
+              '--no-playlist',
+              cleanUrl,
+            ], useProxy), { windowsHide: true });
 
-        let lastUpdate = Date.now();
-        ytdlp.stdout.on('data', (data) => {
-          const output = data.toString();
-          const match = output.match(/\[download\]\s+([\d.]+)%/);
-          if (match) {
-            const progress = parseFloat(match[1]);
-            if (!isNaN(progress)) {
-              const now = Date.now();
-              if (now - lastUpdate > 1000) {
-                lastUpdate = now;
-                Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
+            let lastUpdate = Date.now();
+            ytdlp.stdout.on('data', (data) => {
+              const output = data.toString();
+              const match = output.match(/\[download\]\s+([\d.]+)%/);
+              if (match) {
+                const progress = parseFloat(match[1]);
+                if (!isNaN(progress)) {
+                  const now = Date.now();
+                  if (now - lastUpdate > 1000) {
+                    lastUpdate = now;
+                    Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
+                  }
+                }
               }
-            }
+            });
+
+            ytdlp.stderr.on('data', (data) => {
+              console.error(`[yt-dlp UNIVERSAL ERROR (Proxy: ${useProxy})]:`, data.toString());
+            });
+
+            await new Promise((resolve, reject) => {
+              ytdlp.on('close', (code) => {
+                if (code === 0) resolve(true);
+                else reject(new Error('yt-dlp failed with code ' + code));
+              });
+            });
+            
+            videoDownloaded = true;
+            console.log(`yt-dlp UNIVERSAL succeeded (Proxy: ${useProxy})`);
+          } catch (e: any) {
+            console.error(`yt-dlp UNIVERSAL failed (Proxy: ${useProxy}):`, e.message);
           }
-        });
-
-        ytdlp.stderr.on('data', (data) => {
-          console.error('[yt-dlp UNIVERSAL ERROR]:', data.toString());
-        });
-
-        await new Promise((resolve, reject) => {
-          ytdlp.on('close', (code) => {
-            if (code === 0) resolve(true);
-            else reject(new Error('yt-dlp failed with code ' + code));
-          });
-        });
+        }
+        
+        if (!videoDownloaded) {
+          throw new Error('All download attempts failed.');
+        }
 
         // Find the actual downloaded file since the extension could be .webm, .mkv, or .mp4
         const downloadedFile = findDownloadedFile(fileId);
@@ -1484,7 +1534,15 @@ router.post('/youtube-playlist/metadata', async (req: Request, res: Response): P
 
     // Fetch flat playlist JSON (fast, no extraction)
     // --dump-json outputs one JSON object per line per video
-    const { stdout } = await runYtDlp(['--flat-playlist', '--dump-json', cleanUrl]);
+    let stdout = '';
+    try {
+      const res = await runYtDlp(['--flat-playlist', '--dump-json', cleanUrl], false);
+      stdout = res.stdout;
+    } catch (e) {
+      console.warn('Playlist native fetch failed, trying proxy...');
+      const res = await runYtDlp(['--flat-playlist', '--dump-json', cleanUrl], true);
+      stdout = res.stdout;
+    }
 
     const lines = stdout.trim().split('\n');
     const videos = lines.map(line => {
