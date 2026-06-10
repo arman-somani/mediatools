@@ -257,25 +257,21 @@ export default function DashboardPage() {
                                                     </svg>
                                                 </div>
                                                 <div className="min-w-0 flex-1">
-                                                    <p className="font-medium text-white truncate text-sm">
-                                                        {conversion.youtubeTitle || conversion.originalName || conversion.outputFilename || 'converted-file'}
-                                                    </p>
-                                                    <div className="text-xs text-white/50 mt-0.5 flex flex-wrap items-center gap-2">
-                                                        <Link href={`${typeHref}${conversion.youtubeUrl ? `?url=${encodeURIComponent(conversion.youtubeUrl)}` : ''}`} className="hover:text-brand-purple transition-colors font-semibold">
-                                                            {typeLabel}
+                                                    {conversion.youtubeUrl ? (
+                                                        <Link 
+                                                            href={`${typeHref}?url=${encodeURIComponent(conversion.youtubeUrl)}`}
+                                                            className="font-medium text-white hover:text-brand-cyan transition-colors truncate block text-sm mb-1"
+                                                            title={conversion.youtubeUrl}
+                                                        >
+                                                            {conversion.youtubeUrl}
                                                         </Link>
-                                                        {conversion.youtubeUrl && (
-                                                            <>
-                                                                <span className="opacity-50">&bull;</span>
-                                                                <Link 
-                                                                    href={`${typeHref}?url=${encodeURIComponent(conversion.youtubeUrl)}`}
-                                                                    className="truncate max-w-[150px] sm:max-w-xs md:max-w-md hover:text-brand-cyan hover:underline transition-all"
-                                                                    title={conversion.youtubeUrl}
-                                                                >
-                                                                    {conversion.youtubeUrl}
-                                                                </Link>
-                                                            </>
-                                                        )}
+                                                    ) : (
+                                                        <p className="font-medium text-white truncate text-sm mb-1">
+                                                            {conversion.youtubeTitle || conversion.originalName || conversion.outputFilename || 'converted-file'}
+                                                        </p>
+                                                    )}
+                                                    <div className="text-xs text-white/50 flex flex-wrap items-center gap-2">
+                                                        <span className="font-semibold text-brand-purple">{typeLabel}</span>
                                                     </div>
                                                 </div>
                                             </div>
