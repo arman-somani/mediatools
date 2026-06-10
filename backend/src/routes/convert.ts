@@ -42,6 +42,8 @@ const YT_MEDIA_HOST = 'cloud-api-hub-youtube-downloader.p.rapidapi.com';
 const YT_ALTERNATIVE_HOST = 'youtube-media-downloader.p.rapidapi.com';
 const YT_POLLING_HOST = 'youtube-video-fast-downloader-24-7.p.rapidapi.com';
 const YT_QUICK_HOST = 'youtube-quick-video-downloader.p.rapidapi.com';
+const YT_ALL_MEDIA_HOST = 'all-media-downloader4.p.rapidapi.com';
+const YT_CDN_HOST = 'youtube-mp4-mp3-m4a-cdn.p.rapidapi.com';
 
 /** Stream a URL response body into a local file */
 async function downloadStreamFromUrl(url: string, destPath: string): Promise<void> {
@@ -265,6 +267,161 @@ async function downloadAndMergeViaAPI(
     }
   }
 }
+
+/**
+ * Uses all-media-downloader4.p.rapidapi.com RapidAPI as Tier 4 Fallback.
+ */
+async function downloadAndMergeViaAllMedia(
+  videoId: string,
+  outputPath: string,
+  mode: 'audio' | 'video',
+  targetHeight = 720,
+  audioBitrate = '192',
+  onProgress?: (progress: number) => void
+): Promise<void> {
+  const headers = { 'x-rapidapi-key': getRapidApiKey(), 'x-rapidapi-host': YT_ALL_MEDIA_HOST };
+  const resp = await fetch(`https://${YT_ALL_MEDIA_HOST}/api/youtube/download?id=${videoId}`, { headers });
+  if (!resp.ok) throw new Error(`AllMedia API returned ${resp.status}`);
+  const data = await resp.json() as any;
+  
+  if (!data.results || !Array.isArray(data.results)) {
+    throw new Error('AllMedia API returned invalid format');
+  }
+
+  if (mode === 'audio') {
+    const audioFormats = data.results.filter((f: any) => f.mime.includes('audio/'));
+    if (!audioFormats.length) throw new Error('No audio streams found');
+    const bestAudio = audioFormats[0];
+    await downloadFileWithResume(bestAudio.url, outputPath, {}, 0, onProgress);
+  } else {
+    const videoFormats = data.results.filter((f: any) => f.mime.includes('video/mp4'));
+    let bestVideo = videoFormats.find((f: any) => f.quality === targetHeight + 'p') || videoFormats.find((f: any) => f.quality === '1080p') || videoFormats.find((f: any) => f.quality === '720p') || videoFormats[0];
+    if (!bestVideo) throw new Error('No video streams found');
+    
+    if (bestVideo.has_audio) {
+      await downloadFileWithResume(bestVideo.url, outputPath, {}, 0, onProgress);
+    } else {
+      const audioFormats = data.results.filter((f: any) => f.mime.includes('audio/'));
+      if (!audioFormats.length) throw new Error('No audio streams found for merging');
+      const bestAudio = audioFormats[0];
+      
+      const tmpVideo = outputPath + '.tmp.mp4';
+      const tmpAudio = outputPath + '.tmp.m4a';
+      
+      try {
+        await Promise.all([
+          downloadFileWithResume(bestVideo.url, tmpVideo, {}, 0, p => {
+             if(onProgress) onProgress(p * 0.5);
+          }),
+          downloadFileWithResume(bestAudio.url, tmpAudio, {}, 0, p => {
+             if(onProgress) onProgress(50 + (p * 0.4));
+          })
+        ]);
+        
+        await new Promise<void>((resolve, reject) => {
+          const ff = spawn('ffmpeg', [
+            '-y', 
+            '-i', tmpVideo, 
+            '-i', tmpAudio, 
+            '-c:v', 'copy', 
+            '-c:a', 'aac', 
+            '-b:a', `${audioBitrate}k`, 
+            '-shortest', 
+            outputPath
+          ], { windowsHide: true });
+          
+          let stderr = '';
+          ff.stderr.on('data', d => stderr += d.toString());
+          ff.on('close', code => {
+            if (code === 0) resolve(); else reject(new Error(`ffmpeg merge failed with code ${code}. ${stderr}`));
+          });
+          ff.on('error', reject);
+        });
+      } finally {
+        if (fs.existsSync(tmpVideo)) fs.unlinkSync(tmpVideo);
+        if (fs.existsSync(tmpAudio)) fs.unlinkSync(tmpAudio);
+      }
+    }
+  }
+}
+
+/**
+ * Uses youtube-mp4-mp3-m4a-cdn.p.rapidapi.com RapidAPI as Tier 5 Fallback.
+ */
+async function downloadAndMergeViaCDN(
+  videoId: string,
+  outputPath: string,
+  mode: 'audio' | 'video',
+  targetHeight = 720,
+  audioBitrate = '192',
+  onProgress?: (progress: number) => void
+): Promise<void> {
+  const headers = { 'x-rapidapi-key': getRapidApiKey(), 'x-rapidapi-host': YT_CDN_HOST };
+  const resp = await fetch(`https://${YT_CDN_HOST}/stream?id=${videoId}`, { headers });
+  if (!resp.ok) throw new Error(`CDN API returned ${resp.status}`);
+  const data = await resp.json() as any;
+  
+  if (!data.formats || !Array.isArray(data.formats)) {
+    throw new Error('CDN API returned invalid format');
+  }
+
+  if (mode === 'audio') {
+    const audioFormats = data.formats.filter((f: any) => f.type === 'audio');
+    if (!audioFormats.length) throw new Error('No audio streams found');
+    const bestAudio = audioFormats[0];
+    await downloadFileWithResume(bestAudio.url, outputPath, {}, 0, onProgress);
+  } else {
+    const videoFormats = data.formats.filter((f: any) => f.type === 'video_only' || f.type === 'video_with_audio');
+    let bestVideo = videoFormats.find((f: any) => f.quality === targetHeight + 'p') || videoFormats.find((f: any) => f.quality === '1080p') || videoFormats.find((f: any) => f.quality === '720p') || videoFormats[0];
+    if (!bestVideo) throw new Error('No video streams found');
+    
+    if (bestVideo.type === 'video_with_audio') {
+      await downloadFileWithResume(bestVideo.url, outputPath, {}, 0, onProgress);
+    } else {
+      const audioFormats = data.formats.filter((f: any) => f.type === 'audio');
+      if (!audioFormats.length) throw new Error('No audio streams found for merging');
+      const bestAudio = audioFormats[0];
+      
+      const tmpVideo = outputPath + '.tmp.mp4';
+      const tmpAudio = outputPath + '.tmp.m4a';
+      
+      try {
+        await Promise.all([
+          downloadFileWithResume(bestVideo.url, tmpVideo, {}, 0, p => {
+             if(onProgress) onProgress(p * 0.5);
+          }),
+          downloadFileWithResume(bestAudio.url, tmpAudio, {}, 0, p => {
+             if(onProgress) onProgress(50 + (p * 0.4));
+          })
+        ]);
+        
+        await new Promise<void>((resolve, reject) => {
+          const ff = spawn('ffmpeg', [
+            '-y', 
+            '-i', tmpVideo, 
+            '-i', tmpAudio, 
+            '-c:v', 'copy', 
+            '-c:a', 'aac', 
+            '-b:a', `${audioBitrate}k`, 
+            '-shortest', 
+            outputPath
+          ], { windowsHide: true });
+          
+          let stderr = '';
+          ff.stderr.on('data', d => stderr += d.toString());
+          ff.on('close', code => {
+            if (code === 0) resolve(); else reject(new Error(`ffmpeg merge failed with code ${code}. ${stderr}`));
+          });
+          ff.on('error', reject);
+        });
+      } finally {
+        if (fs.existsSync(tmpVideo)) fs.unlinkSync(tmpVideo);
+        if (fs.existsSync(tmpAudio)) fs.unlinkSync(tmpAudio);
+      }
+    }
+  }
+}
+
 /**
  * Uses youtube-media-downloader RapidAPI as Tier 4 Fallback.
  */
@@ -953,7 +1110,37 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
           }
         }
 
-        // API Tier 3: RapidAPI
+        // API Tier 3.5: AllMedia4
+        if (!audioDownloaded) {
+          try {
+            console.log('Trying AllMedia API for audio...');
+            await downloadAndMergeViaAllMedia(videoId, outputPath, 'audio', 720, audioQuality, (progress) => {
+              Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
+            });
+            requireWrittenFile(outputPath, 'AllMedia audio conversion');
+            audioDownloaded = true;
+            console.log('AllMedia audio succeeded');
+          } catch (e: any) {
+            console.error('AllMedia audio failed:', e.message);
+          }
+        }
+
+        // API Tier 4: CDN API
+        if (!audioDownloaded) {
+          try {
+            console.log('Trying CDN API for audio...');
+            await downloadAndMergeViaCDN(videoId, outputPath, 'audio', 720, audioQuality, (progress) => {
+              Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
+            });
+            requireWrittenFile(outputPath, 'CDN API audio conversion');
+            audioDownloaded = true;
+            console.log('CDN API audio succeeded');
+          } catch (e: any) {
+            console.error('CDN API audio failed:', e.message);
+          }
+        }
+
+        // API Tier 5: RapidAPI
         if (!audioDownloaded) {
           try {
             console.log('Trying RapidAPI for audio...');
@@ -1229,7 +1416,37 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
             }
           }
 
-          // API Tier 3: RapidAPI
+          // API Tier 3.5: AllMedia4
+          if (!videoDownloaded) {
+            try {
+              console.log('Trying AllMedia API for video...');
+              await downloadAndMergeViaAllMedia(videoId, fallbackOutputPath, 'video', targetH, '192', (progress) => {
+                Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
+              });
+              requireWrittenFile(fallbackOutputPath, 'AllMedia video download');
+              videoDownloaded = true;
+              console.log('AllMedia video succeeded');
+            } catch (e: any) {
+              console.error('AllMedia video failed:', e.message);
+            }
+          }
+
+          // API Tier 4: CDN API
+          if (!videoDownloaded) {
+            try {
+              console.log('Trying CDN API for video...');
+              await downloadAndMergeViaCDN(videoId, fallbackOutputPath, 'video', targetH, '192', (progress) => {
+                Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
+              });
+              requireWrittenFile(fallbackOutputPath, 'CDN API video download');
+              videoDownloaded = true;
+              console.log('CDN API video succeeded');
+            } catch (e: any) {
+              console.error('CDN API video failed:', e.message);
+            }
+          }
+
+          // API Tier 5: RapidAPI
           if (!videoDownloaded) {
             try {
               console.log('Trying RapidAPI for video...');
