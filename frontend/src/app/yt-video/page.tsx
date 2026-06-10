@@ -6,6 +6,7 @@ import { isValidYouTubeUrl, getYouTubeVideoId, formatFileSize } from '@/lib/util
 import Image from 'next/image';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ProgressCircle from '@/components/ProgressCircle';
+import { requestNotificationPermission, sendNotification } from '@/lib/notifications';
 
 type VideoQuality = '360p' | '480p' | '720p' | '1080p' | '4K' | '8K';
 
@@ -78,6 +79,7 @@ export default function YtVideoPage() {
           if (startTimeRef.current) setConversionTime(Math.round((Date.now() - startTimeRef.current) / 1000));
           setVideoInfo({ title: conv.youtubeTitle, thumbnail: conv.youtubeThumbnail });
           setFileSize(conv.fileSize || null);
+          sendNotification('Audio Ready! 🎵', 'Your audio file has finished converting and is ready to save.');
         } else if (conv.status === 'failed') {
           clearInterval(pollRef.current!);
           setStatus('failed');
@@ -92,6 +94,7 @@ export default function YtVideoPage() {
   const handleDownload = async () => {
     startTimeRef.current = Date.now();
     if (!isValidYouTubeUrl(url)) { setError('Please enter a valid YouTube URL'); return; }
+    requestNotificationPermission();
     setError(''); setStatus('processing'); setProgress(0); setConversionTime(null);
     try {
       const { data } = await api.post('/convert/youtube-Video', { url, videoQuality: quality });
