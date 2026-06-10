@@ -123,7 +123,7 @@ export default function YouTubePage() {
         <div className="w-full grid grid-cols-1 xl:grid-cols-2 gap-8 items-stretch">
           {/* LEFT COLUMN: SINGLE DOWNLOADER */}
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="w-full h-full">
-            <div className="glass-panel p-8 md:p-10 relative overflow-hidden h-full flex flex-col">
+            <div className="glass-panel p-5 sm:p-8 md:p-10 relative overflow-hidden h-full flex flex-col">
               <div className="absolute top-0 left-0 w-64 h-64 bg-red-500/5 rounded-full blur-3xl -ml-20 -mt-20 pointer-events-none" />
 
               <div className="flex items-center gap-3 mb-8 relative z-10">
@@ -287,8 +287,8 @@ export default function YouTubePage() {
           </motion.div>
 
           {/* RIGHT COLUMN: PLAYLIST DOWNLOADER */}
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }} className="w-full h-full">
-            <div className="glass-panel p-5 sm:p-8 md:p-10 relative overflow-hidden h-full flex flex-col border-[2px] border-red-500/20 shadow-[0_0_40px_rgba(239,68,68,0.1)] bg-gradient-to-b from-red-500/[0.03] to-transparent">
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="w-full h-full">
+            <div className="glass-panel p-5 sm:p-10 relative overflow-hidden h-full flex flex-col border-[2px] border-brand-purple/40 shadow-[0_0_40px_rgba(168,85,247,0.15)] bg-gradient-to-b from-brand-purple/[0.03] to-transparent">
               {/* Highlight glow */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-brand-purple/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
 
