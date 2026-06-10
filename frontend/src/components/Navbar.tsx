@@ -46,17 +46,17 @@ export default function Navbar() {
 
   return (
     <header className="fixed top-0 z-50 w-full border-b border-white/10 navbar-bg backdrop-blur-xl">
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
+        <Link href="/" className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity">
           {/* Alternating 4-Icon Logo Cycle */}
-          <div className="relative w-8 h-8 flex items-center justify-center">
+          <div className="relative w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center">
             {/* 1. Play Button (Emerald) */}
             <motion.div
               className="absolute inset-0 flex items-center justify-center text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.8)]"
               animate={{ opacity: [1, 1, 0, 0, 1] }}
               transition={{ duration: 40, ease: "easeInOut", repeat: Infinity, times: [0, 0.2375, 0.25, 0.9875, 1] }}
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <svg width="100%" height="100%" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                 <path d="M8 5.14V19.08L19 12.11L8 5.14Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
               </svg>
             </motion.div>
@@ -67,7 +67,7 @@ export default function Navbar() {
               animate={{ opacity: [0, 0, 1, 1, 0, 0] }}
               transition={{ duration: 40, ease: "easeInOut", repeat: Infinity, times: [0, 0.2375, 0.25, 0.4875, 0.5, 1] }}
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <svg width="100%" height="100%" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                 <rect x="6" y="5" width="4" height="14" rx="1" />
                 <rect x="14" y="5" width="4" height="14" rx="1" />
               </svg>
@@ -79,7 +79,7 @@ export default function Navbar() {
               animate={{ opacity: [0, 0, 1, 1, 0, 0] }}
               transition={{ duration: 40, ease: "easeInOut", repeat: Infinity, times: [0, 0.4875, 0.5, 0.7375, 0.75, 1] }}
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <svg width="100%" height="100%" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                 <path d="M17 10.5V7C17 5.89543 16.1046 5 15 5H4C2.89543 5 2 5.89543 2 7V17C2 18.1046 2.89543 19 4 19H15C16.1046 19 17 18.1046 17 17V13.5L21 17.5V6.5L17 10.5Z" />
               </svg>
             </motion.div>
@@ -90,13 +90,13 @@ export default function Navbar() {
               animate={{ opacity: [0, 0, 1, 1, 0] }}
               transition={{ duration: 40, ease: "easeInOut", repeat: Infinity, times: [0, 0.7375, 0.75, 0.9875, 1] }}
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <svg width="100%" height="100%" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                 <path d="M21 3V15.5C21 17.43 19.43 19 17.5 19C15.57 19 14 17.43 14 15.5C14 13.57 15.57 12 17.5 12C18.04 12 18.55 12.12 19 12.34V6.47L9 8.6V17.5C9 19.43 7.43 21 5.5 21C3.57 21 2 19.43 2 17.5C2 15.57 3.57 14 5.5 14C6.04 14 6.55 14.12 7 14.34V3L21 3Z" />
               </svg>
             </motion.div>
           </div>
 
-          <span className="text-2xl font-bold navbar-text">
+          <span className="text-lg sm:text-xl md:text-2xl font-bold navbar-text hidden min-[360px]:block">
             MediaTOOlkit
           </span>
         </Link>
