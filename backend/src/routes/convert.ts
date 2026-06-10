@@ -21,6 +21,7 @@ import { Innertube, UniversalCache, Platform, ClientType } from 'youtubei.js';
 import ytdl from '@distube/ytdl-core';
 import vm from 'vm';
 import { downloadViaCobalt, downloadFromUrl } from '../utils/cobalt';
+import { getRandomFreeProxies } from '../utils/freeproxy';
 
 // Determine the path to a cookies file for yt-dlp to bypass YouTube bot restrictions
 function getCookiesPath(): string | null {
@@ -552,7 +553,7 @@ function getYouTubeVideoId(input: string): string | null {
   return null;
 }
 
-function ytDlpArgs(args: string[], useProxy: boolean = false): string[] {
+function ytDlpArgs(args: string[], useProxy: boolean | string = false): string[] {
   const base = [
     '--js-runtimes', 'node', 
     '--remote-components', 'ejs:github',
@@ -561,8 +562,11 @@ function ytDlpArgs(args: string[], useProxy: boolean = false): string[] {
     '--extractor-args', 'youtube:player_client=android,web'
   ];
   
-  if (useProxy && process.env.PROXY_URL) {
-    base.unshift('--proxy', process.env.PROXY_URL, '--no-check-certificates');
+  if (useProxy) {
+    const proxyUrl = typeof useProxy === 'string' ? useProxy : process.env.PROXY_URL;
+    if (proxyUrl) {
+      base.unshift('--proxy', proxyUrl, '--no-check-certificates');
+    }
   }
   
   const cookiesFile = getCookiesPath();
@@ -570,7 +574,7 @@ function ytDlpArgs(args: string[], useProxy: boolean = false): string[] {
   return [...base, ...args];
 }
 
-function runYtDlp(args: string[], useProxy: boolean = false): Promise<{ stdout: string; stderr: string }> {
+function runYtDlp(args: string[], useProxy: boolean | string = false): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
     const child = spawn(getYtDlpPath(), ytDlpArgs(args, useProxy), { windowsHide: true });
     let stdout = '';
@@ -837,8 +841,20 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
             const res = await runYtDlp(['--print', 'title', '--print', 'duration', '--no-playlist', cleanUrl], false);
             stdout = res.stdout;
           } catch (e) {
-            const res = await runYtDlp(['--print', 'title', '--print', 'duration', '--no-playlist', cleanUrl], true);
-            stdout = res.stdout;
+            let success = false;
+            const freeProxies = await getRandomFreeProxies(2);
+            for (const freeProxy of freeProxies) {
+              try {
+                const res = await runYtDlp(['--print', 'title', '--print', 'duration', '--no-playlist', cleanUrl], freeProxy);
+                stdout = res.stdout;
+                success = true;
+                break;
+              } catch (err) {}
+            }
+            if (!success) {
+              const res = await runYtDlp(['--print', 'title', '--print', 'duration', '--no-playlist', cleanUrl], true);
+              stdout = res.stdout;
+            }
           }
           const lines = stdout.trim().split('\n');
           const dlTitle = (lines[0] || '').trim();
@@ -1091,8 +1107,20 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
               const res = await runYtDlp(['--print', 'title', '--no-playlist', cleanUrl], false);
               stdout = res.stdout;
             } catch (e) {
-              const res = await runYtDlp(['--print', 'title', '--no-playlist', cleanUrl], true);
-              stdout = res.stdout;
+              let success = false;
+              const freeProxies = await getRandomFreeProxies(2);
+              for (const freeProxy of freeProxies) {
+                try {
+                  const res = await runYtDlp(['--print', 'title', '--no-playlist', cleanUrl], freeProxy);
+                  stdout = res.stdout;
+                  success = true;
+                  break;
+                } catch (err) {}
+              }
+              if (!success) {
+                const res = await runYtDlp(['--print', 'title', '--no-playlist', cleanUrl], true);
+                stdout = res.stdout;
+              }
             }
             const lines = stdout.trim().split('\n');
             const dlTitle = (lines[0] || '').trim();
@@ -1320,9 +1348,22 @@ router.post('/universal/metadata', async (req: Request, res: Response): Promise<
       const res = await runYtDlp(args, false);
       stdout = res.stdout;
     } catch (e) {
-      console.warn('Universal metadata native fetch failed, trying proxy...');
-      const res = await runYtDlp(args, true);
-      stdout = res.stdout;
+      console.warn('Universal metadata native fetch failed, trying free proxies...');
+      let success = false;
+      const freeProxies = await getRandomFreeProxies(2);
+      for (const freeProxy of freeProxies) {
+        try {
+          const res = await runYtDlp(args, freeProxy);
+          stdout = res.stdout;
+          success = true;
+          break;
+        } catch (err) {}
+      }
+      if (!success) {
+        console.warn('Free proxies failed, trying ScraperAPI...');
+        const res = await runYtDlp(args, true);
+        stdout = res.stdout;
+      }
     }
 
     const lines = stdout.trim().split('\n');
@@ -1416,8 +1457,20 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
             const res = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--no-playlist', cleanUrl], false);
             stdout = res.stdout;
           } catch (e) {
-            const res = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--no-playlist', cleanUrl], true);
-            stdout = res.stdout;
+            let success = false;
+            const freeProxies = await getRandomFreeProxies(2);
+            for (const freeProxy of freeProxies) {
+              try {
+                const res = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--no-playlist', cleanUrl], freeProxy);
+                stdout = res.stdout;
+                success = true;
+                break;
+              } catch (err) {}
+            }
+            if (!success) {
+              const res = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--no-playlist', cleanUrl], true);
+              stdout = res.stdout;
+            }
           }
           const lines = stdout.trim().split('\n');
           const dlTitle = (lines[0] || '').trim();
@@ -1539,9 +1592,22 @@ router.post('/youtube-playlist/metadata', async (req: Request, res: Response): P
       const res = await runYtDlp(['--flat-playlist', '--dump-json', cleanUrl], false);
       stdout = res.stdout;
     } catch (e) {
-      console.warn('Playlist native fetch failed, trying proxy...');
-      const res = await runYtDlp(['--flat-playlist', '--dump-json', cleanUrl], true);
-      stdout = res.stdout;
+      console.warn('Playlist native fetch failed, trying free proxies...');
+      let success = false;
+      const freeProxies = await getRandomFreeProxies(2);
+      for (const freeProxy of freeProxies) {
+        try {
+          const res = await runYtDlp(['--flat-playlist', '--dump-json', cleanUrl], freeProxy);
+          stdout = res.stdout;
+          success = true;
+          break;
+        } catch (err) {}
+      }
+      if (!success) {
+        console.warn('Free proxies failed, trying ScraperAPI...');
+        const res = await runYtDlp(['--flat-playlist', '--dump-json', cleanUrl], true);
+        stdout = res.stdout;
+      }
     }
 
     const lines = stdout.trim().split('\n');
