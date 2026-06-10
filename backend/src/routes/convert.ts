@@ -560,6 +560,11 @@ function ytDlpArgs(args: string[]): string[] {
     '--extractor-args', 'youtube:player_skip=webpage,configs;visitor_data=VISITOR_DATA_VALUE_HERE',
     '--extractor-args', 'youtube:player_client=android,web'
   ];
+  
+  if (process.env.PROXY_URL) {
+    base.unshift('--proxy', process.env.PROXY_URL);
+  }
+  
   const cookiesFile = getCookiesPath();
   if (cookiesFile) base.push('--cookies', cookiesFile);
   return [...base, ...args];
