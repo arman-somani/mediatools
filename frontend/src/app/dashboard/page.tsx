@@ -15,6 +15,7 @@ type RecentConversion = {
     type?: string;
     status?: string;
     fileSize?: number;
+    youtubeUrl?: string;
 };
 
 function formatBytes(bytes?: number) {
@@ -249,26 +250,51 @@ export default function DashboardPage() {
                                             whileTap={{ scale: 0.98 }}
                                             className="flex items-center justify-between rounded-xl bg-white/5 hover:bg-black/[0.08] p-4 border border-white/5 transition-colors"
                                         >
-                                            <div className="flex items-center gap-3 min-w-0">
+                                            <div className="flex items-center gap-3 min-w-0 flex-1">
                                                 <div className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0">
                                                     <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-brand-purple">
                                                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" />
                                                     </svg>
                                                 </div>
-                                                <div className="min-w-0">
+                                                <div className="min-w-0 flex-1">
                                                     <p className="font-medium text-white truncate text-sm">
                                                         {conversion.youtubeTitle || conversion.originalName || conversion.outputFilename || 'converted-file'}
                                                     </p>
-                                                    <p className="text-xs text-white/50 mt-0.5">
-                                                        <Link href={typeHref} className="hover:text-brand-purple transition-colors">
+                                                    <div className="text-xs text-white/50 mt-0.5 flex flex-wrap items-center gap-2">
+                                                        <Link href={`${typeHref}${conversion.youtubeUrl ? `?url=${encodeURIComponent(conversion.youtubeUrl)}` : ''}`} className="hover:text-brand-purple transition-colors font-semibold">
                                                             {typeLabel}
                                                         </Link>
-                                                    </p>
+                                                        {conversion.youtubeUrl && (
+                                                            <>
+                                                                <span className="opacity-50">&bull;</span>
+                                                                <Link 
+                                                                    href={`${typeHref}?url=${encodeURIComponent(conversion.youtubeUrl)}`}
+                                                                    className="truncate max-w-[150px] sm:max-w-xs md:max-w-md hover:text-brand-cyan hover:underline transition-all"
+                                                                    title={conversion.youtubeUrl}
+                                                                >
+                                                                    {conversion.youtubeUrl}
+                                                                </Link>
+                                                            </>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
 
-                                            <div className="text-xs font-mono font-medium px-3 py-1 rounded-full flex-shrink-0 ml-4 bg-brand-cyan/10 text-brand-cyan border border-brand-cyan/20">
-                                                {formatBytes(conversion.fileSize)}
+                                            <div className="flex items-center gap-3 ml-4 flex-shrink-0">
+                                                <div className="text-xs font-mono font-medium px-3 py-1 rounded-full bg-brand-cyan/10 text-brand-cyan border border-brand-cyan/20 hidden sm:block">
+                                                    {formatBytes(conversion.fileSize)}
+                                                </div>
+                                                {conversion.youtubeUrl && (
+                                                    <Link 
+                                                        href={`${typeHref}?url=${encodeURIComponent(conversion.youtubeUrl)}`}
+                                                        title="Convert Again"
+                                                        className="w-8 h-8 rounded-full bg-white/5 border border-white/10 hover:bg-brand-purple hover:border-brand-purple flex items-center justify-center transition-all group"
+                                                    >
+                                                        <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-white group-hover:scale-110 transition-transform">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                                        </svg>
+                                                    </Link>
+                                                )}
                                             </div>
                                         </motion.div>
                                     );
