@@ -20,7 +20,7 @@ import { User } from '../models/User';
 import { Innertube, UniversalCache, Platform, ClientType } from 'youtubei.js';
 import ytdl from '@distube/ytdl-core';
 import vm from 'vm';
-import { downloadViaCobalt, downloadFromUrl } from '../utils/cobalt';
+
 import { getRandomFreeProxies } from '../utils/freeproxy';
 
 // Determine the path to a cookies file for yt-dlp to bypass YouTube bot restrictions
@@ -1025,31 +1025,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         // Step 2: Download audio
         let audioDownloaded = false;
 
-        // API Tier 1: Cobalt API
-        if (!audioDownloaded) {
-          try {
-            console.log('Trying Cobalt API for audio...');
-            const cobaltDownloadUrl = await downloadViaCobalt(cleanUrl, 'audio', audioQuality);
-            console.log('Downloading audio via ffmpeg from Cobalt link...');
-            await new Promise<void>((resolve, reject) => {
-              const ff = spawn('ffmpeg', [
-                '-y', 
-                '-user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-                '-i', cobaltDownloadUrl, 
-                '-c:a', 'libmp3lame', 
-                '-b:a', `${audioQuality}k`, 
-                outputPath
-              ], { windowsHide: true });
-              ff.on('close', code => { if (code === 0) resolve(); else reject(new Error(`FFmpeg Cobalt audio failed with code ${code}`)); });
-              ff.on('error', reject);
-            });
-            requireWrittenFile(outputPath, 'Cobalt audio download');
-            audioDownloaded = true;
-            console.log('Cobalt audio download succeeded');
-          } catch (e: any) {
-            console.error('Cobalt audio failed:', e.message);
-          }
-        }
+
 
         // API Tier 2: Native yt-dlp downloader (without proxy, then with proxy)
         for (const useProxy of [false, true]) {
@@ -1344,31 +1320,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           const targetHeightMap: Record<string, number> = { '360p': 360, '480p': 480, '720p': 720, '1080p': 1080, '4K': 2160, '8K': 4320 };
           const targetH = targetHeightMap[videoQuality] || 720;
 
-          // API Tier 1: Cobalt API
-          if (!videoDownloaded) {
-            try {
-              console.log('Trying Cobalt API for video...');
-              const cobaltDownloadUrl = await downloadViaCobalt(cleanUrl, 'video', videoQuality);
-              console.log('Downloading video via ffmpeg from Cobalt link...');
-              await new Promise<void>((resolve, reject) => {
-                const ff = spawn('ffmpeg', [
-                  '-y', 
-                  '-user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-                  '-i', cobaltDownloadUrl, 
-                  '-c', 'copy', 
-                  fallbackOutputPath
-                ], { windowsHide: true });
-                ff.on('close', code => { if (code === 0) resolve(); else reject(new Error(`FFmpeg Cobalt video failed with code ${code}`)); });
-                ff.on('error', reject);
-              });
-              requireWrittenFile(fallbackOutputPath, 'Cobalt video download');
 
-              videoDownloaded = true;
-              console.log('Cobalt video download succeeded');
-            } catch (e: any) {
-              console.error('Cobalt video failed:', e.message);
-            }
-          }
 
           // API Tier 2: Native yt-dlp downloader (without proxy, then with proxy)
           for (const useProxy of [false, true]) {
