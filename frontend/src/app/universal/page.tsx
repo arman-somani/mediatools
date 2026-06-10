@@ -25,7 +25,7 @@ const getQualityLabel = (resolution: string) => {
 
 export default function UniversalPage() {
   const [url, setUrl] = useState('');
-  const [preflightInfo, setPreflightInfo] = useState<{ title: string; thumbnail: string; resolution: string; sizeBytes: number } | null>(null);
+  const [preflightInfo, setPreflightInfo] = useState<{ title: string; thumbnail: string; resolution: string; sizeBytes: number; videoUrl?: string } | null>(null);
   const [isFetchingInfo, setIsFetchingInfo] = useState(false);
   const [status, setStatus] = useState<'idle' | 'processing' | 'completed' | 'failed'>('idle');
   const [progress, setProgress] = useState(0);
