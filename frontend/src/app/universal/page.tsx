@@ -37,6 +37,14 @@ export default function UniversalPage() {
   const startTimeRef = useRef<number | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const queryUrl = params.get('url');
+      if (queryUrl) setUrl(queryUrl);
+    }
+  }, []);
+
   const poll = (id: string) => {
     pollRef.current = setInterval(async () => {
       try {
