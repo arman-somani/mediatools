@@ -19,6 +19,7 @@ import convertRoutes from './routes/convert';
 import userRoutes from './routes/user';
 import contactRoutes from './routes/contact';
 import searchRoutes from './routes/search';
+import extractorRoutes from './routes/extractor';
 import { errorHandler } from './middleware/errorHandler';
 import { cleanupOldFiles } from './utils/cleanup';
 
@@ -56,6 +57,7 @@ app.use('/api/convert', convertRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/extractor', extractorRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);
