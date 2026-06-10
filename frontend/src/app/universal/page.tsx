@@ -156,23 +156,25 @@ export default function UniversalPage() {
                         className="overflow-hidden rounded-2xl relative border border-white/10 w-full bg-black/40 mt-6"
                       >
                         {preflightInfo.thumbnail && (
-                          <div className="w-full aspect-video relative">
-                            <Image src={preflightInfo.thumbnail} alt="thumbnail" fill className="object-cover opacity-60" unoptimized />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex flex-col justify-end p-6">
-                              <h3 className="text-xl font-bold text-white mb-2 line-clamp-2">{preflightInfo.title}</h3>
-                              <div className="flex gap-4 text-sm font-medium">
-                                <span className="bg-white/10 px-3 py-1 rounded-lg text-brand-purple">Quality: {preflightInfo.resolution}{getQualityLabel(preflightInfo.resolution)}</span>
-                                {preflightInfo.sizeBytes > 0 && <span className="bg-white/10 px-3 py-1 rounded-lg text-brand-cyan">Size: {formatFileSize(preflightInfo.sizeBytes)}</span>}
+                          <div className="flex flex-col w-full">
+                            <div className="w-full aspect-video relative">
+                              <Image src={preflightInfo.thumbnail} alt="thumbnail" fill className="object-cover" unoptimized />
+                            </div>
+                            <div className="p-4 sm:p-6 bg-black/40 flex flex-col gap-2">
+                              <h3 className="text-base sm:text-xl font-bold text-white line-clamp-2">{preflightInfo.title}</h3>
+                              <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm font-medium mt-1 sm:mt-2">
+                                <span className="bg-white/10 px-3 py-1.5 rounded-lg text-brand-purple">Quality: {preflightInfo.resolution}{getQualityLabel(preflightInfo.resolution)}</span>
+                                {preflightInfo.sizeBytes > 0 && <span className="bg-white/10 px-3 py-1.5 rounded-lg text-brand-cyan">Size: {formatFileSize(preflightInfo.sizeBytes)}</span>}
                               </div>
                             </div>
                           </div>
                         )}
                         {!preflightInfo.thumbnail && (
-                          <div className="p-6">
-                            <h3 className="text-xl font-bold text-white mb-2 line-clamp-2">{preflightInfo.title}</h3>
-                            <div className="flex gap-4 text-sm font-medium">
-                              <span className="bg-white/10 px-3 py-1 rounded-lg text-brand-purple">Quality: {preflightInfo.resolution}{getQualityLabel(preflightInfo.resolution)}</span>
-                              {preflightInfo.sizeBytes > 0 && <span className="bg-white/10 px-3 py-1 rounded-lg text-brand-cyan">Size: {formatFileSize(preflightInfo.sizeBytes)}</span>}
+                          <div className="p-4 sm:p-6 bg-black/40">
+                            <h3 className="text-base sm:text-xl font-bold text-white mb-3 line-clamp-2">{preflightInfo.title}</h3>
+                            <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm font-medium">
+                              <span className="bg-white/10 px-3 py-1.5 rounded-lg text-brand-purple">Quality: {preflightInfo.resolution}{getQualityLabel(preflightInfo.resolution)}</span>
+                              {preflightInfo.sizeBytes > 0 && <span className="bg-white/10 px-3 py-1.5 rounded-lg text-brand-cyan">Size: {formatFileSize(preflightInfo.sizeBytes)}</span>}
                             </div>
                           </div>
                         )}
