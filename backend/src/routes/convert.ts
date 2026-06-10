@@ -468,7 +468,7 @@ async function downloadAndMergeViaAlternativeAPI(
     } finally {
       if (fs.existsSync(tempAudio)) fs.unlinkSync(tempAudio);
     }
-    return;
+    return data.title;
   }
 
   if (mode === 'video') {
