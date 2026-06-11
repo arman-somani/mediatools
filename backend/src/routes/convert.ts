@@ -26,7 +26,8 @@ import { uploadToGoFile } from '../utils/gofile';
 
 // Determine the path to a cookies file for yt-dlp to bypass YouTube bot restrictions
 function getCookiesPath(): string | null {
-  return null;
+  const cookiePath = path.join(__dirname, '../../cookies.txt');
+  return fs.existsSync(cookiePath) ? cookiePath : null;
 }
 
 Platform.shim.eval = (script: any) => {
