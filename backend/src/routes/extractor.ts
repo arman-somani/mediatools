@@ -12,13 +12,17 @@ function getYtDlpPath(): string {
   return fs.existsSync(binPath) ? binPath : 'yt-dlp';
 }
 
+function getCookiesPath(): string | null {
+  const cookiePath = path.join(__dirname, '../../cookies.txt');
+  return fs.existsSync(cookiePath) ? cookiePath : null;
+}
+
 function ytDlpArgs(args: string[], useProxy: boolean | string = false): string[] {
   const base = [
     '--js-runtimes', 'node', 
     '--remote-components', 'ejs:github',
-    '--extractor-args', 'youtubetab:skip=webpage,authcheck',
-    '--extractor-args', 'youtube:player_skip=webpage,configs;visitor_data=VISITOR_DATA_VALUE_HERE',
-    '--extractor-args', 'youtube:player_client=android,web'
+    '--extractor-args', 'youtube:player_client=ios',
+    '--rm-cache-dir'
   ];
   
   if (useProxy) {
@@ -27,6 +31,9 @@ function ytDlpArgs(args: string[], useProxy: boolean | string = false): string[]
       base.unshift('--proxy', proxyUrl, '--no-check-certificates');
     }
   }
+
+  const cookiesFile = getCookiesPath();
+  if (cookiesFile) base.push('--cookies', cookiesFile);
   
   return [...base, ...args];
 }
