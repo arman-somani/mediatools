@@ -1594,9 +1594,7 @@ router.post('/universal/metadata', async (req: Request, res: Response): Promise<
         } catch (err) {}
       }
       if (!success) {
-        console.warn('Free proxies failed, trying ScraperAPI...');
-        const res = await runYtDlp(args, true);
-        stdout = res.stdout;
+        throw new Error("Metadata extraction failed.");
       }
     }
 
@@ -1848,9 +1846,7 @@ router.post('/youtube-playlist/metadata', async (req: Request, res: Response): P
         } catch (err) {}
       }
       if (!success) {
-        console.warn('Free proxies failed, trying ScraperAPI...');
-        const res = await runYtDlp(['--flat-playlist', '--dump-json', cleanUrl], true);
-        stdout = res.stdout;
+        throw new Error("Playlist extraction failed.");
       }
     }
 
