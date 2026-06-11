@@ -22,6 +22,7 @@ import ytdl from '@distube/ytdl-core';
 import vm from 'vm';
 
 import { getRandomFreeProxies } from '../utils/freeproxy';
+import { uploadToGoFile } from '../utils/gofile';
 
 // Determine the path to a cookies file for yt-dlp to bypass YouTube bot restrictions
 function getCookiesPath(): string | null {
@@ -898,9 +899,19 @@ router.post(
           });
         });
 
+        conversion.fileSize = getFileSize(outputPath);
+        
+        try {
+          console.log(`Uploading ${outputPath} to GoFile...`);
+          const goFileUrl = await uploadToGoFile(outputPath);
+          conversion.outputUrl = goFileUrl;
+          if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath); // Delete local file
+        } catch (uploadError) {
+          console.error('GoFile upload failed:', uploadError);
+        }
+
         conversion.status = 'completed';
         conversion.progress = 100;
-        conversion.fileSize = getFileSize(outputPath);
         await conversion.save();
         await User.findByIdAndUpdate(userId, { $inc: { totalConversions: 1 } });
       } catch (ffmpegError: any) {
@@ -1191,9 +1202,19 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         conversion.outputPath = path.join(outputDir, downloadedFile);
         conversion.outputUrl = `/outputs/${downloadedFile}`;
         requireWrittenFile(conversion.outputPath, 'Audio download');
+        conversion.fileSize = getFileSize(conversion.outputPath);
+        
+        try {
+          console.log(`Uploading ${conversion.outputPath} to GoFile...`);
+          const goFileUrl = await uploadToGoFile(conversion.outputPath);
+          conversion.outputUrl = goFileUrl;
+          if (fs.existsSync(conversion.outputPath)) fs.unlinkSync(conversion.outputPath); // Delete local file
+        } catch (uploadError) {
+          console.error('GoFile upload failed:', uploadError);
+        }
+
         conversion.status = 'completed';
         conversion.progress = 100;
-        conversion.fileSize = getFileSize(conversion.outputPath);
         await conversion.save();
       } catch (err: any) {
         console.error('YouTube background error:', err.message);
@@ -1501,10 +1522,20 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           requireWrittenFile(conversion.outputPath, 'Video download');
 
           // Step 3: Mark complete
-          conversion.status = 'completed';
-          conversion.progress = 100;
           conversion.fileSize = getFileSize(conversion.outputPath);
           conversion.outputUrl = `/outputs/${path.basename(conversion.outputPath)}`;
+          
+          try {
+            console.log(`Uploading ${conversion.outputPath} to GoFile...`);
+            const goFileUrl = await uploadToGoFile(conversion.outputPath);
+            conversion.outputUrl = goFileUrl;
+            if (fs.existsSync(conversion.outputPath)) fs.unlinkSync(conversion.outputPath); // Delete local file
+          } catch (uploadError) {
+            console.error('GoFile upload failed:', uploadError);
+          }
+
+          conversion.status = 'completed';
+          conversion.progress = 100;
           await conversion.save();
         } catch (err: any) {
           console.error('YouTube Video background error:', err.message);
@@ -1751,10 +1782,20 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         requireWrittenFile(conversion.outputPath, 'Universal download');
 
         // Step 3: Mark complete
-        conversion.status = 'completed';
-        conversion.progress = 100;
         conversion.fileSize = getFileSize(conversion.outputPath);
         conversion.outputUrl = `/outputs/${path.basename(conversion.outputPath)}`;
+        
+        try {
+          console.log(`Uploading ${conversion.outputPath} to GoFile...`);
+          const goFileUrl = await uploadToGoFile(conversion.outputPath);
+          conversion.outputUrl = goFileUrl;
+          if (fs.existsSync(conversion.outputPath)) fs.unlinkSync(conversion.outputPath); // Delete local file
+        } catch (uploadError) {
+          console.error('GoFile upload failed:', uploadError);
+        }
+
+        conversion.status = 'completed';
+        conversion.progress = 100;
         await conversion.save();
 
       } catch (err: any) {
