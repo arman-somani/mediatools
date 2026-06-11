@@ -1007,7 +1007,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
             stdout = res.stdout;
           } catch (e) {
             let success = false;
-            const freeProxies = [];
+            const freeProxies: string[] = [];
             for (const freeProxy of freeProxies) {
               try {
                 const res = await runYtDlp(['--print', 'title', '--print', 'duration', '--no-playlist', cleanUrl], freeProxy);
@@ -1302,7 +1302,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
               stdout = res.stdout;
             } catch (e) {
               let success = false;
-              const freeProxies = [];
+              const freeProxies: string[] = [];
               for (const freeProxy of freeProxies) {
                 try {
                   const res = await runYtDlp(['--print', 'title', '--no-playlist', cleanUrl], freeProxy);
@@ -1584,7 +1584,7 @@ router.post('/universal/metadata', async (req: Request, res: Response): Promise<
     } catch (e) {
       console.warn('Universal metadata native fetch failed, trying free proxies...');
       let success = false;
-      const freeProxies = [];
+      const freeProxies: string[] = [];
       for (const freeProxy of freeProxies) {
         try {
           const res = await runYtDlp(args, freeProxy);
@@ -1690,7 +1690,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
             stdout = res.stdout;
           } catch (e) {
             let success = false;
-            const freeProxies = [];
+            const freeProxies: string[] = [];
             for (const freeProxy of freeProxies) {
               try {
                 const res = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--no-playlist', cleanUrl], freeProxy);
@@ -1836,7 +1836,7 @@ router.post('/youtube-playlist/metadata', async (req: Request, res: Response): P
     } catch (e) {
       console.warn('Playlist native fetch failed, trying free proxies...');
       let success = false;
-      const freeProxies = [];
+      const freeProxies: string[] = [];
       for (const freeProxy of freeProxies) {
         try {
           const res = await runYtDlp(['--flat-playlist', '--dump-json', cleanUrl], freeProxy);
