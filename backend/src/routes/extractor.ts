@@ -92,8 +92,7 @@ router.get('/info', async (req: Request, res: Response): Promise<void> => {
       }
 
       if (!success) {
-        console.warn(`[Extractor] Tier 1.5 failed. Falling back to Tier 2 (ScraperAPI Proxy)...`);
-        data = await runYtDlpJson(url, true);
+        throw new Error("Metadata extraction failed.");
       }
     }
 
