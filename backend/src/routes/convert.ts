@@ -1096,6 +1096,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
           }
         }
 
+        /*
         // API Tier 3.5: AllMedia4
         if (!audioDownloaded) {
           try {
@@ -1195,6 +1196,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
             console.error('Quick RapidAPI audio failed:', e.message);
           }
         }
+        */
 
         if (!audioDownloaded) throw new Error('All download methods failed for audio');
 
@@ -1399,6 +1401,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
             }
           }
 
+          /*
           // API Tier 3.5: AllMedia4
           if (!videoDownloaded) {
             try {
@@ -1508,6 +1511,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
               console.error('Quick RapidAPI video failed:', e.message);
             }
           }
+          */
 
           if (!videoDownloaded) throw new Error('All download methods failed for video');
 
