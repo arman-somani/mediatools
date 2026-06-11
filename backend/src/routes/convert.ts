@@ -1354,7 +1354,8 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
               console.log(`Trying Native yt-dlp for video... (Proxy: ${useProxy})`);
               const ytdlp = spawn(getYtDlpPath(), ytDlpArgs([
                 '--newline',
-                '-f', `bv*[height=${targetH}]+ba/b[height=${targetH}]`,
+                '-f', 'bv*+ba/b',
+                '-S', ytSort,
                 '--merge-output-format', 'mp4',
                 '-o', path.join(outputDir, `${fileId}.%(ext)s`),
                 '--no-playlist',
