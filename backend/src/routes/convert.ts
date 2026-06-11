@@ -714,6 +714,7 @@ function ytDlpArgs(args: string[], useProxy: boolean | string = false): string[]
   const base = [
     '--js-runtimes', 'node', 
     '--remote-components', 'ejs:github',
+    '--extractor-args', 'youtube:player_client=web,default',
     '--rm-cache-dir'
   ];
   
