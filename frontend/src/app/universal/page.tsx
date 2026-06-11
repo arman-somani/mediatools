@@ -166,43 +166,21 @@ export default function UniversalPage() {
                         exit={{ opacity: 0, height: 0 }}
                         className="overflow-hidden rounded-2xl relative border border-white/10 w-full bg-black/40 mt-6"
                       >
-                        {preflightInfo.thumbnail && (
-                          <div className="flex flex-col w-full">
-                            <div className="w-full aspect-video relative">
-                              <Image src={preflightInfo.thumbnail} alt="thumbnail" fill className="object-cover" unoptimized />
-                            </div>
-                            <div className="p-4 sm:p-6 bg-black/40 flex flex-col gap-2">
-                              <h3 className="text-base sm:text-xl font-bold text-white line-clamp-2">{preflightInfo.title}</h3>
-                              <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm font-medium mt-1 sm:mt-2">
-                                <span className="bg-white/10 px-3 py-1.5 rounded-lg text-brand-purple">Quality: {preflightInfo.resolution}{getQualityLabel(preflightInfo.resolution)}</span>
-                                {preflightInfo.sizeBytes > 0 && <span className="bg-white/10 px-3 py-1.5 rounded-lg text-brand-cyan">Size: {formatFileSize(preflightInfo.sizeBytes)}</span>}
-                              </div>
-                            </div>
+                        <div className="p-4 sm:p-6 flex flex-col items-center text-center gap-2">
+                          <div className="w-16 h-16 bg-brand-cyan/10 rounded-full flex items-center justify-center mb-2 border border-brand-cyan/20">
+                            <svg width="32" height="32" fill="none" stroke="#22d3ee" strokeWidth="2" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
                           </div>
-                        )}
-                        {!preflightInfo.thumbnail && preflightInfo.videoUrl && (
-                          <div className="flex flex-col w-full">
-                            <div className="w-full aspect-video relative bg-black">
-                              <video src={`${preflightInfo.videoUrl}#t=0.1`} preload="metadata" className="w-full h-full object-cover" muted playsInline />
+                          <h3 className="text-base sm:text-xl font-bold text-white line-clamp-2">{preflightInfo.title}</h3>
+                          {preflightInfo.sizeBytes > 0 && (
+                            <div className="flex flex-wrap gap-2 sm:gap-4 text-sm font-medium mt-2">
+                              <span className="bg-brand-cyan/10 px-4 py-2 rounded-xl text-brand-cyan border border-brand-cyan/20">
+                                Actual Size: {formatFileSize(preflightInfo.sizeBytes)}
+                              </span>
                             </div>
-                            <div className="p-4 sm:p-6 bg-black/40 flex flex-col gap-2">
-                              <h3 className="text-base sm:text-xl font-bold text-white line-clamp-2">{preflightInfo.title}</h3>
-                              <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm font-medium mt-1 sm:mt-2">
-                                <span className="bg-white/10 px-3 py-1.5 rounded-lg text-brand-purple">Quality: {preflightInfo.resolution}{getQualityLabel(preflightInfo.resolution)}</span>
-                                {preflightInfo.sizeBytes > 0 && <span className="bg-white/10 px-3 py-1.5 rounded-lg text-brand-cyan">Size: {formatFileSize(preflightInfo.sizeBytes)}</span>}
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                        {!preflightInfo.thumbnail && !preflightInfo.videoUrl && (
-                          <div className="p-4 sm:p-6 bg-black/40">
-                            <h3 className="text-base sm:text-xl font-bold text-white mb-3 line-clamp-2">{preflightInfo.title}</h3>
-                            <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm font-medium">
-                              <span className="bg-white/10 px-3 py-1.5 rounded-lg text-brand-purple">Quality: {preflightInfo.resolution}{getQualityLabel(preflightInfo.resolution)}</span>
-                              {preflightInfo.sizeBytes > 0 && <span className="bg-white/10 px-3 py-1.5 rounded-lg text-brand-cyan">Size: {formatFileSize(preflightInfo.sizeBytes)}</span>}
-                            </div>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -254,25 +232,14 @@ export default function UniversalPage() {
 
               ) : (
                 <motion.div key="done" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="py-8 text-center flex flex-col items-center">
-                  {videoInfo?.thumbnail && (
-                    <div className="w-full max-w-sm aspect-video relative rounded-2xl overflow-hidden border border-white/10 mb-8 shadow-2xl">
-                      <Image src={videoInfo.thumbnail} alt="thumbnail" fill className="object-cover" unoptimized />
-                      <div className="absolute inset-0 bg-black/20" />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-16 h-16 bg-white/50 backdrop-blur-md rounded-full flex items-center justify-center border border-white/50 shadow-sm">
-                          <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" className="text-white"><path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  {/* Removed Thumbnail */}
 
-                  {!videoInfo?.thumbnail && (
-                    <div className="w-24 h-24 bg-brand-violet/10 rounded-full flex items-center justify-center mb-6 border border-brand-violet/20 shadow-[0_0_40px_rgba(124,58,237,0.2)]">
-                      <svg width="40" height="40" fill="none" stroke="#7c3aed" strokeWidth="2.5" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                  )}
+                  {/* Clean Icon Fallback */}
+                  <div className="w-24 h-24 bg-brand-violet/10 rounded-full flex items-center justify-center mb-6 border border-brand-violet/20 shadow-[0_0_40px_rgba(124,58,237,0.2)]">
+                    <svg width="40" height="40" fill="none" stroke="#7c3aed" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
 
                   <h3 className="text-2xl sm:text-3xl font-display font-bold text-white mb-2 sm:mb-3">Video is Ready!</h3>
                   {videoInfo?.title && (
