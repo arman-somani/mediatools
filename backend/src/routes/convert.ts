@@ -1330,12 +1330,12 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
 
           // Step 2: Download video in its native format without remuxing
           const formatMap: Record<string, string> = {
-            '360p': 'res:360,ext:mp4:m4a',
-            '480p': 'res:480,ext:mp4:m4a',
-            '720p': 'res:720,ext:mp4:m4a',
-            '1080p': 'res:1080,ext:mp4:m4a',
-            '4K': 'res:2160,ext:mp4:m4a',
-            '8K': 'res:4320,ext:mp4:m4a',
+            '360p': 'res:360',
+            '480p': 'res:480',
+            '720p': 'res:720',
+            '1080p': 'res:1080',
+            '4K': 'res:2160',
+            '8K': 'res:4320',
           };
           const ytSort = formatMap[videoQuality] || formatMap['720p'];
 
@@ -1644,12 +1644,12 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
 
     // Map quality label to yt-dlp sort filter for maximum compatibility across all platforms
     const formatMap: Record<string, string> = {
-      '360p': 'res:360,ext:mp4:m4a',
-      '480p': 'res:480,ext:mp4:m4a',
-      '720p': 'res:720,ext:mp4:m4a',
-      '1080p': 'res:1080,ext:mp4:m4a',
-      '4K': 'res:2160,ext:mp4:m4a',
-      '8K': 'res:4320,ext:mp4:m4a',
+      '360p': 'res:360',
+      '480p': 'res:480',
+      '720p': 'res:720',
+      '1080p': 'res:1080',
+      '4K': 'res:2160',
+      '8K': 'res:4320',
     };
     const ytSort = formatMap[videoQuality] || formatMap['720p'];
 
