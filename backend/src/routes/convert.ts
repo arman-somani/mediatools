@@ -713,9 +713,8 @@ function ytDlpArgs(args: string[], useProxy: boolean | string = false): string[]
   const base = [
     '--js-runtimes', 'node', 
     '--remote-components', 'ejs:github',
-    '--extractor-args', 'youtubetab:skip=webpage,authcheck',
-    '--extractor-args', 'youtube:player_skip=webpage,configs;visitor_data=VISITOR_DATA_VALUE_HERE',
-    '--extractor-args', 'youtube:player_client=android,web'
+    '--extractor-args', 'youtube:player_client=ios',
+    '--rm-cache-dir'
   ];
   
   if (useProxy) {
