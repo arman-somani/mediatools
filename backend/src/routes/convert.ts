@@ -899,15 +899,7 @@ router.post(
         });
 
         conversion.fileSize = getFileSize(outputPath);
-        
-        try {
-          console.log(`Uploading ${outputPath} to GoFile...`);
-          const goFileUrl = await uploadToGoFile(outputPath);
-          conversion.outputUrl = goFileUrl;
-          if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath); // Delete local file
-        } catch (uploadError) {
-          console.error('GoFile upload failed:', uploadError);
-        }
+        // GoFile upload removed
 
         conversion.status = 'completed';
         conversion.progress = 100;
@@ -1204,15 +1196,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         conversion.outputUrl = `/outputs/${downloadedFile}`;
         requireWrittenFile(conversion.outputPath, 'Audio download');
         conversion.fileSize = getFileSize(conversion.outputPath);
-        
-        try {
-          console.log(`Uploading ${conversion.outputPath} to GoFile...`);
-          const goFileUrl = await uploadToGoFile(conversion.outputPath);
-          conversion.outputUrl = goFileUrl;
-          if (fs.existsSync(conversion.outputPath)) fs.unlinkSync(conversion.outputPath); // Delete local file
-        } catch (uploadError) {
-          console.error('GoFile upload failed:', uploadError);
-        }
+        // GoFile upload removed
 
         conversion.status = 'completed';
         conversion.progress = 100;
@@ -1528,15 +1512,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
           // Step 3: Mark complete
           conversion.fileSize = getFileSize(conversion.outputPath);
           conversion.outputUrl = `/outputs/${path.basename(conversion.outputPath)}`;
-          
-          try {
-            console.log(`Uploading ${conversion.outputPath} to GoFile...`);
-            const goFileUrl = await uploadToGoFile(conversion.outputPath);
-            conversion.outputUrl = goFileUrl;
-            if (fs.existsSync(conversion.outputPath)) fs.unlinkSync(conversion.outputPath); // Delete local file
-          } catch (uploadError) {
-            console.error('GoFile upload failed:', uploadError);
-          }
+          // GoFile upload removed
 
           conversion.status = 'completed';
           conversion.progress = 100;
@@ -1786,15 +1762,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         // Step 3: Mark complete
         conversion.fileSize = getFileSize(conversion.outputPath);
         conversion.outputUrl = `/outputs/${path.basename(conversion.outputPath)}`;
-        
-        try {
-          console.log(`Uploading ${conversion.outputPath} to GoFile...`);
-          const goFileUrl = await uploadToGoFile(conversion.outputPath);
-          conversion.outputUrl = goFileUrl;
-          if (fs.existsSync(conversion.outputPath)) fs.unlinkSync(conversion.outputPath); // Delete local file
-        } catch (uploadError) {
-          console.error('GoFile upload failed:', uploadError);
-        }
+        // GoFile upload removed
 
         conversion.status = 'completed';
         conversion.progress = 100;
