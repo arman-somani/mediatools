@@ -1007,7 +1007,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
             stdout = res.stdout;
           } catch (e) {
             let success = false;
-            const freeProxies = await getRandomFreeProxies(2);
+            const freeProxies = [];
             for (const freeProxy of freeProxies) {
               try {
                 const res = await runYtDlp(['--print', 'title', '--print', 'duration', '--no-playlist', cleanUrl], freeProxy);
@@ -1040,7 +1040,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
 
 
         // API Tier 2: Native yt-dlp downloader (without proxy, then with proxy)
-        for (const useProxy of [false, true]) {
+        for (const useProxy of [false]) {
           if (audioDownloaded) break;
           try {
             console.log(`Trying Native yt-dlp for audio... (Proxy: ${useProxy})`);
@@ -1302,7 +1302,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
               stdout = res.stdout;
             } catch (e) {
               let success = false;
-              const freeProxies = await getRandomFreeProxies(2);
+              const freeProxies = [];
               for (const freeProxy of freeProxies) {
                 try {
                   const res = await runYtDlp(['--print', 'title', '--no-playlist', cleanUrl], freeProxy);
@@ -1347,7 +1347,7 @@ router.post('/youtube-Video', optionalAuth, async (req: AuthRequest, res: Respon
 
 
           // API Tier 2: Native yt-dlp downloader (without proxy, then with proxy)
-          for (const useProxy of [false, true]) {
+          for (const useProxy of [false]) {
             if (videoDownloaded) break;
             try {
               console.log(`Trying Native yt-dlp for video... (Proxy: ${useProxy})`);
@@ -1584,7 +1584,7 @@ router.post('/universal/metadata', async (req: Request, res: Response): Promise<
     } catch (e) {
       console.warn('Universal metadata native fetch failed, trying free proxies...');
       let success = false;
-      const freeProxies = await getRandomFreeProxies(2);
+      const freeProxies = [];
       for (const freeProxy of freeProxies) {
         try {
           const res = await runYtDlp(args, freeProxy);
@@ -1692,7 +1692,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
             stdout = res.stdout;
           } catch (e) {
             let success = false;
-            const freeProxies = await getRandomFreeProxies(2);
+            const freeProxies = [];
             for (const freeProxy of freeProxies) {
               try {
                 const res = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--no-playlist', cleanUrl], freeProxy);
@@ -1723,7 +1723,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         // We use -S for sorting formats which is highly optimized for ANY website!
         let videoDownloaded = false;
         
-        for (const useProxy of [false, true]) {
+        for (const useProxy of [false]) {
           if (videoDownloaded) break;
           try {
             console.log(`Trying yt-dlp UNIVERSAL for video... (Proxy: ${useProxy})`);
@@ -1838,7 +1838,7 @@ router.post('/youtube-playlist/metadata', async (req: Request, res: Response): P
     } catch (e) {
       console.warn('Playlist native fetch failed, trying free proxies...');
       let success = false;
-      const freeProxies = await getRandomFreeProxies(2);
+      const freeProxies = [];
       for (const freeProxy of freeProxies) {
         try {
           const res = await runYtDlp(['--flat-playlist', '--dump-json', cleanUrl], freeProxy);
