@@ -1708,6 +1708,9 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
               '--merge-output-format', 'mp4',
               '-o', path.join(outputDir, `${fileId}.%(ext)s`),
               '--no-playlist',
+              '--concurrent-fragments', '10',
+              '--http-chunk-size', '10M',
+              '--hls-prefer-native',
               cleanUrl,
             ], useProxy), { windowsHide: true });
 
