@@ -41,3 +41,5 @@ if (startIdx !== -1 && endIdxStart !== -1) {
 
 fs.writeFileSync(file, code);
 console.log('Cleanup complete');
+
+// Sync trigger
