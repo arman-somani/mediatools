@@ -8,30 +8,31 @@ interface ProgressCircleProps {
 }
 
 export default function ProgressCircle({ progress, statusText, subText }: ProgressCircleProps) {
+  const fillPercentage = Math.max(0, Math.min(progress, 100));
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-12 flex-1 flex flex-col items-center justify-center text-center">
-      <div className="relative w-32 h-32 mb-8">
-        <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8" />
-          <motion.circle
-            cx="50" cy="50" r="46" fill="none"
-            stroke="url(#progressGradient)" strokeWidth="8" strokeLinecap="round"
-            initial={{ strokeDasharray: '0 300' }}
-            animate={{ strokeDasharray: `${Math.max(0, Math.min(progress, 100)) * 2.9} 300` }}
-            transition={{ duration: 0.5, ease: 'easeInOut' }}
-          />
-          <defs>
-            <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#06b6d4" /> {/* brand-cyan */}
-              <stop offset="100%" stopColor="#a855f7" /> {/* brand-purple */}
-            </linearGradient>
-          </defs>
-        </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-3xl font-bold font-display text-white">{Math.round(progress)}%</span>
+      <div className="relative w-40 h-40 mb-8 rounded-full border-[4px] border-white/10 bg-black/40 overflow-hidden shadow-[0_0_40px_rgba(6,182,212,0.15)] flex items-center justify-center">
+        
+        {/* The Water */}
+        <motion.div
+          className="absolute left-0 right-0 bottom-0 bg-gradient-to-t from-brand-cyan/80 to-brand-purple/80"
+          initial={{ height: '0%' }}
+          animate={{ height: `${fillPercentage}%` }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
+          {/* Waves */}
+          <div className="absolute top-0 left-1/2 w-[300px] h-[300px] bg-black/40 rounded-[40%] animate-spin-slow mix-blend-overlay pointer-events-none"></div>
+          <div className="absolute top-0 left-1/2 w-[300px] h-[300px] bg-black/20 rounded-[45%] animate-spin-slow-reverse mix-blend-overlay pointer-events-none"></div>
+        </motion.div>
+        
+        {/* Percentage Text */}
+        <div className="relative z-10 drop-shadow-lg">
+          <span className="text-4xl font-bold font-display text-white tracking-tighter">{Math.round(progress)}%</span>
         </div>
       </div>
-      <h3 className="text-2xl font-display font-bold mb-2 text-white">
+      
+      <h3 className="text-2xl font-display font-bold mb-2 text-white drop-shadow-md">
         {statusText}
       </h3>
       {subText && (
