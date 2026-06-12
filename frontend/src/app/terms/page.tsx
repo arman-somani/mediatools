@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
+import PageWrapper from '@/components/PageWrapper';
 
 export const metadata: Metadata = {
   title: 'Terms of Service - MediaTools',
@@ -8,10 +9,11 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <main className="min-h-screen pt-32 pb-20 px-6 text-white">
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-5xl font-bold mb-4 text-white">Terms of Service</h1>
-        <p className="text-white/50 mb-12">Last updated: June 2025</p>
+    <PageWrapper>
+      <main className="min-h-screen pt-32 pb-20 px-6 text-white">
+        <div className="max-w-5xl mx-auto glass-panel rounded-3xl p-8">
+          <h1 className="text-5xl font-bold mb-4 text-white">Terms of Service</h1>
+          <p className="text-white/50 mb-12">Last updated: June 2025</p>
 
         <div className="space-y-10 text-white/80 leading-relaxed">
           <section>
@@ -140,5 +142,6 @@ export default function TermsPage() {
         </div>
       </div>
     </main>
+    </PageWrapper>
   );
 }
