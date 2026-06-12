@@ -52,7 +52,6 @@ function runYtDlpJson(url: string, useProxy: boolean | string = false): Promise<
       if (code === 0) {
         try {
           const stdoutStr = Buffer.concat(stdoutChunks).toString('utf-8');
-          // yt-dlp sometimes prints warnings to stdout before the JSON blob
           const lines = stdoutStr.trim().split('\n');
           const jsonLine = lines.reverse().find(l => l.trim().startsWith('{')) || stdoutStr;
           const json = JSON.parse(jsonLine);
@@ -67,6 +66,31 @@ function runYtDlpJson(url: string, useProxy: boolean | string = false): Promise<
   });
 }
 
+async function fetchHuntApiData(url: string): Promise<any> {
+  const apiKey = process.env.HUNTAPI_KEY;
+  if (!apiKey) throw new Error("HUNTAPI_KEY is missing");
+
+  const initRes = await fetch(`https://api.huntapi.com/v1/video/download?query=${encodeURIComponent(url)}`, {
+    headers: { 'x-api-key': apiKey }
+  });
+  if (!initRes.ok) throw new Error(`HuntAPI failed: ${initRes.status}`);
+  const initData: any = await initRes.json();
+  const jobId = initData.job_id;
+  if (!jobId) throw new Error("HuntAPI returned no job_id");
+
+  for (let i = 0; i < 20; i++) {
+    await new Promise(r => setTimeout(r, 2000));
+    const pollRes = await fetch(`https://api.huntapi.com/v1/jobs/${jobId}`, {
+      headers: { 'x-api-key': apiKey }
+    });
+    if (!pollRes.ok) continue;
+    const pollData: any = await pollRes.json();
+    if (pollData.status === 'CompletedJob') return pollData.result;
+    if (pollData.status === 'FailedJob') throw new Error("HuntAPI job failed");
+  }
+  throw new Error("HuntAPI polling timed out");
+}
+
 router.get('/info', async (req: Request, res: Response): Promise<void> => {
   try {
     const url = req.query.url as string;
@@ -76,29 +100,59 @@ router.get('/info', async (req: Request, res: Response): Promise<void> => {
     }
 
     let data;
-    try {
-      console.log(`[Extractor] Tier 1: Fetching metadata natively for ${url}`);
-      data = await runYtDlpJson(url, false);
-      if (!data || !data.formats) throw new Error('Invalid metadata returned natively');
-    } catch (err: any) {
-      console.warn(`[Extractor] Tier 1 failed: ${err.message}. Trying Tier 2 (Premium Proxy)...`);
-      let success = false;
-      
-      const premiumProxy = process.env.PROXY_URL;
-      if (premiumProxy) {
-        try {
-          console.log(`[Extractor] Trying Premium Proxy...`);
-          data = await runYtDlpJson(url, premiumProxy);
-          if (data && data.formats) {
-            success = true;
-          }
-        } catch (e) {
-          console.warn(`[Extractor] Premium proxy failed.`);
-        }
-      }
+    let usedHuntAPI = false;
 
-      if (!success) {
-        throw new Error("Metadata extraction failed natively and via proxy.");
+    if (process.env.HUNTAPI_KEY) {
+      try {
+        console.log(`[Extractor] Tier 1: Fetching metadata from HuntAPI for ${url}`);
+        const result = await fetchHuntApiData(url);
+        data = {
+          title: result.metadata?.title || 'Downloaded Video',
+          thumbnail: (result.metadata?.thumbnails && result.metadata.thumbnails.length > 0) 
+            ? result.metadata.thumbnails[result.metadata.thumbnails.length - 1].url 
+            : (result.metadata?.thumbnail || ''),
+          duration: result.metadata?.duration || 0,
+          url: result.response || '',
+          formats: [{
+            quality: result.metadata?.resolution || 'Best Available',
+            ext: 'mp4',
+            hasAudio: true,
+            url: result.response || '',
+            vcodec: 'h264',
+            fps: 30
+          }]
+        };
+        usedHuntAPI = true;
+      } catch (err: any) {
+        console.warn(`[Extractor] HuntAPI Tier 1 failed: ${err.message}. Trying yt-dlp natively...`);
+      }
+    }
+
+    if (!usedHuntAPI) {
+      try {
+        console.log(`[Extractor] Tier 2: Fetching metadata natively using yt-dlp for ${url}`);
+        data = await runYtDlpJson(url, false);
+        if (!data || !data.formats) throw new Error('Invalid metadata returned natively');
+      } catch (err: any) {
+        console.warn(`[Extractor] Tier 2 failed: ${err.message}. Trying Tier 3 (Premium Proxy)...`);
+        let success = false;
+        
+        const premiumProxy = process.env.PROXY_URL;
+        if (premiumProxy) {
+          try {
+            console.log(`[Extractor] Trying Premium Proxy...`);
+            data = await runYtDlpJson(url, premiumProxy);
+            if (data && data.formats) {
+              success = true;
+            }
+          } catch (e) {
+            console.warn(`[Extractor] Premium proxy failed.`);
+          }
+        }
+
+        if (!success) {
+          throw new Error("Metadata extraction failed natively and via proxy.");
+        }
       }
     }
 
