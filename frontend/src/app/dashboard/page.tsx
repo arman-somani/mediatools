@@ -27,10 +27,9 @@ function formatBytes(bytes?: number) {
 }
 
 const TOOLS = [
-
     {
-        label: 'Video to Audio ',
-        description: 'Convert any local video file to high-quality Audio ',
+        label: 'Video to Audio',
+        description: 'Convert any local video file to high-quality Audio',
         href: '/converter',
         gradient: 'from-brand-violet to-brand-purple',
         shadow: 'hover:shadow-[0_0_30px_rgba(168,85,247,0.35)]',
@@ -60,6 +59,39 @@ const TOOLS = [
         badge: 'Any Site',
         badgeColor: 'bg-brand-cyan/20 text-brand-cyan',
     },
+    {
+        label: 'YouTube Audio',
+        description: 'Download YouTube videos directly as MP3 audio.',
+        href: '/youtube',
+        gradient: 'from-red-500 to-red-600',
+        shadow: 'hover:shadow-[0_0_30px_rgba(239,68,68,0.35)]',
+        border: 'border-red-500/20',
+        bg: 'bg-red-500/5',
+        icon: (
+            <svg width="26" height="26" fill="currentColor" viewBox="0 0 24 24" className="text-red-500">
+                <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+            </svg>
+        ),
+        badge: 'Fast',
+        badgeColor: 'bg-red-500/20 text-red-500',
+    },
+    {
+        label: 'YouTube Video',
+        description: 'Download YouTube videos in up to 8K resolution.',
+        href: '/yt-video',
+        gradient: 'from-brand-green to-emerald-500',
+        shadow: 'hover:shadow-[0_0_30px_rgba(34,197,94,0.35)]',
+        border: 'border-brand-green/20',
+        bg: 'bg-brand-green/5',
+        icon: (
+            <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-brand-green">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        ),
+        badge: 'Up to 8K',
+        badgeColor: 'bg-brand-green/20 text-brand-green',
+    }
 ];
 
 export default function DashboardPage() {
