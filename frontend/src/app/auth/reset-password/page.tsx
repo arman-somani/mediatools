@@ -68,7 +68,7 @@ function ResetPasswordForm() {
           <p className="text-white/60 text-sm mb-6">
             Your new password is now active. You can use it to log in to your account.
           </p>
-          <Link href="/auth/login" className="btn-primary-glow px-8 py-3 w-full inline-block text-center rounded-xl font-semibold">
+          <Link href="/auth/login" className="btn-primary px-8 py-3 w-full inline-block text-center rounded-xl font-semibold">
             Proceed to Login
           </Link>
         </div>
@@ -106,7 +106,7 @@ function ResetPasswordForm() {
             </div>
           )}
 
-          <button type="submit" disabled={loading} className="w-full btn-primary-glow h-12 mt-2">
+          <button type="submit" disabled={loading} className="w-full btn-primary h-12 mt-2">
             {loading ? 'Resetting Password...' : 'Reset Password'}
           </button>
         </form>

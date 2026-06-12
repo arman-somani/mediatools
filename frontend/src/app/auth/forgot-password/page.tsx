@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -68,7 +68,7 @@ export default function ForgotPasswordPage() {
                 </div>
               )}
 
-              <button type="submit" disabled={loading} className="w-full btn-primary-glow h-12 mt-2">
+              <button type="submit" disabled={loading} className="w-full btn-primary h-12 mt-2">
                 {loading ? 'Sending...' : 'Send Reset Link'}
               </button>
 

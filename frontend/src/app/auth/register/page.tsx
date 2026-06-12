@@ -103,7 +103,7 @@ export default function RegisterPage() {
               </div>
             )}
 
-            <button type="submit" disabled={loading} className="w-full btn-primary-glow h-12 mt-2">
+            <button type="submit" disabled={loading} className="w-full btn-primary h-12 mt-2">
               {loading ? 'Creating account...' : 'Create Free Account'}
             </button>
 

@@ -91,7 +91,7 @@ function VerifyEmailForm() {
               </div>
             )}
 
-            <button type="submit" disabled={loading || code.length !== 6} className="w-full btn-primary-glow h-12">
+            <button type="submit" disabled={loading || code.length !== 6} className="w-full btn-primary h-12">
               {loading ? 'Verifying...' : 'Verify Email'}
             </button>
           </form>
