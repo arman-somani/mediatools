@@ -121,7 +121,7 @@ async function fetchHuntApiData(url: string): Promise<any> {
     headers: { 'x-api-key': apiKey }
   });
   if (!initRes.ok) throw new Error(`HuntAPI failed: ${initRes.status}`);
-  const initData = await initRes.json();
+  const initData: any = await initRes.json();
   const jobId = initData.job_id;
   if (!jobId) throw new Error("HuntAPI returned no job_id");
 
@@ -131,7 +131,7 @@ async function fetchHuntApiData(url: string): Promise<any> {
       headers: { 'x-api-key': apiKey }
     });
     if (!pollRes.ok) continue;
-    const pollData = await pollRes.json();
+    const pollData: any = await pollRes.json();
     if (pollData.status === 'CompletedJob') return pollData.result;
     if (pollData.status === 'FailedJob') throw new Error("HuntAPI job failed");
   }
