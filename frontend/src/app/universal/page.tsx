@@ -190,7 +190,7 @@ export default function UniversalPage() {
                       <button
                         onClick={handleCheckInfo}
                         disabled={!url || isFetchingInfo}
-                        className={`w-[280px] h-14 rounded-xl font-semibold text-lg transition-all duration-300 flex items-center justify-center gap-2 ${!url ? 'bg-white/5 text-white/40 cursor-not-allowed' : 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:shadow-[0_0_30px_rgba(124,58,237,0.5)] active:scale-95'}`}
+                        className={`w-[280px] h-14 rounded-xl font-semibold text-lg transition-all duration-300 flex items-center justify-center gap-2 ${!url ? 'bg-white/5 text-white/40 cursor-not-allowed' : 'btn-primary'}`}
                       >
                         {isFetchingInfo ? (
                           <>
@@ -206,14 +206,14 @@ export default function UniversalPage() {
                           animate={{ opacity: 1, scale: 1 }}
                           onClick={handleDownload}
                           disabled={!url}
-                          className={`w-full sm:w-[280px] h-14 rounded-xl font-semibold text-lg transition-all duration-300 bg-gradient-to-r from-emerald-500 to-emerald-400 text-white shadow-[0_0_20px_rgba(52,211,153,0.3)] hover:shadow-[0_0_30px_rgba(52,211,153,0.5)] active:scale-95`}
+                          className={`w-full sm:w-[280px] h-14 rounded-xl font-semibold text-lg transition-all duration-300 btn-primary`}
                         >
                           Download Video </motion.button>
                         <motion.button
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
                           onClick={reset}
-                          className={`w-full sm:w-[200px] h-14 rounded-xl font-semibold text-base transition-all duration-300 bg-white/5 hover:bg-white/10 text-white border border-white/10 active:scale-95`}
+                          className={`w-full sm:w-[200px] h-14 rounded-xl font-semibold text-base transition-all duration-300 glass-panel hover:bg-white/5 border border-white/20 text-white active:scale-95`}
                         >
                           Convert Another
                         </motion.button>
@@ -268,13 +268,13 @@ export default function UniversalPage() {
                       rel="noopener noreferrer"
                       className="flex-1"
                     >
-                      <button className="w-full font-semibold rounded-xl flex items-center justify-center gap-2 h-14 transition-all duration-300 bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:shadow-lg active:scale-95">
+                      <button className="w-full font-semibold rounded-xl flex items-center justify-center gap-2 h-14 transition-all duration-300 btn-primary">
                         <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
                         Download Video </button>
                     </a>
-                    <button onClick={reset} className="btn-secondary h-14 w-full sm:w-auto px-8 whitespace-nowrap bg-black/5 hover:bg-white/20 text-white">
+                    <button onClick={reset} className="glass-panel hover:bg-white/5 border border-white/20 text-white transition-all h-14 w-full sm:w-auto px-8 whitespace-nowrap">
                       Download Another
                     </button>
                   </div>
@@ -296,7 +296,7 @@ export default function UniversalPage() {
                 initial={{ scale: 0.9, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                className="bg-white#111] border border-white/10 p-8 rounded-2xl shadow-2xl max-w-md w-full text-center relative"
+                className="glass-panel p-8 rounded-2xl max-w-md w-full text-center relative"
               >
                 <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/30">
                   <svg width="32" height="32" fill="none" stroke="#ef4444" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
