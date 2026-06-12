@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: mediatools-backend
+    env: docker
+    rootDir: backend
+    plan: free
+    dockerContext: .
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
