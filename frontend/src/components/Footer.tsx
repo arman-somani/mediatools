@@ -25,9 +25,8 @@ export default function Footer() {
               </span>
             </Link>
 
-            <p className="text-white/50 text-sm md:text-base leading-relaxed mb-6 max-w-sm">
               The most advanced, high-quality Audio extraction suite on the web.
-              Convert Video and YouTube videos to Audio instantly.
+              Convert Videos to Audio instantly.
             </p>
 
             <div className="flex items-center gap-4 text-white/50 flex-wrap">
@@ -50,14 +49,6 @@ export default function Footer() {
               <li>
                 <Link href="/converter" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">
                   Video to Audio </Link>
-              </li>
-              <li>
-                <Link href="/youtube" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">
-                  YouTube to Audio </Link>
-              </li>
-              <li>
-                <Link href="/yt-video" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">
-                  YouTube to Video </Link>
               </li>
               <li>
                 <Link href="/universal" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">
