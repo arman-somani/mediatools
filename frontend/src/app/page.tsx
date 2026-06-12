@@ -9,8 +9,16 @@ export default function HomePage() {
     <PageWrapper>
       <main className="min-h-screen text-white">
         {/* Hero Section */}
-        <section className="relative flex flex-col items-center justify-center text-center px-4 md:px-6 pt-32 md:pt-40 pb-16 md:pb-24">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[500px] md:w-[800px] h-[300px] md:h-[400px] bg-brand-purple/10 blur-[80px] md:blur-[120px] rounded-full pointer-events-none" />
+        <section className="relative flex flex-col items-center justify-center text-center px-4 md:px-6 pt-32 md:pt-40 pb-16 md:pb-24 min-h-[85vh] overflow-hidden">
+          {/* Video Background */}
+          <div className="absolute inset-0 z-0">
+            <video autoPlay loop muted playsInline className="absolute top-1/2 left-1/2 min-w-full min-h-full w-auto h-auto -translate-x-1/2 -translate-y-1/2 object-cover opacity-50">
+              <source src="https://cdn.pixabay.com/video/2020/05/25/40141-425126867_large.mp4" type="video/mp4" />
+            </video>
+            <div className="absolute inset-0 bg-gradient-to-b from-[#0f172a]/70 via-[#0f172a]/50 to-[#0f172a] pointer-events-none" />
+          </div>
+
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[500px] md:w-[800px] h-[300px] md:h-[400px] bg-brand-purple/20 blur-[100px] md:blur-[140px] rounded-full pointer-events-none z-0" />
 
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -24,19 +32,20 @@ export default function HomePage() {
               <span className="text-gradient">Best-Quality Audio</span>
             </h1>
 
-            <p className="text-white/60 text-lg md:text-xl lg:text-2xl max-w-2xl mx-auto mb-10 md:mb-12 leading-relaxed px-4 sm:px-0">
+            <p className="text-white/80 text-lg md:text-xl lg:text-2xl max-w-2xl mx-auto mb-10 md:mb-12 leading-relaxed px-4 sm:px-0 drop-shadow-md">
               The fastest way to extract Audio from Video files or use our Universal URL Downloader with
               Zero quality loss.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 items-center justify-center flex-wrap w-full px-4 sm:px-0">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.9 }} className="w-full sm:w-auto">
-                <Link href="/converter" className="btn-primary-glow px-6 md:px-8 py-3 md:py-4 text-base md:text-lg rounded-xl block w-full text-center">
-                  Convert Video to Audio </Link>
+                <Link href="/converter" className="btn-primary px-6 md:px-8 py-3 md:py-4 text-base md:text-lg rounded-xl block w-full text-center">
+                  Convert Video to Audio
+                </Link>
               </motion.div>
 
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.9 }} className="w-full sm:w-auto">
-                <Link href="/universal" className="btn-secondary px-6 md:px-8 py-3 md:py-4 text-base md:text-lg rounded-xl flex items-center justify-center gap-2 w-full">
+                <Link href="/universal" className="glass-panel hover:bg-white/5 border border-white/20 px-6 md:px-8 py-3 md:py-4 text-base md:text-lg rounded-xl flex items-center justify-center gap-2 w-full transition-all">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="text-brand-cyan">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
                   </svg>
@@ -139,11 +148,11 @@ export default function HomePage() {
                 No subscriptions, no hidden fees. Every feature is free  unlimited conversions, 320kbps quality. Always.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center flex-wrap w-full">
-                <Link href="/converter" className="btn-primary-glow px-6 md:px-8 py-3 rounded-xl w-full sm:w-auto text-center">
+                <Link href="/converter" className="btn-primary px-6 md:px-8 py-3 rounded-xl w-full sm:w-auto text-center">
                   Start Converting
                 </Link>
 
-                <Link href="/universal" className="btn-secondary px-6 md:px-8 py-3 rounded-xl flex items-center gap-2 justify-center w-full sm:w-auto">
+                <Link href="/universal" className="glass-panel hover:bg-white/5 border border-white/20 px-6 md:px-8 py-3 rounded-xl flex items-center gap-2 justify-center w-full sm:w-auto transition-all">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-brand-cyan">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
                   </svg>
