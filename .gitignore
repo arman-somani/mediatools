@@ -10,3 +10,6 @@ build/
 coverage/
 *.log
 Colab-Server.ipynb
+
+*.env
+Colab_Secrets.env
