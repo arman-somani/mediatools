@@ -6,6 +6,7 @@ import { formatFileSize } from '@/lib/utils';
 import Image from 'next/image';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ProgressCircle from '@/components/ProgressCircle';
+import AnimatedText from '@/components/AnimatedText';
 import { requestNotificationPermission, sendNotification } from '@/lib/notifications';
 
 type ApiError = { response?: { data?: { message?: string } } };
@@ -122,9 +123,9 @@ export default function UniversalPage() {
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full text-center mb-12 pt-8">
           <h1 className="font-display font-bold text-4xl md:text-5xl tracking-tight mb-4 text-white">
-            Download <span className="text-gradient">Any Video</span>
+            <AnimatedText text="Universal" delayOffset={0} /> <AnimatedText text="Downloader" className="text-gradient" delayOffset={300} />
           </h1>
-          <p className="text-white max-w-4xl mx-auto text-lg">
+          <p className="text-white max-w-2xl mx-auto text-lg">
             Paste a link of Instagram, TikTok, Reddit, or any Video URL and download the video as an Video file.
           </p>
         </motion.div>
