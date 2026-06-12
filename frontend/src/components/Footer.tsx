@@ -56,6 +56,16 @@ export default function Footer() {
                   Universal Downloader
                 </Link>
               </li>
+              <li>
+                <Link href="/youtube" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">
+                  YouTube to MP3
+                </Link>
+              </li>
+              <li>
+                <Link href="/yt-video" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">
+                  YouTube to MP4
+                </Link>
+              </li>
             </ul>
           </div>
 
