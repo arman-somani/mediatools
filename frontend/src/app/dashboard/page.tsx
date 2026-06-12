@@ -27,38 +27,7 @@ function formatBytes(bytes?: number) {
 }
 
 const TOOLS = [
-    {
-        label: 'YouTube to Audio ',
-        description: 'Extract Audio from any YouTube video or playlist',
-        href: '/youtube',
-        gradient: 'from-red-600 to-rose-500',
-        shadow: 'hover:shadow-[0_0_30px_rgba(239,68,68,0.35)]',
-        border: 'border-red-500/20',
-        bg: 'bg-red-500/5',
-        icon: (
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" className="text-red-400">
-                <path d="M23.495 6.205a3.007 3.007 0 00-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 00.527 6.205a31.247 31.247 0 00-.522 5.805 31.247 31.247 0 00.522 5.783 3.007 3.007 0 002.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 002.088-2.088 31.247 31.247 0 00.5-5.783 31.247 31.247 0 00-.5-5.805zM9.609 15.601V8.408l6.264 3.602z" />
-            </svg>
-        ),
-        badge: 'Most Popular',
-        badgeColor: 'bg-red-500/20 text-red-400',
-    },
-    {
-        label: 'YouTube to Video',
-        description: 'Download YouTube videos in HD, 4K or 8K quality',
-        href: '/yt-video',
-        gradient: 'from-violet-600 to-purple-500',
-        shadow: 'hover:shadow-[0_0_30px_rgba(139,92,246,0.35)]',
-        border: 'border-violet-500/20',
-        bg: 'bg-violet-500/5',
-        icon: (
-            <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24" className="text-violet-400">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-        ),
-        badge: '4K & 8K',
-        badgeColor: 'bg-violet-500/20 text-violet-400',
-    },
+
     {
         label: 'Video to Audio ',
         description: 'Convert any local video file to high-quality Audio ',
@@ -195,11 +164,11 @@ export default function DashboardPage() {
                         <h2 className="text-2xl font-bold text-white mb-2">Start a New Conversion</h2>
                         <p className="text-white/50 text-sm mb-6">Choose what you want to convert each card goes directly to that tool.</p>
 
-                        <div className="grid gap-5 sm:grid-cols-3">
+                        <div className="grid gap-5 sm:grid-cols-2">
                             {TOOLS.map((tool, i) => (
                                 <motion.div
                                     key={tool.href}
-                                    className={i === 3 ? 'sm:col-start-2' : ''}
+                                    className=""
                                     initial={{ opacity: 0, y: 16 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ type: "spring", stiffness: 300, damping: 15, delay: 0.45 + i * 0.08 }}
