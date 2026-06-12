@@ -9,7 +9,8 @@ export function apiUrl(path: string): string {
 export const api = axios.create({
   baseURL: `${API_BASE_URL}/api`,
   headers: { 
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': '69420'
   },
   withCredentials: false,
 });
