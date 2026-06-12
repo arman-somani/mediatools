@@ -248,6 +248,24 @@
     100% { background-position: 133.333% 50%; }
   }
 
+  @keyframes spinSlow {
+    from { transform: translateX(-50%) translateY(-90%) rotate(0deg); }
+    to { transform: translateX(-50%) translateY(-90%) rotate(360deg); }
+  }
+
+  @keyframes spinSlowReverse {
+    from { transform: translateX(-50%) translateY(-95%) rotate(360deg); }
+    to { transform: translateX(-50%) translateY(-95%) rotate(0deg); }
+  }
+
+  .animate-spin-slow {
+    animation: spinSlow 8s linear infinite;
+  }
+
+  .animate-spin-slow-reverse {
+    animation: spinSlowReverse 12s linear infinite;
+  }
+
   .animated-logo-text {
     background: linear-gradient(to right, #34d399, #7c3aed, #06b6d4, #a855f7, #34d399);
     background-size: 400% auto;
