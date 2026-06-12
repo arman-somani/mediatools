@@ -7,7 +7,6 @@ import Image from 'next/image';
 import PlaylistDownloader from '@/components/PlaylistDownloader';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import PageWrapper from '@/components/PageWrapper';
-import AnimatedText from '@/components/AnimatedText';
 import ProgressCircle from '@/components/ProgressCircle';
 import { requestNotificationPermission, sendNotification } from '@/lib/notifications';
 
@@ -118,7 +117,7 @@ export default function YouTubePage() {
       <div className="w-full max-w-[90rem] mx-auto px-6 py-20 flex flex-col items-center">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full text-center mb-12 pt-8">
           <h1 className="font-display font-bold text-4xl md:text-5xl tracking-tight mb-4 text-white">
-            <AnimatedText text="Download" delayOffset={0} /> <AnimatedText text="YouTube Audio" className="text-gradient" delayOffset={300} />
+            Download <span className="text-gradient">YouTube Audio</span>
           </h1>
           <p className="text-white max-w-2xl mx-auto text-lg">
             Extract high-quality Audio from any YouTube video or entire playlists instantly.
