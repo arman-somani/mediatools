@@ -8,6 +8,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import ProgressCircle from '@/components/ProgressCircle';
 import { requestNotificationPermission, sendNotification } from '@/lib/notifications';
 import PageWrapper from '@/components/PageWrapper';
+import AnimatedText from '@/components/AnimatedText';
 
 type Quality = '128' | '192' | '320';
 type Status = 'idle' | 'uploading' | 'processing' | 'completed' | 'failed';
@@ -105,7 +106,7 @@ export default function ConverterPage() {
         <div className="w-full max-w-4xl mx-auto px-6 py-20 flex flex-col items-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full text-center mb-12 pt-8">
             <h1 className="font-display font-bold text-4xl md:text-5xl tracking-tight mb-4 text-white">
-              High-Fidelity <span className="text-gradient">Audio Extraction</span>
+              <AnimatedText text="High-Fidelity" delayOffset={0} /> <AnimatedText text="Audio Extraction" className="text-gradient" delayOffset={300} />
             </h1>
             <p className="text-white max-w-2x.5 mx-auto text-lg">
               Drop your video file below. Our cloud cluster will extract the Audio track without losing quality.
