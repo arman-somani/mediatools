@@ -1,5 +1,7 @@
 'use client';
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useDropzone } from 'react-dropzone';
 import api, { apiUrl } from '@/lib/api';
 import { formatFileSize } from '@/lib/utils';
 import ProtectedRoute from '@/components/ProtectedRoute';
