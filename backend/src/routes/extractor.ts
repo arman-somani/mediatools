@@ -21,7 +21,8 @@ function ytDlpArgs(args: string[], useProxy: boolean | string = false): string[]
   const base = [
     '--js-runtimes', 'node', 
     '--remote-components', 'ejs:github',
-    '--rm-cache-dir'
+    '--rm-cache-dir',
+    '--socket-timeout', '15'
   ];
   
   if (useProxy) {
