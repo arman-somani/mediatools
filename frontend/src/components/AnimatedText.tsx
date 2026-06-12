@@ -19,25 +19,39 @@ export default function AnimatedText({ text, className = '', delayOffset = 0 }: 
 
     const element = textRef.current;
     
-    // We do NOT add gradients to each letter because it restarts the gradient per character.
-    // The gradient class should be on the parent wrapper, and the letters simply inherit it.
-    element.innerHTML = text
-      .split('')
-      .map((char) => {
-        if (char === ' ') return '&nbsp;';
-        return `<span class="anime-letter" style="display:inline-block;opacity:0;transform:translateY(20px)">${char}</span>`;
-      })
-      .join('');
+    // Split text into words to prevent breaking a word in half on mobile
+    const words = text.split(' ');
+    
+    element.innerHTML = words.map((word) => {
+      // For each word, split into letters.
+      // We use display: inline-block for letters so transform works.
+      // However, if we need text-gradient to work, transform and inline-block break background-clip.
+      // We will use position: relative and top instead of transform, and avoid inline-block if possible.
+      // Actually, setting display:inline-block on the word, and inline-block on the letter is fine for word-breaking.
+      const chars = word.split('').map((char) => {
+        // Use position relative and top for animation to preserve text gradients which break on transforms
+        return `<span class="anime-letter" style="position:relative; opacity:0; top:20px; display:inline-block;">${char}</span>`;
+      }).join('');
+      
+      return `<span style="display:inline-block; white-space:nowrap;">${chars}</span>`;
+    }).join(' ');
 
     const targets = element.querySelectorAll('.anime-letter');
 
     anime({
       targets,
-      translateY: [20, 0],
+      top: ['20px', '0px'],
       opacity: [0, 1],
       easing: 'easeOutExpo',
       duration: 1200,
       delay: anime.stagger(30, { start: delayOffset }),
+      complete: () => {
+        // After animation, remove inline-block and position relative so background-clip gradients render perfectly
+        targets.forEach((el) => {
+          (el as HTMLElement).style.display = 'inline';
+          (el as HTMLElement).style.position = 'static';
+        });
+      }
     });
 
   }, [text, delayOffset]);
