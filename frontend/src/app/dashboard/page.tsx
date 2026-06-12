@@ -6,7 +6,6 @@ import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/lib/store';
 import api from '@/lib/api';
 import PageWrapper from '@/components/PageWrapper';
-import AnimatedText from '@/components/AnimatedText';
 
 type RecentConversion = {
     _id?: string;
@@ -164,9 +163,7 @@ export default function DashboardPage() {
                         animate={{ opacity: 1, y: 0 }}
                         className="mb-10"
                     >
-                        <h1 className="text-5xl font-bold text-white">
-                            <AnimatedText text="Dashboard" />
-                        </h1>
+                        <h1 className="text-5xl font-bold text-white">Dashboard</h1>
                         <p className="mt-3 text-white/60">
                             {user ? `Welcome back, ${user.name}` : 'Manage your conversions and downloads.'}
                         </p>
