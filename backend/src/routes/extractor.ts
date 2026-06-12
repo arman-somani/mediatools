@@ -81,25 +81,24 @@ router.get('/info', async (req: Request, res: Response): Promise<void> => {
       data = await runYtDlpJson(url, false);
       if (!data || !data.formats) throw new Error('Invalid metadata returned natively');
     } catch (err: any) {
-      console.warn(`[Extractor] Tier 1 failed: ${err.message}. Trying Tier 1.5 (Free Proxies)...`);
+      console.warn(`[Extractor] Tier 1 failed: ${err.message}. Trying Tier 2 (Premium Proxy)...`);
       let success = false;
       
-      const freeProxies = await getRandomFreeProxies(2);
-      for (const freeProxy of freeProxies) {
+      const premiumProxy = process.env.PROXY_URL;
+      if (premiumProxy) {
         try {
-          console.log(`[Extractor] Trying Free Proxy: ${freeProxy}`);
-          data = await runYtDlpJson(url, freeProxy);
+          console.log(`[Extractor] Trying Premium Proxy...`);
+          data = await runYtDlpJson(url, premiumProxy);
           if (data && data.formats) {
             success = true;
-            break;
           }
         } catch (e) {
-          console.warn(`[Extractor] Free proxy ${freeProxy} failed.`);
+          console.warn(`[Extractor] Premium proxy failed.`);
         }
       }
 
       if (!success) {
-        throw new Error("Metadata extraction failed.");
+        throw new Error("Metadata extraction failed natively and via proxy.");
       }
     }
 
