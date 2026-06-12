@@ -5,6 +5,7 @@ import api, { apiUrl } from '@/lib/api';
 import { isValidYouTubeUrl, getYouTubeVideoId, formatFileSize } from '@/lib/utils';
 import Image from 'next/image';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import ProgressCircle from '@/components/ProgressCircle';
 import PageWrapper from '@/components/PageWrapper';
 import { requestNotificationPermission, sendNotification } from '@/lib/notifications';
 
