@@ -172,7 +172,7 @@ export default function ConverterPage() {
                         whileTap={file ? { scale: 0.95 } : {}}
                         onClick={handleConvert}
                         disabled={!file}
-                        className={`min-w-[160px] h-[46px] rounded-xl font-semibold transition-colors duration-300 ${!file ? 'bg-white/5 text-white/40 border border-white/10 cursor-not-allowed' : 'bg-gradient-to-r from-red-600 to-red-500 text-white hover:shadow-[0_0_20px_rgba(239,68,68,0.4)]'}`}
+                        className={`min-w-[160px] h-[46px] rounded-xl font-semibold transition-colors duration-300 ${!file ? 'bg-white/5 text-white/40 border border-white/10 cursor-not-allowed' : 'btn-primary'}`}
                       >
                         Convert to Audio </motion.button>
                     </div>
@@ -207,11 +207,11 @@ export default function ConverterPage() {
 
                   <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
                     <a href={apiUrl(`/api/convert/download/${jobId}`)} target="_blank" rel="noopener noreferrer" className="flex-1 block">
-                      <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full btn-primary-glow flex items-center justify-center gap-2 h-14">
+                      <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full btn-primary flex items-center justify-center gap-2 h-14">
                         <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                         Download Audio </motion.button>
                     </a>
-                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={reset} className="btn-secondary h-14 w-full sm:w-auto px-8 whitespace-nowrap bg-black/5 hover:bg-white/20 text-white">
+                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={reset} className="glass-panel hover:bg-white/5 border border-white/20 h-14 w-full sm:w-auto px-8 whitespace-nowrap text-white transition-all">
                       Convert Another
                     </motion.button>
                   </div>
@@ -233,7 +233,7 @@ export default function ConverterPage() {
                   initial={{ scale: 0.9, opacity: 0, y: 20 }}
                   animate={{ scale: 1, opacity: 1, y: 0 }}
                   exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                  className="bg-white#111] border border-white/10 p-8 rounded-2xl shadow-2xl max-w-md w-full text-center relative"
+                  className="glass-panel p-8 rounded-2xl max-w-md w-full text-center relative"
                 >
                   <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/30">
                     <svg width="32" height="32" fill="none" stroke="#ef4444" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
