@@ -18,18 +18,14 @@ export default function AnimatedText({ text, className = '', delayOffset = 0 }: 
     animatedRef.current = true;
 
     const element = textRef.current;
-    const isGradient = className.includes('text-gradient');
-
-    // Build letter spans with inline styles for initial hidden state
+    
+    // We do NOT add gradients to each letter because it restarts the gradient per character.
+    // The gradient class should be on the parent wrapper, and the letters simply inherit it.
     element.innerHTML = text
       .split('')
       .map((char) => {
         if (char === ' ') return '&nbsp;';
-        // If the parent has text-gradient, each letter needs the gradient styles too
-        const gradientStyle = isGradient
-          ? 'background:linear-gradient(to right,#7c3aed,#a855f7,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;'
-          : '';
-        return `<span class="anime-letter" style="display:inline-block;opacity:0;transform:translateY(20px);${gradientStyle}">${char}</span>`;
+        return `<span class="anime-letter" style="display:inline-block;opacity:0;transform:translateY(20px)">${char}</span>`;
       })
       .join('');
 
@@ -44,10 +40,10 @@ export default function AnimatedText({ text, className = '', delayOffset = 0 }: 
       delay: anime.stagger(30, { start: delayOffset }),
     });
 
-  }, [text, delayOffset, className]);
+  }, [text, delayOffset]);
 
   return (
-    <span ref={textRef} className="inline">
+    <span ref={textRef} className={`inline ${className}`}>
       {text}
     </span>
   );
