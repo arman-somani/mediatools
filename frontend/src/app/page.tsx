@@ -3,7 +3,6 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import PageWrapper from '@/components/PageWrapper';
-import AnimatedText from '@/components/AnimatedText';
 
 export default function HomePage() {
   return (
@@ -29,8 +28,8 @@ export default function HomePage() {
           >
 
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[1.1] mb-6 md:mb-8 text-white px-2 sm:px-0">
-              <AnimatedText text="Convert Video into" delayOffset={100} /><br />
-              <AnimatedText text="Best-Quality Audio" className="text-gradient" delayOffset={600} />
+              Convert Video into<br />
+              <span className="text-gradient">Best-Quality Audio</span>
             </h1>
 
             <p className="text-white/80 text-lg md:text-xl lg:text-2xl max-w-2xl mx-auto mb-10 md:mb-12 leading-relaxed px-4 sm:px-0 drop-shadow-md">
