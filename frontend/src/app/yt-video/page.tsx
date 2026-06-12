@@ -5,8 +5,7 @@ import api, { apiUrl } from '@/lib/api';
 import { isValidYouTubeUrl, getYouTubeVideoId, formatFileSize } from '@/lib/utils';
 import Image from 'next/image';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import ProgressCircle from '@/components/ProgressCircle';
-import AnimatedText from '@/components/AnimatedText';
+import PageWrapper from '@/components/PageWrapper';
 import { requestNotificationPermission, sendNotification } from '@/lib/notifications';
 
 type VideoQuality = '360p' | '480p' | '720p' | '1080p' | '4K' | '8K';
@@ -120,7 +119,7 @@ export default function YtVideoPage() {
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full text-center mb-12 pt-8">
           <h1 className="font-display font-bold text-4xl md:text-5xl tracking-tight mb-4 text-white">
-            <AnimatedText text="Download" delayOffset={0} /> <AnimatedText text="YouTube Video" className="text-gradient" delayOffset={300} />
+            Download <span className="text-gradient">YouTube Video</span>
           </h1>
           <p className="text-white max-w-2xl mx-auto text-lg">
             Paste any YouTube Video Link, select preferred quality, and download the full video as an MP4 file.
