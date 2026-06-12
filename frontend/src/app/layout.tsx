@@ -26,8 +26,8 @@ export default function RootLayout({
       </head>
       <body className={`${jakarta.variable} antialiased min-h-screen flex flex-col bg-gradient-mesh relative overflow-x-hidden max-w-full`}>
         {/* Glow orbs for deep background depth */}
-        <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand-violet/20 blur-[120px] rounded-full pointer-events-none" />
-        <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-brand-cyan/10 blur-[120px] rounded-full pointer-events-none" />
+        <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand-violet/20 blur-[120px] rounded-full pointer-events-none animate-blob-1" />
+        <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-brand-cyan/10 blur-[120px] rounded-full pointer-events-none animate-blob-2" />
 
         <GoogleAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}>
           <ThemeProvider>
