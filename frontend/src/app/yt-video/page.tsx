@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import api from '@/lib/api';
+import api, { apiUrl } from '@/lib/api';
 import { isValidYouTubeUrl, getYouTubeVideoId, formatFileSize } from '@/lib/utils';
 import Image from 'next/image';
 import ProtectedRoute from '@/components/ProtectedRoute';
