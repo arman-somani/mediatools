@@ -25,6 +25,7 @@ export default function Footer() {
               </span>
             </Link>
 
+            <p className="text-white/50 text-sm md:text-base leading-relaxed mb-6 max-w-sm">
               The most advanced, high-quality Audio extraction suite on the web.
               Convert Videos to Audio instantly.
             </p>
