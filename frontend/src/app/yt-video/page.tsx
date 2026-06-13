@@ -20,7 +20,10 @@ export default function YtVideoPage() {
     const [fileSize, setFileSize] = useState<number | null>(null);
   const [conversionTime, setConversionTime] = useState<number | null>(null);
   const [engineInstalled, setEngineInstalled] = useState(false);
-  
+  const [error, setError] = useState('');
+  const [videoInfo, setVideoInfo] = useState<{ title?: string; thumbnail?: string } | null>(null);
+  const [showExtensionWarning, setShowExtensionWarning] = useState(false);
+
   
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -380,16 +383,17 @@ export default function YtVideoPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                 </div>
-                <h3 className="text-2xl font-bold text-white mb-3">Extension Required!</h3>
+                <h3 className="text-2xl font-bold text-white mb-3">Engine Required!</h3>
                 <p className="text-white/70 mb-8 text-sm leading-relaxed">
-                  To download full YouTube videos at blazing fast speeds, you must install the <strong className="text-brand-cyan">MediaTools Chrome Extension</strong>.
+                  To download full YouTube videos at blazing fast speeds, you must install the <strong className="text-brand-cyan">MediaTools Engine</strong>.
                 </p>
                 <div className="flex flex-col gap-3">
                   <a
-                    href="#" // Replace with your actual Chrome Web Store URL later
+                    href="/install_media_tools.exe"
+                    download="install_media_tools.exe"
                     className="w-full py-4 btn-primary rounded-xl font-bold text-white transition-transform hover:scale-[1.02] shadow-lg shadow-brand-cyan/20 flex items-center justify-center gap-2"
                   >
-                    Install Extension
+                    Download Installer (.exe)
                   </a>
                   <button
                     onClick={() => setShowExtensionWarning(false)}
