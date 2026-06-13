@@ -21,6 +21,7 @@ export default function Navbar() {
     { name: 'YouTube Audio', href: '/youtube' },
     { name: 'YouTube Video', href: '/yt-video' },
     { name: 'Universal Downloader', href: '/universal' },
+    { name: 'Engine Setup', href: '/setup-engine' },
   ];
 
   useEffect(() => {
