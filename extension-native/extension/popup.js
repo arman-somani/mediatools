@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   btnSetup.addEventListener('click', () => {
-    chrome.tabs.create({ url: 'http://localhost:3000/setup-engine' });
+    chrome.tabs.create({ url: 'https://mediatoolkit.vercel.app/setup-engine' }); // Change to your exact live domain
   });
 
   function initializeMainUI() {
