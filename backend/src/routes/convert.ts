@@ -334,31 +334,29 @@ router.post('/youtube-formats', async (req: Request, res: Response): Promise<voi
       return;
     }
 
-    const info = await ytdl.getInfo(videoUrl);
-    
-    let videoFormat;
-    try {
-      videoFormat = ytdl.chooseFormat(info.formats, { quality: '1080p', filter: 'videoonly' });
-    } catch(e) {
-      videoFormat = ytdl.chooseFormat(info.formats, { quality: 'highestvideo', filter: 'videoonly' });
-    }
-    
-    const audioFormat = ytdl.chooseFormat(info.formats, { quality: 'highestaudio', filter: 'audioonly' });
+    // Because ytdl-core broke globally, we use the incredibly reliable yt-dlp binary to decipher!
+    // We request the best video up to 1080p, and the best audio.
+    const resTitle = await runYtDlp(['--print', 'title', '--no-playlist', videoUrl]);
+    const title = resTitle.stdout.trim();
 
-    if (!videoFormat || !audioFormat) {
+    const resUrls = await runYtDlp(['-f', 'bestvideo[height<=1080]+bestaudio', '--get-url', videoUrl]);
+    const urls = resUrls.stdout.trim().split('\n').filter(line => line.startsWith('http'));
+
+    if (urls.length < 2) {
+      // Fallback if video+audio extraction failed
       res.status(400).json({ success: false, message: 'Could not find separated audio and video formats for merging.' });
       return;
     }
 
     res.json({
       success: true,
-      videoUrl: videoFormat.url,
-      audioUrl: audioFormat.url,
-      title: info.videoDetails.title
+      videoUrl: urls[0], // First URL is video
+      audioUrl: urls[1], // Second URL is audio
+      title: title
     });
   } catch (error: any) {
     console.error('youtube-formats error:', error);
-    res.status(500).json({ success: false, message: error.message || 'Failed to extract formats' });
+    res.status(500).json({ success: false, message: error.message || 'Failed to extract formats via yt-dlp' });
   }
 });
 
