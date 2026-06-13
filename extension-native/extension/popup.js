@@ -2,22 +2,47 @@ document.addEventListener('DOMContentLoaded', function() {
   const urlDisplay = document.getElementById('url-display');
   const btnVideo = document.getElementById('btn-video');
   const btnAudio = document.getElementById('btn-audio');
+  const btnSetup = document.getElementById('btn-setup');
   const statusDiv = document.getElementById('status');
   
+  const loadingUi = document.getElementById('loading-ui');
+  const missingHostUi = document.getElementById('missing-host-ui');
+  const mainUi = document.getElementById('main-ui');
+
   let currentUrl = '';
 
-  // Get current tab
-  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-    const url = tabs[0].url;
-    if (url && (url.includes('youtube.com/watch') || url.includes('youtu.be/'))) {
-      currentUrl = url;
-      urlDisplay.textContent = url;
-      btnVideo.disabled = false;
-      btnAudio.disabled = false;
+  // Check if Native Host is installed
+  chrome.runtime.sendMessage({ action: 'check_host' }, function(response) {
+    loadingUi.style.display = 'none';
+    if (response && response.installed) {
+      mainUi.style.display = 'block';
+      initializeMainUI();
     } else {
-      urlDisplay.textContent = 'Please open a YouTube video.';
+      missingHostUi.style.display = 'block';
     }
   });
+
+  btnSetup.addEventListener('click', () => {
+    chrome.tabs.create({ url: 'http://localhost:3000/setup-engine' });
+  });
+
+  function initializeMainUI() {
+    // Get current tab
+    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+      const url = tabs[0].url;
+      if (url && (url.includes('youtube.com/watch') || url.includes('youtu.be/'))) {
+        currentUrl = url;
+        urlDisplay.textContent = url;
+        btnVideo.disabled = false;
+        btnAudio.disabled = false;
+      } else {
+        urlDisplay.textContent = 'Please open a YouTube video.';
+      }
+    });
+
+    btnVideo.addEventListener('click', () => download('video'));
+    btnAudio.addEventListener('click', () => download('audio'));
+  }
 
   function showStatus(msg, type) {
     statusDiv.textContent = msg;
@@ -36,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function() {
       format: format
     }, function(response) {
       if (!response) {
-        showStatus('Error: Check if the Native Host is installed correctly.', 'error');
+        showStatus('Error: The Native Host stopped responding.', 'error');
         btnVideo.disabled = false;
         btnAudio.disabled = false;
         return;
@@ -54,7 +79,4 @@ document.addEventListener('DOMContentLoaded', function() {
       }, 3000);
     });
   }
-
-  btnVideo.addEventListener('click', () => download('video'));
-  btnAudio.addEventListener('click', () => download('audio'));
 });

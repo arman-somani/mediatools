@@ -57,6 +57,10 @@
       background: linear-gradient(135deg, #8b5cf6 0%, #4338ca 100%);
       color: white;
     }
+    .btn-warning {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+    }
     button:hover {
       opacity: 0.9;
       transform: translateY(-1px);
@@ -85,10 +89,23 @@
     <p>Native Downloader</p>
   </div>
   
-  <div class="url-box" id="url-display">No YouTube URL found.</div>
-  
-  <button id="btn-video" class="btn-video" disabled>Download Best Video</button>
-  <button id="btn-audio" class="btn-audio" disabled>Download Audio Only</button>
+  <div id="loading-ui" style="text-align: center; color: #94a3b8; padding: 20px 0;">
+    Checking connection...
+  </div>
+
+  <div id="missing-host-ui" style="display: none;">
+    <div class="error" style="display:block; margin-bottom: 15px; text-align:center;">
+      <b style="font-size: 16px; display:block; margin-bottom: 5px;">Engine Missing!</b>
+      The MediaTools Native Engine is not installed or running.
+    </div>
+    <button id="btn-setup" class="btn-warning">Download Engine</button>
+  </div>
+
+  <div id="main-ui" style="display: none;">
+    <div class="url-box" id="url-display">No YouTube URL found.</div>
+    <button id="btn-video" class="btn-video" disabled>Download Best Video</button>
+    <button id="btn-audio" class="btn-audio" disabled>Download Audio Only</button>
+  </div>
   
   <div id="status"></div>
 

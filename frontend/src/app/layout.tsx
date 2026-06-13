@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import ThemeProvider from '@/components/ThemeProvider';
 import GoogleAuthProvider from '@/components/GoogleAuthProvider';
 import AnimeBackground from '@/components/AnimeBackground';
+import MobileWarningPopup from '@/components/MobileWarningPopup';
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-jakarta' });
 
@@ -38,6 +39,7 @@ export default function RootLayout({
               {children}
             </main>
             <Footer />
+            <MobileWarningPopup />
           </ThemeProvider>
         </GoogleAuthProvider>
       </body>

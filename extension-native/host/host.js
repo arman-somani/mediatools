@@ -48,6 +48,11 @@ process.stdin.on('data', (chunk) => {
 });
 
 function handleMessage(message) {
+  if (message.action === 'ping') {
+    sendMessage({ success: true, status: 'alive' });
+    return;
+  }
+
   if (!message.url) {
     sendMessage({ success: false, error: 'No URL provided' });
     return;
