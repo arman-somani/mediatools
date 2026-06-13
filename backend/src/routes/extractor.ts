@@ -3,7 +3,6 @@ import { spawn } from 'child_process';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
-import ytdl from '@distube/ytdl-core';
 import { getRandomFreeProxies } from '../utils/freeproxy';
 
 const router = Router();
@@ -231,48 +230,6 @@ router.get('/info', async (req: Request, res: Response): Promise<void> => {
   } catch (error: any) {
     console.error('Extractor API Error:', error.message);
     res.status(500).json({ success: false, message: error.message || 'Failed to extract video information' });
-  }
-});
-
-/* ΓöÇΓöÇ VEVIOZ-STYLE DIRECT URL EXTRACTOR ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
-router.get('/get-urls', async (req: Request, res: Response): Promise<void> => {
-  try {
-    const url = req.query.url as string;
-    if (!url) {
-      res.status(400).json({ success: false, message: 'URL is required' });
-      return;
-    }
-
-    console.log(`[Vevioz-Extractor] Fetching formats for: ${url}`);
-    
-    // ytdl-core handles the ciphering and returns direct playback/download URLs
-    const info = await ytdl.getInfo(url);
-    
-    // We only want formats that the browser can directly download and play easily
-    // Usually MP4 with both video+audio, or audio-only formats.
-    const formats = info.formats.map(f => {
-      const isVideo = f.hasVideo && f.hasAudio;
-      const isAudioOnly = f.hasAudio && !f.hasVideo;
-      
-      return {
-        qualityLabel: f.qualityLabel || (f.audioBitrate ? `${f.audioBitrate}kbps` : 'Unknown'),
-        mimeType: f.mimeType,
-        url: f.url,
-        hasVideo: f.hasVideo,
-        hasAudio: f.hasAudio,
-        contentLength: f.contentLength || null
-      };
-    }).filter(f => f.hasVideo && f.hasAudio || (!f.hasVideo && f.hasAudio)); // Keep combined MP4s or Audio
-
-    res.json({
-      success: true,
-      title: info.videoDetails.title,
-      thumbnail: info.videoDetails.thumbnails?.[info.videoDetails.thumbnails.length - 1]?.url || '',
-      formats: formats
-    });
-  } catch (error: any) {
-    console.error('[Vevioz-Extractor] Error:', error.message);
-    res.status(500).json({ success: false, message: error.message || 'Failed to extract direct URLs' });
   }
 });
 

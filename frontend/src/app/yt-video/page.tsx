@@ -1,22 +1,27 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import api from '@/lib/api';
+import api, { apiUrl } from '@/lib/api';
 import { isValidYouTubeUrl, getYouTubeVideoId, formatFileSize } from '@/lib/utils';
 import Image from 'next/image';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import ProgressCircle from '@/components/ProgressCircle';
 import PageWrapper from '@/components/PageWrapper';
+import { requestNotificationPermission, sendNotification } from '@/lib/notifications';
+
+type VideoQuality = '360p' | '480p' | '720p' | '1080p' | '4K' | '8K';
 
 export default function YtVideoPage() {
   const [url, setUrl] = useState('');
+  const [quality, setQuality] = useState<VideoQuality>('720p');
   const [status, setStatus] = useState<'idle' | 'processing' | 'completed' | 'failed'>('idle');
+  const [progress, setProgress] = useState(0);
+  const [jobId, setJobId] = useState('');
+  const [fileSize, setFileSize] = useState<number | null>(null);
   const [videoInfo, setVideoInfo] = useState<{ title?: string; thumbnail?: string } | null>(null);
   const [error, setError] = useState('');
-  const [formats, setFormats] = useState<any[]>([]);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
+  const [conversionTime, setConversionTime] = useState<number | null>(null);
+  
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -24,6 +29,13 @@ export default function YtVideoPage() {
       if (queryUrl) setUrl(queryUrl);
     }
   }, []);
+  
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  const startTimeRef = useRef<number | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (!url || isValidYouTubeUrl(url)) {
@@ -53,23 +65,51 @@ export default function YtVideoPage() {
   const videoId = url ? getYouTubeVideoId(url) : null;
   const thumbnailPreview = videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : null;
 
-  const handleFetchLinks = async () => {
+  const poll = (id: string) => {
+    pollRef.current = setInterval(async () => {
+      try {
+        const { data } = await api.get(`/convert/status/${id}`);
+        const conv = data.data;
+        setProgress(Math.round(conv.progress || 0));
+        if (conv.status === 'completed') {
+          clearInterval(pollRef.current!);
+          setStatus('completed');
+          setProgress(100);
+          if (startTimeRef.current) setConversionTime(Math.round((Date.now() - startTimeRef.current) / 1000));
+          setVideoInfo({ title: conv.youtubeTitle, thumbnail: conv.youtubeThumbnail });
+          setFileSize(conv.fileSize || null);
+          sendNotification('Audio Ready! 🎵', 'Your audio file has finished converting and is ready to save.');
+        } else if (conv.status === 'failed') {
+          clearInterval(pollRef.current!);
+          setStatus('failed');
+          setError(conv.errorMessage || 'Download failed');
+        }
+      } catch { clearInterval(pollRef.current!); }
+    }, 2500);
+  };
+
+  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
+
+  const handleDownload = async () => {
+    startTimeRef.current = Date.now();
     if (!isValidYouTubeUrl(url)) { setError('Please enter a valid YouTube URL'); return; }
-    setError(''); setStatus('processing'); setVideoInfo(null); setFormats([]);
+    requestNotificationPermission();
+    setError(''); setStatus('processing'); setProgress(0); setConversionTime(null);
     try {
-      const { data } = await api.get(`/extractor/get-urls?url=${encodeURIComponent(url)}`);
-      setVideoInfo({ title: data.title, thumbnail: data.thumbnail });
-      setFormats(data.formats || []);
-      setStatus('completed');
+      const { data } = await api.post('/convert/youtube-Video', { url, videoQuality: quality });
+      setJobId(data.data.jobId);
+      if (data.data.title) setVideoInfo({ title: data.data.title });
+      poll(data.data.jobId);
     } catch (err: unknown) {
       setStatus('failed');
-      const msg = (err as any)?.response?.data?.message || (err as any).message;
-      setError(msg || 'Failed to fetch direct links');
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setError(msg || 'Failed to start download');
     }
   };
 
   const reset = () => {
-    setUrl(''); setStatus('idle'); setVideoInfo(null); setError(''); setFormats([]);
+    setUrl(''); setStatus('idle'); setProgress(0);
+    setJobId(''); setVideoInfo(null); setFileSize(null); setError(''); setConversionTime(null);
   };
 
   return (
@@ -78,10 +118,10 @@ export default function YtVideoPage() {
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full text-center mb-12 pt-8">
           <h1 className="font-display font-bold text-4xl md:text-5xl tracking-tight mb-4 text-white">
-            YouTube <span className="text-gradient">Direct Downloader</span>
+            Download <span className="text-gradient">YouTube Video</span>
           </h1>
           <p className="text-white max-w-2xl mx-auto text-lg">
-            Client-side direct downloads. Bypass server limits and download straight from YouTube's CDN.
+            Paste any YouTube Video Link, select preferred quality, and download the full video as an MP4 file.
           </p>
         </motion.div>
 
@@ -92,6 +132,7 @@ export default function YtVideoPage() {
             <AnimatePresence mode="wait">
               {status === 'idle' || status === 'failed' ? (
                 <motion.div key="input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="relative z-10 space-y-8">
+
                   <div className="relative group">
                     <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none z-10 text-white/40 transition-colors duration-200 group-focus-within:text-brand-purple">
                       <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -102,7 +143,7 @@ export default function YtVideoPage() {
                       type="text"
                       value={url}
                       onChange={(e) => { setUrl(e.target.value); setError(''); }}
-                      onKeyDown={(e) => e.key === 'Enter' && handleFetchLinks()}
+                      onKeyDown={(e) => e.key === 'Enter' && handleDownload()}
                       placeholder="Search YouTube or paste URL..."
                       className="url-input-field"
                     />
@@ -159,79 +200,102 @@ export default function YtVideoPage() {
                     )}
                   </AnimatePresence>
 
-                  <div className="flex justify-center">
-                    <button
-                      onClick={handleFetchLinks}
-                      disabled={!url}
-                      className={`min-w-[200px] h-[46px] rounded-xl font-semibold text-base transition-all duration-300 flex-shrink-0 ${!url ? 'bg-white/5 text-white/40 cursor-not-allowed' : 'btn-primary w-full'}`}
-                    >
-                      Extract Direct Links
-                    </button>
+                  {/* Controls: quality + button on same row, perfectly aligned */}
+                  <div className="flex flex-col md:flex-row gap-4">
+                    {/* Quality selector */}
+                    <div className="flex-1">
+                      <label className="quality-label">VIDEO QUALITY</label>
+                      <div className="quality-track">
+                        {(['360p', '480p', '720p', '1080p', '4K', '8K'] as VideoQuality[]).map(q => (
+                          <button
+                            key={q}
+                            onClick={() => setQuality(q)}
+                            className={`quality-btn${quality === q ? ' active' : ''}`}
+                          >
+                            {q}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Button ? aligned to quality track top using invisible spacer label */}
+                    <div className="flex flex-col justify-start">
+                      <label className="quality-label opacity-0 select-none">BTN</label>
+                      <button
+                        onClick={handleDownload}
+                        disabled={!url}
+                        className={`min-w-[200px] h-[46px] rounded-xl font-semibold text-base transition-all duration-300 flex-shrink-0 ${!url ? 'bg-white/5 text-white/40 cursor-not-allowed' : 'btn-primary'}`}
+                      >
+                        Download Video </button>
+                    </div>
                   </div>
+
                 </motion.div>
 
               ) : status === 'processing' ? (
-                <div className="py-12 flex flex-col items-center justify-center space-y-6">
-                  <div className="w-16 h-16 border-4 border-brand-cyan/20 border-t-brand-cyan rounded-full animate-spin" />
-                  <div className="text-center">
-                    <h3 className="text-xl font-bold text-white mb-2">Resolving URLs...</h3>
-                    <p className="text-white/60">Fetching direct streaming links from YouTube CDN.</p>
-                  </div>
-                </div>
+                <ProgressCircle
+                  progress={progress}
+                  statusText="Downloading & Encoding..."
+                  subText={`Fetching ${quality} video - wait for a while for larger files.`}
+                />
 
               ) : (
-                <motion.div key="done" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="py-4 flex flex-col items-center w-full">
+                <motion.div key="done" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="py-8 text-center flex flex-col items-center">
                   {videoInfo?.thumbnail && (
-                    <div className="w-full max-w-sm aspect-video relative rounded-2xl overflow-hidden border border-white/10 mb-6 shadow-2xl">
+                    <div className="w-full max-w-sm aspect-video relative rounded-2xl overflow-hidden border border-white/10 mb-8 shadow-2xl">
                       <Image src={videoInfo.thumbnail} alt="thumbnail" fill className="object-cover" unoptimized />
+                      <div className="absolute inset-0 bg-black/20" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-16 h-16 bg-white/50 backdrop-blur-md rounded-full flex items-center justify-center border border-white/50 shadow-sm">
+                          <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" className="text-white"><path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        </div>
+                      </div>
                     </div>
                   )}
 
-                  <h3 className="text-2xl sm:text-3xl font-display font-bold text-white mb-2 text-center">Ready to Download</h3>
-                  {videoInfo?.title && (
-                    <p className="max-w-md w-full line-clamp-2 mb-6 text-sm text-center text-white px-4">{videoInfo.title}</p>
+                  {!videoInfo?.thumbnail && (
+                    <div className="w-24 h-24 bg-brand-violet/10 rounded-full flex items-center justify-center mb-6 border border-brand-violet/20 shadow-[0_0_40px_rgba(124,58,237,0.2)]">
+                      <svg width="40" height="40" fill="none" stroke="#7c3aed" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
                   )}
 
-                  <div className="w-full flex flex-col gap-3 mb-8">
-                    {formats.length === 0 ? (
-                      <div className="p-4 bg-white/5 rounded-xl text-center text-white/60">No suitable formats found.</div>
-                    ) : (
-                      formats.map((format, idx) => {
-                        // Construct download attribute filename safely
-                        const filename = `${videoInfo?.title?.replace(/[^\w\s]/gi, '') || 'video'}_${format.qualityLabel}.${format.mimeType.split(';')[0].split('/')[1] || 'mp4'}`;
-                        
-                        return (
-                          <a 
-                            key={idx} 
-                            href={`${format.url}&title=${encodeURIComponent(filename)}`} 
-                            download={filename}
-                            className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all group"
-                          >
-                            <div className="flex flex-col">
-                              <span className="text-white font-semibold text-lg flex items-center gap-2">
-                                {format.hasVideo ? (
-                                  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-brand-cyan"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                                ) : (
-                                  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-brand-purple"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path></svg>
-                                )}
-                                {format.qualityLabel}
-                              </span>
-                              <span className="text-white/50 text-xs mt-1">
-                                {format.mimeType.split(';')[0]} {format.contentLength ? `• ${formatFileSize(Number(format.contentLength))}` : ''}
-                              </span>
-                            </div>
-                            <div className="w-10 h-10 rounded-full bg-brand-cyan/20 flex items-center justify-center group-hover:bg-brand-cyan transition-colors">
-                              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" className="text-white"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                            </div>
-                          </a>
-                        );
-                      })
-                    )}
-                  </div>
+                  <h3 className="text-2xl sm:text-3xl font-display font-bold text-white mb-2 sm:mb-3">Video is Ready!</h3>
+                  {videoInfo?.title && (
+                    <p className="max-w-sm w-full line-clamp-2 mb-2 text-xs sm:text-sm text-white px-4">{videoInfo.title}</p>
+                  )}
+                  <p className="text-white mb-4 text-base sm:text-lg px-2">Your high-quality {quality} Video is ready to download.</p>
+                  {fileSize && (
+                    <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-sm font-medium mb-8 px-4 py-2 rounded-lg bg-white/5 text-white">
+                      <span>Actual Size: <strong className="text-brand-cyan">{formatFileSize(fileSize)}</strong></span>
+                      {conversionTime !== null && (
+                        <span className="hidden sm:inline">|</span>
+                      )}
+                      {conversionTime !== null && (
+                        <span>Time Taken: <strong className="text-brand-cyan">{conversionTime}s</strong></span>
+                      )}
+                    </div>
+                  )}
+                  {!fileSize && <div className="mb-8" />}
 
-                  <button onClick={reset} className="glass-panel hover:bg-white/5 border border-white/20 text-white transition-all h-12 w-full max-w-sm rounded-xl font-medium">
-                    Try Another Video
-                  </button>
+                  <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+                    <a
+                      href={apiUrl(`/api/convert/download/${jobId}`)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1"
+                    >
+                      <button className="w-full font-semibold rounded-xl flex items-center justify-center gap-2 h-14 transition-all duration-300 btn-primary">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Download Video </button>
+                    </a>
+                    <button onClick={reset} className="glass-panel hover:bg-white/5 border border-white/20 text-white transition-all h-14 w-full sm:w-auto px-8 whitespace-nowrap">
+                      Download Another
+                    </button>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -255,7 +319,7 @@ export default function YtVideoPage() {
                 <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/30">
                   <svg width="32" height="32" fill="none" stroke="#ef4444" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                 </div>
-                <h3 className="text-2xl font-bold text-white mb-2">Extraction Failed</h3>
+                <h3 className="text-2xl font-bold text-white mb-2">Download Failed</h3>
                 <p className="text-white mb-8">
                   {error}
                 </p>
