@@ -96,7 +96,7 @@ export default function YtVideoPage() {
     requestNotificationPermission();
     setError(''); setStatus('processing'); setProgress(0); setConversionTime(null);
     try {
-      const { data } = await api.post('/convert/youtube-Video', { url, videoQuality: quality });
+      const { data } = await api.post('/convert/universal', { url, videoQuality: quality });
       setJobId(data.data.jobId);
       if (data.data.title) setVideoInfo({ title: data.data.title });
       poll(data.data.jobId);
