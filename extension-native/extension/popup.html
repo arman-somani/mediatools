@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>MediaTools Downloader</title>
+  <style>
+    body {
+      width: 320px;
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #0f172a;
+      color: #ffffff;
+      padding: 16px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: 20px;
+      margin: 0 0 4px 0;
+      color: #2dd4bf;
+    }
+    p {
+      font-size: 13px;
+      color: #94a3b8;
+      margin: 0;
+      word-break: break-all;
+    }
+    .url-box {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 20px;
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 10px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-video {
+      background: linear-gradient(135deg, #2dd4bf 0%, #0284c7 100%);
+      color: white;
+    }
+    .btn-audio {
+      background: linear-gradient(135deg, #8b5cf6 0%, #4338ca 100%);
+      color: white;
+    }
+    button:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    #status {
+      margin-top: 15px;
+      font-size: 13px;
+      text-align: center;
+      padding: 10px;
+      border-radius: 6px;
+      display: none;
+    }
+    .success { background: rgba(16, 185, 129, 0.1); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2); }
+    .error { background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
+    .loading { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>MediaTools</h1>
+    <p>Native Downloader</p>
+  </div>
+  
+  <div class="url-box" id="url-display">No YouTube URL found.</div>
+  
+  <button id="btn-video" class="btn-video" disabled>Download Best Video</button>
+  <button id="btn-audio" class="btn-audio" disabled>Download Audio Only</button>
+  
+  <div id="status"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
