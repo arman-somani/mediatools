@@ -12,8 +12,6 @@ if (isWin) {
   process.env.PATH = `${ytDlpDir};${process.env.PATH}`;
 }
 
-import engineRouter from './routes/engine';
-app.use('/engine', engineRouter);
 
 import { connectDB } from './config/database';
 import { generalLimiter } from './middleware/rateLimiter';
