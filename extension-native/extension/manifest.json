@@ -18,5 +18,19 @@
   },
   "icons": {
     "128": "icon.png"
-  }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://localhost/*",
+        "*://127.0.0.1/*",
+        "*://*.mediatools.com/*",
+        "*://*.vercel.app/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_start"
+    }
+  ]
 }
