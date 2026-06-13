@@ -22,8 +22,7 @@ function checkHostStatus(sendResponse) {
 chrome.runtime.onInstalled.addListener(() => {
   chrome.runtime.sendNativeMessage(nativeHostName, { action: 'ping' }, function(response) {
     if (chrome.runtime.lastError) {
-      // Host is missing or not registered, redirect to setup page
-      chrome.tabs.create({ url: 'https://mediatoolkit.vercel.app/setup-engine' }); // Change to your exact live domain
+      console.log('MediaTools Engine is not installed.');
     } else {
       console.log('MediaTools Engine is already installed and alive.');
     }

@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const urlDisplay = document.getElementById('url-display');
   const btnVideo = document.getElementById('btn-video');
   const btnAudio = document.getElementById('btn-audio');
-  const btnSetup = document.getElementById('btn-setup');
   const statusDiv = document.getElementById('status');
   
   const loadingUi = document.getElementById('loading-ui');
@@ -20,10 +19,6 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
       missingHostUi.style.display = 'block';
     }
-  });
-
-  btnSetup.addEventListener('click', () => {
-    chrome.tabs.create({ url: 'https://mediatoolkit.vercel.app/setup-engine' }); // Change to your exact live domain
   });
 
   function initializeMainUI() {
