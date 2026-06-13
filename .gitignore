@@ -13,3 +13,7 @@ Colab-Server.ipynb
 
 *.env
 Colab_Secrets.env
+/bin/
+*.exe
+*.zip
+*.ps1

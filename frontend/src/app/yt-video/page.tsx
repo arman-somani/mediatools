@@ -33,12 +33,17 @@ export default function YtVideoPage() {
     }
   }, []);
 
-  // Detect if MediaTools Engine is installed on the PC
+  // Detect if MediaTools Engine is running locally
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await api.get('/engine/installed');
-        setEngineInstalled(data.installed);
+        const res = await fetch('http://127.0.0.1:4000/status');
+        if (res.ok) {
+          const data = await res.json();
+          setEngineInstalled(data.installed);
+        } else {
+          setEngineInstalled(false);
+        }
       } catch {
         setEngineInstalled(false);
       }
@@ -117,14 +122,27 @@ export default function YtVideoPage() {
     requestNotificationPermission();
     setError(''); setStatus('processing'); setProgress(0); setConversionTime(null);
     try {
-      const { data } = await api.post('/convert/universal', { url, videoQuality: quality });
-      setJobId(data.data.jobId);
-      if (data.data.title) setVideoInfo({ title: data.data.title });
-      poll(data.data.jobId);
+      const res = await fetch('http://127.0.0.1:4000/convert/universal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, videoQuality: quality })
+      });
+      
+      if (!res.ok) {
+        throw new Error('Failed to start download');
+      }
+
+      // The daemon returns success immediately while yt-dlp runs in the background
+      // Update UI to completed state
+      setStatus('completed');
+      setProgress(100);
+      if (startTimeRef.current) setConversionTime(Math.round((Date.now() - startTimeRef.current) / 1000));
+      setVideoInfo({ title: 'Video downloading locally...' }); // We don't have metadata immediately
+      sendNotification('Download Started! 🎵', 'Your video is downloading directly to your Downloads folder.');
+      
     } catch (err: unknown) {
       setStatus('failed');
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setError(msg || 'Failed to start download');
+      setError('Failed to reach local engine. Make sure it is running.');
     }
   };
 
@@ -134,8 +152,13 @@ export default function YtVideoPage() {
     // Re‑check engine installation status on reset
     (async () => {
       try {
-        const { data } = await api.get('/engine/installed');
-        setEngineInstalled(data.installed);
+        const res = await fetch('http://127.0.0.1:4000/status');
+        if (res.ok) {
+          const data = await res.json();
+          setEngineInstalled(data.installed);
+        } else {
+          setEngineInstalled(false);
+        }
       } catch {
         setEngineInstalled(false);
       }
