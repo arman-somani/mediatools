@@ -19,6 +19,13 @@
   "action": {
     "default_popup": "popup.html"
   },
+  "content_scripts": [
+    {
+      "matches": [ "*://localhost/*", "*://127.0.0.1/*", "*://*.mediatools.com/*", "*://*.vercel.app/*" ],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
   }

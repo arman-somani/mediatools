@@ -325,6 +325,43 @@ router.post(
 
 
 
+/* ΓöÇΓöÇ YOUTUBE FORMATS EXTRACTOR (Used by WASM Extension) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
+router.post('/youtube-formats', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const videoUrl = req.body.url;
+    if (!videoUrl) {
+      res.status(400).json({ success: false, message: 'Video URL is required' });
+      return;
+    }
+
+    const info = await ytdl.getInfo(videoUrl);
+    
+    let videoFormat;
+    try {
+      videoFormat = ytdl.chooseFormat(info.formats, { quality: '1080p', filter: 'videoonly' });
+    } catch(e) {
+      videoFormat = ytdl.chooseFormat(info.formats, { quality: 'highestvideo', filter: 'videoonly' });
+    }
+    
+    const audioFormat = ytdl.chooseFormat(info.formats, { quality: 'highestaudio', filter: 'audioonly' });
+
+    if (!videoFormat || !audioFormat) {
+      res.status(400).json({ success: false, message: 'Could not find separated audio and video formats for merging.' });
+      return;
+    }
+
+    res.json({
+      success: true,
+      videoUrl: videoFormat.url,
+      audioUrl: audioFormat.url,
+      title: info.videoDetails.title
+    });
+  } catch (error: any) {
+    console.error('youtube-formats error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to extract formats' });
+  }
+});
+
 /* ΓöÇΓöÇ UNIVERSAL VIDEO METADATA ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
 router.post('/universal/metadata', async (req: Request, res: Response): Promise<void> => {
   try {

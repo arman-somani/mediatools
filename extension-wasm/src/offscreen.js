@@ -1,4 +1,4 @@
-import { FFmpeg } from '@ffmpeg/ffmpeg';
+const { FFmpeg } = require('@ffmpeg/ffmpeg');
 
 let ffmpeg = null;
 

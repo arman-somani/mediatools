@@ -1,5 +1,3 @@
-import ytdl from '@distube/ytdl-core';
-
 let creating; // Promise for offscreen document
 
 async function setupOffscreenDocument(path) {
@@ -30,45 +28,40 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 async function handleDownload(url) {
-  console.log("Fetching formats for:", url);
-  // 1. Fetch info using ytdl-core (bypasses IP blocks because it uses the user's browser!)
-  const info = await ytdl.getInfo(url);
+  console.log("Requesting formats from backend...");
   
-  // 2. Select 1080p video and best audio
-  let videoFormat;
-  try {
-    videoFormat = ytdl.chooseFormat(info.formats, { quality: '1080p', filter: 'videoonly' });
-  } catch(e) {
-    // Fallback if 1080p isn't available
-    videoFormat = ytdl.chooseFormat(info.formats, { quality: 'highestvideo', filter: 'videoonly' });
-  }
+  // Use the backend to decipher the URLs. 
+  // This avoids bundling 10MB of Node dependencies (ytdl-core) into the extension.
+  // The actual heavy lifting (downloading chunks & merging) will still happen in the browser via ffmpeg.wasm using the user's IP!
+  const backendUrl = 'http://localhost:5000/api/convert/youtube-formats'; // Change to live URL later
+  const response = await fetch(backendUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url })
+  });
   
-  const audioFormat = ytdl.chooseFormat(info.formats, { quality: 'highestaudio', filter: 'audioonly' });
+  if (!response.ok) throw new Error("Failed to fetch formats from backend: " + response.status);
+  const data = await response.json();
+  if (!data.success) throw new Error(data.message || data.error || "Failed to parse formats");
 
-  if (!videoFormat || !audioFormat) {
-    throw new Error('Could not find suitable video or audio formats.');
-  }
+  console.log("Formats received from backend!");
 
-  console.log("Video Format:", videoFormat.url);
-  console.log("Audio Format:", audioFormat.url);
-
-  // 3. Setup Offscreen document for ffmpeg processing
+  // Setup Offscreen document for ffmpeg processing
   await setupOffscreenDocument('offscreen.html');
 
-  // 4. Send direct URLs to offscreen document
-  const safeTitle = info.videoDetails.title.replace(/[^\w\s-]/gi, '').trim() || 'Downloaded_Video';
+  const safeTitle = (data.title || 'Downloaded_Video').replace(/[^\w\s-]/gi, '').trim() || 'Downloaded_Video';
   
   return new Promise((resolve, reject) => {
     console.log("Sending merge request to offscreen document...");
     chrome.runtime.sendMessage({
       target: 'offscreen',
       action: 'merge',
-      videoUrl: videoFormat.url,
-      audioUrl: audioFormat.url,
+      videoUrl: data.videoUrl,
+      audioUrl: data.audioUrl,
       title: safeTitle
-    }, (response) => {
+    }, (mergeRes) => {
       if (chrome.runtime.lastError) return reject(new Error(chrome.runtime.lastError.message));
-      if (!response || !response.success) return reject(new Error(response?.error || 'Unknown error during merge'));
+      if (!mergeRes || !mergeRes.success) return reject(new Error(mergeRes?.error || 'Unknown error during merge'));
       resolve({ success: true, title: safeTitle });
     });
   });
