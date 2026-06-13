@@ -18,10 +18,7 @@ export default function YtVideoPage() {
   const [progress, setProgress] = useState(0);
   const [jobId, setJobId] = useState('');
   const [fileSize, setFileSize] = useState<number | null>(null);
-  const [videoInfo, setVideoInfo] = useState<{ title?: string; thumbnail?: string } | null>(null);
-  const [error, setError] = useState('');
-  const [showExtensionWarning, setShowExtensionWarning] = useState(false);
-  const [conversionTime, setConversionTime] = useState<number | null>(null);
+  
   
   useEffect(() => {
     if (typeof window !== 'undefined') {
