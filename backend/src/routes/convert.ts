@@ -113,30 +113,7 @@ function runYtDlp(args: string[], useProxy: boolean | string = false): Promise<{
   });
 }
 
-async function fetchHuntApiData(url: string): Promise<any> {
-  const apiKey = process.env.HUNTAPI_KEY;
-  if (!apiKey) throw new Error("HUNTAPI_KEY is missing");
 
-  const initRes = await fetch(`https://api.huntapi.com/v1/video/download?query=${encodeURIComponent(url)}`, {
-    headers: { 'x-api-key': apiKey }
-  });
-  if (!initRes.ok) throw new Error(`HuntAPI failed: ${initRes.status}`);
-  const initData: any = await initRes.json();
-  const jobId = initData.job_id;
-  if (!jobId) throw new Error("HuntAPI returned no job_id");
-
-  for (let i = 0; i < 20; i++) {
-    await new Promise(r => setTimeout(r, 2000));
-    const pollRes = await fetch(`https://api.huntapi.com/v1/jobs/${jobId}`, {
-      headers: { 'x-api-key': apiKey }
-    });
-    if (!pollRes.ok) continue;
-    const pollData: any = await pollRes.json();
-    if (pollData.status === 'CompletedJob') return pollData.result;
-    if (pollData.status === 'FailedJob') throw new Error("HuntAPI job failed");
-  }
-  throw new Error("HuntAPI polling timed out");
-}
 
 function findDownloadedFile(fileId: string): string | null {
   const files = fs.readdirSync(outputDir);
@@ -378,24 +355,8 @@ router.post('/universal/metadata', async (req: Request, res: Response): Promise<
     let directVideoUrl = '';
     let success = false;
 
-    if (process.env.HUNTAPI_KEY) {
-      try {
-        console.log('[Universal] Trying HuntAPI for metadata...');
-        const result = await fetchHuntApiData(cleanUrl);
-        title = result.metadata?.title || 'Downloaded Video';
-        thumbnail = (result.metadata?.thumbnails && result.metadata.thumbnails.length > 0) 
-            ? result.metadata.thumbnails[result.metadata.thumbnails.length - 1].url 
-            : (result.metadata?.thumbnail || '');
-        resolution = result.metadata?.resolution || 'Best Available';
-        directVideoUrl = result.response || '';
-        success = true;
-      } catch (err: any) {
-        console.warn('[Universal] HuntAPI failed:', err.message);
-      }
-    }
-
     if (!success) {
-      console.log('[Universal] HuntAPI failed or missing, trying yt-dlp...');
+      console.log('[Universal] Trying yt-dlp...');
       let stdout = '';
       const args = [
         '--print', '%(title)s',
@@ -507,39 +468,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
       try {
         let videoTitle = 'Downloaded Video';
         let thumbnail = '';
-        let directVideoUrl = '';
-        let downloadSuccess = false;
-
-        // Step 1: Try HuntAPI first for instant external URL
-        if (process.env.HUNTAPI_KEY) {
-          try {
-            console.log('[Universal Download] Trying HuntAPI...');
-            const result = await fetchHuntApiData(cleanUrl);
-            videoTitle = result.metadata?.title || 'Downloaded Video';
-            thumbnail = (result.metadata?.thumbnails && result.metadata.thumbnails.length > 0) 
-                ? result.metadata.thumbnails[result.metadata.thumbnails.length - 1].url 
-                : (result.metadata?.thumbnail || '');
-            directVideoUrl = result.response || '';
-            if (directVideoUrl) downloadSuccess = true;
-          } catch (err: any) {
-            console.warn('[Universal Download] HuntAPI failed:', err.message);
-          }
-        }
-
-        if (downloadSuccess && directVideoUrl) {
-          const safeTitle = sanitizeFilename(videoTitle) || 'Downloaded Video';
-          conversion.youtubeTitle = videoTitle;
-          conversion.youtubeThumbnail = thumbnail;
-          conversion.outputFilename = `${safeTitle}.mp4`;
-          conversion.outputUrl = directVideoUrl;
-          conversion.status = 'completed';
-          conversion.progress = 100;
-          await conversion.save();
-          console.log('[Universal Download] Completed via HuntAPI direct URL.');
-          return;
-        }
-
-        // Step 2: Fallback to yt-dlp metadata and download
+        // Step 1: Fetch metadata via yt-dlp
         try {
           let stdout = '';
           try {
