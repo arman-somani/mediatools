@@ -1,10 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
+const os = require('os');
 
 // The path to your existing yt-dlp binary
 const ytDlpPath = path.join(__dirname, '..', '..', 'bin', 'yt-dlp.exe');
-const outputDir = path.join(__dirname, '..', '..', 'backend', 'outputs');
+const outputDir = path.join(os.homedir(), 'Downloads', 'MediaTools');
 
 // Native Messaging requires length-prefixed messages
 function sendMessage(msg) {
