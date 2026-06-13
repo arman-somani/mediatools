@@ -17,7 +17,14 @@
   },
   "devDependencies": {
     "copy-webpack-plugin": "^14.0.0",
+    "https-browserify": "^1.0.0",
     "path": "^0.12.7",
+    "querystring-es3": "^0.2.1",
+    "stream-browserify": "^3.0.0",
+    "stream-http": "^3.2.0",
+    "timers-browserify": "^2.0.12",
+    "url": "^0.11.4",
+    "vm-browserify": "^1.1.2",
     "webpack": "^5.107.2",
     "webpack-cli": "^7.0.3"
   }
