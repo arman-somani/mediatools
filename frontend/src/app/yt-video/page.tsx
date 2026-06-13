@@ -17,7 +17,8 @@ export default function YtVideoPage() {
   const [status, setStatus] = useState<'idle' | 'processing' | 'completed' | 'failed'>('idle');
   const [progress, setProgress] = useState(0);
   const [jobId, setJobId] = useState('');
-  const [fileSize, setFileSize] = useState<number | null>(null);
+    const [fileSize, setFileSize] = useState<number | null>(null);
+  const [conversionTime, setConversionTime] = useState<number | null>(null);
   
   
   useEffect(() => {
