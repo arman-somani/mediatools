@@ -34,7 +34,9 @@ module.exports = {
       patterns: [
         { from: "src/manifest.json", to: "manifest.json" },
         { from: "src/popup.html", to: "popup.html" },
-        { from: "src/offscreen.html", to: "offscreen.html" }
+        { from: "src/offscreen.html", to: "offscreen.html" },
+        { from: "node_modules/@ffmpeg/core/dist/umd/ffmpeg-core.js", to: "ffmpeg-core.js" },
+        { from: "node_modules/@ffmpeg/core/dist/umd/ffmpeg-core.wasm", to: "ffmpeg-core.wasm" }
       ],
     }),
   ]
