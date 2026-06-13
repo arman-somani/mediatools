@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api, { apiUrl } from '@/lib/api';
-import { isValidYouTubeUrl, getYouTubeVideoId, formatFileSize } from '@/lib/utils';
+
 import Image from 'next/image';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ProgressCircle from '@/components/ProgressCircle';
