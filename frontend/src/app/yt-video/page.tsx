@@ -19,6 +19,7 @@ export default function YtVideoPage() {
   const [jobId, setJobId] = useState('');
     const [fileSize, setFileSize] = useState<number | null>(null);
   const [conversionTime, setConversionTime] = useState<number | null>(null);
+  const [engineInstalled, setEngineInstalled] = useState(false);
   
   
   useEffect(() => {
@@ -27,6 +28,18 @@ export default function YtVideoPage() {
       const queryUrl = params.get('url');
       if (queryUrl) setUrl(queryUrl);
     }
+  }, []);
+
+  // Detect if MediaTools Engine is installed on the PC
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await api.get('/engine/installed');
+        setEngineInstalled(data.installed);
+      } catch {
+        setEngineInstalled(false);
+      }
+    })();
   }, []);
   
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -90,9 +103,8 @@ export default function YtVideoPage() {
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 
   const handleDownload = async () => {
-    // GATEWAY CHECK: Ensure Chrome Extension is installed
-    const hasExtension = document.documentElement.dataset.hasMediatoolsExtension === 'true';
-    if (!hasExtension) {
+    // Ensure MediaTools Engine is installed before proceeding
+    if (!engineInstalled) {
       setShowExtensionWarning(true);
       return;
     }
@@ -116,6 +128,15 @@ export default function YtVideoPage() {
   const reset = () => {
     setUrl(''); setStatus('idle'); setProgress(0);
     setJobId(''); setVideoInfo(null); setFileSize(null); setError(''); setConversionTime(null);
+    // Re‑check engine installation status on reset
+    (async () => {
+      try {
+        const { data } = await api.get('/engine/installed');
+        setEngineInstalled(data.installed);
+      } catch {
+        setEngineInstalled(false);
+      }
+    })();
   };
 
   return (
