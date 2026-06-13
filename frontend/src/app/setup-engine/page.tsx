@@ -52,10 +52,10 @@ export default function SetupEnginePage() {
               </div>
             </div>
 
-            <a href="/MediaTools-Engine.zip" download className="btn-primary w-full h-14 text-lg font-bold rounded-xl shadow-lg shadow-brand-cyan/20 transition-all hover:scale-[1.02] flex items-center justify-center">
-              Download MediaTools Engine.zip
+            <a href="/install_media_tools.exe" download className="btn-primary w-full h-14 text-lg font-bold rounded-xl shadow-lg shadow-brand-cyan/20 transition-all hover:scale-[1.02] flex items-center justify-center">
+              Download MediaTools Engine
             </a>
-            <p className="text-xs text-white/30 mt-4">For Windows 10/11 • Extract and run install_engine.bat</p>
+            <p className="text-xs text-white/30 mt-4">For Windows 10/11 • Run install_media_tools.exe</p>
           </div>
         </motion.div>
 
