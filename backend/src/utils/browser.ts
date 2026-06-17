@@ -49,11 +49,18 @@ export async function extractVideoViaBrowser(url: string): Promise<ScrapedData> 
       request.continue();
     });
 
-    await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+    try {
+      // Use domcontentloaded instead of networkidle2 because YouTube never stops making network requests
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+      // Give it a few seconds for the javascript video player to initialize and trigger the media request
+      await page.waitForTimeout(5000).catch(() => {});
+    } catch (e: any) {
+      console.warn(`[Browser] Navigation timed out, but we might still have intercepted the video URL...`);
+    }
     
     // Wait for a video tag to appear (optional, fallback)
     try {
-      await page.waitForSelector('video', { timeout: 5000 });
+      await page.waitForSelector('video', { timeout: 3000 });
     } catch (e) {
       // Ignored
     }
