@@ -53,7 +53,7 @@ export async function extractVideoViaBrowser(url: string): Promise<ScrapedData> 
       // Use domcontentloaded instead of networkidle2 because YouTube never stops making network requests
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
       // Give it a few seconds for the javascript video player to initialize and trigger the media request
-      await page.waitForTimeout(5000).catch(() => {});
+      await new Promise(r => setTimeout(r, 5000));
     } catch (e: any) {
       console.warn(`[Browser] Navigation timed out, but we might still have intercepted the video URL...`);
     }
