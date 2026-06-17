@@ -19,7 +19,7 @@ function getCookiesPath(): string | null {
 
 function ytDlpArgs(args: string[]): string[] {
   const base = [
-    '--js-runtimes', 'node', 
+    '--js-runtimes', 'nodejs', 
     '--remote-components', 'ejs:github',
     '--rm-cache-dir',
     '--socket-timeout', '15'
