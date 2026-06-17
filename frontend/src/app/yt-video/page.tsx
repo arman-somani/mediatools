@@ -211,18 +211,15 @@ export default function YtVideoPage() {
                     <div className="flex-1">
                       <label className="quality-label">VIDEO QUALITY</label>
                       <div className="quality-track">
-                        {(['360p', '480p', '720p', '1080p', '4K', '8K'] as VideoQuality[]).map(q => {
-                           const label = (q === '720p' || q === '1080p' || q === '4K' || q === '8K') ? `${q} (up to 60fps)` : q;
-                           return (
-                             <button
-                               key={q}
-                               onClick={() => setQuality(q)}
-                               className={`quality-btn${quality === q ? ' active' : ''}`}
-                             >
-                               {label}
-                             </button>
-                           );
-                        })}
+                        {(['360p', '480p', '720p', '1080p', '4K', '8K'] as VideoQuality[]).map(q => (
+                          <button
+                            key={q}
+                            onClick={() => setQuality(q)}
+                            className={`quality-btn${quality === q ? ' active' : ''}`}
+                          >
+                            {q}
+                          </button>
+                        ))}
                       </div>
                     </div>
 
