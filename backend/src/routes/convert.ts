@@ -482,7 +482,6 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
               }
             }
           }
-        }
 
         // Find the actual downloaded mp3 file (saved as {fileId}.mp3 or {fileId}.m4a etc)
         const findAudioFile = (baseId: string): string | undefined => {
@@ -843,7 +842,6 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
               }
             }
           }
-        }
 
         // Find the actual downloaded file by fileId prefix
         const findVideoFile = (baseId: string): string | undefined => {

@@ -161,7 +161,6 @@ router.get('/info', async (req: Request, res: Response): Promise<void> => {
           }
         }
       }
-    }
 
     if (!data) {
       res.status(500).json({ success: false, message: 'Failed to extract video data (null returned)' });
