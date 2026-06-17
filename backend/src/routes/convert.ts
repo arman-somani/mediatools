@@ -86,7 +86,7 @@ function ytDlpArgs(args: string[]): string[] {
     '--retries', '0',
     '--extractor-retries', '0',
     '--fragment-retries', '0',
-    '--extractor-args', 'youtube:player-client=ios,android,web'
+    '--extractor-args', 'youtube:player-client=android_vr,web,default'
   ];
   
   const cookiesFile = getCookiesPath();
@@ -319,7 +319,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
       type: 'youtube',
       status: 'processing',
       youtubeUrl: cleanUrl,
-      youtubeTitle: 'Fetching info...',
+      youtubeTitle: req.body.title || 'Fetching info...',
       outputFilename: diskFilename,
       outputPath,
       outputUrl: `/outputs/${diskFilename}`,
@@ -329,7 +329,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
 
     res.json({
       success: true,
-      message: 'YouTube to MP3 conversion started',
+      message: 'YouTube conversion started',
       data: {
         jobId: conversion._id.toString(),
         conversionId: conversion._id.toString(),
@@ -339,16 +339,26 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
     // Background processing
     (async () => {
       try {
-        let videoTitle = 'Downloaded Audio';
+        let videoTitle = req.body.title || 'Downloaded Audio';
         let thumbnail = '';
-        try {
-          const res = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--no-playlist', cleanUrl]);
-          const lines = res.stdout.trim().split('\n');
-          const dlTitle = (lines[0] || '').trim();
-          if (dlTitle && dlTitle !== 'Downloaded Audio') videoTitle = dlTitle;
-          const dlThumb = (lines[1] || '').trim();
-          if (dlThumb) thumbnail = dlThumb;
-        } catch { }
+
+        // Step 1: Fetch metadata via yt-dlp only if we don't have it
+        if (!req.body.title) {
+          try {
+            let stdout = '';
+            try {
+              const res = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--no-playlist', cleanUrl]);
+              stdout = res.stdout;
+            } catch (e: any) {
+              console.warn(`yt-dlp metadata fetch failed: ${e.message}`);
+            }
+            const lines = stdout.trim().split('\n');
+            const dlTitle = (lines[0] || '').trim();
+            if (dlTitle && dlTitle !== 'Downloaded Audio') videoTitle = dlTitle;
+            const dlThumb = (lines[1] || '').trim();
+            if (dlThumb) thumbnail = dlThumb;
+          } catch { /* keep defaults */ }
+        }
 
         const safeTitle = sanitizeFilename(videoTitle) || 'Downloaded Audio';
         conversion.youtubeTitle = videoTitle;

@@ -26,7 +26,7 @@ function ytDlpArgs(args: string[]): string[] {
     '--retries', '0',
     '--extractor-retries', '0',
     '--fragment-retries', '0',
-    '--extractor-args', 'youtube:player-client=ios,android,web'
+    '--extractor-args', 'youtube:player-client=android_vr,web,default'
   ];
 
   const cookiesFile = getCookiesPath();
