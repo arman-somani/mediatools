@@ -19,10 +19,8 @@ export default function YtVideoPage() {
   const [jobId, setJobId] = useState('');
     const [fileSize, setFileSize] = useState<number | null>(null);
   const [conversionTime, setConversionTime] = useState<number | null>(null);
-  const [engineInstalled, setEngineInstalled] = useState(false);
   const [error, setError] = useState('');
   const [videoInfo, setVideoInfo] = useState<{ title?: string; thumbnail?: string } | null>(null);
-  const [showExtensionWarning, setShowExtensionWarning] = useState(false);
 
   
   useEffect(() => {
@@ -33,23 +31,6 @@ export default function YtVideoPage() {
     }
   }, []);
 
-  // Detect if MediaTools Engine is running locally
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch('http://127.0.0.1:4000/status');
-        if (res.ok) {
-          const data = await res.json();
-          setEngineInstalled(data.installed);
-        } else {
-          setEngineInstalled(false);
-        }
-      } catch {
-        setEngineInstalled(false);
-      }
-    })();
-  }, []);
-  
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -111,12 +92,6 @@ export default function YtVideoPage() {
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 
   const handleDownload = async () => {
-    // Ensure MediaTools Engine is installed before proceeding
-    if (!engineInstalled) {
-      setShowExtensionWarning(true);
-      return;
-    }
-
     startTimeRef.current = Date.now();
     if (!isValidYouTubeUrl(url)) { setError('Please enter a valid YouTube URL'); return; }
     requestNotificationPermission();
@@ -149,20 +124,6 @@ export default function YtVideoPage() {
   const reset = () => {
     setUrl(''); setStatus('idle'); setProgress(0);
     setJobId(''); setVideoInfo(null); setFileSize(null); setError(''); setConversionTime(null);
-    // Re‑check engine installation status on reset
-    (async () => {
-      try {
-        const res = await fetch('http://127.0.0.1:4000/status');
-        if (res.ok) {
-          const data = await res.json();
-          setEngineInstalled(data.installed);
-        } else {
-          setEngineInstalled(false);
-        }
-      } catch {
-        setEngineInstalled(false);
-      }
-    })();
   };
 
   return (
@@ -387,48 +348,6 @@ export default function YtVideoPage() {
           )}
         </AnimatePresence>
 
-        <AnimatePresence>
-          {showExtensionWarning && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-            >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                className="glass-panel p-8 rounded-3xl max-w-md w-full text-center relative border border-brand-cyan/20 shadow-2xl"
-              >
-                <div className="w-20 h-20 bg-brand-cyan/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-brand-cyan/30">
-                  <svg width="40" height="40" fill="none" stroke="#2dd4bf" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-3">Engine Required!</h3>
-                <p className="text-white/70 mb-8 text-sm leading-relaxed">
-                  To download full YouTube videos at blazing fast speeds, you must install the <strong className="text-brand-cyan">MediaTools Engine</strong>.
-                </p>
-                <div className="flex flex-col gap-3">
-                  <a
-                    href="/install_media_tools.exe"
-                    download="install_media_tools.exe"
-                    className="w-full py-4 btn-primary rounded-xl font-bold text-white transition-transform hover:scale-[1.02] shadow-lg shadow-brand-cyan/20 flex items-center justify-center gap-2"
-                  >
-                    Download Installer (.exe)
-                  </a>
-                  <button
-                    onClick={() => setShowExtensionWarning(false)}
-                    className="w-full py-3 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white font-medium rounded-xl transition-all"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
     </ProtectedRoute>
   );
