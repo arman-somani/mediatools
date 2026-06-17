@@ -4,6 +4,7 @@ FROM node:20-bookworm-slim
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     python3 \
+    python3-pip \
     wget \
     libnss3 \
     libnspr4 \
@@ -20,10 +21,9 @@ RUN apt-get update && apt-get install -y \
     libasound2 \
     && rm -rf /var/lib/apt/lists/*
 
-# Download and install the latest yt-dlp nightly build (fixes bot protection)
-# CACHE BUST: 2026-06-12
-RUN wget -q https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp \
-    && chmod a+rx /usr/local/bin/yt-dlp
+# Install the latest yt-dlp nightly build via pip
+# This avoids the PyInstaller bug that prevents Node.js from being used as a JS runtime
+RUN pip3 install -U https://github.com/yt-dlp/yt-dlp/archive/master.zip --break-system-packages
 
 WORKDIR /app
 
