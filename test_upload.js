@@ -1,16 +1,20 @@
 const fs = require('fs');
 const axios = require('axios');
 
-async function testTransfer() {
+async function testPixeldrain() {
     try {
-        fs.writeFileSync('testfile.mp4', 'dummy content for testing upload speeds and links');
+        fs.writeFileSync('test_video.mp4', 'dummy content for testing upload speeds and links');
         
-        console.log('Testing transfer.sh...');
-        const res = await axios.put('https://transfer.sh/testfile.mp4', fs.readFileSync('testfile.mp4'));
-        console.log('Transfer response:\n', res.data);
+        console.log('Testing pixeldrain...');
+        const fileData = fs.readFileSync('test_video.mp4');
+        const res = await axios.put('https://pixeldrain.com/api/file/test_video.mp4', fileData);
+        console.log('Pixeldrain response:\n', res.data);
+        if (res.data.success) {
+            console.log('Direct download link: https://pixeldrain.com/api/file/' + res.data.id + '?download');
+        }
     } catch (e) {
-        console.error('Transfer failed', e.message);
+        console.error('Pixeldrain failed', e.message);
     }
 }
 
-testTransfer();
+testPixeldrain();
