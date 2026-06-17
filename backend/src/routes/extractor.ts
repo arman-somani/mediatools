@@ -4,7 +4,8 @@ import path from 'path';
 import os from 'os';
 import fs from 'fs';
 import { getRandomFreeProxies } from '../utils/freeproxy';
-
+import ytdl from '@distube/ytdl-core';
+import play from 'play-dl';
 const router = Router();
 
 function getYtDlpPath(): string {
@@ -119,7 +120,57 @@ router.get('/info', async (req: Request, res: Response): Promise<void> => {
             console.log(`[Extractor] yt-dlp succeeded after Cookie Harvester`);
           } catch (tier4Err: any) {
             console.error(`[Extractor] Tier 4 (Cookie Harvester) failed:`, tier4Err.message);
-            throw new Error('All extractor attempts failed across all tiers.');
+            console.log(`[Extractor] Triggering Tier 5 (@distube/ytdl-core)...`);
+            try {
+              const ytdl = require('@distube/ytdl-core');
+              const info = await ytdl.getInfo(url);
+              data = {
+                title: info.videoDetails.title,
+                thumbnail: info.videoDetails.thumbnails?.[0]?.url,
+                duration: parseInt(info.videoDetails.lengthSeconds || '0', 10),
+                url: url,
+                formats: info.formats.map((f: any) => ({
+                  url: f.url,
+                  ext: f.container,
+                  vcodec: f.hasVideo ? (f.videoCodec || 'unknown') : 'none',
+                  acodec: f.hasAudio ? (f.audioCodec || 'unknown') : 'none',
+                  height: f.height,
+                  format_note: f.qualityLabel,
+                  filesize: f.contentLength ? parseInt(f.contentLength, 10) : null,
+                  fps: f.fps,
+                  abr: f.audioBitrate
+                }))
+              };
+              console.log(`[Extractor] ytdl-core succeeded`);
+            } catch (tier5Err: any) {
+              console.error(`[Extractor] Tier 5 failed:`, tier5Err.message);
+              console.log(`[Extractor] Triggering Tier 6 (play-dl)...`);
+              try {
+                const play = require('play-dl');
+                const info = await play.video_info(url);
+                data = {
+                  title: info.video_details.title,
+                  thumbnail: info.video_details.thumbnails?.[0]?.url,
+                  duration: info.video_details.durationInSec,
+                  url: url,
+                  formats: info.format.map((f: any) => ({
+                    url: f.url,
+                    ext: f.mimeType ? f.mimeType.split(';')[0].split('/')[1] : 'unknown',
+                    vcodec: f.hasVideo ? 'unknown' : 'none',
+                    acodec: f.hasAudio ? 'unknown' : 'none',
+                    height: f.height || (f.qualityLabel ? parseInt(f.qualityLabel, 10) : undefined),
+                    format_note: f.qualityLabel,
+                    filesize: f.contentLength ? parseInt(f.contentLength, 10) : null,
+                    fps: f.fps,
+                    abr: f.bitrate ? Math.round(f.bitrate / 1000) : undefined
+                  }))
+                };
+                console.log(`[Extractor] play-dl succeeded`);
+              } catch (tier6Err: any) {
+                console.error(`[Extractor] Tier 6 failed:`, tier6Err.message);
+                throw new Error('All extractor attempts failed across all tiers.');
+              }
+            }
           }
         }
       }
