@@ -1,10 +1,23 @@
 FROM node:20-bookworm-slim
 
-# Install FFmpeg, Python (required for yt-dlp), and wget
+# Install FFmpeg, Python (required for yt-dlp), wget, and shared libraries for Sparticuz Chromium
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     python3 \
     wget \
+    libnss3 \
+    libnspr4 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libxkbcommon0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxrandr2 \
+    libgbm1 \
+    libasound2 \
     && rm -rf /var/lib/apt/lists/*
 
 # Download and install the latest yt-dlp nightly build (fixes bot protection)
