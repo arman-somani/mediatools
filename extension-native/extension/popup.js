@@ -25,13 +25,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get current tab
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
       const url = tabs[0].url;
-      if (url && (url.includes('youtube.com/watch') || url.includes('youtu.be/'))) {
+      if (url && url.startsWith('http')) {
         currentUrl = url;
         urlDisplay.textContent = url;
         btnVideo.disabled = false;
         btnAudio.disabled = false;
       } else {
-        urlDisplay.textContent = 'Please open a YouTube video.';
+        urlDisplay.textContent = 'Please open a valid web page.';
       }
     });
 
