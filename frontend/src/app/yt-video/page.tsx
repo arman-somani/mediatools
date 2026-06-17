@@ -97,27 +97,18 @@ export default function YtVideoPage() {
     requestNotificationPermission();
     setError(''); setStatus('processing'); setProgress(0); setConversionTime(null);
     try {
-      const res = await fetch('http://127.0.0.1:4000/convert/universal', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url, videoQuality: quality })
-      });
+      const { data } = await api.post('/convert/universal', { url, videoQuality: quality });
       
-      if (!res.ok) {
-        throw new Error('Failed to start download');
+      if (data.success && data.data?.jobId) {
+        setJobId(data.data.jobId);
+        poll(data.data.jobId);
+      } else {
+        throw new Error('Invalid response from server');
       }
-
-      // The daemon returns success immediately while yt-dlp runs in the background
-      // Update UI to completed state
-      setStatus('completed');
-      setProgress(100);
-      if (startTimeRef.current) setConversionTime(Math.round((Date.now() - startTimeRef.current) / 1000));
-      setVideoInfo({ title: 'Video downloading locally...' }); // We don't have metadata immediately
-      sendNotification('Download Started! 🎵', 'Your video is downloading directly to your Downloads folder.');
-      
     } catch (err: unknown) {
       setStatus('failed');
-      setError('Failed to reach local engine. Make sure it is running.');
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setError(msg || 'Download failed. Please try again.');
     }
   };
 
