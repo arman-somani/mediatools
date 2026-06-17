@@ -397,25 +397,15 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         });
 
         try {
-          console.log(`Trying Tier 1: Proxy Network (Audio)...`);
-          const { getRandomFreeProxies } = require('../utils/freeproxy');
-          const proxies = await getRandomFreeProxies(10);
-          let success = false;
-          for (const proxy of proxies) {
-            console.log(`Trying Tier 1 proxy: ${proxy}`);
-            try {
-              await runYtDlpAudio(proxy);
-              success = true;
-              console.log(`yt-dlp AUDIO succeeded via Tier 1 Proxy`);
-              break;
-            } catch(proxyErr) {
-              console.warn(`Proxy ${proxy} failed.`);
-            }
-          }
-          if (!success) throw new Error('All Tier 1 proxies failed.');
+          console.log(`Trying Tier 1: Cookie Harvester (Audio)...`);
+          const { harvestCookies } = require('../utils/browser');
+          await harvestCookies(cleanUrl);
+          console.log('Cookies harvested. Trying yt-dlp natively...');
+          await runYtDlpAudio(); 
+          console.log(`yt-dlp AUDIO succeeded on Cookie Harvester`);
         } catch (tier1Err: any) {
-          console.error(`Tier 1 (Proxy) failed:`, tier1Err.message);
-          console.log(`Trying Tier 2: Fallback Proxy Network (Audio)...`);
+          console.error(`Tier 1 (Cookie Harvester) failed:`, tier1Err.message);
+          console.log(`Trying Tier 2: Proxy Network (Audio)...`);
           try {
             const { getRandomFreeProxies } = require('../utils/freeproxy');
             const proxies = await getRandomFreeProxies(10);
@@ -433,16 +423,26 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
             }
             if (!success) throw new Error('All Tier 2 proxies failed.');
           } catch (tier2Err: any) {
-            console.error(`Tier 2 (Fallback Proxies) failed:`, tier2Err.message);
-            console.log(`Triggering Tier 3: Cookie Harvester (Audio)...`);
+            console.error(`Tier 2 (Proxy Network) failed:`, tier2Err.message);
+            console.log(`Triggering Tier 3: Fallback Proxy Network (Audio)...`);
             try {
-              const { harvestCookies } = require('../utils/browser');
-              await harvestCookies(cleanUrl);
-              console.log('Cookies harvested. Retrying yt-dlp...');
-              await runYtDlpAudio(); 
-              console.log(`yt-dlp AUDIO succeeded on Cookie Harvester retry`);
-            } catch (browserErr: any) {
-               console.error(`Tier 3 (Cookie Harvester) failed:`, browserErr.message);
+              const { getRandomFreeProxies } = require('../utils/freeproxy');
+              const proxies = await getRandomFreeProxies(10);
+              let success = false;
+              for (const proxy of proxies) {
+                console.log(`Trying Tier 3 proxy: ${proxy}`);
+                try {
+                  await runYtDlpAudio(proxy);
+                  success = true;
+                  console.log(`yt-dlp AUDIO succeeded via Tier 3 Proxy`);
+                  break;
+                } catch(proxyErr) {
+                  console.warn(`Proxy ${proxy} failed.`);
+                }
+              }
+              if (!success) throw new Error('All Tier 3 proxies failed.');
+            } catch (tier3Err: any) {
+               console.error(`Tier 3 (Fallback Proxies) failed:`, tier3Err.message);
                throw new Error('All download attempts failed across all tiers.');
             }
           }
@@ -711,25 +711,15 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         });
 
         try {
-          console.log(`Trying Tier 1: Proxy Network...`);
-          const { getRandomFreeProxies } = require('../utils/freeproxy');
-          const proxies = await getRandomFreeProxies(10);
-          let success = false;
-          for (const proxy of proxies) {
-            console.log(`Trying Tier 1 proxy: ${proxy}`);
-            try {
-              await runYtDlpDownload(proxy);
-              success = true;
-              console.log(`yt-dlp UNIVERSAL succeeded via Tier 1 Proxy`);
-              break;
-            } catch(proxyErr) {
-              console.warn(`Proxy ${proxy} failed.`);
-            }
-          }
-          if (!success) throw new Error('All Tier 1 proxies failed.');
+          console.log(`Trying Tier 1: Cookie Harvester...`);
+          const { harvestCookies } = require('../utils/browser');
+          await harvestCookies(cleanUrl);
+          console.log('Cookies harvested. Trying yt-dlp natively...');
+          await runYtDlpDownload();
+          console.log(`yt-dlp UNIVERSAL succeeded on Cookie Harvester`);
         } catch (tier1Err: any) {
-          console.error(`Tier 1 (Proxy) failed:`, tier1Err.message);
-          console.log(`Trying Tier 2: Fallback Proxy Network...`);
+          console.error(`Tier 1 (Cookie Harvester) failed:`, tier1Err.message);
+          console.log(`Trying Tier 2: Proxy Network...`);
           try {
             const { getRandomFreeProxies } = require('../utils/freeproxy');
             const proxies = await getRandomFreeProxies(10);
@@ -747,16 +737,26 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
             }
             if (!success) throw new Error('All Tier 2 proxies failed.');
           } catch (tier2Err: any) {
-            console.error(`Tier 2 (Fallback Proxies) failed:`, tier2Err.message);
-            console.log(`Triggering Tier 3: Cookie Harvester...`);
+            console.error(`Tier 2 (Proxy Network) failed:`, tier2Err.message);
+            console.log(`Triggering Tier 3: Fallback Proxy Network...`);
             try {
-              const { harvestCookies } = require('../utils/browser');
-              await harvestCookies(cleanUrl);
-              console.log('Cookies harvested. Retrying yt-dlp...');
-              await runYtDlpDownload(); // Try native with cookies
-              console.log(`yt-dlp UNIVERSAL succeeded on Cookie Harvester retry`);
-            } catch (browserErr: any) {
-               console.error(`Tier 3 (Cookie Harvester) failed:`, browserErr.message);
+              const { getRandomFreeProxies } = require('../utils/freeproxy');
+              const proxies = await getRandomFreeProxies(10);
+              let success = false;
+              for (const proxy of proxies) {
+                console.log(`Trying Tier 3 proxy: ${proxy}`);
+                try {
+                  await runYtDlpDownload(proxy);
+                  success = true;
+                  console.log(`yt-dlp UNIVERSAL succeeded via Tier 3 Proxy`);
+                  break;
+                } catch(proxyErr) {
+                  console.warn(`Proxy ${proxy} failed.`);
+                }
+              }
+              if (!success) throw new Error('All Tier 3 proxies failed.');
+            } catch (tier3Err: any) {
+               console.error(`Tier 3 (Fallback Proxies) failed:`, tier3Err.message);
                throw new Error('All download attempts failed across all tiers.');
             }
           }
