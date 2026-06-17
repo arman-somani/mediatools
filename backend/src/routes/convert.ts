@@ -522,7 +522,41 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
           console.log(`yt-dlp UNIVERSAL succeeded`);
         } catch (e: any) {
           console.error(`yt-dlp UNIVERSAL failed:`, e.message);
-          throw new Error('All download attempts failed.');
+          console.log('Trying Tier 2: Headless Browser download fallback...');
+          try {
+            const { extractVideoViaBrowser } = require('../utils/browser');
+            const browserData = await extractVideoViaBrowser(cleanUrl);
+            
+            if (browserData && browserData.videoUrl) {
+              const axios = require('axios');
+              const fs = require('fs');
+              const response = await axios({
+                method: 'GET',
+                url: browserData.videoUrl,
+                responseType: 'stream'
+              });
+              
+              await new Promise((resolve, reject) => {
+                const writer = fs.createWriteStream(path.join(outputDir, `${fileId}.mp4`));
+                response.data.pipe(writer);
+                let error: Error | null = null;
+                writer.on('error', (err: Error) => {
+                  error = err;
+                  writer.close();
+                  reject(err);
+                });
+                writer.on('close', () => {
+                  if (!error) resolve(true);
+                });
+              });
+              console.log('Headless browser download succeeded');
+            } else {
+               throw new Error("Browser extraction yielded no URL");
+            }
+          } catch (browserErr: any) {
+             console.error(`Headless browser fallback failed:`, browserErr.message);
+             throw new Error('All download attempts failed.');
+          }
         }
 
         // Find the actual downloaded file since the extension could be .webm, .mkv, or .mp4
@@ -575,23 +609,11 @@ router.post('/youtube-playlist/metadata', async (req: Request, res: Response): P
     // --dump-json outputs one JSON object per line per video
     let stdout = '';
     try {
-      const res = await runYtDlp(['--flat-playlist', '--dump-json', cleanUrl], false);
+      const res = await runYtDlp(['--flat-playlist', '--dump-json', cleanUrl]);
       stdout = res.stdout;
-    } catch (e) {
-      console.warn('Playlist native fetch failed, trying free proxies...');
-      let success = false;
-      const freeProxies: string[] = [];
-      for (const freeProxy of freeProxies) {
-        try {
-          const res = await runYtDlp(['--flat-playlist', '--dump-json', cleanUrl], freeProxy);
-          stdout = res.stdout;
-          success = true;
-          break;
-        } catch (err) {}
-      }
-      if (!success) {
-        throw new Error("Playlist extraction failed.");
-      }
+    } catch (e: any) {
+      console.warn(`Playlist native fetch failed: ${e.message}`);
+      throw new Error("Playlist extraction failed.");
     }
 
     const lines = stdout.trim().split('\n');

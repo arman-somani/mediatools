@@ -75,8 +75,31 @@ router.get('/info', async (req: Request, res: Response): Promise<void> => {
       data = await runYtDlpJson(url);
       if (!data || !data.formats) throw new Error('Invalid metadata returned natively');
     } catch (err: any) {
-      console.warn(`[Extractor] Extraction failed: ${err.message}`);
-      throw new Error("Metadata extraction failed.");
+      console.warn(`[Extractor] Tier 1 failed: ${err.message}. Trying Tier 2 (Headless Browser)...`);
+      try {
+        const { extractVideoViaBrowser } = require('../utils/browser');
+        const browserData = await extractVideoViaBrowser(url);
+        
+        // Mock a yt-dlp format structure so the rest of the code works
+        data = {
+          title: browserData.title,
+          thumbnail: browserData.thumbnail,
+          duration: 0,
+          url: browserData.videoUrl,
+          formats: [{
+            format_note: 'Source',
+            ext: 'mp4',
+            vcodec: 'h264',
+            acodec: 'aac',
+            url: browserData.videoUrl,
+            protocol: 'https',
+            filesize_approx: null
+          }]
+        };
+      } catch (browserErr: any) {
+        console.warn(`[Extractor] Tier 2 (Browser) failed: ${browserErr.message}`);
+        throw new Error("Metadata extraction failed natively and via browser.");
+      }
     }
 
     if (!data) {
