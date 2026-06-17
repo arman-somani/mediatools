@@ -27,9 +27,9 @@ export async function extractVideoViaBrowser(url: string): Promise<ScrapedData> 
 
   const browser = await puppeteer.launch({
     args: isWin ? [] : chromium.args,
-    defaultViewport: chromium.defaultViewport,
+    defaultViewport: { width: 1920, height: 1080 },
     executablePath: execPath,
-    headless: isWin ? true : chromium.headless,
+    headless: true,
     ignoreHTTPSErrors: true,
   });
 
@@ -39,7 +39,7 @@ export async function extractVideoViaBrowser(url: string): Promise<ScrapedData> 
     // Intercept requests to find direct MP4 URLs
     let interceptedVideoUrl = '';
     await page.setRequestInterception(true);
-    page.on('request', (request) => {
+    page.on('request', (request: any) => {
       if (request.resourceType() === 'media' && !interceptedVideoUrl) {
         const reqUrl = request.url();
         if (reqUrl.includes('.mp4')) {
