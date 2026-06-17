@@ -163,11 +163,12 @@ router.get('/test-ytdlcore', async (req: Request, res: Response): Promise<void> 
   }
 });
 
-const uploadDir = process.env.UPLOAD_DIR || './uploads';
-const outputDir = process.env.OUTPUT_DIR || './outputs';
+const uploadDir = path.resolve(process.env.UPLOAD_DIR || path.join(__dirname, '../../uploads'));
+const outputDir = path.resolve(process.env.OUTPUT_DIR || path.join(__dirname, '../../outputs'));
 
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
+
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadDir),
@@ -355,14 +356,16 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         await conversion.save();
 
         const runYtDlpAudio = (proxy?: string) => new Promise((resolve, reject) => {
+          // Save directly as flat file, not in a subdirectory, to avoid path issues
+          const flatOutputTemplate = path.join(outputDir, `${fileId}.%(ext)s`);
           const ytdlpArgsArr = [
             '--newline',
             '-f', 'ba/b',
             '-x', '--audio-format', 'mp3',
             '--audio-quality', `${audioQuality}K`,
-            '-o', path.join(outputDir, fileId, '%(title)s.%(ext)s'),
+            '-o', flatOutputTemplate,
             '--no-playlist',
-            '--concurrent-fragments', '10',
+            '--concurrent-fragments', '4',
             '--http-chunk-size', '10M',
           ];
           if (proxy) ytdlpArgsArr.push('--proxy', proxy);
@@ -435,23 +438,28 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
           }
         }
 
-        const findDownloadedFile = (baseId: string) => {
-          const dirPath = path.join(outputDir, baseId);
-          if (!fs.existsSync(dirPath)) return undefined;
-          const files = fs.readdirSync(dirPath);
-          return files.find(f => f.endsWith('.mp3') || f.endsWith('.m4a') || f.endsWith('.webm'));
+        // Find the actual downloaded mp3 file (saved as {fileId}.mp3 or {fileId}.m4a etc)
+        const findAudioFile = (baseId: string): string | undefined => {
+          const exactMp3 = path.join(outputDir, `${baseId}.mp3`);
+          if (fs.existsSync(exactMp3)) return exactMp3;
+          // Search flat outputDir for any file starting with the fileId
+          const files = fs.readdirSync(outputDir);
+          const found = files.find(f => f.startsWith(baseId) && !f.endsWith('.part') && !f.endsWith('.ytdl'));
+          return found ? path.join(outputDir, found) : undefined;
         };
 
-        const downloadedFile = findDownloadedFile(fileId);
+        const downloadedFilePath = findAudioFile(fileId);
         
-        if (downloadedFile) {
-          conversion.outputPath = path.join(outputDir, fileId, downloadedFile);
-          conversion.outputFilename = downloadedFile;
+        if (!downloadedFilePath || !fs.existsSync(downloadedFilePath)) {
+          throw new Error('Audio download did not produce a downloadable file');
         }
-        requireWrittenFile(conversion.outputPath, 'Audio download');
 
-        conversion.fileSize = getFileSize(conversion.outputPath);
-        conversion.outputUrl = `/outputs/${fileId}/${encodeURIComponent(downloadedFile || '')}`;
+        const downloadedBasename = path.basename(downloadedFilePath);
+        conversion.outputPath = downloadedFilePath;
+        conversion.outputFilename = safeTitle + '.mp3';
+        conversion.fileSize = getFileSize(downloadedFilePath);
+        // Use download endpoint instead of static URL - more reliable
+        conversion.outputUrl = `/api/convert/download-temp/${fileId}`;
         conversion.status = 'completed';
         conversion.progress = 100;
         await conversion.save();
@@ -660,9 +668,9 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
             '-f', 'bv*+ba/b',
             '-S', ytSort,
             '--merge-output-format', 'mp4',
-            '-o', path.join(outputDir, fileId, '%(title)s.%(ext)s'),
+            '-o', path.join(outputDir, `${fileId}.%(ext)s`),
             '--no-playlist',
-            '--concurrent-fragments', '10',
+            '--concurrent-fragments', '4',
             '--http-chunk-size', '10M',
             '--hls-prefer-native',
           ];
@@ -736,28 +744,30 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
           }
         }
 
-        const findDownloadedFile = (baseId: string) => {
-          const dirPath = path.join(outputDir, baseId);
-          if (!fs.existsSync(dirPath)) return undefined;
-          const files = fs.readdirSync(dirPath);
-          return files.find(f => f.endsWith('.mp4') || f.endsWith('.mkv') || f.endsWith('.webm'));
+        // Find the actual downloaded file by fileId prefix
+        const findVideoFile = (baseId: string): string | undefined => {
+          // Check common extensions first
+          for (const ext of ['.mp4', '.mkv', '.webm']) {
+            const p = path.join(outputDir, `${baseId}${ext}`);
+            if (fs.existsSync(p)) return p;
+          }
+          // Fallback: scan outputDir for any file starting with fileId
+          const files = fs.readdirSync(outputDir);
+          const found = files.find(f => f.startsWith(baseId) && !f.endsWith('.part') && !f.endsWith('.ytdl'));
+          return found ? path.join(outputDir, found) : undefined;
         };
 
-        // Find the actual downloaded file since the extension could be .webm, .mkv, or .mp4
-        const downloadedFile = findDownloadedFile(fileId);
+        const downloadedFilePath = findVideoFile(fileId);
         
-        if (downloadedFile) {
-          conversion.outputPath = path.join(outputDir, fileId, downloadedFile);
-          // Set user-facing filename to the exact title yt-dlp extracted
-          conversion.outputFilename = downloadedFile;
+        if (!downloadedFilePath || !fs.existsSync(downloadedFilePath)) {
+          throw new Error('Video download did not produce a downloadable file');
         }
-        requireWrittenFile(conversion.outputPath, 'Universal download');
 
-        // Step 3: Mark complete
-        conversion.fileSize = getFileSize(conversion.outputPath);
-        conversion.outputUrl = `/outputs/${fileId}/${encodeURIComponent(downloadedFile || '')}`;
-        // GoFile upload removed
-
+        const downloadedBasename = path.basename(downloadedFilePath);
+        conversion.outputPath = downloadedFilePath;
+        conversion.outputFilename = safeTitle + path.extname(downloadedFilePath);
+        conversion.fileSize = getFileSize(downloadedFilePath);
+        conversion.outputUrl = `/api/convert/download/${conversion._id}`;
         conversion.status = 'completed';
         conversion.progress = 100;
         await conversion.save();
@@ -854,7 +864,7 @@ router.get('/status/:id', async (req: Request, res: Response): Promise<void> => 
   }
 });
 
-/* ΓöÇΓöÇ DOWNLOAD (serves file with proper title as filename) ΓöÇΓöÇ */
+/* ── DOWNLOAD (serves file with proper title as filename) ── */
 router.get('/download/:id', async (req: Request, res: Response): Promise<void> => {
   try {
     const conversion: any = await Conversion.findById(req.params.id);
@@ -862,48 +872,85 @@ router.get('/download/:id', async (req: Request, res: Response): Promise<void> =
       res.status(404).json({ success: false, message: 'File not found' }); return;
     }
 
-    conversion.downloadCount += 1;
+    conversion.downloadCount = (conversion.downloadCount || 0) + 1;
     await conversion.save();
 
-    // If it's an external URL (from an API), just redirect to it
+    // If it's an external URL (from a CDN), redirect to it
     if (conversion.outputUrl && conversion.outputUrl.startsWith('http')) {
       res.redirect(conversion.outputUrl);
       return;
     }
 
-    if (!conversion.outputPath || !fs.existsSync(conversion.outputPath)) {
-      res.status(404).json({ success: false, message: 'File expired or deleted' }); return;
+    // Resolve to absolute path to handle both old relative and new absolute stored paths
+    let filePath = conversion.outputPath;
+    if (filePath && !path.isAbsolute(filePath)) {
+      filePath = path.resolve(filePath);
     }
 
-    // outputFilename = "Song Title.mp3" (user-facing), outputPath = UUID file on disk
-    res.download(conversion.outputPath, conversion.outputFilename || 'download.mp3', (err) => {
-      let delayMs = 21 * 60 * 1000; // 21 min default
-      try {
-        if (fs.existsSync(conversion.outputPath)) {
-          const stats = fs.statSync(conversion.outputPath);
-          if (stats.size > 500 * 1024 * 1024) { // > 500MB
-            delayMs = 35 * 60 * 1000; // 35 mins
-          }
-        }
-      } catch (e) {}
+    if (!filePath || !fs.existsSync(filePath)) {
+      res.status(404).json({ success: false, message: 'File expired or not found on server' }); return;
+    }
 
-      // Schedule cleanup
-      setTimeout(async () => {
+    const userFilename = conversion.outputFilename || path.basename(filePath);
+    
+    // Force browser to download (not preview)
+    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(userFilename)}`);
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Length', String(fs.statSync(filePath).size));
+
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+
+    fileStream.on('close', () => {
+      // Schedule cleanup 21 mins after download
+      setTimeout(() => {
         try {
-          if (fs.existsSync(conversion.outputPath)) {
-            fs.unlinkSync(conversion.outputPath);
-          }
-          // Do NOT delete the database record so it stays in user's history
-          console.log(`[CLEANUP] Deleted file for conversion ${conversion._id} after ${delayMs / 60000} mins.`);
-        } catch (e) {
-          console.error('Cleanup error:', e);
-        }
-      }, delayMs);
+          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+          console.log(`[CLEANUP] Deleted ${filePath} after download.`);
+        } catch (e) { console.error('Cleanup error:', e); }
+      }, 21 * 60 * 1000);
     });
+
   } catch (error: any) {
+    console.error('Download error:', error);
     res.status(500).json({ success: false, message: error.message || 'Download failed' });
   }
 });
+
+/* ── DOWNLOAD-TEMP (finds audio file by fileId prefix) ── */
+router.get('/download-temp/:fileId', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { fileId } = req.params;
+
+    // Find file in outputDir that starts with this fileId
+    const files = fs.readdirSync(outputDir);
+    const found = files.find(f => f.startsWith(fileId) && !f.endsWith('.part') && !f.endsWith('.ytdl'));
+
+    if (!found) {
+      res.status(404).json({ success: false, message: 'File not found or already expired' }); return;
+    }
+
+    const filePath = path.join(outputDir, found);
+    if (!fs.existsSync(filePath)) {
+      res.status(404).json({ success: false, message: 'File expired' }); return;
+    }
+
+    // Try to get the user-facing filename from DB
+    const conversion: any = await Conversion.findOne({ outputPath: filePath }).select('outputFilename');
+    const userFilename = conversion?.outputFilename || found;
+
+    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(userFilename)}`);
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Length', String(fs.statSync(filePath).size));
+
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+  } catch (error: any) {
+    console.error('Download-temp error:', error);
+    res.status(500).json({ success: false, message: 'Download failed' });
+  }
+});
+
 
 /* ΓöÇΓöÇ PUBLIC FILE (legacy alias) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
 router.get('/public-file/:id', async (req: Request, res: Response): Promise<void> => {
