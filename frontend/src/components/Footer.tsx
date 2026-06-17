@@ -49,13 +49,7 @@ export default function Footer() {
             <ul className="space-y-3">
               <li>
                 <Link href="/converter" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">
-                  Video to Audio
-                </Link>
-              </li>
-              <li>
-                <Link href="/universal" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">
-                  Universal Downloader
-                </Link>
+                  Video to Audio </Link>
               </li>
               <li>
                 <Link href="/youtube" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">
@@ -68,7 +62,12 @@ export default function Footer() {
                 </Link>
               </li>
             </ul>
-          </div>
+            <Link href="/universal" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">
+              Universal Downloader
+            </Link>
+          </li>
+          <li>
+        </div>
 
         {/* Resources */}
         <div className="col-span-1">
