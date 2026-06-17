@@ -14,12 +14,8 @@ function getYtDlpPath(): string {
 }
 
 function getCookiesPath(): string | null {
-  const generatedCookiePath = path.join(__dirname, '../../outputs/youtube_cookies.txt');
-  const rootCookiePath = path.join(__dirname, '../../cookies.txt'); // Support Colab Google Drive cookies
-  
-  if (fs.existsSync(generatedCookiePath)) return generatedCookiePath;
-  if (fs.existsSync(rootCookiePath)) return rootCookiePath;
-  return null;
+  const cookiePath = path.join(__dirname, '../../outputs/youtube_cookies.txt');
+  return fs.existsSync(cookiePath) ? cookiePath : null;
 }
 
 function ytDlpArgs(args: string[]): string[] {
