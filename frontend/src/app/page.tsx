@@ -170,6 +170,20 @@ export default function HomePage() {
                   Start Converting
                 </Link>
 
+                <Link href="/youtube" className="glass-panel hover:bg-white/5 border border-white/20 px-6 md:px-8 py-3 rounded-xl flex items-center gap-2 justify-center w-full sm:w-auto transition-all">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-brand-purple">
+                    <path d="M21.582 6.186a2.506 2.506 0 00-1.762-1.766C18.265 4 12 4 12 4s-6.264 0-7.82.42a2.506 2.506 0 00-1.762 1.766C2 7.74 2 12 2 12s0 4.26.418 5.814a2.506 2.506 0 001.762 1.766C5.736 20 12 20 12 20s6.265 0 7.82-.42a2.506 2.506 0 001.762 1.766C22 16.26 22 12 22 12s0-4.26-.418-5.814zM10 15.464V8.536L15.818 12 10 15.464z" />
+                  </svg>
+                  YouTube MP3
+                </Link>
+
+                <Link href="/yt-video" className="glass-panel hover:bg-white/5 border border-white/20 px-6 md:px-8 py-3 rounded-xl flex items-center gap-2 justify-center w-full sm:w-auto transition-all">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-brand-cyan">
+                    <path d="M4 6h16v12H4z" opacity=".3" /><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12zM8 15h2v-2h2v-2H8v4zm4-6h2V7h-2v2zM14 15h2v-4h-2v4z" />
+                  </svg>
+                  YouTube MP4
+                </Link>
+
                 <Link href="/universal" className="glass-panel hover:bg-white/5 border border-white/20 px-6 md:px-8 py-3 rounded-xl flex items-center gap-2 justify-center w-full sm:w-auto transition-all">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-brand-cyan">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
