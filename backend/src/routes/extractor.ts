@@ -31,9 +31,11 @@ function ytDlpArgs(args: string[]): string[] {
   return [...base, ...args];
 }
 
-function runYtDlpJson(url: string): Promise<any> {
+function runYtDlpJson(url: string, proxy?: string): Promise<any> {
   return new Promise((resolve, reject) => {
-    const child = spawn(getYtDlpPath(), ytDlpArgs(['-J', '--no-playlist', url]), { windowsHide: true });
+    const args = ['-J', '--no-playlist', url];
+    if (proxy) args.unshift('--proxy', proxy);
+    const child = spawn(getYtDlpPath(), ytDlpArgs(args), { windowsHide: true });
     const stdoutChunks: Buffer[] = [];
     let stderr = '';
 
@@ -84,8 +86,26 @@ router.get('/info', async (req: Request, res: Response): Promise<void> => {
         data = await runYtDlpJson(url);
         if (!data || !data.formats) throw new Error('Invalid metadata returned on retry');
       } catch (browserErr: any) {
-        console.warn(`[Extractor] Cookie Harvester failed: ${browserErr.message}`);
-        throw new Error("Metadata extraction failed natively and via browser.");
+        console.warn(`[Extractor] Cookie Harvester failed: ${browserErr.message}. Triggering Proxy Network...`);
+        const proxies = await getRandomFreeProxies(3);
+        let success = false;
+        
+        for (const proxy of proxies) {
+           console.log(`[Extractor] Retrying with proxy: ${proxy}`);
+           try {
+             data = await runYtDlpJson(url, proxy);
+             if (data && data.formats) {
+               success = true;
+               break;
+             }
+           } catch(e) {
+             console.warn(`[Extractor] Proxy ${proxy} failed.`);
+           }
+        }
+        
+        if (!success) {
+           throw new Error("Metadata extraction failed across all tiers and proxies.");
+        }
       }
     }
 
