@@ -17,20 +17,13 @@ function getCookiesPath(): string | null {
   return fs.existsSync(cookiePath) ? cookiePath : null;
 }
 
-function ytDlpArgs(args: string[], useProxy: boolean | string = false): string[] {
+function ytDlpArgs(args: string[]): string[] {
   const base = [
     '--js-runtimes', 'node', 
     '--remote-components', 'ejs:github',
     '--rm-cache-dir',
     '--socket-timeout', '15'
   ];
-  
-  if (useProxy) {
-    const proxyUrl = typeof useProxy === 'string' ? useProxy : process.env.PROXY_URL;
-    if (proxyUrl) {
-      base.unshift('--proxy', proxyUrl, '--no-check-certificates');
-    }
-  }
 
   const cookiesFile = getCookiesPath();
   if (cookiesFile) base.push('--cookies', cookiesFile);
@@ -38,9 +31,9 @@ function ytDlpArgs(args: string[], useProxy: boolean | string = false): string[]
   return [...base, ...args];
 }
 
-function runYtDlpJson(url: string, useProxy: boolean | string = false): Promise<any> {
+function runYtDlpJson(url: string): Promise<any> {
   return new Promise((resolve, reject) => {
-    const child = spawn(getYtDlpPath(), ytDlpArgs(['-J', '--no-playlist', url], useProxy), { windowsHide: true });
+    const child = spawn(getYtDlpPath(), ytDlpArgs(['-J', '--no-playlist', url]), { windowsHide: true });
     const stdoutChunks: Buffer[] = [];
     let stderr = '';
 
@@ -78,29 +71,12 @@ router.get('/info', async (req: Request, res: Response): Promise<void> => {
     let data;
 
     try {
-      console.log(`[Extractor] Tier 1: Fetching metadata natively using yt-dlp for ${url}`);
-      data = await runYtDlpJson(url, false);
+      console.log(`[Extractor] Fetching metadata natively using yt-dlp for ${url}`);
+      data = await runYtDlpJson(url);
       if (!data || !data.formats) throw new Error('Invalid metadata returned natively');
     } catch (err: any) {
-      console.warn(`[Extractor] Tier 1 failed: ${err.message}. Trying Tier 2 (Premium Proxy)...`);
-      let success = false;
-      
-      const premiumProxy = process.env.PROXY_URL;
-      if (premiumProxy) {
-        try {
-          console.log(`[Extractor] Trying Premium Proxy...`);
-          data = await runYtDlpJson(url, premiumProxy);
-          if (data && data.formats) {
-            success = true;
-          }
-        } catch (e) {
-          console.warn(`[Extractor] Premium proxy failed.`);
-        }
-      }
-
-      if (!success) {
-        throw new Error("Metadata extraction failed natively and via proxy.");
-      }
+      console.warn(`[Extractor] Extraction failed: ${err.message}`);
+      throw new Error("Metadata extraction failed.");
     }
 
     if (!data) {
