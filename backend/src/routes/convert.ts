@@ -484,7 +484,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
             '-f', 'bv*+ba/b',
             '-S', ytSort,
             '--merge-output-format', 'mp4',
-            '-o', path.join(outputDir, `${fileId}.%(ext)s`),
+            '-o', path.join(outputDir, fileId, '%(title)s.%(ext)s'),
             '--no-playlist',
             '--concurrent-fragments', '10',
             '--http-chunk-size', '10M',
@@ -555,19 +555,26 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
           }
         }
 
+        const findDownloadedFile = (baseId: string) => {
+          const dirPath = path.join(outputDir, baseId);
+          if (!fs.existsSync(dirPath)) return undefined;
+          const files = fs.readdirSync(dirPath);
+          return files.find(f => f.endsWith('.mp4') || f.endsWith('.mkv') || f.endsWith('.webm'));
+        };
+
         // Find the actual downloaded file since the extension could be .webm, .mkv, or .mp4
         const downloadedFile = findDownloadedFile(fileId);
         
         if (downloadedFile) {
-          const actualExt = path.extname(downloadedFile);
-          conversion.outputPath = path.join(outputDir, downloadedFile);
-          conversion.outputFilename = safeTitle + actualExt;
+          conversion.outputPath = path.join(outputDir, fileId, downloadedFile);
+          // Set user-facing filename to the exact title yt-dlp extracted
+          conversion.outputFilename = downloadedFile;
         }
         requireWrittenFile(conversion.outputPath, 'Universal download');
 
         // Step 3: Mark complete
         conversion.fileSize = getFileSize(conversion.outputPath);
-        conversion.outputUrl = `/outputs/${path.basename(conversion.outputPath)}`;
+        conversion.outputUrl = `/outputs/${fileId}/${encodeURIComponent(downloadedFile || '')}`;
         // GoFile upload removed
 
         conversion.status = 'completed';
