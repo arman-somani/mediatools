@@ -80,7 +80,7 @@ function getYouTubeVideoId(input: string): string | null {
 
 function ytDlpArgs(args: string[]): string[] {
   const base = [
-    '--js-runtimes', 'nodejs', 
+    '--js-runtimes', `node:${process.execPath}`, 
     '--remote-components', 'ejs:github',
     '--rm-cache-dir',
     '--socket-timeout', '15'
