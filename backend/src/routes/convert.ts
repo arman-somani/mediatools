@@ -293,8 +293,195 @@ router.post(
     }
   }
 );
+/* ── YOUTUBE TO MP3 ─────────────────────────────────────── */
+router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const videoUrl = req.body.youtubeUrl || req.body.url;
+    const reqQuality = String(req.body.quality || '320');
+    const audioQuality = ['128', '192', '320'].includes(reqQuality) ? reqQuality : '320';
 
+    if (!videoUrl) {
+      res.status(400).json({ success: false, message: 'Video URL is required' });
+      return;
+    }
 
+    const cleanUrl = String(videoUrl).trim();
+    const fileId = uuidv4();
+    const diskFilename = `${fileId}.mp3`;
+    const outputPath = path.join(outputDir, diskFilename);
+
+    const conversion: any = await Conversion.create({
+      userId: req.user?.id,
+      type: 'youtube',
+      status: 'processing',
+      youtubeUrl: cleanUrl,
+      youtubeTitle: 'Fetching info...',
+      outputFilename: diskFilename,
+      outputPath,
+      outputUrl: `/outputs/${diskFilename}`,
+      quality: audioQuality as any,
+      progress: 0,
+    });
+
+    res.json({
+      success: true,
+      message: 'YouTube to MP3 conversion started',
+      data: {
+        jobId: conversion._id.toString(),
+        conversionId: conversion._id.toString(),
+      },
+    });
+
+    // Background processing
+    (async () => {
+      try {
+        let videoTitle = 'Downloaded Audio';
+        let thumbnail = '';
+        try {
+          const res = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--no-playlist', cleanUrl]);
+          const lines = res.stdout.trim().split('\n');
+          const dlTitle = (lines[0] || '').trim();
+          if (dlTitle && dlTitle !== 'Downloaded Audio') videoTitle = dlTitle;
+          const dlThumb = (lines[1] || '').trim();
+          if (dlThumb) thumbnail = dlThumb;
+        } catch { }
+
+        const safeTitle = sanitizeFilename(videoTitle) || 'Downloaded Audio';
+        conversion.youtubeTitle = videoTitle;
+        conversion.youtubeThumbnail = thumbnail;
+        conversion.outputFilename = `${safeTitle}.mp3`;
+        await conversion.save();
+
+        const runYtDlpAudio = (proxy?: string) => new Promise((resolve, reject) => {
+          const ytdlpArgsArr = [
+            '--newline',
+            '-f', 'ba/b',
+            '-x', '--audio-format', 'mp3',
+            '--audio-quality', `${audioQuality}K`,
+            '-o', path.join(outputDir, fileId, '%(title)s.%(ext)s'),
+            '--no-playlist',
+            '--concurrent-fragments', '10',
+            '--http-chunk-size', '10M',
+          ];
+          if (proxy) ytdlpArgsArr.push('--proxy', proxy);
+          ytdlpArgsArr.push(cleanUrl);
+          
+          const ytdlp = spawn(getYtDlpPath(), ytDlpArgs(ytdlpArgsArr), { windowsHide: true });
+
+          let lastUpdate = Date.now();
+          ytdlp.stdout.on('data', (data) => {
+            const output = data.toString();
+            const match = output.match(/\[download\]\s+([\d.]+)%/);
+            if (match) {
+              const progress = parseFloat(match[1]);
+              if (!isNaN(progress)) {
+                const now = Date.now();
+                if (now - lastUpdate > 1000) {
+                  lastUpdate = now;
+                  Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
+                }
+              }
+            }
+          });
+
+          ytdlp.stderr.on('data', (data) => {
+            console.error(`[yt-dlp AUDIO ERROR]:`, data.toString());
+          });
+
+          ytdlp.on('close', (code) => {
+            if (code === 0) resolve(true);
+            else reject(new Error('yt-dlp audio failed with code ' + code));
+          });
+        });
+
+        try {
+          console.log(`Trying Tier 1: Proxy Network (Audio)...`);
+          const { getRandomFreeProxies } = require('../utils/freeproxy');
+          const proxies = await getRandomFreeProxies(10);
+          let success = false;
+          for (const proxy of proxies) {
+            console.log(`Trying Tier 1 proxy: ${proxy}`);
+            try {
+              await runYtDlpAudio(proxy);
+              success = true;
+              console.log(`yt-dlp AUDIO succeeded via Tier 1 Proxy`);
+              break;
+            } catch(proxyErr) {
+              console.warn(`Proxy ${proxy} failed.`);
+            }
+          }
+          if (!success) throw new Error('All Tier 1 proxies failed.');
+        } catch (tier1Err: any) {
+          console.error(`Tier 1 (Proxy) failed:`, tier1Err.message);
+          console.log(`Trying Tier 2: Fallback Proxy Network (Audio)...`);
+          try {
+            const { getRandomFreeProxies } = require('../utils/freeproxy');
+            const proxies = await getRandomFreeProxies(10);
+            let success = false;
+            for (const proxy of proxies) {
+              console.log(`Trying Tier 2 proxy: ${proxy}`);
+              try {
+                await runYtDlpAudio(proxy);
+                success = true;
+                console.log(`yt-dlp AUDIO succeeded via Tier 2 Proxy`);
+                break;
+              } catch(proxyErr) {
+                console.warn(`Proxy ${proxy} failed.`);
+              }
+            }
+            if (!success) throw new Error('All Tier 2 proxies failed.');
+          } catch (tier2Err: any) {
+            console.error(`Tier 2 (Fallback Proxies) failed:`, tier2Err.message);
+            console.log(`Triggering Tier 3: Cookie Harvester (Audio)...`);
+            try {
+              const { harvestCookies } = require('../utils/browser');
+              await harvestCookies(cleanUrl);
+              console.log('Cookies harvested. Retrying yt-dlp...');
+              await runYtDlpAudio(); 
+              console.log(`yt-dlp AUDIO succeeded on Cookie Harvester retry`);
+            } catch (browserErr: any) {
+               console.error(`Tier 3 (Cookie Harvester) failed:`, browserErr.message);
+               throw new Error('All download attempts failed across all tiers.');
+            }
+          }
+        }
+
+        const findDownloadedFile = (baseId: string) => {
+          const dirPath = path.join(outputDir, baseId);
+          if (!fs.existsSync(dirPath)) return undefined;
+          const files = fs.readdirSync(dirPath);
+          return files.find(f => f.endsWith('.mp3') || f.endsWith('.m4a') || f.endsWith('.webm'));
+        };
+
+        const downloadedFile = findDownloadedFile(fileId);
+        
+        if (downloadedFile) {
+          conversion.outputPath = path.join(outputDir, fileId, downloadedFile);
+          conversion.outputFilename = downloadedFile;
+        }
+        requireWrittenFile(conversion.outputPath, 'Audio download');
+
+        conversion.fileSize = getFileSize(conversion.outputPath);
+        conversion.outputUrl = `/outputs/${fileId}/${encodeURIComponent(downloadedFile || '')}`;
+        conversion.status = 'completed';
+        conversion.progress = 100;
+        await conversion.save();
+
+      } catch (err: any) {
+        console.error('YouTube audio background error:', err.message);
+        try {
+          conversion.status = 'failed';
+          conversion.errorMessage = err.message || 'Download failed';
+          await conversion.save();
+        } catch { }
+      }
+    })();
+
+  } catch (error: any) {
+    console.error('YouTube audio route error:', error);
+    res.status(500).json({ success: false, message: error.message || 'YouTube audio conversion failed' });
+  }
+});
 
 /* ΓöÇΓöÇ YOUTUBE FORMATS EXTRACTOR (Used by WASM Extension) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
 router.post('/youtube-formats', async (req: Request, res: Response): Promise<void> => {
