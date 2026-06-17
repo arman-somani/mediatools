@@ -645,14 +645,14 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
     const diskFilename = `${fileId}.mp4`;
     const outputPath = path.join(outputDir, diskFilename);
 
-    // Map quality label to yt-dlp sort filter with robust fallbacks
+    // Map quality label to yt-dlp sort filter for maximum compatibility across all platforms
     const formatMap: Record<string, string> = {
-      '360p': 'bestvideo[height<=360]+bestaudio/best[height<=360]/best',
-      '480p': 'bestvideo[height<=480]+bestaudio/best[height<=480]/best',
-      '720p': 'bestvideo[height<=720]+bestaudio/best[height<=720]/best',
-      '1080p': 'bestvideo[height<=1080]+bestaudio/best[height<=1080]/best',
-      '4K': 'bestvideo[height<=2160]+bestaudio/best[height<=2160]/best',
-      '8K': 'bestvideo[height<=4320]+bestaudio/best[height<=4320]/best',
+      '360p': 'res:360',
+      '480p': 'res:480',
+      '720p': 'res:720',
+      '1080p': 'res:1080',
+      '4K': 'res:2160',
+      '8K': 'res:4320',
     };
     const ytSort = formatMap[videoQuality] || formatMap['720p'];
 
