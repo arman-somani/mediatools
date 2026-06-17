@@ -14,6 +14,7 @@
     "type": "commonjs",
     "dependencies": {
         "@distube/ytdl-core": "^4.16.12",
+        "@sparticuz/chromium": "^149.0.0",
         "axios": "^1.16.1",
         "bcryptjs": "^3.0.3",
         "cloudinary": "^2.10.0",
@@ -33,6 +34,9 @@
         "node-fetch": "^2.7.0",
         "nodemailer": "^8.0.10",
         "play-dl": "^1.9.7",
+        "puppeteer-core": "^25.1.0",
+        "puppeteer-extra": "^3.3.6",
+        "puppeteer-extra-plugin-stealth": "^2.11.2",
         "razorpay": "^2.9.6",
         "resend": "^6.12.4",
         "streamifier": "^0.1.1",
