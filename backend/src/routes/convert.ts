@@ -79,8 +79,11 @@ function getYouTubeVideoId(input: string): string | null {
 }
 
 function ytDlpArgs(args: string[]): string[] {
+  const isWin = process.platform === 'win32';
+  const jsRuntime = isWin ? 'node' : `node:${process.execPath}`;
+
   const base = [
-    '--js-runtimes', `node:${process.execPath}`, 
+    '--js-runtimes', jsRuntime, 
     '--remote-components', 'ejs:github',
     '--rm-cache-dir',
     '--socket-timeout', '15'
