@@ -88,7 +88,7 @@ function ytDlpArgs(args: string[]): string[] {
     '--fragment-retries', '0',
     '--extractor-args', 'youtube:player-client=android_vr,web,default'
   ];
-  
+
   const cookiesFile = getCookiesPath();
   if (cookiesFile) base.push('--cookies', cookiesFile);
   return [...base, ...args];
@@ -155,9 +155,9 @@ router.get('/test-ytdlcore', async (req: Request, res: Response): Promise<void> 
     const videoId = req.query.id as string || 'dQw4w9WgXcQ';
     const info = await ytdl.getInfo(videoId);
     const format = ytdl.chooseFormat(info.formats, { quality: 'highestaudio' });
-    
+
     // Test the download url
-    const r = await fetch(format.url, { headers: { 'Range': 'bytes=0-99' }});
+    const r = await fetch(format.url, { headers: { 'Range': 'bytes=0-99' } });
     res.json({ success: true, title: info.videoDetails.title, formatUrl: format.url.slice(0, 50), downloadStatus: r.status });
   } catch (e: any) {
     res.json({ success: false, error: e.message });
@@ -381,7 +381,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
           ];
           if (proxy) ytdlpArgsArr.push('--proxy', proxy);
           ytdlpArgsArr.push(cleanUrl);
-          
+
           const ytdlp = spawn(getYtDlpPath(), ytDlpArgs(ytdlpArgsArr), { windowsHide: true });
 
           let lastUpdate = Date.now();
@@ -412,7 +412,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
 
         try {
           console.log(`Trying Tier 1: Native Connection (Audio) using cached cookies...`);
-          await runYtDlpAudio(); 
+          await runYtDlpAudio();
           console.log(`yt-dlp AUDIO succeeded on Native Connection`);
         } catch (tier1Err: any) {
           console.error(`Tier 1 (Native Connection) failed: ${tier1Err.message}. Triggering Tier 2 (Proxy Network 1)...`);
@@ -427,7 +427,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
                 success = true;
                 console.log(`yt-dlp AUDIO succeeded via Tier 2 Proxy`);
                 break;
-              } catch(proxyErr) { console.warn(`Proxy ${proxy} failed.`); }
+              } catch (proxyErr) { console.warn(`Proxy ${proxy} failed.`); }
             }
             if (!success) throw new Error('All Tier 2 proxies failed.');
           } catch (tier2Err: any) {
@@ -443,7 +443,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
                   success = true;
                   console.log(`yt-dlp AUDIO succeeded via Tier 3 Proxy`);
                   break;
-                } catch(proxyErr) { console.warn(`Proxy ${proxy} failed.`); }
+                } catch (proxyErr) { console.warn(`Proxy ${proxy} failed.`); }
               }
               if (!success) throw new Error('All Tier 3 proxies failed.');
             } catch (tier3Err: any) {
@@ -452,7 +452,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
                 const { harvestCookies } = require('../utils/browser');
                 await harvestCookies(cleanUrl);
                 console.log('Fresh cookies harvested. Retrying yt-dlp natively...');
-                await runYtDlpAudio(); 
+                await runYtDlpAudio();
                 console.log(`yt-dlp AUDIO succeeded after Cookie Harvester`);
               } catch (tier4Err: any) {
                 console.error(`Tier 4 (Cookie Harvester) failed:`, tier4Err.message);
@@ -506,7 +506,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         };
 
         const downloadedFilePath = findAudioFile(fileId);
-        
+
         if (!downloadedFilePath || !fs.existsSync(downloadedFilePath)) {
           throw new Error('Audio download did not produce a downloadable file');
         }
@@ -670,7 +670,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
       userId: req.user?.id,
       type: 'universal',
       status: 'processing',
-      youtubeUrl: cleanUrl, 
+      youtubeUrl: cleanUrl,
       youtubeTitle: req.body.title || 'Fetching info...',
       outputFilename: diskFilename,
       outputPath,
@@ -695,7 +695,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
       try {
         let videoTitle = req.body.title || 'Downloaded Video';
         let thumbnail = '';
-        
+
         // Step 1: Fetch metadata via yt-dlp only if we don't have it
         if (!req.body.title) {
           try {
@@ -736,7 +736,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
           ];
           if (proxy) ytdlpArgsArr.push('--proxy', proxy);
           ytdlpArgsArr.push(cleanUrl);
-          
+
           const ytdlp = spawn(getYtDlpPath(), ytDlpArgs(ytdlpArgsArr), { windowsHide: true });
 
           let lastUpdate = Date.now();
@@ -782,7 +782,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
                 success = true;
                 console.log(`yt-dlp UNIVERSAL succeeded via Tier 2 Proxy`);
                 break;
-              } catch(proxyErr) { console.warn(`Proxy ${proxy} failed.`); }
+              } catch (proxyErr) { console.warn(`Proxy ${proxy} failed.`); }
             }
             if (!success) throw new Error('All Tier 2 proxies failed.');
           } catch (tier2Err: any) {
@@ -798,7 +798,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
                   success = true;
                   console.log(`yt-dlp UNIVERSAL succeeded via Tier 3 Proxy`);
                   break;
-                } catch(proxyErr) { console.warn(`Proxy ${proxy} failed.`); }
+                } catch (proxyErr) { console.warn(`Proxy ${proxy} failed.`); }
               }
               if (!success) throw new Error('All Tier 3 proxies failed.');
             } catch (tier3Err: any) {
@@ -811,12 +811,12 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
                 console.log(`yt-dlp UNIVERSAL succeeded after Cookie Harvester`);
               } catch (tier4Err: any) {
                 console.error(`Tier 4 (Cookie Harvester) failed:`, tier4Err.message);
-                
+
                 const isYouTube = cleanUrl.includes('youtube.com') || cleanUrl.includes('youtu.be');
                 if (!isYouTube) {
                   throw new Error('All download attempts failed across all tiers.');
                 }
-                
+
                 console.log(`Triggering Tier 5 (@distube/ytdl-core)...`);
                 try {
                   const ytdl = require('@distube/ytdl-core');
@@ -836,11 +836,11 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
                     const info = await play.video_info(cleanUrl);
                     const format = info.format.find((f: any) => f.hasVideo && f.hasAudio) || info.format[0];
                     if (!format || !format.url) throw new Error('No merged format found in play-dl');
-                    
+
                     const fetch = require('node-fetch');
                     const res = await fetch(format.url);
                     if (!res.ok) throw new Error('Failed to fetch from play-dl format url');
-                    
+
                     await new Promise((resolve, reject) => {
                       const exactMp4 = path.join(outputDir, `${fileId}.mp4`);
                       const writeStream = fs.createWriteStream(exactMp4);
@@ -873,7 +873,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         };
 
         const downloadedFilePath = findVideoFile(fileId);
-        
+
         if (!downloadedFilePath || !fs.existsSync(downloadedFilePath)) {
           throw new Error('Video download did not produce a downloadable file');
         }
@@ -1007,7 +1007,7 @@ router.get('/download/:id', async (req: Request, res: Response): Promise<void> =
     }
 
     const userFilename = conversion.outputFilename || path.basename(filePath);
-    
+
     // Force browser to download (not preview)
     res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(userFilename)}`);
     res.setHeader('Content-Type', 'application/octet-stream');
@@ -1086,7 +1086,7 @@ router.get('/public-file/:id', async (req: Request, res: Response): Promise<void
             delayMs = 35 * 60 * 1000; // 35 mins
           }
         }
-      } catch (e) {}
+      } catch (e) { }
 
       // Schedule cleanup
       setTimeout(async () => {
