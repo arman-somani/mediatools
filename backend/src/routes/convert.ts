@@ -24,10 +24,9 @@ import vm from 'vm';
 import { getRandomFreeProxies } from '../utils/freeproxy';
 import { uploadToGoFile } from '../utils/gofile';
 
-// Determine the path to a cookies file for yt-dlp to bypass YouTube bot restrictions
-function getCookiesPath(): string | null {
-  const cookiePath = path.join(__dirname, '../../outputs/youtube_cookies.txt');
-  return fs.existsSync(cookiePath) ? cookiePath : null;
+// OAuth2 is used instead of cookies.txt
+function ytDlpAuthArgs(): string[] {
+  return ['--username', 'oauth2', '--password', '""'];
 }
 
 Platform.shim.eval = (script: any) => {
@@ -81,7 +80,7 @@ function getYouTubeVideoId(input: string): string | null {
 function ytDlpArgs(args: string[]): string[] {
   const base = [
     '--remote-components', 'ejs:github',
-    '--rm-cache-dir',
+    // '--rm-cache-dir', // DO NOT remove cache, oauth2 token is stored here!
     '--socket-timeout', '10',
     '--retries', '0',
     '--extractor-retries', '0',
@@ -89,9 +88,7 @@ function ytDlpArgs(args: string[]): string[] {
     '--extractor-args', 'youtube:player-client=android_vr,web,default'
   ];
 
-  const cookiesFile = getCookiesPath();
-  if (cookiesFile) base.push('--cookies', cookiesFile);
-  return [...base, ...args];
+  return [...base, ...ytDlpAuthArgs(), ...args];
 }
 
 function runYtDlp(args: string[]): Promise<{ stdout: string; stderr: string }> {
@@ -446,16 +443,8 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
                 } catch (proxyErr) { console.warn(`Proxy ${proxy} failed.`); }
               }
               if (!success) throw new Error('All Tier 3 proxies failed.');
-            } catch (tier3Err: any) {
-              console.error(`Tier 3 failed: ${tier3Err.message}. Triggering Tier 4 (Cookie Harvester)...`);
-              try {
-                const { harvestCookies } = require('../utils/browser');
-                await harvestCookies(cleanUrl);
-                console.log('Fresh cookies harvested. Retrying yt-dlp natively...');
-                await runYtDlpAudio();
-                console.log(`yt-dlp AUDIO succeeded after Cookie Harvester`);
-              } catch (tier4Err: any) {
-                console.error(`Tier 4 (Cookie Harvester) failed:`, tier4Err.message);
+              } catch (tier3Err: any) {
+                console.error(`Tier 3 failed:`, tier3Err.message);
                 console.log(`Triggering Tier 5 (@distube/ytdl-core)...`);
                 try {
                   const ytdl = require('@distube/ytdl-core');
@@ -806,17 +795,8 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
                   break;
                 } catch (proxyErr) { console.warn(`Proxy ${proxy} failed.`); }
               }
-              if (!success) throw new Error('All Tier 3 proxies failed.');
-            } catch (tier3Err: any) {
-              console.error(`Tier 3 failed: ${tier3Err.message}. Triggering Tier 4 (Cookie Harvester)...`);
-              try {
-                const { harvestCookies } = require('../utils/browser');
-                await harvestCookies(cleanUrl);
-                console.log('Fresh cookies harvested. Retrying yt-dlp natively...');
-                await runYtDlpDownload();
-                console.log(`yt-dlp UNIVERSAL succeeded after Cookie Harvester`);
-              } catch (tier4Err: any) {
-                console.error(`Tier 4 (Cookie Harvester) failed:`, tier4Err.message);
+              } catch (tier3Err: any) {
+                console.error(`Tier 3 failed:`, tier3Err.message);
 
                 const isYouTube = cleanUrl.includes('youtube.com') || cleanUrl.includes('youtu.be');
                 if (!isYouTube) {

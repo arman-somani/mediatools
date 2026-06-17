@@ -13,15 +13,14 @@ function getYtDlpPath(): string {
   return fs.existsSync(binPath) ? binPath : 'yt-dlp';
 }
 
-function getCookiesPath(): string | null {
-  const cookiePath = path.join(__dirname, '../../outputs/youtube_cookies.txt');
-  return fs.existsSync(cookiePath) ? cookiePath : null;
+function ytDlpAuthArgs(): string[] {
+  return ['--username', 'oauth2', '--password', '""'];
 }
 
 function ytDlpArgs(args: string[]): string[] {
   const base = [
     '--remote-components', 'ejs:github',
-    '--rm-cache-dir',
+    // '--rm-cache-dir', // DO NOT remove cache, oauth2 token is stored here!
     '--socket-timeout', '10',
     '--retries', '0',
     '--extractor-retries', '0',
@@ -29,10 +28,7 @@ function ytDlpArgs(args: string[]): string[] {
     '--extractor-args', 'youtube:player-client=android_vr,web,default'
   ];
 
-  const cookiesFile = getCookiesPath();
-  if (cookiesFile) base.push('--cookies', cookiesFile);
-  
-  return [...base, ...args];
+  return [...base, ...ytDlpAuthArgs(), ...args];
 }
 
 function runYtDlpJson(url: string, proxy?: string): Promise<any> {
@@ -110,38 +106,29 @@ router.get('/info', async (req: Request, res: Response): Promise<void> => {
           }
           if (!success) throw new Error('All Tier 3 proxies failed.');
         } catch (tier3Err: any) {
-          console.error(`[Extractor] Tier 3 failed: ${tier3Err.message}. Triggering Tier 4 (Cookie Harvester)...`);
+          console.error(`[Extractor] Tier 3 failed:`, tier3Err.message);
+          console.log(`[Extractor] Triggering Tier 5 (@distube/ytdl-core)...`);
           try {
-            const { harvestCookies } = require('../utils/browser');
-            await harvestCookies(url);
-            console.log(`[Extractor] Fresh cookies harvested. Retrying yt-dlp natively...`);
-            data = await runYtDlpJson(url);
-            if (!data || !data.formats) throw new Error('Invalid metadata after harvesting cookies');
-            console.log(`[Extractor] yt-dlp succeeded after Cookie Harvester`);
-          } catch (tier4Err: any) {
-            console.error(`[Extractor] Tier 4 (Cookie Harvester) failed:`, tier4Err.message);
-            console.log(`[Extractor] Triggering Tier 5 (@distube/ytdl-core)...`);
-            try {
-              const ytdl = require('@distube/ytdl-core');
-              const info = await ytdl.getInfo(url);
-              data = {
-                title: info.videoDetails.title,
-                thumbnail: info.videoDetails.thumbnails?.[0]?.url,
-                duration: parseInt(info.videoDetails.lengthSeconds || '0', 10),
-                url: url,
-                formats: info.formats.map((f: any) => ({
-                  url: f.url,
-                  ext: f.container,
-                  vcodec: f.hasVideo ? (f.videoCodec || 'unknown') : 'none',
-                  acodec: f.hasAudio ? (f.audioCodec || 'unknown') : 'none',
-                  height: f.height,
-                  format_note: f.qualityLabel,
-                  filesize: f.contentLength ? parseInt(f.contentLength, 10) : null,
-                  fps: f.fps,
-                  abr: f.audioBitrate
-                }))
-              };
-              console.log(`[Extractor] ytdl-core succeeded`);
+            const ytdl = require('@distube/ytdl-core');
+            const info = await ytdl.getInfo(url);
+            data = {
+              title: info.videoDetails.title,
+              thumbnail: info.videoDetails.thumbnails?.[0]?.url,
+              duration: parseInt(info.videoDetails.lengthSeconds || '0', 10),
+              url: url,
+              formats: info.formats.map((f: any) => ({
+                url: f.url,
+                ext: f.container,
+                vcodec: f.hasVideo ? (f.videoCodec || 'unknown') : 'none',
+                acodec: f.hasAudio ? (f.audioCodec || 'unknown') : 'none',
+                height: f.height,
+                format_note: f.qualityLabel,
+                filesize: f.contentLength ? parseInt(f.contentLength, 10) : null,
+                fps: f.fps,
+                abr: f.audioBitrate
+              }))
+            };
+            console.log(`[Extractor] ytdl-core succeeded`);
             } catch (tier5Err: any) {
               console.error(`[Extractor] Tier 5 failed:`, tier5Err.message);
               console.log(`[Extractor] Triggering Tier 6 (play-dl)...`);
