@@ -44,22 +44,6 @@ const TOOLS = [
         badgeColor: 'bg-brand-purple/20 text-brand-purple',
     },
     {
-        label: 'Universal Downloader',
-        description: 'Download video from Twitter, TikTok, Instagram, etc.',
-        href: '/universal',
-        gradient: 'from-brand-cyan to-blue-500',
-        shadow: 'hover:shadow-[0_0_30px_rgba(6,182,212,0.35)]',
-        border: 'border-brand-cyan/20',
-        bg: 'bg-brand-cyan/5',
-        icon: (
-            <svg width="26" height="26" fill="currentColor" viewBox="0 0 24 24" className="text-brand-cyan">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
-            </svg>
-        ),
-        badge: 'Any Site',
-        badgeColor: 'bg-brand-cyan/20 text-brand-cyan',
-    },
-    {
         label: 'YouTube MP3',
         description: 'Download YouTube videos directly as MP3 audio.',
         href: '/youtube',
@@ -91,6 +75,22 @@ const TOOLS = [
         ),
         badge: 'Up to 8K',
         badgeColor: 'bg-brand-green/20 text-brand-green',
+    },
+    {
+        label: 'Universal Downloader',
+        description: 'Download video from Twitter, TikTok, Instagram, etc.',
+        href: '/universal',
+        gradient: 'from-brand-cyan to-blue-500',
+        shadow: 'hover:shadow-[0_0_30px_rgba(6,182,212,0.35)]',
+        border: 'border-brand-cyan/20',
+        bg: 'bg-brand-cyan/5',
+        icon: (
+            <svg width="26" height="26" fill="currentColor" viewBox="0 0 24 24" className="text-brand-cyan">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
+            </svg>
+        ),
+        badge: 'Any Site',
+        badgeColor: 'bg-brand-cyan/20 text-brand-cyan',
     }
 ];
 
