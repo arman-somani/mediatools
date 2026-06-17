@@ -22,7 +22,9 @@ function ytDlpArgs(args: string[]): string[] {
     '--remote-components', 'ejs:github',
     '--rm-cache-dir',
     '--socket-timeout', '10',
-    '--retries', '0'
+    '--retries', '0',
+    '--extractor-retries', '0',
+    '--fragment-retries', '0'
   ];
 
   const cookiesFile = getCookiesPath();
