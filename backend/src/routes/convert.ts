@@ -515,14 +515,8 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         conversion.outputPath = downloadedFilePath;
         conversion.outputFilename = safeTitle + '.mp3';
         conversion.fileSize = getFileSize(downloadedFilePath);
-        // Use GoFile for extremely fast unmetered downloads
-        try {
-          conversion.outputUrl = await uploadToGoFile(downloadedFilePath);
-          console.log(`[GoFile] Audio uploaded successfully: ${conversion.outputUrl}`);
-        } catch (e) {
-          console.error('[GoFile] Upload failed, falling back to local serve:', e);
-          conversion.outputUrl = `/api/convert/download-temp/${fileId}`;
-        }
+        // Use download endpoint instead of static URL - more reliable
+        conversion.outputUrl = `/api/convert/download-temp/${fileId}`;
         conversion.status = 'completed';
         conversion.progress = 100;
         await conversion.save();
@@ -888,16 +882,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         conversion.outputPath = downloadedFilePath;
         conversion.outputFilename = safeTitle + path.extname(downloadedFilePath);
         conversion.fileSize = getFileSize(downloadedFilePath);
-        
-        // Use GoFile for extremely fast unmetered downloads
-        try {
-          conversion.outputUrl = await uploadToGoFile(downloadedFilePath);
-          console.log(`[GoFile] Video uploaded successfully: ${conversion.outputUrl}`);
-        } catch (e) {
-          console.error('[GoFile] Upload failed, falling back to local serve:', e);
-          conversion.outputUrl = `/api/convert/download/${conversion._id}`;
-        }
-
+        conversion.outputUrl = `/api/convert/download/${conversion._id}`;
         conversion.status = 'completed';
         conversion.progress = 100;
         await conversion.save();
