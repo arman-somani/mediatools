@@ -660,8 +660,8 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
       userId: req.user?.id,
       type: 'universal',
       status: 'processing',
-      youtubeUrl: cleanUrl, // Using existing schema field to store URL
-      youtubeTitle: 'Fetching info...',
+      youtubeUrl: cleanUrl, 
+      youtubeTitle: req.body.title || 'Fetching info...',
       outputFilename: diskFilename,
       outputPath,
       outputUrl: `/outputs/${diskFilename}`,
