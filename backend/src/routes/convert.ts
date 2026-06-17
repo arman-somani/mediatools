@@ -26,7 +26,7 @@ import { uploadToGoFile } from '../utils/gofile';
 
 // Determine the path to a cookies file for yt-dlp to bypass YouTube bot restrictions
 function getCookiesPath(): string | null {
-  const cookiePath = path.join(__dirname, '../../cookies.txt');
+  const cookiePath = path.join(__dirname, '../../outputs/youtube_cookies.txt');
   return fs.existsSync(cookiePath) ? cookiePath : null;
 }
 
@@ -477,9 +477,8 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
 
         // Step 2: Download video in its native format without remuxing
         // We use -S for sorting formats which is highly optimized for ANY website!
-        try {
-          console.log(`Trying yt-dlp UNIVERSAL for video...`);
-          const ytdlp = spawn(getYtDlpPath(), ytDlpArgs([
+        const runYtDlpDownload = () => new Promise((resolve, reject) => {
+          const ytdlpArgsArr = [
             '--newline',
             '-f', 'bv*+ba/b',
             '-S', ytSort,
@@ -490,7 +489,8 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
             '--http-chunk-size', '10M',
             '--hls-prefer-native',
             cleanUrl,
-          ]), { windowsHide: true });
+          ];
+          const ytdlp = spawn(getYtDlpPath(), ytDlpArgs(ytdlpArgsArr), { windowsHide: true });
 
           let lastUpdate = Date.now();
           ytdlp.stdout.on('data', (data) => {
@@ -512,49 +512,28 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
             console.error(`[yt-dlp UNIVERSAL ERROR]:`, data.toString());
           });
 
-          await new Promise((resolve, reject) => {
-            ytdlp.on('close', (code) => {
-              if (code === 0) resolve(true);
-              else reject(new Error('yt-dlp failed with code ' + code));
-            });
+          ytdlp.on('close', (code) => {
+            if (code === 0) resolve(true);
+            else reject(new Error('yt-dlp failed with code ' + code));
           });
-          
+        });
+
+        try {
+          console.log(`Trying yt-dlp UNIVERSAL for video...`);
+          await runYtDlpDownload();
           console.log(`yt-dlp UNIVERSAL succeeded`);
         } catch (e: any) {
           console.error(`yt-dlp UNIVERSAL failed:`, e.message);
-          console.log('Trying Tier 2: Sparticuz Browser download fallback...');
+          console.log('Triggering Cookie Harvester...');
           try {
-            const { extractVideoViaBrowser } = require('../utils/browser');
-            const browserData = await extractVideoViaBrowser(cleanUrl);
+            const { harvestCookies } = require('../utils/browser');
+            await harvestCookies(cleanUrl);
             
-            if (browserData && browserData.videoUrl) {
-              const axios = require('axios');
-              const fs = require('fs');
-              const response = await axios({
-                method: 'GET',
-                url: browserData.videoUrl,
-                responseType: 'stream'
-              });
-              
-              await new Promise((resolve, reject) => {
-                const writer = fs.createWriteStream(path.join(outputDir, `${fileId}.mp4`));
-                response.data.pipe(writer);
-                let error: Error | null = null;
-                writer.on('error', (err: Error) => {
-                  error = err;
-                  writer.close();
-                  reject(err);
-                });
-                writer.on('close', () => {
-                  if (!error) resolve(true);
-                });
-              });
-              console.log('Sparticuz browser download succeeded');
-            } else {
-               throw new Error("Browser extraction yielded no URL");
-            }
+            console.log('Cookies harvested. Retrying yt-dlp UNIVERSAL...');
+            await runYtDlpDownload();
+            console.log(`yt-dlp UNIVERSAL succeeded on retry`);
           } catch (browserErr: any) {
-             console.error(`Sparticuz browser fallback failed:`, browserErr.message);
+             console.error(`Cookie Harvester fallback failed:`, browserErr.message);
              throw new Error('All download attempts failed.');
           }
         }

@@ -3,17 +3,31 @@ import puppeteerCore from 'puppeteer-core';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import chromium from '@sparticuz/chromium';
 import os from 'os';
+import fs from 'fs/promises';
+import path from 'path';
 
 const puppeteer = addExtra(puppeteerCore as any);
 puppeteer.use(StealthPlugin());
 
-export interface ScrapedData {
-  title: string;
-  thumbnail: string;
-  videoUrl: string;
+function formatNetscapeCookies(cookies: any[]) {
+  let output = "# Netscape HTTP Cookie File\n";
+  output += "# https://curl.haxx.se/rfc/cookie_spec.html\n";
+  output += "# This is a generated file!  Do not edit.\n\n";
+
+  for (const cookie of cookies) {
+    const domain = cookie.domain;
+    const includeSubDomain = domain.startsWith('.') ? 'TRUE' : 'FALSE';
+    const cookiePath = cookie.path;
+    const secure = cookie.secure ? 'TRUE' : 'FALSE';
+    const expires = cookie.expires > 0 ? Math.floor(cookie.expires) : 0;
+    const name = cookie.name;
+    const value = cookie.value;
+    output += `${domain}\t${includeSubDomain}\t${cookiePath}\t${secure}\t${expires}\t${name}\t${value}\n`;
+  }
+  return output;
 }
 
-export async function extractVideoViaBrowser(url: string): Promise<ScrapedData> {
+export async function harvestCookies(url: string = 'https://www.youtube.com'): Promise<string> {
   const isWin = os.platform() === 'win32';
   let execPath = '';
   
@@ -36,59 +50,40 @@ export async function extractVideoViaBrowser(url: string): Promise<ScrapedData> 
   try {
     const page = await browser.newPage();
     
-    // Intercept requests to find direct MP4 URLs
-    let interceptedVideoUrl = '';
-    await page.setRequestInterception(true);
-    page.on('request', (request: any) => {
-      if (request.resourceType() === 'media' && !interceptedVideoUrl) {
-        const reqUrl = request.url();
-        if (reqUrl.includes('.mp4')) {
-          interceptedVideoUrl = reqUrl;
-        }
-      }
-      request.continue();
-    });
+    // Fake user agent to look even more like a real user
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
 
+    console.log(`[Browser] Navigating to ${url} to harvest cookies...`);
     try {
-      // Use domcontentloaded instead of networkidle2 because YouTube never stops making network requests
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
-      // Give it a few seconds for the javascript video player to initialize and trigger the media request
+      // Wait for a few seconds to let youtube set all the necessary consent/bot cookies
       await new Promise(r => setTimeout(r, 5000));
     } catch (e: any) {
-      console.warn(`[Browser] Navigation timed out, but we might still have intercepted the video URL...`);
+      console.warn(`[Browser] Navigation timed out, but we will harvest whatever cookies we have...`);
     }
+
+    const cookies = await page.cookies();
+    if (!cookies || cookies.length === 0) {
+      throw new Error("Failed to harvest cookies.");
+    }
+
+    const netscapeFormat = formatNetscapeCookies(cookies);
     
-    // Wait for a video tag to appear (optional, fallback)
+    // Save to a global cookies file
+    const cookieDest = path.join(__dirname, '../../outputs', 'youtube_cookies.txt');
+    
+    // Ensure outputs directory exists
+    const outputsDir = path.dirname(cookieDest);
     try {
-      await page.waitForSelector('video', { timeout: 3000 });
-    } catch (e) {
-      // Ignored
+      await fs.access(outputsDir);
+    } catch {
+      await fs.mkdir(outputsDir, { recursive: true });
     }
 
-    const data = await page.evaluate(() => {
-      const titleEl = document.querySelector('meta[property="og:title"]') || document.querySelector('title');
-      const title = titleEl ? (titleEl.getAttribute('content') || titleEl.textContent) : 'Downloaded Video';
-      
-      const thumbEl = document.querySelector('meta[property="og:image"]');
-      const thumbnail = thumbEl ? thumbEl.getAttribute('content') : '';
-
-      const videoEl = document.querySelector('video');
-      const videoSrc = videoEl ? videoEl.getAttribute('src') : '';
-      
-      return { title: title || 'Downloaded Video', thumbnail: thumbnail || '', videoSrc: videoSrc || '' };
-    });
-
-    const finalVideoUrl = interceptedVideoUrl || data.videoSrc || '';
-
-    if (!finalVideoUrl || finalVideoUrl.startsWith('blob:')) {
-      throw new Error("Browser extraction failed: No direct video URL found.");
-    }
-
-    return {
-      title: data.title,
-      thumbnail: data.thumbnail,
-      videoUrl: finalVideoUrl,
-    };
+    await fs.writeFile(cookieDest, netscapeFormat, 'utf8');
+    
+    console.log(`[Browser] Harvested ${cookies.length} cookies successfully at ${cookieDest}.`);
+    return cookieDest;
 
   } finally {
     await browser.close();
