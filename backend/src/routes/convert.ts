@@ -478,7 +478,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
 
         // Step 2: Download video in its native format without remuxing
         // We use -S for sorting formats which is highly optimized for ANY website!
-        const runYtDlpDownload = () => new Promise((resolve, reject) => {
+        const runYtDlpDownload = (proxy?: string) => new Promise((resolve, reject) => {
           const ytdlpArgsArr = [
             '--newline',
             '-f', 'bv*+ba/b',
@@ -489,8 +489,10 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
             '--concurrent-fragments', '10',
             '--http-chunk-size', '10M',
             '--hls-prefer-native',
-            cleanUrl,
           ];
+          if (proxy) ytdlpArgsArr.push('--proxy', proxy);
+          ytdlpArgsArr.push(cleanUrl);
+          
           const ytdlp = spawn(getYtDlpPath(), ytDlpArgs(ytdlpArgsArr), { windowsHide: true });
 
           let lastUpdate = Date.now();
@@ -535,7 +537,21 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
             console.log(`yt-dlp UNIVERSAL succeeded on retry`);
           } catch (browserErr: any) {
              console.error(`Cookie Harvester fallback failed:`, browserErr.message);
-             throw new Error('All download attempts failed.');
+             console.log(`Triggering Proxy Network Fallback...`);
+             const proxies = await getRandomFreeProxies(3);
+             let success = false;
+             for (const proxy of proxies) {
+               console.log(`Retrying download with proxy: ${proxy}`);
+               try {
+                 await runYtDlpDownload(proxy);
+                 success = true;
+                 console.log(`Download succeeded with proxy ${proxy}`);
+                 break;
+               } catch(proxyErr) {
+                 console.warn(`Proxy ${proxy} failed.`);
+               }
+             }
+             if (!success) throw new Error('All download attempts failed including proxies.');
           }
         }
 
