@@ -369,19 +369,11 @@ router.post('/universal/metadata', async (req: Request, res: Response): Promise<
       ];
 
       try {
-        const res = await runYtDlp(args, false);
+        const res = await runYtDlp(args);
         stdout = res.stdout;
-      } catch (e) {
-        console.warn('Universal metadata native fetch failed, trying proxy...');
-        let ytSuccess = false;
-        try {
-          const res = await runYtDlp(args, true); // try true to use process.env.PROXY_URL
-          stdout = res.stdout;
-          ytSuccess = true;
-        } catch (err) {}
-        if (!ytSuccess) {
-          throw new Error("Metadata extraction failed.");
-        }
+      } catch (e: any) {
+        console.warn(`Universal metadata native fetch failed: ${e.message}`);
+        throw new Error("Metadata extraction failed.");
       }
 
       const lines = stdout.trim().split('\n');
@@ -498,60 +490,51 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
 
         // Step 2: Download video in its native format without remuxing
         // We use -S for sorting formats which is highly optimized for ANY website!
-        let videoDownloaded = false;
-        
-        for (const useProxy of [false]) {
-          if (videoDownloaded) break;
-          try {
-            console.log(`Trying yt-dlp UNIVERSAL for video... (Proxy: ${useProxy})`);
-            const ytdlp = spawn(getYtDlpPath(), ytDlpArgs([
-              '--newline',
-              '-f', 'bv*+ba/b',
-              '-S', ytSort,
-              '--merge-output-format', 'mp4',
-              '-o', path.join(outputDir, `${fileId}.%(ext)s`),
-              '--no-playlist',
-              '--concurrent-fragments', '10',
-              '--http-chunk-size', '10M',
-              '--hls-prefer-native',
-              cleanUrl,
-            ], useProxy), { windowsHide: true });
+        try {
+          console.log(`Trying yt-dlp UNIVERSAL for video...`);
+          const ytdlp = spawn(getYtDlpPath(), ytDlpArgs([
+            '--newline',
+            '-f', 'bv*+ba/b',
+            '-S', ytSort,
+            '--merge-output-format', 'mp4',
+            '-o', path.join(outputDir, `${fileId}.%(ext)s`),
+            '--no-playlist',
+            '--concurrent-fragments', '10',
+            '--http-chunk-size', '10M',
+            '--hls-prefer-native',
+            cleanUrl,
+          ]), { windowsHide: true });
 
-            let lastUpdate = Date.now();
-            ytdlp.stdout.on('data', (data) => {
-              const output = data.toString();
-              const match = output.match(/\[download\]\s+([\d.]+)%/);
-              if (match) {
-                const progress = parseFloat(match[1]);
-                if (!isNaN(progress)) {
-                  const now = Date.now();
-                  if (now - lastUpdate > 1000) {
-                    lastUpdate = now;
-                    Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
-                  }
+          let lastUpdate = Date.now();
+          ytdlp.stdout.on('data', (data) => {
+            const output = data.toString();
+            const match = output.match(/\[download\]\s+([\d.]+)%/);
+            if (match) {
+              const progress = parseFloat(match[1]);
+              if (!isNaN(progress)) {
+                const now = Date.now();
+                if (now - lastUpdate > 1000) {
+                  lastUpdate = now;
+                  Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
                 }
               }
-            });
+            }
+          });
 
-            ytdlp.stderr.on('data', (data) => {
-              console.error(`[yt-dlp UNIVERSAL ERROR (Proxy: ${useProxy})]:`, data.toString());
-            });
+          ytdlp.stderr.on('data', (data) => {
+            console.error(`[yt-dlp UNIVERSAL ERROR]:`, data.toString());
+          });
 
-            await new Promise((resolve, reject) => {
-              ytdlp.on('close', (code) => {
-                if (code === 0) resolve(true);
-                else reject(new Error('yt-dlp failed with code ' + code));
-              });
+          await new Promise((resolve, reject) => {
+            ytdlp.on('close', (code) => {
+              if (code === 0) resolve(true);
+              else reject(new Error('yt-dlp failed with code ' + code));
             });
-            
-            videoDownloaded = true;
-            console.log(`yt-dlp UNIVERSAL succeeded (Proxy: ${useProxy})`);
-          } catch (e: any) {
-            console.error(`yt-dlp UNIVERSAL failed (Proxy: ${useProxy}):`, e.message);
-          }
-        }
-        
-        if (!videoDownloaded) {
+          });
+          
+          console.log(`yt-dlp UNIVERSAL succeeded`);
+        } catch (e: any) {
+          console.error(`yt-dlp UNIVERSAL failed:`, e.message);
           throw new Error('All download attempts failed.');
         }
 
