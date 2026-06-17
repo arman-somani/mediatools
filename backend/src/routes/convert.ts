@@ -82,7 +82,8 @@ function ytDlpArgs(args: string[]): string[] {
   const base = [
     '--remote-components', 'ejs:github',
     '--rm-cache-dir',
-    '--socket-timeout', '15'
+    '--socket-timeout', '10',
+    '--retries', '0'
   ];
   
   const cookiesFile = getCookiesPath();
@@ -523,7 +524,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         try {
           console.log(`Trying Tier 1 & 2: Proxy Network...`);
           const { getRandomFreeProxies } = require('../utils/freeproxy');
-          const proxies = await getRandomFreeProxies(2);
+          const proxies = await getRandomFreeProxies(10);
           let success = false;
           for (const proxy of proxies) {
             console.log(`Trying download with proxy: ${proxy}`);
