@@ -6,6 +6,8 @@ RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     wget \
+    curl \
+    unzip \
     libnss3 \
     libnspr4 \
     libatk1.0-0 \
@@ -24,6 +26,10 @@ RUN apt-get update && apt-get install -y \
 # Install the latest yt-dlp nightly build via pip
 # This avoids the PyInstaller bug that prevents Node.js from being used as a JS runtime
 RUN pip3 install -U https://github.com/yt-dlp/yt-dlp/archive/master.zip --break-system-packages
+
+# Install Deno as the bulletproof JS runtime for yt-dlp
+RUN curl -fsSL https://deno.land/install.sh | sh && \
+    ln -s /root/.deno/bin/deno /usr/local/bin/deno
 
 WORKDIR /app
 
