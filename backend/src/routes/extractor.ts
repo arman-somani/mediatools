@@ -73,12 +73,12 @@ router.get('/info', async (req: Request, res: Response): Promise<void> => {
     let data;
 
     try {
-      console.log(`[Extractor] Tier 1 & 2: Fetching metadata using Proxy Network for ${url}`);
+      console.log(`[Extractor] Tier 1: Fetching metadata using Proxy Network for ${url}`);
       const { getRandomFreeProxies } = require('../utils/freeproxy');
       const proxies = await getRandomFreeProxies(10);
       let success = false;
       for (const proxy of proxies) {
-        console.log(`[Extractor] Trying proxy: ${proxy}`);
+        console.log(`[Extractor] Trying Tier 1 proxy: ${proxy}`);
         try {
           data = await runYtDlpJson(url, proxy);
           if (data && data.formats) {
@@ -89,18 +89,38 @@ router.get('/info', async (req: Request, res: Response): Promise<void> => {
           console.warn(`[Extractor] Proxy ${proxy} failed.`);
         }
       }
-      if (!success) throw new Error('Invalid metadata from proxies');
-    } catch (proxyErr: any) {
-      console.warn(`[Extractor] Proxy Network failed: ${proxyErr.message}. Triggering Tier 3 (Cookie Harvester)...`);
+      if (!success) throw new Error('Invalid metadata from all Tier 1 proxies');
+    } catch (tier1Err: any) {
+      console.warn(`[Extractor] Tier 1 (Proxy) failed: ${tier1Err.message}. Triggering Tier 2 (Fallback Proxy Network)...`);
       try {
-        const { harvestCookies } = require('../utils/browser');
-        await harvestCookies(url);
-        console.log(`[Extractor] Cookies harvested. Retrying yt-dlp...`);
-        data = await runYtDlpJson(url);
-        if (!data || !data.formats) throw new Error('Invalid metadata returned on Cookie Harvester retry');
-      } catch (browserErr: any) {
-        console.warn(`[Extractor] Tier 3 (Cookie Harvester) failed: ${browserErr.message}`);
-        throw new Error("Metadata extraction failed across all tiers.");
+        const { getRandomFreeProxies } = require('../utils/freeproxy');
+        const proxies = await getRandomFreeProxies(10);
+        let success = false;
+        for (const proxy of proxies) {
+          console.log(`[Extractor] Trying Tier 2 proxy: ${proxy}`);
+          try {
+            data = await runYtDlpJson(url, proxy);
+            if (data && data.formats) {
+              success = true;
+              break;
+            }
+          } catch(e) {
+            console.warn(`[Extractor] Proxy ${proxy} failed.`);
+          }
+        }
+        if (!success) throw new Error('Invalid metadata from all Tier 2 proxies');
+      } catch (tier2Err: any) {
+        console.warn(`[Extractor] Tier 2 (Fallback Proxies) failed: ${tier2Err.message}. Triggering Tier 3 (Cookie Harvester)...`);
+        try {
+          const { harvestCookies } = require('../utils/browser');
+          await harvestCookies(url);
+          console.log(`[Extractor] Cookies harvested. Retrying yt-dlp...`);
+          data = await runYtDlpJson(url);
+          if (!data || !data.formats) throw new Error('Invalid metadata returned on Cookie Harvester retry');
+        } catch (browserErr: any) {
+          console.warn(`[Extractor] Tier 3 (Cookie Harvester) failed: ${browserErr.message}`);
+          throw new Error("Metadata extraction failed across all tiers.");
+        }
       }
     }
 
