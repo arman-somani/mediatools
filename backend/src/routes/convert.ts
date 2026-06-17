@@ -85,7 +85,8 @@ function ytDlpArgs(args: string[]): string[] {
     '--socket-timeout', '10',
     '--retries', '0',
     '--extractor-retries', '0',
-    '--fragment-retries', '0'
+    '--fragment-retries', '0',
+    '--extractor-args', 'youtube:player-client=ios,android,web'
   ];
   
   const cookiesFile = getCookiesPath();
