@@ -446,7 +446,40 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
                 console.log(`yt-dlp AUDIO succeeded after Cookie Harvester`);
               } catch (tier4Err: any) {
                 console.error(`Tier 4 (Cookie Harvester) failed:`, tier4Err.message);
-                throw new Error('All download attempts failed across all tiers.');
+                console.log(`Triggering Tier 5 (@distube/ytdl-core)...`);
+                try {
+                  const ytdl = require('@distube/ytdl-core');
+                  await new Promise((resolve, reject) => {
+                    const exactMp3 = path.join(outputDir, `${fileId}.mp3`);
+                    const stream = ytdl(cleanUrl, { quality: 'highestaudio', filter: 'audioonly' });
+                    stream.pipe(fs.createWriteStream(exactMp3));
+                    stream.on('end', () => resolve(true));
+                    stream.on('error', reject);
+                  });
+                  console.log(`ytdl-core AUDIO succeeded`);
+                } catch (tier5Err: any) {
+                  console.error(`Tier 5 failed:`, tier5Err.message);
+                  console.log(`Triggering Tier 6 (play-dl)...`);
+                  try {
+                    const play = require('play-dl');
+                    await new Promise(async (resolve, reject) => {
+                      try {
+                        const exactMp3 = path.join(outputDir, `${fileId}.mp3`);
+                        const stream = await play.stream(cleanUrl, { discordPlayerCompatibility: true });
+                        const writeStream = fs.createWriteStream(exactMp3);
+                        stream.stream.pipe(writeStream);
+                        writeStream.on('finish', () => resolve(true));
+                        writeStream.on('error', reject);
+                      } catch (err) {
+                        reject(err);
+                      }
+                    });
+                    console.log(`play-dl AUDIO succeeded`);
+                  } catch (tier6Err: any) {
+                    console.error(`Tier 6 failed:`, tier6Err.message);
+                    throw new Error('All download attempts failed across all tiers.');
+                  }
+                }
               }
             }
           }
@@ -765,7 +798,49 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
                 console.log(`yt-dlp UNIVERSAL succeeded after Cookie Harvester`);
               } catch (tier4Err: any) {
                 console.error(`Tier 4 (Cookie Harvester) failed:`, tier4Err.message);
-                throw new Error('All download attempts failed across all tiers.');
+                
+                const isYouTube = cleanUrl.includes('youtube.com') || cleanUrl.includes('youtu.be');
+                if (!isYouTube) {
+                  throw new Error('All download attempts failed across all tiers.');
+                }
+                
+                console.log(`Triggering Tier 5 (@distube/ytdl-core)...`);
+                try {
+                  const ytdl = require('@distube/ytdl-core');
+                  await new Promise((resolve, reject) => {
+                    const exactMp4 = path.join(outputDir, `${fileId}.mp4`);
+                    const stream = ytdl(cleanUrl, { quality: 'highest', filter: 'audioandvideo' });
+                    stream.pipe(fs.createWriteStream(exactMp4));
+                    stream.on('end', () => resolve(true));
+                    stream.on('error', reject);
+                  });
+                  console.log(`ytdl-core UNIVERSAL succeeded`);
+                } catch (tier5Err: any) {
+                  console.error(`Tier 5 failed:`, tier5Err.message);
+                  console.log(`Triggering Tier 6 (play-dl)...`);
+                  try {
+                    const play = require('play-dl');
+                    const info = await play.video_info(cleanUrl);
+                    const format = info.format.find((f: any) => f.hasVideo && f.hasAudio) || info.format[0];
+                    if (!format || !format.url) throw new Error('No merged format found in play-dl');
+                    
+                    const fetch = require('node-fetch');
+                    const res = await fetch(format.url);
+                    if (!res.ok) throw new Error('Failed to fetch from play-dl format url');
+                    
+                    await new Promise((resolve, reject) => {
+                      const exactMp4 = path.join(outputDir, `${fileId}.mp4`);
+                      const writeStream = fs.createWriteStream(exactMp4);
+                      res.body.pipe(writeStream);
+                      writeStream.on('finish', () => resolve(true));
+                      writeStream.on('error', reject);
+                    });
+                    console.log(`play-dl UNIVERSAL succeeded`);
+                  } catch (tier6Err: any) {
+                    console.error(`Tier 6 failed:`, tier6Err.message);
+                    throw new Error('All download attempts failed across all tiers.');
+                  }
+                }
               }
             }
           }
