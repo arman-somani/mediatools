@@ -1,20 +1,16 @@
 const fs = require('fs');
 const axios = require('axios');
-const FormData = require('form-data');
 
-async function testOshi() {
+async function testTransfer() {
     try {
         fs.writeFileSync('testfile.mp4', 'dummy content for testing upload speeds and links');
         
-        const form = new FormData();
-        form.append('f', fs.createReadStream('testfile.mp4'));
-        
-        console.log('Testing oshi.at...');
-        const res = await axios.post('https://oshi.at', form, { headers: form.getHeaders() });
-        console.log('Oshi response:\n', res.data);
+        console.log('Testing transfer.sh...');
+        const res = await axios.put('https://transfer.sh/testfile.mp4', fs.readFileSync('testfile.mp4'));
+        console.log('Transfer response:\n', res.data);
     } catch (e) {
-        console.error('Oshi failed', e.message);
+        console.error('Transfer failed', e.message);
     }
 }
 
-testOshi();
+testTransfer();
