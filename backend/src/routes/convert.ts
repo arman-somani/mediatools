@@ -78,28 +78,21 @@ function getYouTubeVideoId(input: string): string | null {
   return null;
 }
 
-function ytDlpArgs(args: string[], useProxy: boolean | string = false): string[] {
+function ytDlpArgs(args: string[]): string[] {
   const base = [
     '--js-runtimes', 'node', 
     '--remote-components', 'ejs:github',
     '--rm-cache-dir'
   ];
   
-  if (useProxy) {
-    const proxyUrl = typeof useProxy === 'string' ? useProxy : process.env.PROXY_URL;
-    if (proxyUrl) {
-      base.unshift('--proxy', proxyUrl, '--no-check-certificates');
-    }
-  }
-  
   const cookiesFile = getCookiesPath();
   if (cookiesFile) base.push('--cookies', cookiesFile);
   return [...base, ...args];
 }
 
-function runYtDlp(args: string[], useProxy: boolean | string = false): Promise<{ stdout: string; stderr: string }> {
+function runYtDlp(args: string[]): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
-    const child = spawn(getYtDlpPath(), ytDlpArgs(args, useProxy), { windowsHide: true });
+    const child = spawn(getYtDlpPath(), ytDlpArgs(args), { windowsHide: true });
     let stdout = '';
     let stderr = '';
 

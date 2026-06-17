@@ -52,11 +52,6 @@ export default function Footer() {
                   Video to Audio </Link>
               </li>
               <li>
-                <Link href="/universal" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">
-                  Universal Downloader
-                </Link>
-              </li>
-              <li>
                 <Link href="/youtube" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">
                   YouTube to MP3
                 </Link>
@@ -67,66 +62,71 @@ export default function Footer() {
                 </Link>
               </li>
             </ul>
-          </div>
-
-          {/* Resources */}
-          <div className="col-span-1">
-            <h4 className="font-semibold text-white mb-4 text-sm md:text-base tracking-wide">Resources</h4>
-            <ul className="space-y-3">
-              <li>
-                <Link href="/feedback" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">
-                  Feedback
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">
-                  Contact Us
-                </Link>
-              </li>
-              <li>
-                <a href="https://github.com/arman-somani/mediatools" target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">
-                  GitHub Repository
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Legal */}
-          <div className="col-span-1 sm:col-span-1">
-            <h4 className="font-semibold text-white mb-4 text-sm md:text-base tracking-wide">Legal</h4>
-            <ul className="space-y-3">
-              <li>
-                <Link href="/terms" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">
-                  Terms of Service
-                </Link>
-              </li>
-              <li>
-                <Link href="/privacy" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link href="/dmca" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">
-                  DMCA
-                </Link>
-              </li>
-            </ul>
-          </div>
+            <Link href="/universal" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">
+              Universal Downloader
+            </Link>
+          </li>
+          <li>
         </div>
 
-        {/* Bottom Footer */}
-        <div className="pt-8 border-t border-black/[0.07] flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
-          <p className="text-white/40 text-xs md:text-sm">
-            © {new Date().getFullYear()} MediaTools. All rights reserved.
-          </p>
-          <div className="flex items-center gap-2 justify-center">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-white/50 text-xs md:text-sm">
-              All systems operational
-            </span>
-          </div>
+        {/* Resources */}
+        <div className="col-span-1">
+          <h4 className="font-semibold text-white mb-4 text-sm md:text-base tracking-wide">Resources</h4>
+          <ul className="space-y-3">
+            <li>
+              <Link href="/feedback" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">
+                Feedback
+              </Link>
+            </li>
+            <li>
+              <Link href="/contact" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">
+                Contact Us
+              </Link>
+            </li>
+            <li>
+              <a href="https://github.com/arman-somani/mediatools" target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">
+                GitHub Repository
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        {/* Legal */}
+        <div className="col-span-1 sm:col-span-1">
+          <h4 className="font-semibold text-white mb-4 text-sm md:text-base tracking-wide">Legal</h4>
+          <ul className="space-y-3">
+            <li>
+              <Link href="/terms" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">
+                Terms of Service
+              </Link>
+            </li>
+            <li>
+              <Link href="/privacy" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">
+                Privacy Policy
+              </Link>
+            </li>
+            <li>
+              <Link href="/dmca" className="text-white/50 hover:text-white transition-colors text-sm md:text-base">
+                DMCA
+              </Link>
+            </li>
+          </ul>
         </div>
       </div>
-    </footer>
+
+      {/* Bottom Footer */}
+      <div className="pt-8 border-t border-black/[0.07] flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
+        <p className="text-white/40 text-xs md:text-sm">
+          © {new Date().getFullYear()} MediaTools. All rights reserved.
+        </p>
+        <div className="flex items-center gap-2 justify-center">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-white/50 text-xs md:text-sm">
+            All systems operational
+          </span>
+        </div>
+      </div>
+    </div>
+    </footer >
   );
 }
