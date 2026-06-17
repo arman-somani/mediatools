@@ -457,16 +457,10 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         try {
           let stdout = '';
           try {
-            const res = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--no-playlist', cleanUrl], false);
+            const res = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--no-playlist', cleanUrl]);
             stdout = res.stdout;
-          } catch (e) {
-            let success = false;
-            try {
-              const res = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--no-playlist', cleanUrl], true);
-              stdout = res.stdout;
-              success = true;
-            } catch (err) {}
-            if (!success) console.warn('yt-dlp metadata fetch failed.');
+          } catch (e: any) {
+            console.warn(`yt-dlp metadata fetch failed: ${e.message}`);
           }
           const lines = stdout.trim().split('\n');
           const dlTitle = (lines[0] || '').trim();
