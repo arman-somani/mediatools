@@ -23,7 +23,7 @@ export async function interceptYoutubeStreams(url: string, type: 'video' | 'audi
             '--disable-dev-shm-usage',
             '--disable-gpu'
         ],
-        defaultViewport: chromium.defaultViewport as any,
+        defaultViewport: { width: 1920, height: 1080 },
         executablePath: executablePath || undefined,
         headless: true,
         ignoreHTTPSErrors: true,
