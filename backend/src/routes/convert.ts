@@ -664,7 +664,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
 
     const conversion: any = await Conversion.create({
       userId: req.user?.id,
-      type: 'universal',
+      type: req.body.type || 'universal',
       status: 'processing',
       youtubeUrl: cleanUrl,
       youtubeTitle: req.body.title || 'Fetching info...',
