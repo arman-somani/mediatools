@@ -22,7 +22,7 @@ import ytdl from '@distube/ytdl-core';
 import vm from 'vm';
 
 import { getRandomFreeProxies } from '../utils/freeproxy';
-// Removed GoFile import to serve locally
+import { uploadToTmpFiles } from '../utils/tmpfiles';
 import { interceptYoutubeStreams } from '../utils/puppeteerInterceptor';
 
 // OAuth2 is no longer supported by yt-dlp. Using browser cookies natively.
@@ -505,8 +505,14 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         conversion.outputPath = downloadedFilePath;
         conversion.outputFilename = videoTitle.replace(/[\/\\\\?%*:|"<>]/g, '-') + '.mp3';
         conversion.fileSize = getFileSize(downloadedFilePath);
-        // Serve locally directly from our backend without redirecting to external sites
-        conversion.outputUrl = `/api/convert/download-temp/${fileId}`;
+        // Use tmpfiles.org for 1 Gbps direct download unthrottled links
+        try {
+          conversion.outputUrl = await uploadToTmpFiles(downloadedFilePath, conversion.outputFilename);
+          console.log(`[TmpFiles] Audio uploaded successfully: ${conversion.outputUrl}`);
+        } catch (e) {
+          console.error('[TmpFiles] Upload failed, falling back to local serve:', e);
+          conversion.outputUrl = `/api/convert/download-temp/${fileId}`;
+        }
         conversion.status = 'completed';
         conversion.progress = 100;
         await conversion.save();
@@ -863,8 +869,14 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         conversion.outputFilename = videoTitle.replace(/[\/\\\\?%*:|"<>]/g, '-') + path.extname(downloadedFilePath);
         conversion.fileSize = getFileSize(downloadedFilePath);
         
-        // Serve locally directly from our backend without redirecting to external sites
-        conversion.outputUrl = `/api/convert/download/${conversion._id}`;
+        // Use tmpfiles.org for 1 Gbps direct download unthrottled links
+        try {
+          conversion.outputUrl = await uploadToTmpFiles(downloadedFilePath, conversion.outputFilename);
+          console.log(`[TmpFiles] Video uploaded successfully: ${conversion.outputUrl}`);
+        } catch (e) {
+          console.error('[TmpFiles] Upload failed, falling back to local serve:', e);
+          conversion.outputUrl = `/api/convert/download/${conversion._id}`;
+        }
 
         conversion.status = 'completed';
         conversion.progress = 100;
