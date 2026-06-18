@@ -299,7 +299,7 @@ export default function PlaylistDownloader() {
                     <div className="flex-shrink-0">
                       {isCompleted ? (
                         <a
-                          href={download.jobId}
+                          href={getDownloadUrl(download.jobId)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="h-9 px-3 bg-emerald-500/20 text-emerald-600 rounded-lg text-xs font-semibold flex items-center hover:bg-emerald-500/30 transition-colors"
