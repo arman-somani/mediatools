@@ -114,12 +114,7 @@ export default function PlaylistDownloader() {
       const jobId = downloads[video.id].jobId;
       if (jobId) {
         setTimeout(() => {
-          const a = document.createElement('a');
           window.open(jobId, '_blank');
-          a.download = '';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
         }, index * 500);
       }
     });
