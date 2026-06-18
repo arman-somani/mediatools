@@ -991,8 +991,12 @@ router.get('/download/:id', async (req: Request, res: Response): Promise<void> =
 
     const userFilename = conversion.outputFilename || path.basename(filePath);
 
-    fileStream.on('close', () => {
-      // Schedule cleanup 21 mins after download
+    // Enable caching at Cloudflare Edge to turbo-charge speeds
+    res.setHeader('Cache-Control', 'public, max-age=604800');
+
+    res.download(filePath, userFilename, (err) => {
+      if (err) console.error('Download stream error:', err);
+      // Schedule cleanup 21 mins after download is initiated
       setTimeout(() => {
         try {
           if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
