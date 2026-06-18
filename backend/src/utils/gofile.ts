@@ -8,41 +8,76 @@ const execFileAsync = util.promisify(execFile);
 /**
  * Uploads a local file to GoFile.io and returns the download page URL
  */
-export async function uploadToGoFile(localFilePath: string, filename: string): Promise<string> {
+import { spawn } from 'child_process';
+
+export async function uploadToGoFile(
+  localFilePath: string, 
+  filename: string,
+  onProgress?: (percent: number) => void
+): Promise<string> {
   try {
-    // 1. Get the best available server
     const serverResponse = await axios.get('https://api.gofile.io/servers');
     if (serverResponse.data.status !== 'ok') {
       throw new Error('Failed to get GoFile server');
     }
     
-    // Choose the first available server
     const serverName = serverResponse.data.data.servers[0].name;
-
-    // 2. Upload the file to that server using CURL instead of Axios
-    // We use CURL because Node's Axios buffer often crashes with EPROTO on 2GB+ streams
-    
-    // Clean filename for curl: remove double quotes to avoid parsing issues inside curl's -F parameter
     const safeFilename = filename.replace(/"/g, "'");
 
     const args = [
-      '-s', 
       '-F', 'token=zr5lPVjXmF3Isjd2PiVtm3cgeiYWmFoN',
       '-F', `file=@${localFilePath};filename="${safeFilename}"`,
       `https://${serverName}.gofile.io/contents/uploadfile`
     ];
 
-    const { stdout } = await execFileAsync('curl', args, { maxBuffer: 10 * 1024 * 1024 });
+    return new Promise((resolve, reject) => {
+      const curl = spawn('curl', args);
+      let stdoutData = '';
 
-    const responseData = JSON.parse(stdout);
+      curl.stdout.on('data', (data) => {
+        stdoutData += data.toString();
+      });
 
-    if (responseData.status !== 'ok') {
-      throw new Error('GoFile upload failed: ' + JSON.stringify(responseData));
-    }
+      curl.stderr.on('data', (data) => {
+        const output = data.toString();
+        // Parse curl progress table
+        // Format: % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+        //                                 Dload  Upload   Total   Spent    Left  Speed
+        // 10 1000M    0     0   10  100M      0  10.0M  0:01:40  0:00:10  0:01:30 10.0M
+        const lines = output.trim().split(/[\r\n]+/);
+        const lastLine = lines[lines.length - 1];
+        if (lastLine) {
+          const parts = lastLine.trim().split(/\s+/);
+          // In curl progress table, the first column is % Total, but for upload, it's the % Xferd (column 5 or 6 depending on alignment)
+          // Wait, curl outputs carriage returns (\r) to overwrite the line.
+          const match = output.match(/(\d+)\s+\w+\s+\d+\s+\w+\s+(\d+)/g);
+          if (match && match.length > 0) {
+             const lastMatch = match[match.length - 1];
+             const uploadPercentStr = lastMatch.trim().split(/\s+/)[2];
+             if (uploadPercentStr && !isNaN(parseInt(uploadPercentStr))) {
+               if (onProgress) onProgress(parseInt(uploadPercentStr));
+             }
+          }
+        }
+      });
 
-    // GoFile returns a downloadPage (a webpage link to download the file)
-    // E.g., "https://gofile.io/d/XXXXXX"
-    return responseData.data.downloadPage;
+      curl.on('close', (code) => {
+        if (code !== 0) {
+          reject(new Error(`curl exited with code ${code}`));
+          return;
+        }
+        try {
+          const responseData = JSON.parse(stdoutData);
+          if (responseData.status !== 'ok') {
+            reject(new Error('GoFile upload failed: ' + stdoutData));
+          } else {
+            resolve(responseData.data.downloadPage);
+          }
+        } catch (e) {
+          reject(new Error('Failed to parse GoFile response: ' + stdoutData));
+        }
+      });
+    });
   } catch (error) {
     console.error('GoFile Upload Error:', error);
     throw error;
