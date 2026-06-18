@@ -503,7 +503,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
 
         const downloadedBasename = path.basename(downloadedFilePath);
         conversion.outputPath = downloadedFilePath;
-        conversion.outputFilename = safeTitle + '.mp3';
+        conversion.outputFilename = videoTitle.replace(/[\/\\\\?%*:|"<>]/g, '-') + '.mp3';
         conversion.fileSize = getFileSize(downloadedFilePath);
         // Serve locally directly from our backend without redirecting to external sites
         conversion.outputUrl = `/api/convert/download-temp/${fileId}`;
@@ -715,7 +715,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         const runYtDlpDownload = (proxy?: string) => new Promise((resolve, reject) => {
           const ytdlpArgsArr = [
             '--newline',
-            '-f', 'bv*+ba/b',
+            '-f', `bv*[height<=${ytSort.split(':')[1]}]+ba/b`,
             '-S', ytSort,
             '--merge-output-format', 'mp4',
             '-o', path.join(outputDir, `${fileId}.%(ext)s`),
@@ -860,7 +860,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
 
         const downloadedBasename = path.basename(downloadedFilePath);
         conversion.outputPath = downloadedFilePath;
-        conversion.outputFilename = safeTitle + path.extname(downloadedFilePath);
+        conversion.outputFilename = videoTitle.replace(/[\/\\\\?%*:|"<>]/g, '-') + path.extname(downloadedFilePath);
         conversion.fileSize = getFileSize(downloadedFilePath);
         
         // Serve locally directly from our backend without redirecting to external sites
