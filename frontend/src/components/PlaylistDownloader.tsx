@@ -115,7 +115,7 @@ export default function PlaylistDownloader() {
       if (jobId) {
         setTimeout(() => {
           const a = document.createElement('a');
-          a.href = jobId;
+          window.open(jobId, '_blank');
           a.download = '';
           document.body.appendChild(a);
           a.click();
