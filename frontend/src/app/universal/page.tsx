@@ -263,18 +263,17 @@ export default function UniversalPage() {
                   {!fileSize && <div className="mb-8" />}
 
                   <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
-                    <a
-                      href={apiUrl(`/api/convert/download/${jobId}`)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1"
-                    >
-                      <button className="w-full font-semibold rounded-xl flex items-center justify-center gap-2 h-14 transition-all duration-300 btn-primary">
+                    <div className="flex-1">
+                      <button 
+                        onClick={() => window.open(jobId, '_blank')}
+                        className="w-full font-semibold rounded-xl flex items-center justify-center gap-2 h-14 transition-all duration-300 btn-primary"
+                      >
                         <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
-                        Download Video </button>
-                    </a>
+                        Download Video 
+                      </button>
+                    </div>
                     <button onClick={reset} className="glass-panel hover:bg-white/5 border border-white/20 text-white transition-all h-14 w-full sm:w-auto px-8 whitespace-nowrap">
                       Download Another
                     </button>
