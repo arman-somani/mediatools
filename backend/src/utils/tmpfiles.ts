@@ -8,14 +8,18 @@ import { uploadToGoFile } from './gofile';
  * TmpFiles is used for files < 90MB (direct link).
  * GoFile is used for files >= 90MB (redirect link).
  */
-export async function uploadToTmpFiles(localFilePath: string, filename: string): Promise<string> {
+export async function uploadToTmpFiles(
+  localFilePath: string, 
+  filename: string,
+  onProgress?: (percent: number) => void
+): Promise<string> {
   try {
     const stats = fs.statSync(localFilePath);
     const sizeMB = stats.size / (1024 * 1024);
 
     if (sizeMB > 90) {
       console.log(`[Hybrid CDN] File is ${sizeMB.toFixed(2)} MB. Uploading to GoFile...`);
-      return await uploadToGoFile(localFilePath, filename);
+      return await uploadToGoFile(localFilePath, filename, onProgress);
     }
 
     console.log(`[Hybrid CDN] File is ${sizeMB.toFixed(2)} MB. Uploading to TmpFiles...`);
@@ -26,6 +30,12 @@ export async function uploadToTmpFiles(localFilePath: string, filename: string):
       headers: form.getHeaders(),
       maxContentLength: Infinity,
       maxBodyLength: Infinity,
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total && onProgress) {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onProgress(percent);
+        }
+      }
     });
 
     if (uploadResponse.data.status !== 'success') {
