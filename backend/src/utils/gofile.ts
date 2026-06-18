@@ -23,7 +23,9 @@ export async function uploadToGoFile(localFilePath: string): Promise<string> {
     form.append('file', fs.createReadStream(localFilePath));
 
     const uploadResponse = await axios.post(`https://${serverName}.gofile.io/contents/uploadfile`, form, {
-      headers: form.getHeaders()
+      headers: form.getHeaders(),
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
     });
 
     if (uploadResponse.data.status !== 'ok') {
