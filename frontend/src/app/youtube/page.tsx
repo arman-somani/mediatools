@@ -251,12 +251,6 @@ export default function YouTubePage() {
                     {videoInfo?.thumbnail && (
                       <div className="w-full max-w-sm aspect-video relative rounded-2xl overflow-hidden border border-white/10 mb-8 shadow-2xl">
                         <Image src={videoInfo.thumbnail} alt="thumbnail" fill className="object-cover" unoptimized />
-                        <div className="absolute inset-0 bg-black/20" />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="w-16 h-16 bg-white/50 backdrop-blur-md rounded-full flex items-center justify-center border border-white/50 shadow-sm">
-                            <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" className="text-white"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                          </div>
-                        </div>
                       </div>
                     )}
 
