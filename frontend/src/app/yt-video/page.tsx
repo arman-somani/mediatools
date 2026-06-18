@@ -288,7 +288,7 @@ export default function YtVideoPage() {
                   <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
                     <div className="flex-1">
                       <button 
-                        onClick={() => { window.location.href = apiUrl(`/api/convert/download/${jobId}`); }}
+                        onClick={() => { window.location.href = jobId; }}
                         className="w-full font-semibold rounded-xl flex items-center justify-center gap-2 h-14 transition-all duration-300 btn-primary"
                       >
                         <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
