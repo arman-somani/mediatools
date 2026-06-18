@@ -81,7 +81,7 @@ export default function YouTubePage() {
           if (startTimeRef.current) setConversionTime(Math.round((Date.now() - startTimeRef.current) / 1000));
           setVideoInfo({ title: conv.youtubeTitle, thumbnail: conv.youtubeThumbnail });
           setFileSize(conv.fileSize || null);
-          setJobId(conv.outputUrl || apiUrl(\`/api/convert/download/\${id}\`)); // Store the direct download URL in jobId
+          setJobId(conv.outputUrl || apiUrl(`/api/convert/download/${id}`)); // Store the direct download URL in jobId
           sendNotification('Video Ready! 🎬', 'Your YouTube video has finished converting and is ready to save.');
         } else if (conv.status === 'failed') {
           clearInterval(pollRef.current!);
