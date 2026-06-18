@@ -87,7 +87,7 @@ function ytDlpArgs(args: string[]): string[] {
     '--extractor-retries', '0',
     '--fragment-retries', '0',
     '--extractor-args', 'youtube:player-client=android_vr,web,default',
-    '--cookies-from-browser', 'chromium'
+    '--cookies-from-browser', 'chrome'
   ];
 
   return [...base, ...ytDlpAuthArgs(), ...args];
