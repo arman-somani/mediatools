@@ -7,10 +7,10 @@ import fs from 'fs';
  * It does NOT return a webpage, it returns the raw file stream URL.
  * Max size: 100GB. Retention: 60-120 minutes.
  */
-export async function uploadToTmpFiles(localFilePath: string): Promise<string> {
+export async function uploadToTmpFiles(localFilePath: string, filename: string): Promise<string> {
   try {
     const form = new FormData();
-    form.append('file', fs.createReadStream(localFilePath));
+    form.append('file', fs.createReadStream(localFilePath), { filename });
 
     const uploadResponse = await axios.post('https://tmpfiles.org/api/v1/upload', form, {
       headers: form.getHeaders(),
