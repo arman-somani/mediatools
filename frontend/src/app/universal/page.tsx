@@ -228,8 +228,8 @@ export default function UniversalPage() {
               ) : status === 'processing' ? (
                 <ProgressCircle
                   progress={progress}
-                  statusText="Downloading & Encoding..."
-                  subText={`Fetching highest quality video-this may take a while`}
+                  statusText={progress < 50 ? "Downloading Video..." : "Uploading to CDN..."}
+                  subText={progress < 50 ? "Fetching highest quality video securely" : "Preparing high-speed download link"}
                 />
 
               ) : (
