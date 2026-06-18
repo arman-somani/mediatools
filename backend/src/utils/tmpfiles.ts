@@ -15,7 +15,7 @@ export async function uploadToTmpFiles(localFilePath: string, filename: string):
 
     if (sizeMB > 90) {
       console.log(`[Hybrid CDN] File is ${sizeMB.toFixed(2)} MB. Uploading to GoFile...`);
-      return await uploadToGoFile(localFilePath);
+      return await uploadToGoFile(localFilePath, filename);
     }
 
     console.log(`[Hybrid CDN] File is ${sizeMB.toFixed(2)} MB. Uploading to TmpFiles...`);
