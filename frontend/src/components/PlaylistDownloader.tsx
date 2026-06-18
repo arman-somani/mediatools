@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api, { apiUrl } from '@/lib/api';
@@ -71,6 +71,7 @@ export default function PlaylistDownloader() {
             progress: Math.round(conv.progress || 0),
             status: conv.status === 'completed' || conv.status === 'failed' ? conv.status : 'processing',
             error: conv.errorMessage,
+            jobId: conv.outputUrl || prev[videoId].jobId,
           },
         }));
         if (conv.status === 'completed' || conv.status === 'failed') {
@@ -114,7 +115,7 @@ export default function PlaylistDownloader() {
       if (jobId) {
         setTimeout(() => {
           const a = document.createElement('a');
-          a.href = apiUrl(`/api/convert/download/${jobId}`);
+          a.href = jobId;
           a.download = '';
           document.body.appendChild(a);
           a.click();
@@ -296,7 +297,7 @@ export default function PlaylistDownloader() {
                     <div className="flex-shrink-0">
                       {isCompleted ? (
                         <a
-                          href={apiUrl(`/api/convert/download/${download.jobId}`)}
+                          href={download.jobId}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="h-9 px-3 bg-emerald-500/20 text-emerald-600 rounded-lg text-xs font-semibold flex items-center hover:bg-emerald-500/30 transition-colors"
