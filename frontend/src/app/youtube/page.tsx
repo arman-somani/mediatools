@@ -81,6 +81,7 @@ export default function YouTubePage() {
           if (startTimeRef.current) setConversionTime(Math.round((Date.now() - startTimeRef.current) / 1000));
           setVideoInfo({ title: conv.youtubeTitle, thumbnail: conv.youtubeThumbnail });
           setFileSize(conv.fileSize || null);
+          setJobId(conv.outputUrl || apiUrl(\`/api/convert/download/\${id}\`)); // Store the direct download URL in jobId
           sendNotification('Video Ready! 🎬', 'Your YouTube video has finished converting and is ready to save.');
         } else if (conv.status === 'failed') {
           clearInterval(pollRef.current!);
@@ -276,7 +277,7 @@ export default function YouTubePage() {
 
                     <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm mx-auto">
                       <div className="flex-1">
-                        <motion.button onClick={() => { window.location.href = apiUrl(`/api/convert/download/${jobId}`); }} whileHover={{ y: -2 }} whileTap={{ scale: 0.96 }} className="w-full btn-primary font-semibold rounded-xl flex items-center justify-center gap-2 h-14 transition-all duration-300">
+                        <motion.button onClick={() => { window.location.href = jobId; }} whileHover={{ y: -2 }} whileTap={{ scale: 0.96 }} className="w-full btn-primary font-semibold rounded-xl flex items-center justify-center gap-2 h-14 transition-all duration-300">
                           <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                           Download Audio </motion.button>
                       </div>
