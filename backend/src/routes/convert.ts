@@ -991,14 +991,6 @@ router.get('/download/:id', async (req: Request, res: Response): Promise<void> =
 
     const userFilename = conversion.outputFilename || path.basename(filePath);
 
-    // Force browser to download (not preview)
-    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(userFilename)}`);
-    res.setHeader('Content-Type', 'application/octet-stream');
-    res.setHeader('Content-Length', String(fs.statSync(filePath).size));
-
-    const fileStream = fs.createReadStream(filePath);
-    fileStream.pipe(res);
-
     fileStream.on('close', () => {
       // Schedule cleanup 21 mins after download
       setTimeout(() => {
