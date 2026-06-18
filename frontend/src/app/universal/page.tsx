@@ -59,7 +59,8 @@ export default function UniversalPage() {
           if (startTimeRef.current) setConversionTime(Math.round((Date.now() - startTimeRef.current) / 1000));
           setVideoInfo({ title: conv.youtubeTitle, thumbnail: conv.youtubeThumbnail });
           setFileSize(conv.fileSize || null);
-          setJobId(conv.outputUrl || apiUrl(`/api/convert/download/${id}`));
+          const finalUrl = conv.outputUrl || `/api/convert/download/${id}`;
+          setJobId(finalUrl.startsWith('http') ? finalUrl : apiUrl(finalUrl));
           sendNotification('Download Complete! 🎉', 'Your video has finished downloading and is ready to save.');
         } else if (conv.status === 'failed') {
           clearInterval(pollRef.current!);
