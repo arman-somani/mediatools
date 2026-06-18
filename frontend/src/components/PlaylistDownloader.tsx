@@ -107,14 +107,21 @@ export default function PlaylistDownloader() {
     });
   };
 
+  const getDownloadUrl = (jobId: string | undefined) => {
+    if (!jobId) return '#';
+    if (jobId.startsWith('http')) return jobId;
+    if (jobId.startsWith('/api/')) return apiUrl(jobId);
+    return apiUrl(`/api/convert/download/${jobId}`);
+  };
+
   const downloadAll = () => {
     const targetVideos = selectedIds.size > 0 ? videos.filter(v => selectedIds.has(v.id)) : videos;
     const completedVideos = targetVideos.filter(v => downloads[v.id]?.status === 'completed');
     completedVideos.forEach((video, index) => {
-      const jobId = downloads[video.id].jobId;
+      const jobId = downloads[video.id]?.jobId;
       if (jobId) {
         setTimeout(() => {
-          window.open(jobId, '_blank');
+          window.open(getDownloadUrl(jobId), '_blank');
         }, index * 500);
       }
     });
