@@ -248,7 +248,7 @@ router.post(
             const m = parseFloat(match[2]);
             const s = parseFloat(match[3]);
             const currentSecs = h * 3600 + m * 60 + s;
-            const progress = Math.min(Math.round((currentSecs / totalDurationSecs) * 100), 99);
+            const progress = Math.min(Math.round((currentSecs / totalDurationSecs) * 50), 49);
 
             const now = Date.now();
             if (now - lastUpdate > 1000) {
