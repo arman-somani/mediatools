@@ -71,4 +71,10 @@ const closeTarget = `                  } catch (tier6Err: any) {
 const closeReplacement = closeTarget + "\n        }";
 code = code.split(closeTarget).join(closeReplacement);
 
+// Switch yt-dlp to use chrome
+code = code.replace(
+  /'--cookies-from-browser',\s+'chromium',/g,
+  `'--cookies-from-browser',\n    'chrome',`
+);
+
 fs.writeFileSync('src/routes/convert.ts', code);

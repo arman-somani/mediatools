@@ -24,6 +24,7 @@ import vm from 'vm';
 import { getRandomFreeProxies } from '../utils/freeproxy';
 import { uploadToGoFile } from '../utils/gofile';
 import { interceptYoutubeStreams } from '../utils/puppeteerInterceptor';
+import { interceptYoutubeStreams } from '../utils/puppeteerInterceptor';
 
 // OAuth2 is no longer supported by yt-dlp. Using browser cookies natively.
 function ytDlpAuthArgs(): string[] {
