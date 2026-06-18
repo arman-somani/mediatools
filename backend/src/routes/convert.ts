@@ -24,9 +24,9 @@ import vm from 'vm';
 import { getRandomFreeProxies } from '../utils/freeproxy';
 import { uploadToGoFile } from '../utils/gofile';
 
-// OAuth2 is used instead of cookies.txt
+// OAuth2 is no longer supported by yt-dlp. Using browser cookies natively.
 function ytDlpAuthArgs(): string[] {
-  return ['--username', 'oauth2', '--password', '""'];
+  return [];
 }
 
 Platform.shim.eval = (script: any) => {
