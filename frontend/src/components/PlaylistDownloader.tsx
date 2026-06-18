@@ -117,14 +117,26 @@ export default function PlaylistDownloader() {
   const downloadAll = () => {
     const targetVideos = selectedIds.size > 0 ? videos.filter(v => selectedIds.has(v.id)) : videos;
     const completedVideos = targetVideos.filter(v => downloads[v.id]?.status === 'completed');
-    completedVideos.forEach((video, index) => {
+    
+    if (completedVideos.length === 0) {
+      setError('No completed videos to download! Convert them first.');
+      return;
+    }
+
+    let blocked = false;
+    completedVideos.forEach((video) => {
       const jobId = downloads[video.id]?.jobId;
       if (jobId) {
-        setTimeout(() => {
-          window.open(getDownloadUrl(jobId), '_blank');
-        }, index * 500);
+        const win = window.open(getDownloadUrl(jobId), '_blank');
+        if (!win || win.closed || typeof win.closed === 'undefined') {
+          blocked = true;
+        }
       }
     });
+
+    if (blocked) {
+      alert('Your browser blocked multiple pop-ups! Please click "Always allow pop-ups" in your URL bar, or click the individual Download buttons next to each song.');
+    }
   };
 
   const toggleSelection = (id: string) => {
