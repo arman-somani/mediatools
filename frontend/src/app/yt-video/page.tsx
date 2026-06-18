@@ -79,6 +79,7 @@ export default function YtVideoPage() {
           if (startTimeRef.current) setConversionTime(Math.round((Date.now() - startTimeRef.current) / 1000));
           setVideoInfo({ title: conv.youtubeTitle, thumbnail: conv.youtubeThumbnail });
           setFileSize(conv.fileSize || null);
+          setJobId(conv.outputUrl || apiUrl(\`/api/convert/download/\${id}\`)); // Store the direct download URL in jobId
           sendNotification('Audio Ready! 🎵', 'Your audio file has finished converting and is ready to save.');
         } else if (conv.status === 'failed') {
           clearInterval(pollRef.current!);
