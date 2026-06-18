@@ -23,7 +23,7 @@ export async function interceptYoutubeStreams(url: string, type: 'video' | 'audi
             '--disable-dev-shm-usage',
             '--disable-gpu'
         ],
-        defaultViewport: chromium.defaultViewport,
+        defaultViewport: chromium.defaultViewport as any,
         executablePath: executablePath || undefined,
         headless: true,
         ignoreHTTPSErrors: true,
@@ -41,7 +41,7 @@ export async function interceptYoutubeStreams(url: string, type: 'video' | 'audi
             resolve({ videoUrl, audioUrl });
         }, 15000);
 
-        page.on('response', async (response) => {
+        page.on('response', async (response: any) => {
             const reqUrl = response.url();
             if (reqUrl.includes('videoplayback')) {
                 try {

@@ -23,7 +23,6 @@ import vm from 'vm';
 
 import { getRandomFreeProxies } from '../utils/freeproxy';
 import { uploadToGoFile } from '../utils/gofile';
-import { interceptYoutubeStreams } from '../utils/puppeteerInterceptor';
 
 // OAuth2 is no longer supported by yt-dlp. Using browser cookies natively.
 function ytDlpAuthArgs(): string[] {
@@ -410,23 +409,12 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         });
 
         try {
-          console.log(`Trying Tier 1: Headless Browser Interception (Puppeteer)...`);
-          const { audioUrl } = await interceptYoutubeStreams(cleanUrl, 'audio');
-          if (!audioUrl) throw new Error('Puppeteer failed to intercept audio stream');
-          const exactMp3 = path.join(outputDir, `${fileId}.mp3`);
-          await new Promise((resolve, reject) => {
-            const ffmpeg = spawn('ffmpeg', ['-y', '-i', audioUrl, '-vn', '-ab', `${audioQuality}k`, exactMp3]);
-            ffmpeg.on('close', code => code === 0 ? resolve(true) : reject(new Error(`ffmpeg failed with code ${code}`)));
-          });
-          console.log(`Puppeteer AUDIO succeeded`);
+          console.log(`Trying Tier 1: Native Connection (Audio) using cached cookies...`);
+          await runYtDlpAudio();
+          console.log(`yt-dlp AUDIO succeeded on Native Connection`);
         } catch (tier1Err: any) {
-          console.error(`Tier 1 (Puppeteer) failed: ${tier1Err.message}. Triggering Tier 2 (Native yt-dlp)...`);
+          console.error(`Tier 1 (Native Connection) failed: ${tier1Err.message}. Triggering Tier 2 (Proxy Network 1)...`);
           try {
-            await runYtDlpAudio();
-            console.log(`yt-dlp AUDIO succeeded on Native Connection`);
-          } catch (tier2Err: any) {
-            console.error(`Tier 2 (Native Connection) failed: ${tier2Err.message}. Triggering Tier 3 (Proxy Network 1)...`);
-            try {
             const { getRandomFreeProxies } = require('../utils/freeproxy');
             const proxies = await getRandomFreeProxies(10);
             let success = false;
@@ -495,8 +483,6 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
               }
             }
           }
-        }
-      }
 
         // Find the actual downloaded mp3 file (saved as {fileId}.mp3 or {fileId}.m4a etc)
         const findAudioFile = (baseId: string): string | undefined => {
@@ -775,23 +761,12 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         });
 
         try {
-          console.log(`Trying Tier 1: Headless Browser Interception (Puppeteer)...`);
-          const { videoUrl, audioUrl } = await interceptYoutubeStreams(cleanUrl, 'video');
-          if (!videoUrl || !audioUrl) throw new Error('Puppeteer failed to intercept video or audio streams');
-          const exactMp4 = path.join(outputDir, `${fileId}.mp4`);
-          await new Promise((resolve, reject) => {
-            const ffmpeg = spawn('ffmpeg', ['-y', '-i', videoUrl, '-i', audioUrl, '-c:v', 'copy', '-c:a', 'aac', exactMp4]);
-            ffmpeg.on('close', code => code === 0 ? resolve(true) : reject(new Error(`ffmpeg failed with code ${code}`)));
-          });
-          console.log(`Puppeteer UNIVERSAL succeeded`);
+          console.log(`Trying Tier 1: Native Connection using cached cookies...`);
+          await runYtDlpDownload();
+          console.log(`yt-dlp UNIVERSAL succeeded on Native Connection`);
         } catch (tier1Err: any) {
-          console.error(`Tier 1 (Puppeteer) failed: ${tier1Err.message}. Triggering Tier 2 (Native yt-dlp)...`);
+          console.error(`Tier 1 (Native Connection) failed: ${tier1Err.message}. Triggering Tier 2 (Proxy Network 1)...`);
           try {
-            await runYtDlpDownload();
-            console.log(`yt-dlp UNIVERSAL succeeded on Native Connection`);
-          } catch (tier2Err: any) {
-            console.error(`Tier 2 (Native Connection) failed: ${tier2Err.message}. Triggering Tier 3 (Proxy Network 1)...`);
-            try {
             const { getRandomFreeProxies } = require('../utils/freeproxy');
             const proxies = await getRandomFreeProxies(10);
             let success = false;
@@ -868,8 +843,6 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
               }
             }
           }
-        }
-      }
 
         // Find the actual downloaded file by fileId prefix
         const findVideoFile = (baseId: string): string | undefined => {
