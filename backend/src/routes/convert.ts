@@ -1033,12 +1033,12 @@ router.get('/download-temp/:fileId', async (req: Request, res: Response): Promis
     const conversion: any = await Conversion.findOne({ outputPath: filePath }).select('outputFilename');
     const userFilename = conversion?.outputFilename || found;
 
-    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(userFilename)}`);
-    res.setHeader('Content-Type', 'application/octet-stream');
-    res.setHeader('Content-Length', String(fs.statSync(filePath).size));
+    // Enable caching at Cloudflare Edge to turbo-charge speeds
+    res.setHeader('Cache-Control', 'public, max-age=604800');
 
-    const fileStream = fs.createReadStream(filePath);
-    fileStream.pipe(res);
+    res.download(filePath, userFilename, (err) => {
+      if (err) console.error('Download-temp stream error:', err);
+    });
   } catch (error: any) {
     console.error('Download-temp error:', error);
     res.status(500).json({ success: false, message: 'Download failed' });
