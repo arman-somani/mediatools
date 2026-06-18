@@ -322,7 +322,7 @@ export default function DashboardPage() {
                                             whileTap={{ scale: 0.98 }}
                                             className="flex items-center justify-between rounded-xl bg-white/5 hover:bg-black/[0.08] p-4 border border-white/5 transition-colors"
                                         >
-                                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                                            <Link href={conversion.youtubeUrl ? `${typeHref}?url=${encodeURIComponent(conversion.youtubeUrl)}` : typeHref} className="flex items-center gap-3 min-w-0 flex-1 group-hover/row:opacity-80 transition-opacity">
                                                 <div className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0">
                                                     <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-brand-purple">
                                                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" />
@@ -330,13 +330,9 @@ export default function DashboardPage() {
                                                 </div>
                                                 <div className="min-w-0 flex-1">
                                                     {conversion.youtubeUrl ? (
-                                                        <Link 
-                                                            href={`${typeHref}?url=${encodeURIComponent(conversion.youtubeUrl)}`}
-                                                            className="font-medium text-white hover:text-brand-cyan transition-colors truncate block text-sm mb-1"
-                                                            title={conversion.youtubeUrl}
-                                                        >
+                                                        <p className="font-medium text-white group-hover/row:text-brand-cyan transition-colors truncate block text-sm mb-1" title={conversion.youtubeUrl}>
                                                             {conversion.youtubeUrl}
-                                                        </Link>
+                                                        </p>
                                                     ) : (
                                                         <p className="font-medium text-white truncate text-sm mb-1">
                                                             {conversion.youtubeTitle || conversion.originalName || conversion.outputFilename || 'converted-file'}
@@ -346,7 +342,7 @@ export default function DashboardPage() {
                                                         <span className="font-semibold text-brand-purple">{typeLabel}</span>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </Link>
 
                                             <div className="flex items-center gap-3 ml-4 flex-shrink-0">
                                                 <div className="text-xs font-mono font-medium px-3 py-1 rounded-full bg-brand-cyan/10 text-brand-cyan border border-brand-cyan/20 hidden sm:block">
