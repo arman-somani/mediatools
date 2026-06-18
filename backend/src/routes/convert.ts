@@ -868,6 +868,8 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
               }
             }
           }
+        }
+      }
 
         // Find the actual downloaded file by fileId prefix
         const findVideoFile = (baseId: string): string | undefined => {
