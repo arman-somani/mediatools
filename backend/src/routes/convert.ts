@@ -22,7 +22,7 @@ import ytdl from '@distube/ytdl-core';
 import vm from 'vm';
 
 import { getRandomFreeProxies } from '../utils/freeproxy';
-import { uploadToGoFile } from '../utils/gofile';
+// Removed GoFile import to serve locally
 import { interceptYoutubeStreams } from '../utils/puppeteerInterceptor';
 
 // OAuth2 is no longer supported by yt-dlp. Using browser cookies natively.
@@ -505,14 +505,8 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         conversion.outputPath = downloadedFilePath;
         conversion.outputFilename = safeTitle + '.mp3';
         conversion.fileSize = getFileSize(downloadedFilePath);
-        // Use GoFile for extremely fast unmetered downloads
-        try {
-          conversion.outputUrl = await uploadToGoFile(downloadedFilePath);
-          console.log(`[GoFile] Audio uploaded successfully: ${conversion.outputUrl}`);
-        } catch (e) {
-          console.error('[GoFile] Upload failed, falling back to local serve:', e);
-          conversion.outputUrl = `/api/convert/download-temp/${fileId}`;
-        }
+        // Serve locally directly from our backend without redirecting to external sites
+        conversion.outputUrl = `/api/convert/download-temp/${fileId}`;
         conversion.status = 'completed';
         conversion.progress = 100;
         await conversion.save();
@@ -869,14 +863,8 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         conversion.outputFilename = safeTitle + path.extname(downloadedFilePath);
         conversion.fileSize = getFileSize(downloadedFilePath);
         
-        // Use GoFile for extremely fast unmetered downloads
-        try {
-          conversion.outputUrl = await uploadToGoFile(downloadedFilePath);
-          console.log(`[GoFile] Video uploaded successfully: ${conversion.outputUrl}`);
-        } catch (e) {
-          console.error('[GoFile] Upload failed, falling back to local serve:', e);
-          conversion.outputUrl = `/api/convert/download/${conversion._id}`;
-        }
+        // Serve locally directly from our backend without redirecting to external sites
+        conversion.outputUrl = `/api/convert/download/${conversion._id}`;
 
         conversion.status = 'completed';
         conversion.progress = 100;
