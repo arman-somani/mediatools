@@ -220,7 +220,7 @@ export default function YtVideoPage() {
                       <label className="quality-label">VIDEO QUALITY</label>
                       <select
                       value={quality}
-                      onChange={(e) => setQuality(e.target.value)}
+                      onChange={(e) => setQuality(e.target.value as VideoQuality)}
                       className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-white outline-none focus:border-brand-purple/50 focus:ring-1 focus:ring-brand-purple/50 appearance-none transition-all duration-300"
                     >
                       <option value="4K" className="bg-gray-900">4K Ultra HD</option>
