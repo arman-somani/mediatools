@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api, { apiUrl } from '@/lib/api';
 import { isValidYouTubeUrl, getYouTubeVideoId, formatFileSize } from '@/lib/utils';
 import Image from 'next/image';
-import PlaylistDownloader from '@/components/PlaylistDownloader';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import PageWrapper from '@/components/PageWrapper';
 import ProgressCircle from '@/components/ProgressCircle';
@@ -17,7 +16,7 @@ type Quality = '128' | '192' | '320';
 export default function YouTubePage() {
   const [url, setUrl] = useState('');
   const [quality, setQuality] = useState<Quality>('192');
-  const [status, setStatus] = useState<'idle' | 'processing' | 'completed' | 'failed'>('idle');
+  const [status, setStatus] = useState<'idle' | 'processing' | 'uploading' | 'completed' | 'failed'>('idle');
   const [progress, setProgress] = useState(0);
   const [jobId, setJobId] = useState('');
   const [fileSize, setFileSize] = useState<number | null>(null);
@@ -88,6 +87,10 @@ export default function YouTubePage() {
           clearInterval(pollRef.current!);
           setStatus('failed');
           setError(conv.errorMessage || 'Conversion failed');
+        } else if (conv.status === 'uploading') {
+          setStatus('uploading');
+        } else {
+          setStatus('processing');
         }
       } catch { clearInterval(pollRef.current!); }
     }, 2000);
@@ -116,31 +119,19 @@ export default function YouTubePage() {
 
   return (
     <ProtectedRoute>
-      <div className="w-full max-w-[90rem] mx-auto px-6 py-20 flex flex-col items-center">
+      <div className="w-full max-w-4xl mx-auto px-6 py-20 flex flex-col items-center">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full text-center mb-12 pt-8">
           <h1 className="font-display font-bold text-4xl md:text-5xl tracking-tight mb-4 text-white">
             Download <span className="text-gradient">YouTube Audio</span>
           </h1>
           <p className="text-white max-w-2xl mx-auto text-lg">
-            Extract high-quality Audio from any YouTube video or entire playlists instantly.
+            Extract high-quality Audio from any YouTube video instantly.
           </p>
         </motion.div>
 
-        <div className="w-full grid grid-cols-1 xl:grid-cols-2 gap-8 items-stretch">
-          {/* LEFT COLUMN: SINGLE DOWNLOADER */}
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="w-full h-full">
-            <div className="glass-panel p-5 sm:p-8 md:p-10 relative overflow-hidden h-full flex flex-col">
-              <div className="absolute top-0 left-0 w-64 h-64 bg-red-500/5 rounded-full blur-3xl -ml-20 -mt-20 pointer-events-none" />
-
-              <div className="flex items-center gap-3 mb-8 relative z-10">
-                <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center border border-red-500/30">
-                  <svg width="20" height="20" fill="none" stroke="#ef4444" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" /></svg>
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-white">Single Audio Downloader</h2>
-                  <p className="text-sm text-white">Download one specific video</p>
-                </div>
-              </div>
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }} className="w-full">
+          <div className="glass-panel p-5 sm:p-8 md:p-12 relative overflow-hidden h-full flex flex-col">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
 
               <AnimatePresence mode="wait">
                 {status === 'idle' || status === 'failed' ? (
@@ -241,11 +232,11 @@ export default function YouTubePage() {
                     </div>
 
                   </motion.div>
-                ) : status === 'processing' ? (
+                ) : status === 'processing' || status === 'uploading' ? (
                 <ProgressCircle
                   progress={progress}
-                  statusText="Downloading Audio..."
-                  subText="Fetching highest quality audio securely"
+                  statusText={status === 'uploading' ? "Your link is getting ready..." : "Downloading Audio..."}
+                  subText={status === 'uploading' ? "Generating high-speed CDN link" : "Fetching highest quality audio securely"}
                 />
                 ) : (
                   <motion.div key="done" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="py-8 flex-1 text-center flex flex-col items-center">
@@ -285,18 +276,6 @@ export default function YouTubePage() {
               </AnimatePresence>
             </div>
           </motion.div>
-
-          {/* RIGHT COLUMN: PLAYLIST DOWNLOADER */}
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="w-full h-full">
-            <div className="glass-panel p-5 sm:p-10 relative overflow-hidden h-full flex flex-col border-[2px] border-brand-purple/40 shadow-[0_0_40px_rgba(168,85,247,0.15)] bg-gradient-to-b from-brand-purple/[0.03] to-transparent">
-              {/* Highlight glow */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-brand-purple/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
-
-              <PlaylistDownloader />
-            </div>
-          </motion.div>
-        </div>
-
         {/* Error Dialog Modal */}
         <AnimatePresence>
           {error && (

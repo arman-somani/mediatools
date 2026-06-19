@@ -38,6 +38,7 @@ Platform.shim.eval = (script: any) => {
 
 
 const router = Router();
+const activePolls = new Map<string, number>();
 const execAsync = promisify(exec);
 
 // Dummy comment to trigger GitHub auto-sync test 2
@@ -238,6 +239,16 @@ router.post(
 
         const ffmpeg = spawn('ffmpeg', ['-y', '-i', file.path, '-vn', '-ab', `${quality}k`, outputPath]);
 
+        activePolls.set(conversion._id.toString(), Date.now());
+        const zombieKiller = setInterval(() => {
+          const lastPoll = activePolls.get(conversion._id.toString());
+          if (lastPoll && Date.now() - lastPoll > 15000) {
+             console.log(`[ZOMBIE KILLER] User disconnected for ${conversion._id}. Killing ffmpeg.`);
+             ffmpeg.kill('SIGKILL');
+             clearInterval(zombieKiller);
+          }
+        }, 5000);
+
         let lastUpdate = Date.now();
         ffmpeg.stderr.on('data', (data) => {
           if (!totalDurationSecs || totalDurationSecs <= 0) return;
@@ -248,7 +259,7 @@ router.post(
             const m = parseFloat(match[2]);
             const s = parseFloat(match[3]);
             const currentSecs = h * 3600 + m * 60 + s;
-            const progress = Math.min(Math.round((currentSecs / totalDurationSecs) * 50), 49);
+            const progress = Math.min(Math.round((currentSecs / totalDurationSecs) * 100), 99);
 
             const now = Date.now();
             if (now - lastUpdate > 1000) {
@@ -260,6 +271,8 @@ router.post(
 
         await new Promise((resolve, reject) => {
           ffmpeg.on('close', (code) => {
+            clearInterval(zombieKiller);
+            activePolls.delete(conversion._id.toString());
             if (code === 0) resolve(true);
             else reject(new Error('FFmpeg failed with code ' + code));
           });
@@ -383,6 +396,17 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
 
           const ytdlp = spawn(getYtDlpPath(), ytDlpArgs(ytdlpArgsArr), { windowsHide: true });
 
+          activePolls.set(conversion._id.toString(), Date.now());
+          const zombieKiller = setInterval(() => {
+            const lastPoll = activePolls.get(conversion._id.toString());
+            if (lastPoll && Date.now() - lastPoll > 15000) {
+               console.log(`[ZOMBIE KILLER] User disconnected for ${conversion._id}. Killing yt-dlp audio.`);
+               ytdlp.kill('SIGKILL');
+               clearInterval(zombieKiller);
+               reject(new Error('User closed the tab. Download cancelled.'));
+            }
+          }, 5000);
+
           let lastUpdate = Date.now();
           ytdlp.stdout.on('data', (data) => {
             const output = data.toString();
@@ -393,7 +417,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
                 const now = Date.now();
                 if (now - lastUpdate > 1000) {
                   lastUpdate = now;
-                  Conversion.findByIdAndUpdate(conversion._id, { progress: progress * 0.5 }).catch(() => { });
+                  Conversion.findByIdAndUpdate(conversion._id, { progress: progress }).catch(() => { });
                 }
               }
             }
@@ -404,6 +428,8 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
           });
 
           ytdlp.on('close', (code) => {
+            clearInterval(zombieKiller);
+            activePolls.delete(conversion._id.toString());
             if (code === 0) resolve(true);
             else reject(new Error('yt-dlp audio failed with code ' + code));
           });
@@ -742,6 +768,17 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
 
           const ytdlp = spawn(getYtDlpPath(), ytDlpArgs(ytdlpArgsArr), { windowsHide: true });
 
+          activePolls.set(conversion._id.toString(), Date.now());
+          const zombieKiller = setInterval(() => {
+            const lastPoll = activePolls.get(conversion._id.toString());
+            if (lastPoll && Date.now() - lastPoll > 15000) {
+               console.log(`[ZOMBIE KILLER] User disconnected for ${conversion._id}. Killing yt-dlp video.`);
+               ytdlp.kill('SIGKILL');
+               clearInterval(zombieKiller);
+               reject(new Error('User closed the tab. Download cancelled.'));
+            }
+          }, 5000);
+
           let lastUpdate = Date.now();
           ytdlp.stdout.on('data', (data) => {
             const output = data.toString();
@@ -752,7 +789,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
                 const now = Date.now();
                 if (now - lastUpdate > 1000) {
                   lastUpdate = now;
-                  Conversion.findByIdAndUpdate(conversion._id, { progress: progress * 0.5 }).catch(() => { });
+                  Conversion.findByIdAndUpdate(conversion._id, { progress: progress }).catch(() => { });
                 }
               }
             }
@@ -763,6 +800,8 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
           });
 
           ytdlp.on('close', (code) => {
+            clearInterval(zombieKiller);
+            activePolls.delete(conversion._id.toString());
             if (code === 0) resolve(true);
             else reject(new Error('yt-dlp failed with code ' + code));
           });
@@ -912,58 +951,12 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
   }
 });
 
-/* ΓöÇΓöÇ YOUTUBE PLAYLIST METADATA ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
-router.post('/youtube-playlist/metadata', async (req: Request, res: Response): Promise<void> => {
-  try {
-    const playlistUrl = req.body.url;
-    if (!playlistUrl) {
-      res.status(400).json({ success: false, message: 'Playlist URL is required' });
-      return;
-    }
 
-    const cleanUrl = String(playlistUrl).trim();
-
-    // Fetch flat playlist JSON (fast, no extraction)
-    // --dump-json outputs one JSON object per line per video
-    let stdout = '';
-    try {
-      const res = await runYtDlp(['--flat-playlist', '--dump-json', cleanUrl]);
-      stdout = res.stdout;
-    } catch (e: any) {
-      console.warn(`Playlist native fetch failed: ${e.message}`);
-      throw new Error("Playlist extraction failed.");
-    }
-
-    const lines = stdout.trim().split('\n');
-    const videos = lines.map(line => {
-      try {
-        const item = JSON.parse(line);
-        // yt-dlp flat-playlist uses 'id', 'title', 'url'
-        const id = item.id || getYouTubeVideoId(item.url || '');
-        return {
-          id,
-          title: item.title,
-          url: `https://www.youtube.com/watch?v=${id}`,
-          thumbnail: `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
-        };
-      } catch {
-        return null;
-      }
-    }).filter(v => v !== null && v.id && v.title);
-
-    res.json({
-      success: true,
-      data: { videos },
-    });
-  } catch (error: any) {
-    console.error('Playlist fetch error:', error);
-    res.status(500).json({ success: false, message: error.message || 'Failed to fetch playlist' });
-  }
-});
 
 /* ΓöÇΓöÇ GET STATUS (frontend polls this) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
 router.get('/status/:id', async (req: Request, res: Response): Promise<void> => {
   try {
+    activePolls.set(req.params.id, Date.now());
     const conversion: any = await Conversion.findById(req.params.id).select('-outputPath');
     if (!conversion) {
       res.status(404).json({ success: false, message: 'Conversion not found' });

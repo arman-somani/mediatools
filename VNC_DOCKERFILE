@@ -1,0 +1,30 @@
+# Use Ubuntu 22.04
+FROM ubuntu:22.04
+
+# Avoid prompts during apt installs
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install XFCE Desktop, VNC, noVNC, and Firefox browser
+RUN apt-get update && apt-get install -y \
+    xfce4 xfce4-goodies tigervnc-standalone-server \
+    python3-websockify git curl firefox \
+    && rm -rf /var/lib/apt/lists/*
+
+# Clone noVNC to view the desktop in the web browser
+RUN git clone https://github.com/novnc/noVNC.git /noVNC
+
+# Hugging Face Spaces requires running as a non-root user (ID 1000)
+RUN useradd -m -u 1000 user
+USER user
+ENV HOME=/home/user \
+    PATH=/home/user/.local/bin:$PATH
+
+WORKDIR $HOME
+
+# Expose Hugging Face Port 7860
+EXPOSE 7860
+ENV PORT=7860
+
+# Start the VNC server and the noVNC proxy on port 7860
+CMD vncserver :1 -geometry 1280x800 -depth 24 && \
+    /noVNC/utils/novnc_proxy --vnc localhost:5901 --listen 7860

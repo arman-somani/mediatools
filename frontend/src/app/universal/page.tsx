@@ -28,7 +28,7 @@ export default function UniversalPage() {
   const [url, setUrl] = useState('');
   const [preflightInfo, setPreflightInfo] = useState<{ title: string; thumbnail: string; resolution: string; sizeBytes: number; videoUrl?: string } | null>(null);
   const [isFetchingInfo, setIsFetchingInfo] = useState(false);
-  const [status, setStatus] = useState<'idle' | 'processing' | 'completed' | 'failed'>('idle');
+  const [status, setStatus] = useState<'idle' | 'processing' | 'uploading' | 'completed' | 'failed'>('idle');
   const [progress, setProgress] = useState(0);
   const [jobId, setJobId] = useState('');
   const [fileSize, setFileSize] = useState<number | null>(null);
@@ -66,6 +66,10 @@ export default function UniversalPage() {
           clearInterval(pollRef.current!);
           setStatus('failed');
           setError(conv.errorMessage || 'Download failed');
+        } else if (conv.status === 'uploading') {
+          setStatus('uploading');
+        } else {
+          setStatus('processing');
         }
       } catch { clearInterval(pollRef.current!); }
     }, 2500);
@@ -225,11 +229,11 @@ export default function UniversalPage() {
 
                 </motion.div>
 
-              ) : status === 'processing' ? (
+              ) : status === 'processing' || status === 'uploading' ? (
                 <ProgressCircle
                   progress={progress}
-                  statusText="Downloading Video..."
-                  subText="Fetching highest quality video securely"
+                  statusText={status === 'uploading' ? "Your link is getting ready..." : "Downloading Video..."}
+                  subText={status === 'uploading' ? "Generating high-speed CDN link" : "Fetching highest quality video securely"}
                 />
 
               ) : (
