@@ -17,3 +17,8 @@ Colab_Secrets.env
 *.exe
 *.zip
 *.ps1
+test_dl*
+test_convert*
+*.part
+*.mkv
+outputs/
