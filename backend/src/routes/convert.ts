@@ -86,7 +86,7 @@ function ytDlpArgs(args: string[]): string[] {
     '--retries', '5',
     '--extractor-retries', '3',
     '--fragment-retries', '3',
-    '--extractor-args', 'youtube:player-client=ios,android,web',
+    '--extractor-args', 'youtube:player-client=web,android',
     '--no-warnings'
   ];
 
@@ -852,25 +852,44 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
                   throw new Error('All download attempts failed across all tiers.');
                 }
 
-                console.log(`Triggering Tier 5 (@distube/ytdl-core)...`);
+                console.log(`Triggering Tier 5 (@distube/ytdl-core) with target height ${targetHeight}...`);
                 try {
                   const ytdl = require('@distube/ytdl-core');
-                  await new Promise((resolve, reject) => {
-                    const exactMp4 = path.join(outputDir, `${fileId}.mp4`);
-                    const stream = ytdl(cleanUrl, { quality: 'highest', filter: 'audioandvideo' });
-                    stream.pipe(fs.createWriteStream(exactMp4));
-                    stream.on('end', () => resolve(true));
-                    stream.on('error', reject);
+                  const targetH = parseInt(targetHeight, 10) || 720;
+                  await new Promise(async (resolve, reject) => {
+                    try {
+                      const info = await ytdl.getInfo(cleanUrl);
+                      // Pick the best video+audio format that fits the target height
+                      const formats = info.formats
+                        .filter((f: any) => f.hasVideo && f.hasAudio && f.height && f.height <= targetH)
+                        .sort((a: any, b: any) => (b.height || 0) - (a.height || 0));
+                      const chosen = formats[0];
+                      const opts = chosen
+                        ? { quality: chosen.itag }
+                        : { quality: 'highest', filter: 'audioandvideo' as const };
+                      console.log(`[Tier 5] Chose itag=${chosen?.itag} height=${chosen?.height || 'best available'}`);
+                      const exactMp4 = path.join(outputDir, `${fileId}.mp4`);
+                      const stream = ytdl(cleanUrl, opts);
+                      stream.pipe(fs.createWriteStream(exactMp4));
+                      stream.on('end', () => resolve(true));
+                      stream.on('error', reject);
+                    } catch (e) { reject(e); }
                   });
                   console.log(`ytdl-core UNIVERSAL succeeded`);
                 } catch (tier5Err: any) {
                   console.error(`Tier 5 failed:`, tier5Err.message);
-                  console.log(`Triggering Tier 6 (play-dl)...`);
+                  console.log(`Triggering Tier 6 (play-dl) with target height ${targetHeight}...`);
                   try {
                     const play = require('play-dl');
+                    const targetH = parseInt(targetHeight, 10) || 720;
                     const info = await play.video_info(cleanUrl);
-                    const format = info.format.find((f: any) => f.hasVideo && f.hasAudio) || info.format[0];
+                    // Filter formats to match the user's requested quality
+                    const matching = info.format
+                      .filter((f: any) => f.hasVideo && f.hasAudio && f.height && f.height <= targetH)
+                      .sort((a: any, b: any) => (b.height || 0) - (a.height || 0));
+                    const format = matching[0] || info.format.find((f: any) => f.hasVideo && f.hasAudio) || info.format[0];
                     if (!format || !format.url) throw new Error('No merged format found in play-dl');
+                    console.log(`[Tier 6] Chose format height=${format.height || 'unknown'}`);
 
                     const fetch = require('node-fetch');
                     const res = await fetch(format.url);
@@ -989,6 +1008,7 @@ router.get('/status/:id', async (req: Request, res: Response): Promise<void> => 
         outputUrl: conversion.outputUrl,
         gofileUrl: conversion.gofileUrl,
         fileSize: conversion.fileSize,
+        videoQuality: conversion.videoQuality,
         youtubeTitle: conversion.youtubeTitle,
         youtubeThumbnail: conversion.youtubeThumbnail,
         errorMessage: conversion.errorMessage,
