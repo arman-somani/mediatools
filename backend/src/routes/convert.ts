@@ -940,7 +940,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
           const { stdout: resOut } = await execAsync(`ffprobe -v error -select_streams v:0 -show_entries stream=height -of csv=s=x:p=0 "${downloadedFilePath}"`);
           const h = parseInt(resOut.trim(), 10);
           if (h) {
-            conversion.videoQuality = h >= 4320 ? '8K' : h >= 2160 ? '4K' : h >= 1440 ? '1440p' : h >= 1080 ? '1080p' : h >= 720 ? '720p' : h >= 480 ? '480p' : '360p';
+            conversion.videoQuality = h >= 4320 ? '8K' : h >= 2160 ? '4K' : h >= 1080 ? '1080p' : h >= 720 ? '720p' : h >= 480 ? '480p' : '360p';
           }
         } catch (e) {
           console.warn('ffprobe resolution check failed', e);
