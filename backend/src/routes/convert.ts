@@ -82,6 +82,7 @@ function getYouTubeVideoId(input: string): string | null {
 function ytDlpArgs(args: string[]): string[] {
   const base = [
     '--remote-components', 'ejs:github',
+    '--js-runtimes', 'node',
     '--socket-timeout', '15',
     '--retries', '5',
     '--extractor-retries', '3',
