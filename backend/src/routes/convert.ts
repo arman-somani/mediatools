@@ -505,21 +505,8 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         conversion.outputPath = downloadedFilePath;
         conversion.outputFilename = videoTitle.replace(/[\/\\\\?%*:|"<>]/g, '-') + '.mp3';
         conversion.fileSize = getFileSize(downloadedFilePath);
-        // Use tmpfiles.org for 1 Gbps direct download unthrottled links
-        try {
-          let lastUploadUpdate = Date.now();
-          conversion.outputUrl = await uploadToTmpFiles(downloadedFilePath, conversion.outputFilename, (uploadPercent) => {
-            conversion.progress = 50 + (uploadPercent * 0.5);
-            if (Date.now() - lastUploadUpdate > 1000 || uploadPercent === 100) {
-              lastUploadUpdate = Date.now();
-              conversion.save().catch(() => {});
-            }
-          });
-          console.log(`[TmpFiles] Audio uploaded successfully: ${conversion.outputUrl}`);
-        } catch (e) {
-          console.error('[TmpFiles] Upload failed, falling back to local serve:', e);
-          conversion.outputUrl = `/api/convert/download-temp/${fileId}`;
-        }
+        // Direct local serve
+        conversion.outputUrl = `/api/convert/download-temp/${fileId}`;
         conversion.status = 'completed';
         conversion.progress = 100;
         await conversion.save();
@@ -752,7 +739,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
                 const now = Date.now();
                 if (now - lastUpdate > 1000) {
                   lastUpdate = now;
-                  Conversion.findByIdAndUpdate(conversion._id, { progress: progress * 0.5 }).catch(() => { });
+                  Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
                 }
               }
             }

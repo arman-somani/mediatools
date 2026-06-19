@@ -244,8 +244,8 @@ export default function YouTubePage() {
                 ) : status === 'processing' ? (
                 <ProgressCircle
                   progress={progress}
-                  statusText={progress < 50 ? "Downloading Audio..." : "Uploading to CDN..."}
-                  subText={progress < 50 ? "Fetching highest quality audio securely" : "Preparing high-speed download link"}
+                  statusText="Downloading Audio..."
+                  subText="Fetching highest quality audio securely"
                 />
                 ) : (
                   <motion.div key="done" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="py-8 flex-1 text-center flex flex-col items-center">
