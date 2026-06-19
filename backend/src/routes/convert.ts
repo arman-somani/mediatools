@@ -752,12 +752,15 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         conversion.outputFilename = `${safeTitle}.mp4`;
         await conversion.save();
 
-        // Step 2: Download video in its native format without remuxing
-        // We use -S for sorting formats which is highly optimized for ANY website!
+        // Step 2: Download video with the user's selected quality
+        console.log(`[QUALITY DEBUG] User requested: ${videoQuality} → targetHeight: ${targetHeight}`);
         const runYtDlpDownload = (proxy?: string) => new Promise((resolve, reject) => {
+          const formatStr = `bestvideo[height<=${targetHeight}]+bestaudio/best[height<=${targetHeight}]`;
+          console.log(`[QUALITY DEBUG] yt-dlp format string: ${formatStr}`);
           const ytdlpArgsArr = [
             '--newline',
-            '-f', `bestvideo[height<=${targetHeight}]+bestaudio/best[height<=${targetHeight}]`,
+            '-v',
+            '-f', formatStr,
             '-S', `res:${targetHeight}`,
             '--merge-output-format', 'mkv',
             '-o', path.join(outputDir, `${fileId}.%(ext)s`),
@@ -798,7 +801,11 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
           });
 
           ytdlp.stderr.on('data', (data) => {
-            console.error(`[yt-dlp UNIVERSAL ERROR]:`, data.toString());
+            const msg = data.toString();
+            // Log format selection and download info for debugging quality issues
+            if (msg.includes('Downloading') || msg.includes('format') || msg.includes('Merging') || msg.includes('ERROR')) {
+              console.log(`[yt-dlp VERBOSE]:`, msg.trim());
+            }
           });
 
           ytdlp.on('close', (code) => {
