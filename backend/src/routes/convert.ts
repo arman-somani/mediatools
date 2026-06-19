@@ -88,6 +88,7 @@ function ytDlpArgs(args: string[]): string[] {
     '--extractor-retries', '3',
     '--fragment-retries', '3',
     '--extractor-args', 'youtube:player-client=ios,android,web',
+    '--no-warnings'
   ];
 
   return [...base, ...ytDlpAuthArgs(), ...args];
@@ -113,11 +114,12 @@ function runYtDlp(args: string[]): Promise<{ stdout: string; stderr: string }> {
 
 function findDownloadedFile(fileId: string): string | null {
   const files = fs.readdirSync(outputDir);
-  return files.find(file =>
-    file.startsWith(`${fileId}.`) &&
-    !file.endsWith('.part') &&
-    !file.endsWith('.ytdl') &&
-    !file.endsWith('.temp')
+  // Strictly match final merged extensions, ignoring yt-dlp intermediate (.f137.mp4) formats
+  return files.find(file => 
+    file === `${fileId}.mp4` || 
+    file === `${fileId}.mkv` || 
+    file === `${fileId}.webm` || 
+    file === `${fileId}.mp3`
   ) || null;
 }
 
@@ -688,15 +690,15 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
     const outputPath = path.join(outputDir, diskFilename);
 
     // Map quality label to yt-dlp sort filter for maximum compatibility across all platforms
-    const formatMap: Record<string, string> = {
-      '360p': 'res:360',
-      '480p': 'res:480',
-      '720p': 'res:720',
-      '1080p': 'res:1080',
-      '4K': 'res:2160',
-      '8K': 'res:4320',
+    const formatMap: Record<string, { sort: string, filter: string }> = {
+      '360p': { sort: 'res:360', filter: 'bv*[height<=360]' },
+      '480p': { sort: 'res:480', filter: 'bv*[height<=480]' },
+      '720p': { sort: 'res:720', filter: 'bv*[height<=720]' },
+      '1080p': { sort: 'res:1080', filter: 'bv*[height<=1080]' },
+      '4K': { sort: 'res:2160', filter: 'bv*[height<=2160]' },
+      '8K': { sort: 'res:4320', filter: 'bv*[height<=4320]' },
     };
-    const ytSort = formatMap[videoQuality] || formatMap['720p'];
+    const ytConfig = formatMap[videoQuality] || formatMap['720p'];
 
     const conversion: any = await Conversion.create({
       userId: req.user?.id,
@@ -757,8 +759,8 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         const runYtDlpDownload = (proxy?: string) => new Promise((resolve, reject) => {
           const ytdlpArgsArr = [
             '--newline',
-            '-f', `bv*[height<=${ytSort.split(':')[1]}]+ba/b`,
-            '-S', ytSort,
+            '-f', `${ytConfig.filter}+ba/b`,
+            '-S', ytConfig.sort,
             '--merge-output-format', 'mp4',
             '-o', path.join(outputDir, `${fileId}.%(ext)s`),
             '--no-playlist',
@@ -1000,8 +1002,29 @@ router.get('/download/:id', async (req: Request, res: Response): Promise<void> =
     }
 
     if (conversion.cdnUrl) {
-      res.redirect(302, conversion.cdnUrl);
-      return;
+      // Do not touch GoFile
+      if (conversion.cdnUrl.includes('gofile.io')) {
+        res.redirect(302, conversion.cdnUrl);
+        return;
+      }
+      
+      // For TmpFiles, proxy it directly so it downloads from OUR page
+      try {
+        const axios = require('axios');
+        const proxyRes = await axios({ method: 'GET', url: conversion.cdnUrl, responseType: 'stream' });
+        const filename = encodeURIComponent(conversion.outputFilename || 'Downloaded_Media');
+        res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${filename}`);
+        res.setHeader('Content-Type', proxyRes.headers['content-type'] || 'application/octet-stream');
+        if (proxyRes.headers['content-length']) res.setHeader('Content-Length', proxyRes.headers['content-length']);
+        
+        conversion.downloadCount = (conversion.downloadCount || 0) + 1;
+        await conversion.save();
+        
+        proxyRes.data.pipe(res);
+        return;
+      } catch (proxyErr) {
+        console.error('Failed to proxy tmpfiles, falling back to local file serve');
+      }
     }
 
     conversion.downloadCount = (conversion.downloadCount || 0) + 1;

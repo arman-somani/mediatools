@@ -218,17 +218,17 @@ export default function YtVideoPage() {
                     {/* Quality selector */}
                     <div className="flex-1">
                       <label className="quality-label">VIDEO QUALITY</label>
-                      <div className="quality-track">
-                        {(['360p', '480p', '720p', '1080p', '4K', '8K'] as VideoQuality[]).map(q => (
-                          <button
-                            key={q}
-                            onClick={() => setQuality(q)}
-                            className={`quality-btn${quality === q ? ' active' : ''}`}
-                          >
-                            {q}
-                          </button>
-                        ))}
-                      </div>
+                      <select
+                      value={quality}
+                      onChange={(e) => setQuality(e.target.value)}
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-white outline-none focus:border-brand-purple/50 focus:ring-1 focus:ring-brand-purple/50 appearance-none transition-all duration-300"
+                    >
+                      <option value="4K" className="bg-gray-900">4K Ultra HD</option>
+                      <option value="1080p" className="bg-gray-900">1080p Full HD</option>
+                      <option value="720p" className="bg-gray-900">720p HD</option>
+                      <option value="480p" className="bg-gray-900">480p Standard</option>
+                      <option value="360p" className="bg-gray-900">360p Low</option>
+                    </select>
                     </div>
 
                     {/* Button ? aligned to quality track top using invisible spacer label */}
