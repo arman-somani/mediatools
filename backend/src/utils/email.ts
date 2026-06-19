@@ -107,3 +107,39 @@ export const sendContactEmail = async (name: string, email: string, message: str
     throw error; // Throw to handle in the route
   }
 };
+
+export const sendFeedbackEmail = async (name: string, email: string, type: string, message: string): Promise<void> => {
+  const adminEmail = process.env.FROM_EMAIL || 'mediatools.contactus@gmail.com';
+
+  console.log(`\n======================================================`);
+  console.log(`📩 NEW FEEDBACK FROM: ${name} (${email}) - Type: ${type}`);
+  console.log(`======================================================\n`);
+
+  try {
+    const transporter = getTransporter();
+    await transporter.sendMail({
+      from: `"${name} (via MediaTools Feedback)" <${process.env.FROM_EMAIL}>`,
+      replyTo: email,
+      to: adminEmail,
+      subject: `[${type.toUpperCase()}] MediaTools Feedback from ${name}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0f0f23; color: #fff; padding: 40px; border-radius: 12px;">
+          <h1 style="color: #a855f7; margin-bottom: 8px;">New Feedback Received</h1>
+          <p style="color: #94a3b8; margin-bottom: 24px;">You have received a new feedback submission.</p>
+          
+          <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 12px; margin-bottom: 24px;">
+            <p><strong>Name:</strong> ${name}</p>
+            <p><strong>Email:</strong> <a href="mailto:${email}" style="color: #a855f7;">${email}</a></p>
+            <p><strong>Type:</strong> <span style="text-transform: capitalize;">${type}</span></p>
+            <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 15px 0;" />
+            <p style="white-space: pre-wrap; line-height: 1.6;">${message}</p>
+          </div>
+        </div>
+      `,
+    });
+    console.log(`✅ Feedback email sent to admin (${adminEmail})`);
+  } catch (error) {
+    console.error(`⚠️ SMTP Error: Could not send feedback email:`, error);
+    throw error;
+  }
+};

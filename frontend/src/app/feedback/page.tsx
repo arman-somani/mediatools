@@ -19,25 +19,15 @@ export default function FeedbackPage() {
         setError('');
 
         try {
-            const response = await fetch("https://api.web3forms.com/submit", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
-                },
-                body: JSON.stringify({
-                    access_key: "3831652c-f766-4fba-a62a-433e813ec13d",
-                    name,
-                    email,
-                    subject: `[${type.toUpperCase()}] MediaTools Feedback`,
-                    message,
-                }),
+            const response = await api.post('/feedback', {
+                name,
+                email,
+                type,
+                message,
             });
             
-            const result = await response.json();
-            
-            if (!result.success) {
-                throw new Error(result.message || 'Failed to send message.');
+            if (!response.data.success) {
+                throw new Error(response.data.message || 'Failed to send message.');
             }
 
             setStatus('success');
