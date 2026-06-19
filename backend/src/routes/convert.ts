@@ -536,15 +536,14 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
           conversion.progress = 100;
           await conversion.save();
 
-          const EIGHT_GB = 8 * 1024 * 1024 * 1024;
-          if (conversion.fileSize && conversion.fileSize > EIGHT_GB) {
+          const HUNDRED_MB = 100 * 1024 * 1024;
+          if (conversion.fileSize && conversion.fileSize > HUNDRED_MB) {
             try { 
               conversion.gofileUrl = await uploadToGoFile(downloadedFilePath, conversion.outputFilename); 
               conversion.cdnUrl = conversion.gofileUrl; // Redirect main button to GoFile
             } catch (e) { console.error('[GoFile] error:', e); }
           } else {
             try { conversion.cdnUrl = await uploadToTmpFiles(downloadedFilePath, conversion.outputFilename); } catch (e) { console.error('[TmpFiles] error:', e); }
-            try { conversion.gofileUrl = await uploadToGoFile(downloadedFilePath, conversion.outputFilename); } catch (e) { console.error('[GoFile] error:', e); }
           }
 
           conversion.outputUrl = `/api/convert/download/${conversion._id}`;
@@ -926,15 +925,14 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
           conversion.progress = 100;
           await conversion.save();
 
-          const EIGHT_GB = 8 * 1024 * 1024 * 1024;
-          if (conversion.fileSize && conversion.fileSize > EIGHT_GB) {
+          const HUNDRED_MB = 100 * 1024 * 1024;
+          if (conversion.fileSize && conversion.fileSize > HUNDRED_MB) {
             try { 
               conversion.gofileUrl = await uploadToGoFile(downloadedFilePath, conversion.outputFilename); 
               conversion.cdnUrl = conversion.gofileUrl; // Redirect main button to GoFile
             } catch (e) { console.error('[GoFile] error:', e); }
           } else {
             try { conversion.cdnUrl = await uploadToTmpFiles(downloadedFilePath, conversion.outputFilename); } catch (e) { console.error('[TmpFiles] error:', e); }
-            try { conversion.gofileUrl = await uploadToGoFile(downloadedFilePath, conversion.outputFilename); } catch (e) { console.error('[GoFile] error:', e); }
           }
 
           conversion.outputUrl = `/api/convert/download/${conversion._id}`;
