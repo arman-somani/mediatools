@@ -134,7 +134,7 @@ export default function YtVideoPage() {
             Download <span className="text-gradient">YouTube Video</span>
           </h1>
           <p className="text-white max-w-2xl mx-auto text-lg">
-            Paste any YouTube Video Link, select preferred quality, and download the full video as an MP4 file.
+            Paste any YouTube Video Link, select preferred quality, and download the full video file.
           </p>
         </motion.div>
 
