@@ -3,7 +3,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IConversion extends Document {
   userId?: string;
   type: 'Video' | 'youtube' | 'youtube-Video' | 'universal';
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: 'pending' | 'processing' | 'uploading' | 'completed' | 'failed';
   originalName?: string;
   youtubeUrl?: string;
   youtubeTitle?: string;
@@ -38,7 +38,7 @@ const conversionSchema = new Schema<IConversion>(
     },
     status: {
       type: String,
-      enum: ['pending', 'processing', 'completed', 'failed'],
+      enum: ['pending', 'processing', 'uploading', 'completed', 'failed'],
       default: 'pending',
     },
     originalName: String,

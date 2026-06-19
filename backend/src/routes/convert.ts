@@ -83,13 +83,11 @@ function getYouTubeVideoId(input: string): string | null {
 function ytDlpArgs(args: string[]): string[] {
   const base = [
     '--remote-components', 'ejs:github',
-    // '--rm-cache-dir', // DO NOT remove cache, oauth2 token is stored here!
-    '--socket-timeout', '10',
-    '--retries', '0',
-    '--extractor-retries', '0',
-    '--fragment-retries', '0',
-    '--extractor-args', 'youtube:player-client=android_vr,web,default',
-    '--cookies-from-browser', 'chrome'
+    '--socket-timeout', '15',
+    '--retries', '5',
+    '--extractor-retries', '3',
+    '--fragment-retries', '3',
+    '--extractor-args', 'youtube:player-client=ios,android,web',
   ];
 
   return [...base, ...ytDlpAuthArgs(), ...args];

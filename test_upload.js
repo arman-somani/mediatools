@@ -1,20 +1,60 @@
-const fs = require('fs');
 const axios = require('axios');
+const fs = require('fs');
+const FormData = require('form-data');
+const { spawn } = require('child_process');
 
-async function testPixeldrain() {
-    try {
-        fs.writeFileSync('test_video.mp4', 'dummy content for testing upload speeds and links');
-        
-        console.log('Testing pixeldrain...');
-        const fileData = fs.readFileSync('test_video.mp4');
-        const res = await axios.put('https://pixeldrain.com/api/file/test_video.mp4', fileData);
-        console.log('Pixeldrain response:\n', res.data);
-        if (res.data.success) {
-            console.log('Direct download link: https://pixeldrain.com/api/file/' + res.data.id + '?download');
-        }
-    } catch (e) {
-        console.error('Pixeldrain failed', e.message);
-    }
+const testFile = 'test.txt';
+fs.writeFileSync(testFile, 'Hello world from test script!');
+
+async function testTmpfiles() {
+  console.log('Testing tmpfiles.org...');
+  try {
+    const form = new FormData();
+    form.append('file', fs.createReadStream(testFile), { filename: testFile });
+
+    const uploadResponse = await axios.post('https://tmpfiles.org/api/v1/upload', form, {
+      headers: form.getHeaders(),
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
+    });
+    console.log('Tmpfiles success:', uploadResponse.data);
+  } catch (e) {
+    console.error('Tmpfiles error:', e.message);
+  }
 }
 
-testPixeldrain();
+async function testGoFile() {
+  console.log('Testing gofile.io...');
+  try {
+    const serverResponse = await axios.get('https://api.gofile.io/servers');
+    const serverName = serverResponse.data.data.servers[0].name;
+    const args = [
+      '-F', 'token=zr5lPVjXmF3Isjd2PiVtm3cgeiYWmFoN',
+      '-F', `file=@${testFile};filename="${testFile}"`,
+      `https://${serverName}.gofile.io/contents/uploadfile`
+    ];
+
+    await new Promise((resolve, reject) => {
+      const curl = spawn('curl', args);
+      let stdoutData = '';
+      curl.stdout.on('data', (data) => stdoutData += data.toString());
+      curl.stderr.on('data', (data) => {}); // ignore stderr progress
+      curl.on('close', (code) => {
+        if (code !== 0) reject(new Error('curl exit ' + code));
+        else {
+          console.log('GoFile success:', stdoutData);
+          resolve();
+        }
+      });
+      curl.on('error', (err) => reject(new Error('Spawn error: ' + err.message)));
+    });
+  } catch (e) {
+    console.error('GoFile error:', e.message);
+  }
+}
+
+async function run() {
+  await testTmpfiles();
+  await testGoFile();
+}
+run();
