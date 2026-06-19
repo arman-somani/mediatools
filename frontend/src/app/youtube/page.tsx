@@ -21,6 +21,7 @@ export default function YouTubePage() {
   const [jobId, setJobId] = useState('');
   const [fileSize, setFileSize] = useState<number | null>(null);
   const [videoInfo, setVideoInfo] = useState<{ title?: string; thumbnail?: string } | null>(null);
+  const [gofileUrl, setGofileUrl] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [conversionTime, setConversionTime] = useState<number | null>(null);
   
@@ -80,6 +81,7 @@ export default function YouTubePage() {
           if (startTimeRef.current) setConversionTime(Math.round((Date.now() - startTimeRef.current) / 1000));
           setVideoInfo({ title: conv.youtubeTitle, thumbnail: conv.youtubeThumbnail });
           setFileSize(conv.fileSize || null);
+          if (conv.gofileUrl) setGofileUrl(conv.gofileUrl);
           const finalUrl = conv.outputUrl || `/api/convert/download/${id}`;
           setJobId(finalUrl.startsWith('http') ? finalUrl : apiUrl(finalUrl));
           sendNotification('Audio Ready! 🎵', 'Your audio file has finished converting and is ready to save.');
@@ -115,7 +117,7 @@ export default function YouTubePage() {
     }
   };
 
-  const reset = () => { setUrl(''); setStatus('idle'); setProgress(0); setJobId(''); setVideoInfo(null); setFileSize(null); setError(''); setConversionTime(null); };
+  const reset = () => { setUrl(''); setStatus('idle'); setProgress(0); setJobId(''); setVideoInfo(null); setFileSize(null); setGofileUrl(null); setError(''); setConversionTime(null); };
 
   return (
     <ProtectedRoute>
@@ -261,11 +263,22 @@ export default function YouTubePage() {
                     )}
                     {!fileSize && <div className="mb-8" />}
 
-                    <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm mx-auto">
-                      <div className="flex-1">
-                        <motion.button onClick={() => { window.open(jobId, '_blank'); }} whileHover={{ y: -2 }} whileTap={{ scale: 0.96 }} className="w-full btn-primary font-semibold rounded-xl flex items-center justify-center gap-2 h-14 transition-all duration-300">
+                    <div className="flex flex-col sm:flex-row gap-4 w-full max-w-lg mx-auto">
+                      <div className="flex flex-col gap-3 flex-1">
+                        <motion.button onClick={() => { window.location.href = jobId; }} whileHover={{ y: -2 }} whileTap={{ scale: 0.96 }} className="w-full btn-primary font-semibold rounded-xl flex items-center justify-center gap-2 h-14 transition-all duration-300">
                           <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                          Download Audio </motion.button>
+                          Download Audio 
+                        </motion.button>
+                        {gofileUrl && (
+                          <motion.button 
+                            onClick={() => { window.open(gofileUrl, '_blank'); }}
+                            whileHover={{ y: -2 }} whileTap={{ scale: 0.96 }}
+                            className="w-full font-semibold rounded-xl flex items-center justify-center gap-2 h-12 transition-all duration-300 bg-brand-violet/20 text-brand-violet hover:bg-brand-violet/30"
+                          >
+                            <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                            Mirror (GoFile)
+                          </motion.button>
+                        )}
                       </div>
                       <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.96 }} onClick={reset} className="glass-panel hover:bg-white/5 border border-white/20 h-14 w-full sm:w-auto px-8 whitespace-nowrap text-white transition-all">
                         Another

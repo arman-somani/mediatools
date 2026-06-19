@@ -33,6 +33,7 @@ export default function UniversalPage() {
   const [jobId, setJobId] = useState('');
   const [fileSize, setFileSize] = useState<number | null>(null);
   const [videoInfo, setVideoInfo] = useState<{ title?: string; thumbnail?: string } | null>(null);
+  const [gofileUrl, setGofileUrl] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [conversionTime, setConversionTime] = useState<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
@@ -59,6 +60,7 @@ export default function UniversalPage() {
           if (startTimeRef.current) setConversionTime(Math.round((Date.now() - startTimeRef.current) / 1000));
           setVideoInfo({ title: conv.youtubeTitle, thumbnail: conv.youtubeThumbnail });
           setFileSize(conv.fileSize || null);
+          if (conv.gofileUrl) setGofileUrl(conv.gofileUrl);
           const finalUrl = conv.outputUrl || `/api/convert/download/${id}`;
           setJobId(finalUrl.startsWith('http') ? finalUrl : apiUrl(finalUrl));
           sendNotification('Download Complete! 🎉', 'Your video has finished downloading and is ready to save.');
@@ -119,7 +121,7 @@ export default function UniversalPage() {
 
   const reset = () => {
     setUrl(''); setStatus('idle'); setProgress(0);
-    setJobId(''); setVideoInfo(null); setFileSize(null); setError(''); setPreflightInfo(null); setConversionTime(null);
+    setJobId(''); setVideoInfo(null); setFileSize(null); setGofileUrl(null); setError(''); setPreflightInfo(null); setConversionTime(null);
   };
 
   return (
@@ -267,10 +269,10 @@ export default function UniversalPage() {
                   )}
                   {!fileSize && <div className="mb-8" />}
 
-                  <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
-                    <div className="flex-1">
+                  <div className="flex flex-col sm:flex-row gap-4 w-full max-w-lg">
+                    <div className="flex flex-col gap-3 flex-1">
                       <button 
-                        onClick={() => window.open(jobId, '_blank')}
+                        onClick={() => { window.location.href = jobId; }}
                         className="w-full font-semibold rounded-xl flex items-center justify-center gap-2 h-14 transition-all duration-300 btn-primary"
                       >
                         <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -278,6 +280,15 @@ export default function UniversalPage() {
                         </svg>
                         Download Video 
                       </button>
+                      {gofileUrl && (
+                        <button 
+                          onClick={() => { window.open(gofileUrl, '_blank'); }}
+                          className="w-full font-semibold rounded-xl flex items-center justify-center gap-2 h-12 transition-all duration-300 bg-brand-violet/20 text-brand-violet hover:bg-brand-violet/30"
+                        >
+                          <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                          Mirror (GoFile)
+                        </button>
+                      )}
                     </div>
                     <button onClick={reset} className="glass-panel hover:bg-white/5 border border-white/20 text-white transition-all h-14 w-full sm:w-auto px-8 whitespace-nowrap">
                       Download Another

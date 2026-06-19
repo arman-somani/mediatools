@@ -23,6 +23,7 @@ import vm from 'vm';
 
 import { getRandomFreeProxies } from '../utils/freeproxy';
 import { uploadToTmpFiles } from '../utils/tmpfiles';
+import { uploadToGoFile } from '../utils/gofile';
 import { interceptYoutubeStreams } from '../utils/puppeteerInterceptor';
 
 // OAuth2 is no longer supported by yt-dlp. Using browser cookies natively.
@@ -243,7 +244,6 @@ router.post(
         const zombieKiller = setInterval(() => {
           const lastPoll = activePolls.get(conversion._id.toString());
           if (lastPoll && Date.now() - lastPoll > 15000) {
-             console.log(`[ZOMBIE KILLER] User disconnected for ${conversion._id}. Killing ffmpeg.`);
              ffmpeg.kill('SIGKILL');
              clearInterval(zombieKiller);
           }
@@ -400,7 +400,6 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
           const zombieKiller = setInterval(() => {
             const lastPoll = activePolls.get(conversion._id.toString());
             if (lastPoll && Date.now() - lastPoll > 15000) {
-               console.log(`[ZOMBIE KILLER] User disconnected for ${conversion._id}. Killing yt-dlp audio.`);
                ytdlp.kill('SIGKILL');
                clearInterval(zombieKiller);
                reject(new Error('User closed the tab. Download cancelled.'));
@@ -533,18 +532,17 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         conversion.fileSize = getFileSize(downloadedFilePath);
         // Use tmpfiles.org for 1 Gbps direct download unthrottled links
         try {
-          let lastUploadUpdate = Date.now();
-          conversion.outputUrl = await uploadToTmpFiles(downloadedFilePath, conversion.outputFilename, (uploadPercent) => {
-            conversion.progress = 50 + (uploadPercent * 0.5);
-            if (Date.now() - lastUploadUpdate > 1000 || uploadPercent === 100) {
-              lastUploadUpdate = Date.now();
-              Conversion.findByIdAndUpdate(conversion._id, { progress: conversion.progress }).catch(() => {});
-            }
-          });
-          console.log(`[TmpFiles] Audio uploaded successfully: ${conversion.outputUrl}`);
+          conversion.status = 'uploading';
+          conversion.progress = 100;
+          await conversion.save();
+
+          try { conversion.cdnUrl = await uploadToTmpFiles(downloadedFilePath, conversion.outputFilename); } catch (e) { console.error('[TmpFiles] error:', e); }
+          try { conversion.gofileUrl = await uploadToGoFile(downloadedFilePath, conversion.outputFilename); } catch (e) { console.error('[GoFile] error:', e); }
+
+          conversion.outputUrl = `/api/convert/download/${conversion._id}`;
         } catch (e) {
-          console.error('[TmpFiles] Upload failed, falling back to local serve:', e);
-          conversion.outputUrl = `/api/convert/download-temp/${fileId}`;
+          console.error('[Upload] failed, falling back to local serve:', e);
+          conversion.outputUrl = `/api/convert/download/${conversion._id}`;
         }
         conversion.status = 'completed';
         conversion.progress = 100;
@@ -601,7 +599,7 @@ router.post('/youtube-formats', async (req: Request, res: Response): Promise<voi
   }
 });
 
-/* ΓöÇΓöÇ UNIVERSAL VIDEO METADATA ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
+/* ΓöÇΓöÇ UNIVERSAL VIDEO METADATA ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
 router.post('/universal/metadata', async (req: Request, res: Response): Promise<void> => {
   try {
     const videoUrl = req.body.url;
@@ -772,7 +770,6 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
           const zombieKiller = setInterval(() => {
             const lastPoll = activePolls.get(conversion._id.toString());
             if (lastPoll && Date.now() - lastPoll > 15000) {
-               console.log(`[ZOMBIE KILLER] User disconnected for ${conversion._id}. Killing yt-dlp video.`);
                ytdlp.kill('SIGKILL');
                clearInterval(zombieKiller);
                reject(new Error('User closed the tab. Download cancelled.'));
@@ -917,17 +914,16 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         
         // Use tmpfiles.org for 1 Gbps direct download unthrottled links
         try {
-          let lastUploadUpdate = Date.now();
-          conversion.outputUrl = await uploadToTmpFiles(downloadedFilePath, conversion.outputFilename, (uploadPercent) => {
-            conversion.progress = 50 + (uploadPercent * 0.5);
-            if (Date.now() - lastUploadUpdate > 1000 || uploadPercent === 100) {
-              lastUploadUpdate = Date.now();
-              Conversion.findByIdAndUpdate(conversion._id, { progress: conversion.progress }).catch(() => {});
-            }
-          });
-          console.log(`[TmpFiles] Video uploaded successfully: ${conversion.outputUrl}`);
+          conversion.status = 'uploading';
+          conversion.progress = 100;
+          await conversion.save();
+
+          try { conversion.cdnUrl = await uploadToTmpFiles(downloadedFilePath, conversion.outputFilename); } catch (e) { console.error('[TmpFiles] error:', e); }
+          try { conversion.gofileUrl = await uploadToGoFile(downloadedFilePath, conversion.outputFilename); } catch (e) { console.error('[GoFile] error:', e); }
+
+          conversion.outputUrl = `/api/convert/download/${conversion._id}`;
         } catch (e) {
-          console.error('[TmpFiles] Upload failed, falling back to local serve:', e);
+          console.error('[Upload] failed, falling back to local serve:', e);
           conversion.outputUrl = `/api/convert/download/${conversion._id}`;
         }
 
@@ -970,6 +966,7 @@ router.get('/status/:id', async (req: Request, res: Response): Promise<void> => 
         progress: conversion.progress,
         outputFilename: conversion.outputFilename,
         outputUrl: conversion.outputUrl,
+        gofileUrl: conversion.gofileUrl,
         fileSize: conversion.fileSize,
         youtubeTitle: conversion.youtubeTitle,
         youtubeThumbnail: conversion.youtubeThumbnail,
@@ -986,7 +983,13 @@ router.get('/download/:id', async (req: Request, res: Response): Promise<void> =
   try {
     const conversion: any = await Conversion.findById(req.params.id);
     if (!conversion) {
-      res.status(404).json({ success: false, message: 'File not found' }); return;
+      res.status(404).json({ success: false, message: 'Conversion not found' });
+      return;
+    }
+
+    if (conversion.cdnUrl) {
+      res.redirect(302, conversion.cdnUrl);
+      return;
     }
 
     conversion.downloadCount = (conversion.downloadCount || 0) + 1;
