@@ -79,6 +79,7 @@ export default function YtVideoPage() {
           setProgress(100);
           if (startTimeRef.current) setConversionTime(Math.round((Date.now() - startTimeRef.current) / 1000));
           setVideoInfo({ title: conv.youtubeTitle, thumbnail: conv.youtubeThumbnail });
+          if (conv.videoQuality) setQuality(conv.videoQuality);
           setFileSize(conv.fileSize || null);
           if (conv.gofileUrl) setGofileUrl(conv.gofileUrl);
           const finalUrl = conv.outputUrl || `/api/convert/download/${id}`;
