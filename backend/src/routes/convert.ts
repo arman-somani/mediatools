@@ -954,7 +954,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
           console.warn('ffprobe resolution check failed', e);
         }
         
-        // Use tmpfiles.org for 1 Gbps direct download unthrottled links
+        // Upload to CDN networks
         try {
           conversion.status = 'uploading';
           conversion.progress = 100;
@@ -962,14 +962,29 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
 
           const HUNDRED_MB = 100 * 1024 * 1024;
           if (conversion.fileSize && conversion.fileSize > HUNDRED_MB) {
+            // > 100MB: GoFile
             try { 
               conversion.gofileUrl = await uploadToGoFile(downloadedFilePath, conversion.outputFilename); 
               conversion.cdnUrl = conversion.gofileUrl; // Redirect main button to GoFile
+              conversion.outputUrl = conversion.cdnUrl; // Ensure frontend gets the URL
             } catch (e) { console.error('[GoFile] error:', e); }
+          } else {
+            // <= 100MB: tmpfiles.org for direct high-speed download
+            try {
+              const { uploadToTmpFiles } = require('../utils/tmpfiles');
+              const tmpFilesUrl = await uploadToTmpFiles(downloadedFilePath);
+              conversion.cdnUrl = tmpFilesUrl;
+              conversion.outputUrl = tmpFilesUrl; // Frontend directly opens this URL
+              console.log(`[TmpFiles] Uploaded successfully: ${tmpFilesUrl}`);
+            } catch (e) { 
+              console.error('[TmpFiles] error:', e); 
+              conversion.outputUrl = `/api/convert/download/${conversion._id}`;
+            }
           }
-          // Files under 100MB remain exclusively on local disk
 
-          conversion.outputUrl = `/api/convert/download/${conversion._id}`;
+          if (!conversion.outputUrl) {
+            conversion.outputUrl = `/api/convert/download/${conversion._id}`;
+          }
         } catch (e) {
           console.error('[Upload] failed, falling back to local serve:', e);
           conversion.outputUrl = `/api/convert/download/${conversion._id}`;
