@@ -219,7 +219,7 @@ export default function DashboardPage() {
                             {TOOLS.map((tool, i) => (
                                 <motion.div
                                     key={tool.href}
-                                    className=""
+                                    className={i === 2 && TOOLS.length === 3 ? "sm:col-span-2 sm:w-[calc(50%-10px)] sm:mx-auto w-full" : "w-full"}
                                     initial={{ opacity: 0, y: 16 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ type: "spring", stiffness: 300, damping: 15, delay: 0.45 + i * 0.08 }}
