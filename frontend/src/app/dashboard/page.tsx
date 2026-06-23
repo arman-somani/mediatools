@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/lib/store';
 import api from '@/lib/api';
 import PageWrapper from '@/components/PageWrapper';
+import AnimeReveal from '@/components/AnimeReveal';
+import AnimeHover from '@/components/AnimeHover';
 
 type RecentConversion = {
     _id?: string;
@@ -141,19 +142,19 @@ export default function DashboardPage() {
             <main className="min-h-screen w-full px-6 pt-32 pb-20 text-white">
                 <section className="mx-auto max-w-7xl">
 
-                    {/* â”€â”€ Header â”€â”€ */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
+                    {/* ── Header ── */}
+                    <AnimeReveal
+                        delay={100}
+                        direction="up"
                         className="mb-10"
                     >
                         <h1 className="text-5xl font-bold text-white">Dashboard</h1>
                         <p className="mt-3 text-white/60">
                             {user ? `Welcome back, ${user.name}` : 'Manage your conversions and downloads.'}
                         </p>
-                    </motion.div>
+                    </AnimeReveal>
 
-                    {/* â”€â”€ Auth warning â”€â”€ */}
+                    {/* ── Auth warning ── */}
                     {!user && !accessToken && (
                         <div className="mb-6 rounded-xl bg-yellow-500/10 border border-yellow-500/20 p-4 text-yellow-600 flex items-center gap-3">
                             <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -172,10 +173,9 @@ export default function DashboardPage() {
 
                     {/* ── Statistics Overview ── */}
                     {user && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2 }}
+                        <AnimeReveal
+                            delay={200}
+                            direction="up"
                             className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-10"
                         >
                             <div className="glass-panel p-6 rounded-2xl flex items-center gap-5 relative overflow-hidden group">
@@ -202,30 +202,25 @@ export default function DashboardPage() {
                                     <p className="text-3xl font-bold text-white font-display">{userDownloads}</p>
                                 </div>
                             </div>
-                        </motion.div>
+                        </AnimeReveal>
                     )}
 
                     {/* ── Start New Conversion — Tool Picker ── */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.4 }}
+                    <AnimeReveal
+                        delay={400}
+                        direction="up"
                         className="mb-10"
                     >
                         <h2 className="text-2xl font-bold text-white mb-2">Start a New Conversion</h2>
                         <p className="text-white/50 text-sm mb-6">Choose what you want to convert each card goes directly to that tool.</p>
 
                         <div className="grid gap-5 sm:grid-cols-2">
-                            {TOOLS.map((tool, i) => (
-                                <motion.div
-                                    key={tool.href}
-                                    className={i === 2 && TOOLS.length === 3 ? "sm:col-span-2 sm:w-[calc(50%-10px)] sm:mx-auto w-full" : "w-full"}
-                                    initial={{ opacity: 0, y: 16 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ type: "spring", stiffness: 300, damping: 15, delay: 0.45 + i * 0.08 }}
-                                    whileHover={{ y: -8, scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                >
+                            <AnimeReveal delay={500} staggerDelay={80} direction="up" className="contents">
+                                {TOOLS.map((tool, i) => (
+                                    <AnimeHover
+                                        key={tool.href}
+                                        className={i === 2 && TOOLS.length === 3 ? "sm:col-span-2 sm:w-[calc(50%-10px)] sm:mx-auto w-full" : "w-full"}
+                                    >
                                     <Link
                                         href={tool.href}
                                         className={`flex flex-col gap-4 p-6 rounded-2xl border ${tool.border} ${tool.bg} transition-all duration-300 ${tool.shadow} group relative overflow-hidden block`}
@@ -257,16 +252,16 @@ export default function DashboardPage() {
                                             </svg>
                                         </div>
                                     </Link>
-                                </motion.div>
+                                </AnimeHover>
                             ))}
+                            </AnimeReveal>
                         </div>
-                    </motion.div>
+                    </AnimeReveal>
 
-                    {/* â”€â”€ Recent Conversions â”€â”€ */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.65 }}
+                    {/* ── Recent Conversions ── */}
+                    <AnimeReveal
+                        delay={600}
+                        direction="up"
                         className="glass-panel rounded-3xl p-8"
                     >
                         <div className="flex items-center justify-between mb-6">
@@ -300,10 +295,10 @@ export default function DashboardPage() {
                                                     '/converter';
 
                                     return (
-                                        <motion.div
+                                        <AnimeHover
                                             key={conversion._id || index}
-                                            whileHover={{ y: -2, scale: 1.02 }}
-                                            whileTap={{ scale: 0.98 }}
+                                            scaleHover={1.02}
+                                            scaleTap={0.98}
                                             className="flex items-center justify-between rounded-xl bg-white/5 hover:bg-black/[0.08] p-4 border border-white/5 transition-colors"
                                         >
                                             <Link href={conversion.youtubeUrl ? `${typeHref}?url=${encodeURIComponent(conversion.youtubeUrl)}` : typeHref} className="flex items-center gap-3 min-w-0 flex-1 group-hover/row:opacity-80 transition-opacity">
@@ -353,7 +348,7 @@ export default function DashboardPage() {
                                                     </svg>
                                                 </button>
                                             </div>
-                                        </motion.div>
+                                        </AnimeHover>
                                     );
                                 })
                             ) : (
@@ -381,7 +376,7 @@ export default function DashboardPage() {
                                 </div>
                             )}
                         </div>
-                    </motion.div>
+                    </AnimeReveal>
 
                 </section>
             </main >
