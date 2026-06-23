@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, Suspense } from 'react';
-import { motion } from 'framer-motion';
+import AnimeReveal from '@/components/AnimeReveal';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import api from '@/lib/api';
@@ -120,7 +120,7 @@ export default function ResetPasswordPage() {
     <div className="w-full flex items-center justify-center py-24 px-6 relative">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(168,85,247,0.1)_0%,transparent_70%)] pointer-events-none" />
 
-      <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md relative z-10">
+      <AnimeReveal direction="up" className="w-full max-w-md relative z-10">
         <div className="text-center mb-10">
           <h1 className="font-display font-bold text-3xl tracking-tight text-white mb-2">Create New Password</h1>
           <p className="text-white/60">Choose a new password for your account.</p>
@@ -129,7 +129,7 @@ export default function ResetPasswordPage() {
         <Suspense fallback={<div className="glass-panel p-8 text-center text-white/50">Loading form...</div>}>
           <ResetPasswordForm />
         </Suspense>
-      </motion.div>
+      </AnimeReveal>
     </div>
   );
 }
