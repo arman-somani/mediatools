@@ -298,15 +298,6 @@ export default function YtVideoPage() {
                         </svg>
                         Download Video 
                       </button>
-                      {gofileUrl && (
-                        <button 
-                          onClick={() => { window.open(gofileUrl, '_blank'); }}
-                          className="w-full font-semibold rounded-xl flex items-center justify-center gap-2 h-12 transition-all duration-300 bg-brand-violet/20 text-brand-violet hover:bg-brand-violet/30"
-                        >
-                          <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                          Mirror (GoFile)
-                        </button>
-                      )}
                     </div>
                     <button onClick={reset} className="glass-panel hover:bg-white/5 border border-white/20 text-white transition-all h-14 w-full sm:w-auto px-8 whitespace-nowrap">
                       Download Another
