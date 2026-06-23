@@ -269,16 +269,6 @@ export default function YouTubePage() {
                           <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                           Download Audio 
                         </motion.button>
-                        {gofileUrl && (
-                          <motion.button 
-                            onClick={() => { window.open(gofileUrl, '_blank'); }}
-                            whileHover={{ y: -2 }} whileTap={{ scale: 0.96 }}
-                            className="w-full font-semibold rounded-xl flex items-center justify-center gap-2 h-12 transition-all duration-300 bg-brand-violet/20 text-brand-violet hover:bg-brand-violet/30"
-                          >
-                            <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                            Mirror (GoFile)
-                          </motion.button>
-                        )}
                       </div>
                       <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.96 }} onClick={reset} className="glass-panel hover:bg-white/5 border border-white/20 h-14 w-full sm:w-auto px-8 whitespace-nowrap text-white transition-all">
                         Another
