@@ -1,8 +1,10 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import Link from 'next/link';
 import PageWrapper from '@/components/PageWrapper';
+import AnimeReveal from '@/components/AnimeReveal';
+import AnimeHover from '@/components/AnimeHover';
+import AnimeBackground from '@/components/AnimeBackground';
 
 export default function HomePage() {
   return (
@@ -10,8 +12,8 @@ export default function HomePage() {
       <main className="min-h-screen text-white">
         {/* Hero Section */}
         <section className="relative flex flex-col items-center justify-center text-center px-4 md:px-6 pt-32 md:pt-40 pb-16 md:pb-24 min-h-[85vh] overflow-hidden">
+          <AnimeBackground />
           {/* Video Background */}
-          <div className="absolute inset-0 z-0">
             <video autoPlay loop muted playsInline className="absolute top-1/2 left-1/2 min-w-full min-h-full w-auto h-auto -translate-x-1/2 -translate-y-1/2 object-cover opacity-50">
               <source src="https://cdn.pixabay.com/video/2020/05/25/40141-425126867_large.mp4" type="video/mp4" />
             </video>
@@ -20,10 +22,9 @@ export default function HomePage() {
 
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[500px] md:w-[800px] h-[300px] md:h-[400px] bg-brand-purple/20 blur-[100px] md:blur-[140px] rounded-full pointer-events-none z-0" />
 
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
+          <AnimeReveal
+            delay={100}
+            direction="up"
             className="relative z-10 max-w-5xl mx-auto pt-10"
           >
 
@@ -38,40 +39,38 @@ export default function HomePage() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 items-center justify-center flex-wrap w-full px-4 sm:px-0">
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.9 }} className="w-full sm:w-auto">
+              <AnimeHover scaleHover={1.05} scaleTap={0.9} className="w-full sm:w-auto">
                 <Link href="/converter" className="btn-primary px-6 md:px-8 py-3 md:py-4 text-base md:text-lg rounded-xl block w-full text-center">
                   Convert Video to Audio
                 </Link>
-              </motion.div>
+              </AnimeHover>
 
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.9 }} className="w-full sm:w-auto">
+              <AnimeHover scaleHover={1.05} scaleTap={0.9} className="w-full sm:w-auto">
                 <Link href="/youtube" className="glass-panel hover:bg-white/5 border border-white/20 px-6 md:px-8 py-3 md:py-4 text-base md:text-lg rounded-xl flex items-center justify-center gap-2 w-full transition-all">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="text-brand-purple">
                     <path d="M21.582 6.186a2.506 2.506 0 00-1.762-1.766C18.265 4 12 4 12 4s-6.264 0-7.82.42a2.506 2.506 0 00-1.762 1.766C2 7.74 2 12 2 12s0 4.26.418 5.814a2.506 2.506 0 001.762 1.766C5.736 20 12 20 12 20s6.265 0 7.82-.42a2.506 2.506 0 001.762-1.766C22 16.26 22 12 22 12s0-4.26-.418-5.814zM10 15.464V8.536L15.818 12 10 15.464z" />
                   </svg>
                   YouTube MP3
                 </Link>
-              </motion.div>
+              </AnimeHover>
 
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.9 }} className="w-full sm:w-auto">
+              <AnimeHover scaleHover={1.05} scaleTap={0.9} className="w-full sm:w-auto">
                 <Link href="/yt-video" className="glass-panel hover:bg-white/5 border border-white/20 px-6 md:px-8 py-3 md:py-4 text-base md:text-lg rounded-xl flex items-center justify-center gap-2 w-full transition-all">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="text-brand-cyan">
                     <path d="M4 6h16v12H4z" opacity=".3" /><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12zM8 15h2v-2h2v-2H8v4zm4-6h2V7h-2v2zM14 15h2v-4h-2v4z" />
                   </svg>
                   YouTube MP4
                 </Link>
-              </motion.div>
+              </AnimeHover>
             </div>
-          </motion.div>
+          </AnimeReveal>
         </section>
 
         {/* Features Section */}
         <section className="px-4 md:px-6 py-16 md:py-24 max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
+          <AnimeReveal
+            delay={200}
+            direction="up"
             className="text-center mb-12 md:mb-16"
           >
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-white px-2">
@@ -80,9 +79,9 @@ export default function HomePage() {
             <p className="text-white/60 text-base md:text-lg max-w-xl mx-auto px-4">
               Professional-grade Audio extraction tools, built for everyone.
             </p>
-          </motion.div>
+          </AnimeReveal>
 
-          <div className="grid gap-6 md:grid-cols-3">
+          <AnimeReveal staggerDelay={100} delay={300} direction="up" className="grid gap-6 md:grid-cols-3">
             {[
               {
                 icon: (
@@ -121,31 +120,27 @@ export default function HomePage() {
                 border: 'border-emerald-500/20',
               },
             ].map((feature, i) => (
-              <motion.div
+              <AnimeHover
                 key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-                whileHover={{ y: -4 }}
-                className="glass-panel glass-panel-hover p-8"
+                scaleHover={1.02}
+                scaleTap={0.98}
+                className="glass-panel glass-panel-hover p-8 opacity-0"
               >
                 <div className={`w-14 h-14 ${feature.bg} border ${feature.border} rounded-2xl flex items-center justify-center mb-6 ${feature.color}`}>
                   {feature.icon}
                 </div>
                 <h3 className="text-xl font-bold text-white mb-3">{feature.title}</h3>
                 <p className="text-white/60 leading-relaxed">{feature.description}</p>
-              </motion.div>
+              </AnimeHover>
             ))}
-          </div>
+          </AnimeReveal>
         </section>
 
         {/* CTA Section */}
         <section className="px-4 md:px-6 py-16 md:py-24">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
+          <AnimeReveal
+            delay={200}
+            direction="up"
             className="max-w-3xl mx-auto glass-panel p-8 md:p-12 text-center relative overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-brand-violet/10 to-brand-cyan/5 pointer-events-none" />
@@ -176,7 +171,7 @@ export default function HomePage() {
                 </Link>
               </div>
             </div>
-          </motion.div>
+          </AnimeReveal>
         </section>
       </main>
     </PageWrapper>
