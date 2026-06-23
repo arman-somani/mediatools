@@ -14,7 +14,17 @@ function getYtDlpPath(): string {
 }
 
 function ytDlpAuthArgs(): string[] {
-  return ['--username', 'oauth2', '--password', '""'];
+  // If running on Colab (Linux) and the Chrome profile exists, extract fresh cookies directly!
+  if (os.platform() === 'linux' && fs.existsSync('/root/.config/google-chrome')) {
+    return ['--cookies-from-browser', 'chrome:/root/.config/google-chrome'];
+  }
+  
+  // Fallback for Windows/local development
+  const cookiePath = path.resolve(process.cwd(), process.env.YOUTUBE_COOKIES || 'cookies.txt');
+  if (fs.existsSync(cookiePath)) {
+    return ['--cookies', cookiePath];
+  }
+  return [];
 }
 
 function ytDlpArgs(args: string[]): string[] {

@@ -25,8 +25,13 @@ import { getRandomFreeProxies } from '../utils/freeproxy';
 import { uploadToGoFile } from '../utils/gofile';
 import { interceptYoutubeStreams } from '../utils/puppeteerInterceptor';
 
-// OAuth2 is no longer supported by yt-dlp. Using browser cookies natively.
 function ytDlpAuthArgs(): string[] {
+  // If running on Colab (Linux) and the Chrome profile exists, extract fresh cookies directly!
+  if (os.platform() === 'linux' && fs.existsSync('/root/.config/google-chrome')) {
+    return ['--cookies-from-browser', 'chrome:/root/.config/google-chrome'];
+  }
+  
+  // Fallback for Windows/local development
   const cookiePath = path.resolve(process.cwd(), process.env.YOUTUBE_COOKIES || 'cookies.txt');
   if (fs.existsSync(cookiePath)) {
     return ['--cookies', cookiePath];
