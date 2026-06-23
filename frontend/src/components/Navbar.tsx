@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
 import { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import anime from 'animejs';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -14,6 +14,11 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileDropdownRef = useRef<HTMLDivElement>(null);
+
+  const icon1Ref = useRef<HTMLDivElement>(null);
+  const icon2Ref = useRef<HTMLDivElement>(null);
+  const icon3Ref = useRef<HTMLDivElement>(null);
+  const icon4Ref = useRef<HTMLDivElement>(null);
 
   const links = [
     { name: 'Dashboard', href: '/dashboard' },
@@ -35,6 +40,40 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    // 40 second timeline loop for icons
+    const tl = anime.timeline({
+      loop: true,
+      duration: 40000,
+      easing: 'easeInOutSine'
+    });
+
+    // We simulate the framer motion keyframes:
+    // Icon 1: visible 0-25%, 100%
+    // Icon 2: visible 25-50%
+    // Icon 3: visible 50-75%
+    // Icon 4: visible 75-100%
+
+    // Setup initial states
+    if (icon1Ref.current) icon1Ref.current.style.opacity = '1';
+    if (icon2Ref.current) icon2Ref.current.style.opacity = '0';
+    if (icon3Ref.current) icon3Ref.current.style.opacity = '0';
+    if (icon4Ref.current) icon4Ref.current.style.opacity = '0';
+
+    const step = 10000; // 10 seconds per icon
+
+    tl
+    .add({ targets: icon1Ref.current, opacity: 0, duration: 500 }, step - 500)
+    .add({ targets: icon2Ref.current, opacity: 1, duration: 500 }, step - 500)
+    .add({ targets: icon2Ref.current, opacity: 0, duration: 500 }, step * 2 - 500)
+    .add({ targets: icon3Ref.current, opacity: 1, duration: 500 }, step * 2 - 500)
+    .add({ targets: icon3Ref.current, opacity: 0, duration: 500 }, step * 3 - 500)
+    .add({ targets: icon4Ref.current, opacity: 1, duration: 500 }, step * 3 - 500)
+    .add({ targets: icon4Ref.current, opacity: 0, duration: 500 }, step * 4 - 500)
+    .add({ targets: icon1Ref.current, opacity: 1, duration: 500 }, step * 4 - 500);
+
+  }, []);
+
   const handleSignOut = () => {
     clearAuth();
     setDropdownOpen(false);
@@ -50,49 +89,45 @@ export default function Navbar() {
           {/* Alternating 4-Icon Logo Cycle */}
           <div className="relative w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center">
             {/* 1. Play Button (Emerald) */}
-            <motion.div
+            <div
+              ref={icon1Ref}
               className="absolute inset-0 flex items-center justify-center text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.8)]"
-              animate={{ opacity: [1, 1, 0, 0, 1] }}
-              transition={{ duration: 40, ease: "easeInOut", repeat: Infinity, times: [0, 0.2375, 0.25, 0.9875, 1] }}
             >
               <svg width="100%" height="100%" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                 <path d="M8 5.14V19.08L19 12.11L8 5.14Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
               </svg>
-            </motion.div>
+            </div>
 
             {/* 2. Pause Button (Violet) */}
-            <motion.div
-              className="absolute inset-0 flex items-center justify-center text-brand-violet drop-shadow-[0_0_8px_rgba(124,58,237,0.8)]"
-              animate={{ opacity: [0, 0, 1, 1, 0, 0] }}
-              transition={{ duration: 40, ease: "easeInOut", repeat: Infinity, times: [0, 0.2375, 0.25, 0.4875, 0.5, 1] }}
+            <div
+              ref={icon2Ref}
+              className="absolute inset-0 flex items-center justify-center text-brand-violet drop-shadow-[0_0_8px_rgba(124,58,237,0.8)] opacity-0"
             >
               <svg width="100%" height="100%" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                 <rect x="6" y="5" width="4" height="14" rx="1" />
                 <rect x="14" y="5" width="4" height="14" rx="1" />
               </svg>
-            </motion.div>
+            </div>
 
             {/* 3. Video Camera (Cyan) */}
-            <motion.div
-              className="absolute inset-0 flex items-center justify-center text-brand-cyan drop-shadow-[0_0_8px_rgba(6,182,212,0.8)]"
-              animate={{ opacity: [0, 0, 1, 1, 0, 0] }}
-              transition={{ duration: 40, ease: "easeInOut", repeat: Infinity, times: [0, 0.4875, 0.5, 0.7375, 0.75, 1] }}
+            <div
+              ref={icon3Ref}
+              className="absolute inset-0 flex items-center justify-center text-brand-cyan drop-shadow-[0_0_8px_rgba(6,182,212,0.8)] opacity-0"
             >
               <svg width="100%" height="100%" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                 <path d="M17 10.5V7C17 5.89543 16.1046 5 15 5H4C2.89543 5 2 5.89543 2 7V17C2 18.1046 2.89543 19 4 19H15C16.1046 19 17 18.1046 17 17V13.5L21 17.5V6.5L17 10.5Z" />
               </svg>
-            </motion.div>
+            </div>
 
             {/* 4. Double Music Note (Purple) */}
-            <motion.div
-              className="absolute inset-0 flex items-center justify-center text-brand-purple drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]"
-              animate={{ opacity: [0, 0, 1, 1, 0] }}
-              transition={{ duration: 40, ease: "easeInOut", repeat: Infinity, times: [0, 0.7375, 0.75, 0.9875, 1] }}
+            <div
+              ref={icon4Ref}
+              className="absolute inset-0 flex items-center justify-center text-brand-purple drop-shadow-[0_0_8px_rgba(168,85,247,0.8)] opacity-0"
             >
               <svg width="100%" height="100%" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                 <path d="M21 3V15.5C21 17.43 19.43 19 17.5 19C15.57 19 14 17.43 14 15.5C14 13.57 15.57 12 17.5 12C18.04 12 18.55 12.12 19 12.34V6.47L9 8.6V17.5C9 19.43 7.43 21 5.5 21C3.57 21 2 19.43 2 17.5C2 15.57 3.57 14 5.5 14C6.04 14 6.55 14.12 7 14.34V3L21 3Z" />
               </svg>
-            </motion.div>
+            </div>
           </div>
 
           <span className="text-lg sm:text-xl md:text-2xl font-bold navbar-text hidden min-[360px]:block">
