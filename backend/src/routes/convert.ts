@@ -361,6 +361,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
     // Background processing
     (async () => {
       try {
+        await refreshYouTubeCookies(true);
         let videoTitle = req.body.title || 'Downloaded Audio';
         let thumbnail = '';
 
