@@ -1,22 +1,28 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { useEffect, useRef } from 'react';
+import anime from 'animejs';
 
 export default function PageWrapper({ children }: { children: React.ReactNode }) {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!wrapperRef.current) return;
+    
+    // Initial mount animation
+    anime({
+      targets: wrapperRef.current,
+      opacity: [0, 1],
+      translateY: [20, 0],
+      scale: [0.98, 1],
+      duration: 800,
+      easing: 'easeOutElastic(1, .8)',
+    });
+  }, []);
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -20, scale: 0.98 }}
-      transition={{
-        type: 'spring',
-        stiffness: 260,
-        damping: 20,
-        bounce: 0.4,
-      }}
-      className="w-full h-full"
-    >
+    <div ref={wrapperRef} className="w-full h-full opacity-0">
       {children}
-    </motion.div>
+    </div>
   );
 }
