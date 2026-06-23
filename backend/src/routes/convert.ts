@@ -24,6 +24,7 @@ import vm from 'vm';
 import { getRandomFreeProxies } from '../utils/freeproxy';
 import { uploadToGoFile } from '../utils/gofile';
 import { interceptYoutubeStreams } from '../utils/puppeteerInterceptor';
+import { refreshYouTubeCookies } from '../utils/cookies';
 
 function ytDlpAuthArgs(): string[] {
   // If running on Colab (Linux) and the Chrome profile exists, extract fresh cookies directly!
