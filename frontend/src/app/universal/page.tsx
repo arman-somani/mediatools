@@ -26,7 +26,7 @@ const getQualityLabel = (resolution: string) => {
 
 export default function UniversalPage() {
   const [url, setUrl] = useState('');
-  const [quality, setQuality] = useState('720p');
+  const [quality, setQuality] = useState('8K');
   const [preflightInfo, setPreflightInfo] = useState<{ title: string; thumbnail: string; resolution: string; sizeBytes: number; videoUrl?: string } | null>(null);
   const [isFetchingInfo, setIsFetchingInfo] = useState(false);
   const [status, setStatus] = useState<'idle' | 'processing' | 'uploading' | 'completed' | 'failed'>('idle');
@@ -167,22 +167,7 @@ export default function UniversalPage() {
                     />
                   </div>
 
-                  <div className="relative">
-                    <select
-                      value={quality}
-                      onChange={(e) => setQuality(e.target.value)}
-                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-white outline-none focus:border-brand-purple/50 focus:ring-1 focus:ring-brand-purple/50 appearance-none transition-all duration-300"
-                    >
-                      <option value="8K" className="bg-gray-900">Highest Quality (Up to 8K)</option>
-                      <option value="4K" className="bg-gray-900">4K Ultra HD</option>
-                      <option value="1080p" className="bg-gray-900">1080p Full HD</option>
-                      <option value="720p" className="bg-gray-900">720p HD</option>
-                      <option value="480p" className="bg-gray-900">480p Standard</option>
-                    </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/40">
-                      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </div>
-                  </div>
+                  {/* Quality selector removed, defaults to 8K / Highest Quality */}
 
                   <AnimatePresence>
                     {preflightInfo && (
