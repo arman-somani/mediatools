@@ -1,11 +1,12 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import api, { apiUrl } from '@/lib/api';
 import { formatFileSize } from '@/lib/utils';
 import Image from 'next/image';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ProgressCircle from '@/components/ProgressCircle';
+import AnimeReveal from '@/components/AnimeReveal';
+import AnimeHover from '@/components/AnimeHover';
 import { requestNotificationPermission, sendNotification } from '@/lib/notifications';
 
 type ApiError = { response?: { data?: { message?: string } } };
@@ -129,22 +130,21 @@ export default function UniversalPage() {
     <ProtectedRoute>
       <div className="w-full max-w-4xl mx-auto px-6 py-20 flex flex-col items-center">
         {/* Header */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full text-center mb-12 pt-8">
+        <AnimeReveal direction="up" className="w-full text-center mb-12 pt-8">
           <h1 className="font-display font-bold text-4xl md:text-5xl tracking-tight mb-4 text-white">
             Universal <span className="text-gradient">Downloader</span>
           </h1>
           <p className="text-white max-w-2xl mx-auto text-lg">
             Paste a link of Instagram, TikTok, Reddit, or any Video URL and download the video as an Video file.
           </p>
-        </motion.div>
+        </AnimeReveal>
 
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }} className="w-full">
+        <AnimeReveal delay={100} direction="up" className="w-full">
           <div className="glass-panel p-5 sm:p-8 md:p-12 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-brand-violet/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
 
-            <AnimatePresence mode="wait">
               {status === 'idle' || status === 'failed' ? (
-                <motion.div key="input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="relative z-10 space-y-8">
+                <div key="input" className="relative z-10 space-y-8 animate-in fade-in duration-300">
 
                   <div className="relative group">
                     <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none z-10 text-white/40 transition-colors duration-200 group-focus-within:text-brand-purple">
@@ -169,13 +169,9 @@ export default function UniversalPage() {
 
                   {/* Quality selector removed, defaults to 8K / Highest Quality */}
 
-                  <AnimatePresence>
                     {preflightInfo && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="overflow-hidden rounded-2xl relative border border-white/10 w-full bg-black/40 mt-6"
+                      <div
+                        className="overflow-hidden rounded-2xl relative border border-white/10 w-full bg-black/40 mt-6 animate-in slide-in-from-top-2 fade-in duration-300"
                       >
                         <div className="p-4 sm:p-6 flex flex-col items-center text-center gap-2">
                           <div className="w-16 h-16 bg-brand-cyan/10 rounded-full flex items-center justify-center mb-2 border border-brand-cyan/20">
@@ -192,9 +188,8 @@ export default function UniversalPage() {
                             </div>
                           )}
                         </div>
-                      </motion.div>
+                      </div>
                     )}
-                  </AnimatePresence>
 
                   <div className="flex justify-center mt-6">
                     {!preflightInfo ? (
@@ -212,27 +207,28 @@ export default function UniversalPage() {
                       </button>
                     ) : (
                       <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
-                        <motion.button
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          onClick={handleDownload}
-                          disabled={!url}
-                          className={`w-full sm:w-[280px] h-14 rounded-xl font-semibold text-lg transition-all duration-300 btn-primary`}
-                        >
-                          Download Video </motion.button>
-                        <motion.button
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          onClick={reset}
-                          className={`w-full sm:w-[200px] h-14 rounded-xl font-semibold text-base transition-all duration-300 glass-panel hover:bg-white/5 border border-white/20 text-white active:scale-95`}
-                        >
-                          Convert Another
-                        </motion.button>
+                        <AnimeHover scaleHover={1.02} scaleTap={0.96} className="w-full sm:w-[280px]">
+                          <button
+                            onClick={handleDownload}
+                            disabled={!url}
+                            className={`w-full h-14 rounded-xl font-semibold text-lg transition-all duration-300 btn-primary`}
+                          >
+                            Download Video 
+                          </button>
+                        </AnimeHover>
+                        <AnimeHover scaleHover={1.02} scaleTap={0.96} className="w-full sm:w-[200px]">
+                          <button
+                            onClick={reset}
+                            className={`w-full h-14 rounded-xl font-semibold text-base transition-all duration-300 glass-panel hover:bg-white/5 border border-white/20 text-white`}
+                          >
+                            Convert Another
+                          </button>
+                        </AnimeHover>
                       </div>
                     )}
                   </div>
 
-                </motion.div>
+                </div>
 
               ) : status === 'processing' || status === 'uploading' ? (
                 <ProgressCircle
@@ -242,7 +238,7 @@ export default function UniversalPage() {
                 />
 
               ) : (
-                <motion.div key="done" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="py-8 text-center flex flex-col items-center">
+                <div key="done" className="py-8 text-center flex flex-col items-center animate-in fade-in zoom-in-95 duration-300">
                   {/* Removed Thumbnail */}
 
                   {/* Clean Icon Fallback */}
@@ -274,39 +270,35 @@ export default function UniversalPage() {
 
                   <div className="flex flex-col sm:flex-row gap-4 w-full max-w-lg">
                     <div className="flex flex-col gap-3 flex-1">
-                      <button 
-                        onClick={() => { window.open(jobId, '_blank'); }}
-                        className="w-full font-semibold rounded-xl flex items-center justify-center gap-2 h-14 transition-all duration-300 btn-primary"
-                      >
-                        <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                        Download Video 
-                      </button>
+                      <AnimeHover scaleHover={1.02} scaleTap={0.96} className="w-full">
+                        <button 
+                          onClick={() => { window.open(jobId, '_blank'); }}
+                          className="w-full font-semibold rounded-xl flex items-center justify-center gap-2 h-14 transition-all duration-300 btn-primary"
+                        >
+                          <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                          Download Video 
+                        </button>
+                      </AnimeHover>
                     </div>
-                    <button onClick={reset} className="glass-panel hover:bg-white/5 border border-white/20 text-white transition-all h-14 w-full sm:w-auto px-8 whitespace-nowrap">
-                      Download Another
-                    </button>
+                    <AnimeHover scaleHover={1.02} scaleTap={0.96} className="w-full sm:w-auto">
+                      <button onClick={reset} className="glass-panel hover:bg-white/5 border border-white/20 text-white transition-all h-14 w-full px-8 whitespace-nowrap">
+                        Download Another
+                      </button>
+                    </AnimeHover>
                   </div>
-                </motion.div>
+                </div>
               )}
-            </AnimatePresence>
           </div>
-        </motion.div>
+        </AnimeReveal>
 
-        <AnimatePresence>
           {error && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+            <div
               className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
             >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                className="glass-panel p-8 rounded-2xl max-w-md w-full text-center relative"
+              <div
+                className="glass-panel p-8 rounded-2xl max-w-md w-full text-center relative animate-in fade-in zoom-in-95 duration-300"
               >
                 <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/30">
                   <svg width="32" height="32" fill="none" stroke="#ef4444" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
@@ -321,10 +313,9 @@ export default function UniversalPage() {
                 >
                   Try Again
                 </button>
-              </motion.div>
-            </motion.div>
+              </div>
+            </div>
           )}
-        </AnimatePresence>
       </div>
     </ProtectedRoute>
   );
