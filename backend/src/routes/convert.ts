@@ -1058,9 +1058,17 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
               conversion.outputUrl = conversion.cdnUrl; // Ensure frontend gets the URL
             } catch (e) { console.error('[GoFile] error:', e); }
           } else {
-            // <= 100MB: Serve directly from our own backend (via Cloudflare Tunnel)
-            console.log(`[Local Serve] File is ${conversion.fileSize ? (conversion.fileSize/(1024*1024)).toFixed(2) : 'unknown'} MB, serving directly from backend.`);
-            conversion.outputUrl = `/api/convert/download/${conversion._id}`;
+            // <= 100MB: tmpfiles.org for direct high-speed download
+            try {
+              const { uploadToTmpFiles } = require('../utils/tmpfiles');
+              const tmpFilesUrl = await uploadToTmpFiles(downloadedFilePath, conversion.outputFilename);
+              conversion.cdnUrl = tmpFilesUrl;
+              conversion.outputUrl = tmpFilesUrl; // Frontend directly opens this URL
+              console.log(`[TmpFiles] Uploaded successfully: ${tmpFilesUrl}`);
+            } catch (e) { 
+              console.error('[TmpFiles] error:', e); 
+              conversion.outputUrl = `/api/convert/download/${conversion._id}`;
+            }
           }
 
           if (!conversion.outputUrl) {
