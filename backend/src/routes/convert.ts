@@ -1044,7 +1044,8 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
             // > 100MB: GoFile
             try { 
               let lastUploadUpdate = Date.now();
-              console.log(`[GoFile] Starting upload for ${formatFileSize(conversion.fileSize)} file...`);
+              const mbSize = (conversion.fileSize / (1024 * 1024)).toFixed(2);
+              console.log(`[GoFile] Starting upload for ${mbSize} MB file...`);
               conversion.gofileUrl = await uploadToGoFile(downloadedFilePath, conversion.outputFilename, (percent) => {
                 const now = Date.now();
                 if (now - lastUploadUpdate > 2000) {
