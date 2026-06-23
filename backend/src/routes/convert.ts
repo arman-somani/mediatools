@@ -904,20 +904,62 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
                   await new Promise(async (resolve, reject) => {
                     try {
                       const info = await ytdl.getInfo(cleanUrl);
-                      // Pick the best video+audio format that fits the target height
-                      const formats = info.formats
-                        .filter((f: any) => f.hasVideo && f.hasAudio && f.height && f.height <= targetH)
+                      
+                      // Find best video matching target height
+                      const videoFormats = info.formats
+                        .filter((f: any) => f.hasVideo && f.height && f.height <= targetH)
                         .sort((a: any, b: any) => (b.height || 0) - (a.height || 0));
-                      const chosen = formats[0];
-                      const opts = chosen
-                        ? { quality: chosen.itag }
-                        : { quality: 'highest', filter: 'audioandvideo' as const };
-                      console.log(`[Tier 5] Chose itag=${chosen?.itag} height=${chosen?.height || 'best available'}`);
+                      const chosenVideo = videoFormats[0];
+
+                      // Find best audio
+                      const audioFormats = info.formats
+                        .filter((f: any) => f.hasAudio && !f.hasVideo)
+                        .sort((a: any, b: any) => (b.audioBitrate || 0) - (a.audioBitrate || 0));
+                      const chosenAudio = audioFormats[0] || info.formats.find((f: any) => f.hasAudio);
+
                       const exactMp4 = path.join(outputDir, `${fileId}.mp4`);
-                      const stream = ytdl(cleanUrl, opts);
-                      stream.pipe(fs.createWriteStream(exactMp4));
-                      stream.on('end', () => resolve(true));
-                      stream.on('error', reject);
+
+                      if (chosenVideo && chosenAudio && !chosenVideo.hasAudio) {
+                        console.log(`[Tier 5] Merging Video itag=${chosenVideo.itag} (${chosenVideo.height}p) and Audio itag=${chosenAudio.itag}`);
+                        const ffmpeg = spawn('ffmpeg', [
+                          '-loglevel', '8', '-hide_banner',
+                          '-i', 'pipe:3',
+                          '-i', 'pipe:4',
+                          '-map', '0:v', '-map', '1:a',
+                          '-c:v', 'copy', '-c:a', 'aac',
+                          exactMp4
+                        ], {
+                          windowsHide: true,
+                          stdio: ['inherit', 'inherit', 'inherit', 'pipe', 'pipe']
+                        });
+
+                        ffmpeg.on('close', (code) => {
+                          if (code === 0) resolve(true);
+                          else reject(new Error('Tier 5 FFmpeg merging failed with code ' + code));
+                        });
+                        ffmpeg.on('error', reject);
+
+                        const videoStream = ytdl(cleanUrl, { quality: chosenVideo.itag });
+                        const audioStream = ytdl(cleanUrl, { quality: chosenAudio.itag });
+
+                        videoStream.pipe(ffmpeg.stdio[3] as any);
+                        audioStream.pipe(ffmpeg.stdio[4] as any);
+
+                        videoStream.on('error', reject);
+                        audioStream.on('error', reject);
+                      } else {
+                        // Fallback to merged stream if no separate streams found
+                        const formats = info.formats
+                          .filter((f: any) => f.hasVideo && f.hasAudio && f.height && f.height <= targetH)
+                          .sort((a: any, b: any) => (b.height || 0) - (a.height || 0));
+                        const chosen = formats[0];
+                        const opts = chosen ? { quality: chosen.itag } : { quality: 'highest', filter: 'audioandvideo' as const };
+                        console.log(`[Tier 5] Chose merged itag=${chosen?.itag} height=${chosen?.height || 'best'}`);
+                        const stream = ytdl(cleanUrl, opts);
+                        stream.pipe(fs.createWriteStream(exactMp4));
+                        stream.on('end', () => resolve(true));
+                        stream.on('error', reject);
+                      }
                     } catch (e) { reject(e); }
                   });
                   console.log(`ytdl-core UNIVERSAL succeeded`);
