@@ -223,13 +223,15 @@ router.get('/info', async (req: Request, res: Response): Promise<void> => {
 
     res.json({
       success: true,
-      title,
-      thumbnail,
-      duration,
-      videoUrl: data.url || videoFormats[0]?.url || '',
-      formats: {
-        video: videoFormats,
-        audio: audioFormats
+      data: {
+        title,
+        thumbnail,
+        duration,
+        videoUrl: data.url || videoFormats[0]?.url || '',
+        formats: {
+          video: videoFormats,
+          audio: audioFormats
+        }
       }
     });
 
