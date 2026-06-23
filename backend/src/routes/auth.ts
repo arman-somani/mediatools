@@ -141,7 +141,8 @@ router.post('/google', authLimiter, async (req: Request, res: Response): Promise
         user: { id: user._id, name: user.name, email: user.email, isPremium: user.isPremium, subscriptionType: user.subscriptionType },
       },
     });
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Google Auth Error:', error?.response?.data || error?.message || error);
     res.status(401).json({ success: false, message: 'Invalid Google token' });
   }
 });
