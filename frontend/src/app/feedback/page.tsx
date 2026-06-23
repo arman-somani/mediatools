@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import api from '@/lib/api';
 import PageWrapper from '@/components/PageWrapper';
 import AnimeReveal from '@/components/AnimeReveal';
 
