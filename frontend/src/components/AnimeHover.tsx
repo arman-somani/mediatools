@@ -66,7 +66,6 @@ export default function AnimeHover({
       onMouseLeave={handleMouseLeave}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
-      onMouseLeaveCapture={handleMouseLeave} // safeguard
     >
       {children}
     </div>
