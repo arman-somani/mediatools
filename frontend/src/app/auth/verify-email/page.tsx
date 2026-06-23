@@ -1,7 +1,7 @@
 'use client';
 import { useState, Suspense } from 'react';
-import { motion } from 'framer-motion';
 import { useSearchParams, useRouter } from 'next/navigation';
+import AnimeReveal from '@/components/AnimeReveal';
 import api from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 
@@ -45,7 +45,7 @@ function VerifyEmailForm() {
     <div className="w-full flex items-center justify-center py-24 px-6 relative min-h-screen">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(6,182,212,0.1)_0%,transparent_70%)] pointer-events-none" />
 
-      <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md relative z-10">
+      <AnimeReveal direction="up" className="w-full max-w-md relative z-10">
         <div className="text-center mb-10">
           <div className="w-16 h-16 bg-brand-cyan/10 rounded-2xl mx-auto flex items-center justify-center mb-6 shadow-xl border border-brand-cyan/20 text-brand-cyan">
             <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -96,7 +96,7 @@ function VerifyEmailForm() {
             </button>
           </form>
         </div>
-      </motion.div>
+      </AnimeReveal>
     </div>
   );
 }
