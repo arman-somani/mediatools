@@ -10,7 +10,6 @@ node test_download_methods.js
 ```
 
 This will test:
-- ✅ Cobalt API instances
 - ✅ Piped API
 - ✅ Invidious API  
 - ✅ Backend endpoints (if running)
@@ -18,10 +17,6 @@ This will test:
 **Expected Output:**
 ```
 ✅ Successful: 3/4
-
-✅ Cobalt API (co.wuk.sh)
-   Message: Successfully retrieved download URL
-   Duration: 234ms
 
 ✅ Piped API (pipedapi.kavin.rocks)
    Message: Got 12 video + 8 audio streams
@@ -90,15 +85,7 @@ When you request a download:
 ```
 1. Try yt-dlp (direct YouTube download)
    ↓ (if blocked)
-2. Try Cobalt API
-   - Automatically finds working instances
-   - Tests multiple instances
-   - Returns download URL
-   ↓ (if all instances fail)
-3. Try RapidAPI
-   - Requires API key
-   ↓ (if not configured)
-4. Try Innertube.js
+2. Try Innertube.js
    - Uses YouTube client library
    - Multiple client types (ANDROID, TV, MWEB)
    ↓
@@ -108,14 +95,12 @@ When you request a download:
 ## What Changed
 
 ### Code Changes
-- ✅ Created `backend/src/utils/cobalt.ts` - Smart Cobalt API utility
+
 - ✅ Updated `backend/src/routes/convert.ts` - Improved fallback chain
 - ✅ Created `test_download_methods.js` - Test suite
 
 ### Key Features
-- 🔄 **Automatic instance discovery** - Cobalt finds working instances
 - 🛡️ **Multiple fallbacks** - Doesn't rely on single method
-- ⚡ **Caching** - Instances cached for 1 hour (better performance)
 - 📊 **Comprehensive logging** - See which method worked in logs
 
 ## Troubleshooting
@@ -135,11 +120,7 @@ When you request a download:
 
 **"yt-dlp failed with code 1"**
 - This is expected - YouTube blocks yt-dlp
-- System will try Cobalt next ✅
-
-**"Cobalt audio failed"**  
-- All Cobalt instances are down (rare)
-- Will try RapidAPI or Innertube ✅
+- System will try alternative methods next ✅
 
 **"All download methods failed"**
 - All methods are blocked
@@ -152,8 +133,6 @@ When you request a download:
 MEDIATOOLS/
 ├── backend/
 │   ├── src/
-│   │   ├── utils/
-│   │   │   └── cobalt.ts          ← NEW: Cobalt API utility
 │   │   └── routes/
 │   │       └── convert.ts         ← MODIFIED: Updated routes
 │   └── outputs/                   ← Downloaded files here

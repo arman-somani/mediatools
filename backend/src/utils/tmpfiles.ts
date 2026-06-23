@@ -2,9 +2,10 @@ import FormData from 'form-data';
 import fs from 'fs';
 import axios from 'axios';
 
-export async function uploadToTmpFiles(filePath: string): Promise<string> {
+export async function uploadToTmpFiles(filePath: string, customName?: string): Promise<string> {
   const form = new FormData();
-  form.append('file', fs.createReadStream(filePath));
+  const options = customName ? { filename: customName } : {};
+  form.append('file', fs.createReadStream(filePath), options);
 
   try {
     const response = await axios.post('https://tmpfiles.org/api/v1/upload', form, {

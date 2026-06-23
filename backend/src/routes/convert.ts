@@ -27,6 +27,10 @@ import { interceptYoutubeStreams } from '../utils/puppeteerInterceptor';
 
 // OAuth2 is no longer supported by yt-dlp. Using browser cookies natively.
 function ytDlpAuthArgs(): string[] {
+  const cookiePath = path.resolve(process.cwd(), process.env.YOUTUBE_COOKIES || 'cookies.txt');
+  if (fs.existsSync(cookiePath)) {
+    return ['--cookies', cookiePath];
+  }
   return [];
 }
 
@@ -478,9 +482,19 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
                   await new Promise((resolve, reject) => {
                     const exactMp3 = path.join(outputDir, `${fileId}.mp3`);
                     const stream = ytdl(cleanUrl, { quality: 'highestaudio', filter: 'audioonly' });
-                    stream.pipe(fs.createWriteStream(exactMp3));
-                    stream.on('end', () => resolve(true));
-                    stream.on('error', reject);
+                    const ffmpeg = spawn('ffmpeg', [
+                      '-i', 'pipe:0',
+                      '-y',
+                      '-acodec', 'libmp3lame',
+                      '-b:a', `${audioQuality}k`,
+                      exactMp3
+                    ]);
+                    stream.pipe(ffmpeg.stdin);
+                    ffmpeg.on('close', (code) => {
+                      if (code === 0) resolve(true);
+                      else reject(new Error('ffmpeg transcoding failed with code ' + code));
+                    });
+                    ffmpeg.on('error', reject);
                   });
                   console.log(`ytdl-core AUDIO succeeded`);
                 } catch (tier5Err: any) {
@@ -492,10 +506,19 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
                       try {
                         const exactMp3 = path.join(outputDir, `${fileId}.mp3`);
                         const stream = await play.stream(cleanUrl, { discordPlayerCompatibility: true });
-                        const writeStream = fs.createWriteStream(exactMp3);
-                        stream.stream.pipe(writeStream);
-                        writeStream.on('finish', () => resolve(true));
-                        writeStream.on('error', reject);
+                        const ffmpeg = spawn('ffmpeg', [
+                          '-i', 'pipe:0',
+                          '-y',
+                          '-acodec', 'libmp3lame',
+                          '-b:a', `${audioQuality}k`,
+                          exactMp3
+                        ]);
+                        stream.stream.pipe(ffmpeg.stdin);
+                        ffmpeg.on('close', (code) => {
+                          if (code === 0) resolve(true);
+                          else reject(new Error('ffmpeg transcoding failed with code ' + code));
+                        });
+                        ffmpeg.on('error', reject);
                       } catch (err) {
                         reject(err);
                       }
@@ -541,11 +564,25 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
             try { 
               conversion.gofileUrl = await uploadToGoFile(downloadedFilePath, conversion.outputFilename); 
               conversion.cdnUrl = conversion.gofileUrl; // Redirect main button to GoFile
+              conversion.outputUrl = conversion.cdnUrl;
             } catch (e) { console.error('[GoFile] error:', e); }
+          } else {
+            // <= 100MB: tmpfiles.org for direct high-speed download
+            try {
+              const { uploadToTmpFiles } = require('../utils/tmpfiles');
+              const tmpFilesUrl = await uploadToTmpFiles(downloadedFilePath, conversion.outputFilename);
+              conversion.cdnUrl = tmpFilesUrl;
+              conversion.outputUrl = tmpFilesUrl; // Frontend directly opens this URL
+              console.log(`[TmpFiles] Uploaded successfully: ${tmpFilesUrl}`);
+            } catch (e) { 
+              console.error('[TmpFiles] error:', e); 
+              conversion.outputUrl = `/api/convert/download/${conversion._id}`;
+            }
           }
-          // Files under 100MB remain exclusively on local disk
 
-          conversion.outputUrl = `/api/convert/download/${conversion._id}`;
+          if (!conversion.outputUrl) {
+            conversion.outputUrl = `/api/convert/download/${conversion._id}`;
+          }
         } catch (e) {
           console.error('[Upload] failed, falling back to local serve:', e);
           conversion.outputUrl = `/api/convert/download/${conversion._id}`;
@@ -972,7 +1009,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
             // <= 100MB: tmpfiles.org for direct high-speed download
             try {
               const { uploadToTmpFiles } = require('../utils/tmpfiles');
-              const tmpFilesUrl = await uploadToTmpFiles(downloadedFilePath);
+              const tmpFilesUrl = await uploadToTmpFiles(downloadedFilePath, conversion.outputFilename);
               conversion.cdnUrl = tmpFilesUrl;
               conversion.outputUrl = tmpFilesUrl; // Frontend directly opens this URL
               console.log(`[TmpFiles] Uploaded successfully: ${tmpFilesUrl}`);
