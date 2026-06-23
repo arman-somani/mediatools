@@ -770,6 +770,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
     // Background processing
     (async () => {
       try {
+        await refreshYouTubeCookies(true);
         let videoTitle = req.body.title || 'Downloaded Video';
         let thumbnail = '';
 
