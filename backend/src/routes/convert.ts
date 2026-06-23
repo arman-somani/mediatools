@@ -91,7 +91,6 @@ function ytDlpArgs(args: string[]): string[] {
     '--retries', '5',
     '--extractor-retries', '3',
     '--fragment-retries', '3',
-    '--extractor-args', 'youtube:player-client=web,android',
     '--no-warnings'
   ];
 
