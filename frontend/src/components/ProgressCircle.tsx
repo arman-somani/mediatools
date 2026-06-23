@@ -1,5 +1,7 @@
 'use client';
-import { motion } from 'framer-motion';
+
+import { useEffect, useRef } from 'react';
+import anime from 'animejs';
 
 interface ProgressCircleProps {
   progress: number;
@@ -8,17 +10,42 @@ interface ProgressCircleProps {
 }
 
 export default function ProgressCircle({ progress, statusText, subText }: ProgressCircleProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const circleRef = useRef<SVGCircleElement>(null);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      anime({
+        targets: containerRef.current,
+        opacity: [0, 1],
+        duration: 500,
+        easing: 'easeOutSine'
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (circleRef.current) {
+      const targetDash = Math.max(0, Math.min(progress, 100)) * 2.9;
+      anime({
+        targets: circleRef.current,
+        strokeDasharray: `${targetDash} 300`,
+        duration: 500,
+        easing: 'easeOutQuart'
+      });
+    }
+  }, [progress]);
+
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-12 flex-1 flex flex-col items-center justify-center text-center">
+    <div ref={containerRef} className="py-12 flex-1 flex flex-col items-center justify-center text-center opacity-0">
       <div className="relative w-32 h-32 mb-8">
         <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
           <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8" />
-          <motion.circle
+          <circle
+            ref={circleRef}
             cx="50" cy="50" r="46" fill="none"
             stroke="url(#progressGradient)" strokeWidth="8" strokeLinecap="round"
-            initial={{ strokeDasharray: '0 300' }}
-            animate={{ strokeDasharray: `${Math.max(0, Math.min(progress, 100)) * 2.9} 300` }}
-            transition={{ duration: 0.5, ease: 'easeInOut' }}
+            style={{ strokeDasharray: '0 300' }}
           />
           <defs>
             <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -39,6 +66,6 @@ export default function ProgressCircle({ progress, statusText, subText }: Progre
           {subText}
         </p>
       )}
-    </motion.div>
+    </div>
   );
 }
