@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import api from '@/lib/api';
 import PageWrapper from '@/components/PageWrapper';
+import AnimeReveal from '@/components/AnimeReveal';
 
 export default function FeedbackPage() {
     const [name, setName] = useState('');
@@ -57,17 +56,11 @@ export default function FeedbackPage() {
                         </p>
                     </div>
 
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5 }}
-                    >
+                    <AnimeReveal direction="up" delay={100}>
                         <div className="glass-panel p-8 md:p-10 rounded-3xl relative overflow-hidden">
                             {status === 'success' ? (
-                                <motion.div
-                                    initial={{ opacity: 0, scale: 0.9 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a0a0a]/90 backdrop-blur-sm z-20 text-center px-6"
+                                <div
+                                    className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a0a0a]/90 backdrop-blur-sm z-20 text-center px-6 animate-in fade-in zoom-in-95 duration-300"
                                 >
                                     <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mb-4 text-emerald-400 border border-emerald-500/30">
                                         <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
@@ -76,7 +69,7 @@ export default function FeedbackPage() {
                                     </div>
                                     <h3 className="text-2xl font-bold mb-2">Message Sent!</h3>
                                     <p className="text-white/60">Thank you for reaching out. We appreciate your feedback.</p>
-                                </motion.div>
+                                </div>
                             ) : null}
 
                             {error && (
@@ -187,7 +180,7 @@ export default function FeedbackPage() {
                                 </button>
                             </form>
                         </div>
-                    </motion.div>
+                    </AnimeReveal>
                 </div>
             </main>
         </PageWrapper>
