@@ -61,15 +61,6 @@ export default function HomePage() {
                   YouTube MP4
                 </Link>
               </motion.div>
-
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.9 }} className="w-full sm:w-auto">
-                <Link href="/universal" className="glass-panel hover:bg-white/5 border border-white/20 px-6 md:px-8 py-3 md:py-4 text-base md:text-lg rounded-xl flex items-center justify-center gap-2 w-full transition-all">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="text-brand-cyan">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
-                  </svg>
-                  Universal Downloader
-                </Link>
-              </motion.div>
             </div>
           </motion.div>
         </section>
@@ -182,13 +173,6 @@ export default function HomePage() {
                     <path d="M4 6h16v12H4z" opacity=".3" /><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12zM8 15h2v-2h2v-2H8v4zm4-6h2V7h-2v2zM14 15h2v-4h-2v4z" />
                   </svg>
                   YouTube MP4
-                </Link>
-
-                <Link href="/universal" className="glass-panel hover:bg-white/5 border border-white/20 px-6 md:px-8 py-3 rounded-xl flex items-center gap-2 justify-center w-full sm:w-auto transition-all">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-brand-cyan">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
-                  </svg>
-                  Universal Downloader
                 </Link>
               </div>
             </div>
