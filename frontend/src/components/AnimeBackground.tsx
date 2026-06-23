@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import anime from 'animejs';
 
 export default function AnimeBackground() {
@@ -9,55 +9,60 @@ export default function AnimeBackground() {
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Create particles
-    const particleCount = 40;
     const container = containerRef.current;
-    container.innerHTML = ''; // Clean up
+    const numOrbs = 15;
+    
+    // Clear existing orbs in case of re-render
+    container.innerHTML = '';
 
-    for (let i = 0; i < particleCount; i++) {
-      const p = document.createElement('div');
-      p.classList.add('anime-particle');
+    const colors = ['#8b5cf6', '#06b6d4', '#10b981', '#3b82f6'];
+
+    for (let i = 0; i < numOrbs; i++) {
+      const orb = document.createElement('div');
       
-      // Random initial positions and sizes
-      const size = Math.random() * 4 + 2;
-      p.style.width = `${size}px`;
-      p.style.height = `${size}px`;
-      p.style.background = Math.random() > 0.5 ? 'rgba(168, 85, 247, 0.4)' : 'rgba(6, 182, 212, 0.4)';
-      p.style.borderRadius = '50%';
-      p.style.position = 'absolute';
-      p.style.top = `${Math.random() * 100}%`;
-      p.style.left = `${Math.random() * 100}%`;
-      p.style.filter = 'blur(1px)';
+      const size = Math.random() * 200 + 50;
+      const bg = colors[Math.floor(Math.random() * colors.length)];
       
-      container.appendChild(p);
+      orb.style.width = `${size}px`;
+      orb.style.height = `${size}px`;
+      orb.style.background = bg;
+      orb.style.position = 'absolute';
+      orb.style.borderRadius = '50%';
+      orb.style.filter = 'blur(80px)';
+      orb.style.opacity = '0.15';
+      
+      // Random starting positions
+      const startX = Math.random() * window.innerWidth;
+      const startY = Math.random() * window.innerHeight;
+      
+      orb.style.left = `${startX}px`;
+      orb.style.top = `${startY}px`;
+      
+      orb.classList.add('anime-orb');
+      container.appendChild(orb);
     }
 
-    const particles = container.querySelectorAll('.anime-particle');
-
-    // Animate particles continuously using anime.js
+    // Animate all orbs continuously
     anime({
-      targets: particles,
-      translateX: () => anime.random(-100, 100),
-      translateY: () => anime.random(-100, 100),
-      scale: () => anime.random(0.5, 2),
-      opacity: () => [0, anime.random(0.3, 0.8), 0],
-      duration: () => anime.random(4000, 10000),
-      delay: anime.stagger(200),
-      easing: 'easeInOutQuad',
+      targets: '.anime-orb',
+      translateX: () => anime.random(-300, 300),
+      translateY: () => anime.random(-300, 300),
+      scale: () => anime.random(0.8, 1.5),
+      duration: () => anime.random(6000, 12000),
       direction: 'alternate',
-      loop: true
+      loop: true,
+      easing: 'easeInOutQuad'
     });
 
     return () => {
-      anime.remove(particles);
+      anime.remove('.anime-orb');
     };
   }, []);
 
   return (
     <div 
       ref={containerRef} 
-      className="fixed inset-0 pointer-events-none z-[-1] overflow-hidden" 
-      aria-hidden="true" 
+      className="fixed inset-0 pointer-events-none z-[-1] overflow-hidden bg-gradient-to-b from-[#0a0a0a] to-[#121212]"
     />
   );
 }
