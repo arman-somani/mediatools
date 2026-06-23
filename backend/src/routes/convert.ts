@@ -1036,14 +1036,23 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         // Upload to CDN networks
         try {
           conversion.status = 'uploading';
-          conversion.progress = 100;
+          conversion.progress = 0; // Reset progress for upload phase
           await conversion.save();
 
           const HUNDRED_MB = 100 * 1024 * 1024;
           if (conversion.fileSize && conversion.fileSize > HUNDRED_MB) {
             // > 100MB: GoFile
             try { 
-              conversion.gofileUrl = await uploadToGoFile(downloadedFilePath, conversion.outputFilename); 
+              let lastUploadUpdate = Date.now();
+              console.log(`[GoFile] Starting upload for ${formatFileSize(conversion.fileSize)} file...`);
+              conversion.gofileUrl = await uploadToGoFile(downloadedFilePath, conversion.outputFilename, (percent) => {
+                const now = Date.now();
+                if (now - lastUploadUpdate > 2000) {
+                  lastUploadUpdate = now;
+                  console.log(`[GoFile] Uploading: ${percent}%`);
+                  Conversion.findByIdAndUpdate(conversion._id, { progress: percent }).catch(() => {});
+                }
+              }); 
               conversion.cdnUrl = conversion.gofileUrl; // Redirect main button to GoFile
               conversion.outputUrl = conversion.cdnUrl; // Ensure frontend gets the URL
             } catch (e) { console.error('[GoFile] error:', e); }
