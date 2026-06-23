@@ -1,12 +1,13 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import api, { apiUrl } from '@/lib/api';
 import { isValidYouTubeUrl, getYouTubeVideoId, formatFileSize } from '@/lib/utils';
 import Image from 'next/image';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import PageWrapper from '@/components/PageWrapper';
 import ProgressCircle from '@/components/ProgressCircle';
+import AnimeReveal from '@/components/AnimeReveal';
+import AnimeHover from '@/components/AnimeHover';
 import { requestNotificationPermission, sendNotification } from '@/lib/notifications';
 
 type Quality = '128' | '192' | '320';
@@ -122,22 +123,21 @@ export default function YouTubePage() {
   return (
     <ProtectedRoute>
       <div className="w-full max-w-4xl mx-auto px-6 py-20 flex flex-col items-center">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full text-center mb-12 pt-8">
+        <AnimeReveal direction="up" className="w-full text-center mb-12 pt-8">
           <h1 className="font-display font-bold text-4xl md:text-5xl tracking-tight mb-4 text-white">
             Download <span className="text-gradient">YouTube Audio</span>
           </h1>
           <p className="text-white max-w-2xl mx-auto text-lg">
             Extract high-quality Audio from any YouTube video instantly.
           </p>
-        </motion.div>
+        </AnimeReveal>
 
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }} className="w-full">
+        <AnimeReveal delay={100} direction="up" className="w-full">
           <div className="glass-panel p-5 sm:p-8 md:p-12 relative overflow-hidden h-full flex flex-col">
             <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
 
-              <AnimatePresence mode="wait">
                 {status === 'idle' || status === 'failed' ? (
-                  <motion.div key="input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="relative z-10 space-y-8 flex-1">
+                  <div key="input" className="relative z-10 space-y-8 flex-1 animate-in fade-in duration-300">
 
                     {/* URL Input */}
                     <div className="relative group">
@@ -154,13 +154,9 @@ export default function YouTubePage() {
                       />
                     </div>
 
-                    <AnimatePresence>
-                      {(isSearching || searchResults.length > 0) && !isValidYouTubeUrl(url) && url.length > 2 && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          className="absolute w-full mt-2 bg-[#1E1B2E]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-50 max-h-[400px] overflow-y-auto overflow-x-hidden p-2 custom-scrollbar"
+                    {(isSearching || searchResults.length > 0) && !isValidYouTubeUrl(url) && url.length > 2 && (
+                        <div
+                          className="absolute w-full mt-2 bg-[#1E1B2E]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-50 max-h-[400px] overflow-y-auto overflow-x-hidden p-2 custom-scrollbar animate-in slide-in-from-top-2 fade-in duration-300"
                         >
                           {isSearching && (
                             <div className="p-4 text-center text-white/50">Searching YouTube...</div>
@@ -183,23 +179,20 @@ export default function YouTubePage() {
                               </div>
                             </button>
                           ))}
-                        </motion.div>
+                        </div>
                       )}
-                    </AnimatePresence>
 
                     {/* Preview */}
-                    <AnimatePresence>
                       {thumbnailPreview && url && (
-                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden rounded-2xl relative border border-white/10 aspect-video w-full bg-black">
+                        <div className="overflow-hidden rounded-2xl relative border border-white/10 aspect-video w-full bg-black animate-in slide-in-from-bottom-2 fade-in duration-300">
                           <Image src={thumbnailPreview} alt="YouTube thumbnail" fill className="object-cover opacity-60" unoptimized />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-6">
                             <span className="flex items-center gap-2 text-white font-medium">
                               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> Valid YouTube Link
                             </span>
                           </div>
-                        </motion.div>
+                        </div>
                       )}
-                    </AnimatePresence>
 
                     {/* Controls: quality + button on same row, perfectly aligned */}
                     <div className="flex flex-col sm:flex-row gap-4">
@@ -222,18 +215,18 @@ export default function YouTubePage() {
                       {/* Button ? top aligned with quality track label */}
                       <div className="flex flex-col justify-start">
                         <label className="quality-label opacity-0 select-none">BTN</label>
-                        <motion.button
-                          whileHover={url ? { y: -2 } : {}}
-                          whileTap={url ? { scale: 0.96 } : {}}
-                          onClick={handleConvert}
-                          disabled={!url}
-                          className={`min-w-[160px] h-[46px] rounded-xl font-semibold transition-all duration-300 ${!url ? 'bg-white/5 text-white/40 border border-white/10 cursor-not-allowed' : 'btn-primary'}`}
-                        >
-                          Convert to Audio </motion.button>
+                        <AnimeHover scaleHover={url ? 1.02 : 1} scaleTap={url ? 0.96 : 1}>
+                          <button
+                            onClick={handleConvert}
+                            disabled={!url}
+                            className={`w-full min-w-[160px] h-[46px] rounded-xl font-semibold transition-all duration-300 ${!url ? 'bg-white/5 text-white/40 border border-white/10 cursor-not-allowed' : 'btn-primary'}`}
+                          >
+                            Convert to Audio </button>
+                        </AnimeHover>
                       </div>
                     </div>
 
-                  </motion.div>
+                  </div>
                 ) : status === 'processing' || status === 'uploading' ? (
                 <ProgressCircle
                   progress={progress}
@@ -241,7 +234,7 @@ export default function YouTubePage() {
                   subText={status === 'uploading' ? "Generating high-speed CDN link" : "Fetching highest quality audio securely"}
                 />
                 ) : (
-                  <motion.div key="done" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="py-8 flex-1 text-center flex flex-col items-center">
+                  <div key="done" className="py-8 flex-1 text-center flex flex-col items-center animate-in fade-in zoom-in-95 duration-300">
                     {videoInfo?.thumbnail && (
                       <div className="w-full max-w-sm aspect-video relative rounded-2xl overflow-hidden border border-white/10 mb-8 shadow-2xl">
                         <Image src={videoInfo.thumbnail} alt="thumbnail" fill className="object-cover" unoptimized />
@@ -265,37 +258,32 @@ export default function YouTubePage() {
 
                     <div className="flex flex-col sm:flex-row gap-4 w-full max-w-lg mx-auto">
                       <div className="flex flex-col gap-3 flex-1">
-                        <motion.button 
-                          onClick={() => { window.open(jobId, '_blank'); }}
-                          whileHover={{ y: -2 }} whileTap={{ scale: 0.96 }}
-                          className="w-full font-semibold rounded-xl flex items-center justify-center gap-2 h-14 transition-all duration-300 btn-primary">
-                          <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                          Download Audio 
-                        </motion.button>
+                        <AnimeHover scaleHover={1.02} scaleTap={0.96} className="w-full">
+                          <button 
+                            onClick={() => { window.open(jobId, '_blank'); }}
+                            className="w-full font-semibold rounded-xl flex items-center justify-center gap-2 h-14 transition-all duration-300 btn-primary">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                            Download Audio 
+                          </button>
+                        </AnimeHover>
                       </div>
-                      <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.96 }} onClick={reset} className="glass-panel hover:bg-white/5 border border-white/20 h-14 w-full sm:w-auto px-8 whitespace-nowrap text-white transition-all">
-                        Another
-                      </motion.button>
+                      <AnimeHover scaleHover={1.02} scaleTap={0.96} className="w-full sm:w-auto">
+                        <button onClick={reset} className="glass-panel hover:bg-white/5 border border-white/20 h-14 w-full px-8 whitespace-nowrap text-white transition-all">
+                          Another
+                        </button>
+                      </AnimeHover>
                     </div>
-                  </motion.div>
+                  </div>
                 )}
-              </AnimatePresence>
-            </div>
-          </motion.div>
+          </div>
+        </AnimeReveal>
         {/* Error Dialog Modal */}
-        <AnimatePresence>
           {error && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+            <div
               className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
             >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                className="glass-panel p-8 rounded-2xl max-w-md w-full text-center relative"
+              <div
+                className="glass-panel p-8 rounded-2xl max-w-md w-full text-center relative animate-in fade-in zoom-in-95 duration-300"
               >
                 <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/30">
                   <svg width="32" height="32" fill="none" stroke="#ef4444" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
@@ -310,10 +298,9 @@ export default function YouTubePage() {
                 >
                   Try Again
                 </button>
-              </motion.div>
-            </motion.div>
+              </div>
+            </div>
           )}
-        </AnimatePresence>
       </div>
     </ProtectedRoute>
   );
