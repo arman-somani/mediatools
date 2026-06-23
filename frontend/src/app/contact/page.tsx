@@ -1,7 +1,7 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import PageWrapper from '@/components/PageWrapper';
+import AnimeReveal from '@/components/AnimeReveal';
 
 export default function ContactPage() {
     return (
@@ -12,10 +12,8 @@ export default function ContactPage() {
                 <div className="absolute bottom-[20%] right-[10%] w-[30%] h-[30%] bg-brand-cyan/10 blur-[120px] rounded-full pointer-events-none" />
 
                 <div className="w-full max-w-xl relative z-10 mt-10">
-                    <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5 }}
+                    <AnimeReveal
+                        direction="up"
                         className="glass-panel p-6 sm:p-10 md:p-14 rounded-3xl text-center shadow-2xl relative overflow-hidden"
                     >
                         <div className="w-20 h-20 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-xl border border-white/10 text-brand-cyan">
@@ -44,7 +42,7 @@ export default function ContactPage() {
 
 
                         </div>
-                    </motion.div>
+                    </AnimeReveal>
                 </div>
             </main>
         </PageWrapper>
