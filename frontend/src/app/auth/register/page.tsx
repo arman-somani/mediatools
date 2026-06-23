@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import Link from 'next/link';
+import AnimeReveal from '@/components/AnimeReveal';
 import api from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
@@ -48,7 +48,7 @@ export default function RegisterPage() {
     <div className="w-full flex items-center justify-center py-24 px-6 relative">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(6,182,212,0.1)_0%,transparent_70%)] pointer-events-none" />
 
-      <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md relative z-10">
+      <AnimeReveal direction="up" className="w-full max-w-md relative z-10">
         <div className="text-center mb-10">
           <div className="w-16 h-16 bg-white/5 rounded-2xl mx-auto flex items-center justify-center mb-6 shadow-xl border border-white/10 text-white">
             <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
@@ -117,7 +117,7 @@ export default function RegisterPage() {
             <Link href="/auth/login" className="text-brand-cyan font-medium hover:text-brand-purple transition-colors">Sign in</Link>
           </p>
         </div>
-      </motion.div>
+      </AnimeReveal>
     </div>
   );
 }
