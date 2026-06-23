@@ -18,8 +18,6 @@ export default function HomePage() {
               <source src="https://cdn.pixabay.com/video/2020/05/25/40141-425126867_large.mp4" type="video/mp4" />
             </video>
             <div className="absolute inset-0 bg-gradient-to-b from-[#0f172a]/70 via-[#0f172a]/50 to-[#0f172a] pointer-events-none" />
-          </div>
-
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[500px] md:w-[800px] h-[300px] md:h-[400px] bg-brand-purple/20 blur-[100px] md:blur-[140px] rounded-full pointer-events-none z-0" />
 
           <AnimeReveal
