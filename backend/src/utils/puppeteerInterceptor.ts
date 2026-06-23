@@ -66,7 +66,7 @@ export async function refreshYouTubeCookies() {
     } catch (err: any) {
         console.error('[Cookies] Failed to refresh cookies:', err.message);
     } finally {
-        await browser.close().catch(() => {});
+        browser.close().catch(() => {});
     }
 }
 
