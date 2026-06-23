@@ -154,6 +154,7 @@
 /* ─── Quality Selector ───────────────────────────── */
 .quality-track {
   display: flex;
+  flex-wrap: wrap;
   padding: 5px;
   border-radius: 12px;
   background: var(--quality-track-bg);
