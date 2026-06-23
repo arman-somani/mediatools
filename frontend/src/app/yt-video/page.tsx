@@ -1,12 +1,12 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import api, { apiUrl } from '@/lib/api';
 import { isValidYouTubeUrl, getYouTubeVideoId, formatFileSize } from '@/lib/utils';
 import Image from 'next/image';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ProgressCircle from '@/components/ProgressCircle';
 import PageWrapper from '@/components/PageWrapper';
+import AnimeReveal from '@/components/AnimeReveal';
 import { requestNotificationPermission, sendNotification } from '@/lib/notifications';
 
 type VideoQuality = '360p' | '480p' | '720p' | '1080p' | '4K' | '8K';
@@ -130,22 +130,21 @@ export default function YtVideoPage() {
     <ProtectedRoute>
       <div className="w-full max-w-4xl mx-auto px-6 py-20 flex flex-col items-center">
         {/* Header */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full text-center mb-12 pt-8">
+        <AnimeReveal direction="up" className="w-full text-center mb-12 pt-8">
           <h1 className="font-display font-bold text-4xl md:text-5xl tracking-tight mb-4 text-white">
             Download <span className="text-gradient">YouTube Video</span>
           </h1>
           <p className="text-white max-w-2xl mx-auto text-lg">
             Paste any YouTube Video Link, select preferred quality, and download the full video file.
           </p>
-        </motion.div>
+        </AnimeReveal>
 
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }} className="w-full">
+        <AnimeReveal delay={100} direction="up" className="w-full">
           <div className="glass-panel p-5 sm:p-8 md:p-12 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-brand-cyan/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
 
-            <AnimatePresence mode="wait">
-              {status === 'idle' || status === 'failed' ? (
-                <motion.div key="input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="relative z-10 space-y-8">
+            {status === 'idle' || status === 'failed' ? (
+                <div key="input" className="relative z-10 space-y-8">
 
                   <div className="relative group">
                     <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none z-10 text-white/40 transition-colors duration-200 group-focus-within:text-brand-purple">
@@ -163,12 +162,8 @@ export default function YtVideoPage() {
                     />
                   </div>
 
-                  <AnimatePresence>
                     {(isSearching || searchResults.length > 0) && !isValidYouTubeUrl(url) && url.length > 2 && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
+                      <div
                         className="absolute w-full mt-2 bg-[#1E1B2E]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-50 max-h-[400px] overflow-y-auto overflow-x-hidden p-2 custom-scrollbar"
                       >
                         {isSearching && (
@@ -192,16 +187,11 @@ export default function YtVideoPage() {
                             </div>
                           </button>
                         ))}
-                      </motion.div>
+                      </div>
                     )}
-                  </AnimatePresence>
 
-                  <AnimatePresence>
                     {thumbnailPreview && url && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
+                      <div
                         className="overflow-hidden rounded-2xl relative border border-white/10 aspect-video w-full bg-black"
                       >
                         <Image src={thumbnailPreview} alt="YouTube thumbnail" fill className="object-cover opacity-60" unoptimized />
@@ -210,9 +200,8 @@ export default function YtVideoPage() {
                             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> Valid YouTube Link
                           </span>
                         </div>
-                      </motion.div>
+                      </div>
                     )}
-                  </AnimatePresence>
 
                   {/* Controls: quality + button on same row, perfectly aligned */}
                   <div className="flex flex-col md:flex-row gap-4">
@@ -244,7 +233,7 @@ export default function YtVideoPage() {
                     </div>
                   </div>
 
-                </motion.div>
+                </div>
 
               ) : status === 'processing' || status === 'uploading' ? (
                 <ProgressCircle
@@ -254,7 +243,7 @@ export default function YtVideoPage() {
                 />
 
               ) : (
-                <motion.div key="done" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="py-8 text-center flex flex-col items-center">
+                <div key="done" className="py-8 text-center flex flex-col items-center">
                   {videoInfo?.thumbnail && (
                     <div className="w-full max-w-sm aspect-video relative rounded-2xl overflow-hidden border border-white/10 mb-8 shadow-2xl">
                       <Image src={videoInfo.thumbnail} alt="thumbnail" fill className="object-cover" unoptimized />
@@ -303,18 +292,13 @@ export default function YtVideoPage() {
                       Download Another
                     </button>
                   </div>
-                </motion.div>
+                </div>
               )}
-            </AnimatePresence>
           </div>
-        </motion.div>
+        </AnimeReveal>
 
-        <AnimatePresence>
           {error && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+            <div
               className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
             >
               <motion.div
