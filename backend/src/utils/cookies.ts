@@ -2,6 +2,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import os from 'os';
 import fs from 'fs';
+import { refreshYouTubeCookies as refreshViaPuppeteer } from './puppeteerInterceptor';
 
 const execAsync = promisify(exec);
 
@@ -9,14 +10,11 @@ let fetchPromise: Promise<void> | null = null;
 let lastFetchTime = 0;
 
 export async function refreshYouTubeCookies(force = false): Promise<void> {
-  // Only run on Linux (Google Colab)
-  if (os.platform() !== 'linux') return;
-
   const now = Date.now();
   
   // If we successfully fetched cookies within the last 30 seconds, 
   // don't fetch again. They are still perfectly fresh!
-  if (now - lastFetchTime < 30000) {
+  if (!force && now - lastFetchTime < 30000) {
     return;
   }
 
@@ -30,15 +28,29 @@ export async function refreshYouTubeCookies(force = false): Promise<void> {
   // Start the fetch and store the promise so other requests can await it
   fetchPromise = (async () => {
     try {
-      console.log('🌐 [Cookies] Launching Headless Chrome to fetch fresh YouTube cookies...');
-      
-      if (force && fs.existsSync('/root/.config/google-chrome')) {
-        await execAsync('rm -rf /root/.config/google-chrome');
-        console.log('🧹 [Cookies] Wiped old Chrome profile for a forced fresh start.');
+      // Check if google-chrome-stable is installed (Colab environment)
+      let isColab = false;
+      if (os.platform() === 'linux') {
+        try {
+          await execAsync('which google-chrome-stable');
+          isColab = true;
+        } catch (e) {
+          isColab = false;
+        }
       }
 
-      await execAsync('google-chrome-stable --headless --no-sandbox --disable-dev-shm-usage --user-data-dir=/root/.config/google-chrome --password-store=basic --virtual-time-budget=5000 https://www.youtube.com');
-      
+      if (isColab) {
+        console.log('🌐 [Cookies] Colab environment detected. Launching native Google Chrome...');
+        if (force && fs.existsSync('/root/.config/google-chrome')) {
+          await execAsync('rm -rf /root/.config/google-chrome');
+          console.log('🧹 [Cookies] Wiped old Chrome profile for a forced fresh start.');
+        }
+        await execAsync('google-chrome-stable --headless --no-sandbox --disable-dev-shm-usage --user-data-dir=/root/.config/google-chrome --password-store=basic --virtual-time-budget=5000 https://www.youtube.com');
+      } else {
+        console.log('🌐 [Cookies] Render/Docker/Local environment detected. Launching Headless Chromium via Puppeteer...');
+        await refreshViaPuppeteer();
+      }
+
       lastFetchTime = Date.now();
       console.log('✅ [Cookies] Fresh YouTube cookies successfully generated and stored!');
     } catch (error: any) {

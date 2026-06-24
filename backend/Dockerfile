@@ -23,6 +23,11 @@ RUN apt-get update && apt-get install -y \
     libasound2 \
     && rm -rf /var/lib/apt/lists/*
 
+# Install native Google Chrome so Render runs exactly like Colab
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
+    sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' && \
+    apt-get update && apt-get install -y google-chrome-stable
+
 # Install the latest yt-dlp nightly build via pip
 # This avoids the PyInstaller bug that prevents Node.js from being used as a JS runtime
 RUN pip3 install -U https://github.com/yt-dlp/yt-dlp/archive/master.zip --break-system-packages

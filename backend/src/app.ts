@@ -24,7 +24,7 @@ import searchRoutes from './routes/search';
 import extractorRoutes from './routes/extractor';
 import { errorHandler } from './middleware/errorHandler';
 import { cleanupOldFiles } from './utils/cleanup';
-import { refreshYouTubeCookies } from './utils/puppeteerInterceptor';
+import { refreshYouTubeCookies } from './utils/cookies';
 
 const app = express();
 
@@ -87,14 +87,14 @@ const start = async () => {
   // Cleanup job - run every 30 minutes
   setInterval(cleanupOldFiles, 30 * 60 * 1000);
 
-  // Auto-refresh YouTube cookies every 1 hour to ensure they are always fresh
+  // Auto-refresh YouTube cookies every 10 minutes to ensure they are always fresh
   setInterval(async () => {
     try {
-      await refreshYouTubeCookies();
+      await refreshYouTubeCookies(true); // force a refresh since 10 mins have passed
     } catch (e) {
       console.error('Scheduled cookie refresh failed:', e);
     }
-  }, 60 * 60 * 1000);
+  }, 10 * 60 * 1000);
 
   app.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`🚀 MediaTools Backend running on port ${PORT}`);

@@ -16,6 +16,10 @@ export async function refreshYouTubeCookies() {
     let executablePath = '';
     if (fs.existsSync('/usr/bin/chromium-browser')) {
         executablePath = '/usr/bin/chromium-browser';
+    } else if (fs.existsSync('/usr/bin/google-chrome-stable')) {
+        executablePath = '/usr/bin/google-chrome-stable';
+    } else if (fs.existsSync('/usr/bin/google-chrome')) {
+        executablePath = '/usr/bin/google-chrome';
     } else {
         executablePath = await chromium.executablePath();
     }
@@ -76,6 +80,10 @@ export async function interceptYoutubeStreams(url: string, type: 'video' | 'audi
     // Use Colab's native chromium if available, otherwise use sparticuz
     if (fs.existsSync('/usr/bin/chromium-browser')) {
         executablePath = '/usr/bin/chromium-browser';
+    } else if (fs.existsSync('/usr/bin/google-chrome-stable')) {
+        executablePath = '/usr/bin/google-chrome-stable';
+    } else if (fs.existsSync('/usr/bin/google-chrome')) {
+        executablePath = '/usr/bin/google-chrome';
     } else {
         executablePath = await chromium.executablePath();
     }
