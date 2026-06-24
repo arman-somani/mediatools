@@ -1,0 +1,37 @@
+name: Sync Backend to Hugging Face Space
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/**' # Only trigger when backend files change
+  workflow_dispatch: # Allows you to manually trigger it from the GitHub Actions tab
+
+jobs:
+  sync-to-hub:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout GitHub Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - name: Sync and Push to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          # 1. Configure Git
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "GitHub Actions"
+          
+          # 2. Clone your Hugging Face Space repository into a temporary folder
+          git clone https://mediatools:$HF_TOKEN@huggingface.co/spaces/mediatools/mediatools-backend hf_space
+          
+          # 3. Copy only the backend folder contents into the Hugging Face repo
+          cp -a backend/. hf_space/
+          
+          # 4. Push the updates to Hugging Face!
+          cd hf_space
+          git add .
+          git commit -m "🚀 Auto-deploy from GitHub" || echo "No changes to commit"
+          git push

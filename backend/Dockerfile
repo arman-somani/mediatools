@@ -51,8 +51,9 @@ RUN npm run build
 # Create necessary directories for the app
 RUN mkdir -p uploads outputs
 
-# Render automatically passes the PORT env variable
-EXPOSE 5000
+# Hugging Face Spaces requires the app to listen on port 7860
+ENV PORT=7860
+EXPOSE 7860
 
 # Start the application
 CMD ["npm", "start"]
