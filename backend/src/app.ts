@@ -57,6 +57,11 @@ app.get('/api/health', (_req, res) => {
 });
 
 // Routes
+// Health check endpoint for Hugging Face
+app.get('/', (req, res) => {
+  res.status(200).send('MediaTools Backend is perfectly running! 🚀');
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/convert', convertRoutes);
 app.use('/api/user', userRoutes);
