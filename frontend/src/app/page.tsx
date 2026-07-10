@@ -122,13 +122,16 @@ export default function HomePage() {
                 key={i}
                 scaleHover={1.02}
                 scaleTap={0.98}
-                className="glass-panel glass-panel-hover p-8 opacity-0"
+                className="glass-panel glass-panel-hover p-8 opacity-0 relative overflow-hidden"
               >
-                <div className={`w-14 h-14 ${feature.bg} border ${feature.border} rounded-2xl flex items-center justify-center mb-6 ${feature.color}`}>
-                  {feature.icon}
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-violet/10 to-brand-cyan/5 pointer-events-none" />
+                <div className="relative z-10">
+                  <div className={`w-14 h-14 ${feature.bg} border ${feature.border} rounded-2xl flex items-center justify-center mb-6 ${feature.color}`}>
+                    {feature.icon}
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-3">{feature.title}</h3>
+                  <p className="text-white/60 leading-relaxed">{feature.description}</p>
                 </div>
-                <h3 className="text-xl font-bold text-white mb-3">{feature.title}</h3>
-                <p className="text-white/60 leading-relaxed">{feature.description}</p>
               </AnimeHover>
             ))}
           </AnimeReveal>
