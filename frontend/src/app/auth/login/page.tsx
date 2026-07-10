@@ -1,9 +1,9 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import AnimeReveal from '@/components/AnimeReveal';
 import api from '@/lib/api';
-import { useAuthStore } from '@/lib/store';
+import { useAuthStore, useServerStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
 import { useGoogleLogin } from '@react-oauth/google';
 
@@ -12,11 +12,26 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showServerPopup, setShowServerPopup] = useState(false);
+  const [countdown, setCountdown] = useState(30);
   const { setAuth } = useAuthStore();
+  const { isServerReady } = useServerStore();
   const router = useRouter();
+
+  useEffect(() => {
+    if (showServerPopup && countdown > 0) {
+      const t = setTimeout(() => setCountdown(c => c - 1), 1000);
+      return () => clearTimeout(t);
+    }
+  }, [showServerPopup, countdown]);
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isServerReady) {
+      setShowServerPopup(true);
+      setCountdown(30);
+    }
     setLoading(true); setError('');
     try {
       const { data } = await api.post('/auth/login', { email, password });
@@ -25,11 +40,18 @@ export default function LoginPage() {
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setError(msg || 'Invalid email or password');
-    } finally { setLoading(false); }
+    } finally { 
+      setLoading(false); 
+      setShowServerPopup(false);
+    }
   };
 
   const handleGoogleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
+      if (!isServerReady) {
+        setShowServerPopup(true);
+        setCountdown(30);
+      }
       setLoading(true); setError('');
       try {
         const { data } = await api.post('/auth/google', { accessToken: tokenResponse.access_token });
@@ -38,7 +60,10 @@ export default function LoginPage() {
       } catch (err: unknown) {
         const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
         setError(msg || 'Google login failed');
-      } finally { setLoading(false); }
+      } finally { 
+        setLoading(false); 
+        setShowServerPopup(false);
+      }
     },
     onError: () => setError('Google login failed'),
   });
@@ -46,6 +71,28 @@ export default function LoginPage() {
   return (
     <div className="w-full flex items-center justify-center py-24 px-6 relative">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(168,85,247,0.1)_0%,transparent_70%)] pointer-events-none" />
+
+      {/* Server Wake-up Popup */}
+      {showServerPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <AnimeReveal direction="up" className="bg-slate-900 border border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-2xl text-center relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-brand-violet/20 to-brand-cyan/20 pointer-events-none" />
+            <div className="relative z-10">
+              <div className="w-12 h-12 rounded-full bg-brand-violet/20 mx-auto flex items-center justify-center mb-4">
+                <div className="w-6 h-6 border-2 border-brand-violet border-t-transparent rounded-full animate-spin" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Server Waking Up</h3>
+              <p className="text-white/70 text-sm mb-4">
+                We're spinning up the backend. It will catch your login in approximately:
+              </p>
+              <div className="text-3xl font-bold font-display text-brand-cyan mb-2">
+                {countdown}s
+              </div>
+              <p className="text-white/40 text-xs">Please wait, logging you in...</p>
+            </div>
+          </AnimeReveal>
+        </div>
+      )}
 
       <AnimeReveal direction="up" className="w-full max-w-md relative z-10">
         <div className="text-center mb-10">

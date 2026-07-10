@@ -59,3 +59,17 @@ export const useThemeStore = create<ThemeStore>()(
     { name: 'mediatools-theme' }
   )
 );
+
+interface ServerStore {
+  isServerReady: boolean;
+  hasCheckedServer: boolean;
+  setServerReady: (ready: boolean) => void;
+  setHasCheckedServer: (checked: boolean) => void;
+}
+
+export const useServerStore = create<ServerStore>()((set) => ({
+  isServerReady: false,
+  hasCheckedServer: false,
+  setServerReady: (ready) => set({ isServerReady: ready }),
+  setHasCheckedServer: (checked) => set({ hasCheckedServer: checked }),
+}));
