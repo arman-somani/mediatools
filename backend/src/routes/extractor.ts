@@ -163,7 +163,6 @@ router.get('/info', async (req: Request, res: Response): Promise<void> => {
               }
             }
           }
-        }
       }
 
     if (!data) {

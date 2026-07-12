@@ -528,7 +528,6 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
                     throw new Error('All download attempts failed across all tiers.');
                   }
                 }
-              }
             }
           }
 
@@ -980,7 +979,6 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
                     throw new Error('All download attempts failed across all tiers.');
                   }
                 }
-              }
             }
           }
 
