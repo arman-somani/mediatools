@@ -13,7 +13,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showServerPopup, setShowServerPopup] = useState(false);
-  const [countdown, setCountdown] = useState(30);
+  const [countdown, setCountdown] = useState(60);
   const { setAuth } = useAuthStore();
   const { isServerReady } = useServerStore();
   const router = useRouter();
@@ -30,7 +30,7 @@ export default function LoginPage() {
     e.preventDefault();
     if (!isServerReady) {
       setShowServerPopup(true);
-      setCountdown(30);
+      setCountdown(60);
     }
     setLoading(true); setError('');
     try {
@@ -50,7 +50,7 @@ export default function LoginPage() {
     onSuccess: async (tokenResponse) => {
       if (!isServerReady) {
         setShowServerPopup(true);
-        setCountdown(30);
+        setCountdown(60);
       }
       setLoading(true); setError('');
       try {

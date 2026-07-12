@@ -12,9 +12,9 @@ let lastFetchTime = 0;
 export async function refreshYouTubeCookies(force = false): Promise<void> {
   const now = Date.now();
   
-  // If we successfully fetched cookies within the last 30 seconds, 
+  // If we successfully fetched cookies within the last 60 seconds, 
   // don't fetch again. They are still perfectly fresh!
-  if (!force && now - lastFetchTime < 30000) {
+  if (!force && now - lastFetchTime < 60000) {
     return;
   }
 
