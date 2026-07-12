@@ -792,7 +792,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
             '-v',
             '-f', formatStr,
             '-S', `res:${targetHeight}`,
-            '--merge-output-format', 'mkv',
+            '--merge-output-format', 'mp4',
             '-o', path.join(outputDir, `${fileId}.%(ext)s`),
             '--no-playlist',
             '--concurrent-fragments', '2',
