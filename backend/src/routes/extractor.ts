@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { spawn } from 'child_process';
+import { spawn, execSync } from 'child_process';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
@@ -14,6 +14,14 @@ function getYtDlpPath(): string {
 }
 
 function ytDlpAuthArgs(): string[] {
+  try {
+    const stdout = execSync('bgutil-pot generate', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+    const token = stdout.trim();
+    if (token) {
+      return ['--extractor-args', `youtube:player-client=web,default;po_token=web+${token}`];
+    }
+  } catch (e) {}
+
   // If running on Colab (Linux) and the Chrome profile exists, extract fresh cookies directly!
   if (os.platform() === 'linux' && !process.env.RENDER && fs.existsSync('/root/.config/google-chrome')) {
     return ['--cookies-from-browser', 'chrome:/root/.config/google-chrome'];
@@ -102,23 +110,9 @@ router.get('/info', async (req: Request, res: Response): Promise<void> => {
         }
         if (!success) throw new Error('All Tier 2 proxies failed.');
       } catch (tier2Err: any) {
-        console.warn(`[Extractor] Tier 2 failed: ${tier2Err.message}. Triggering Tier 3 (Proxy Network 2)...`);
+        console.error(`[Extractor] Tier 2 failed:`, tier2Err.message);
+        console.log(`[Extractor] Triggering Tier 5 (@distube/ytdl-core)...`);
         try {
-          const { getRandomFreeProxies } = require('../utils/freeproxy');
-          const proxies = await getRandomFreeProxies(10);
-          let success = false;
-          for (const proxy of proxies) {
-            console.log(`[Extractor] Trying Tier 3 proxy: ${proxy}`);
-            try {
-              data = await runYtDlpJson(url, proxy);
-              if (data && data.formats) { success = true; break; }
-            } catch(e) { console.warn(`[Extractor] Proxy ${proxy} failed.`); }
-          }
-          if (!success) throw new Error('All Tier 3 proxies failed.');
-        } catch (tier3Err: any) {
-          console.error(`[Extractor] Tier 3 failed:`, tier3Err.message);
-          console.log(`[Extractor] Triggering Tier 5 (@distube/ytdl-core)...`);
-          try {
             const ytdl = require('@distube/ytdl-core');
             const info = await ytdl.getInfo(url);
             data = {

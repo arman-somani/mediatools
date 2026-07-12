@@ -3,7 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
-import { exec, spawn } from 'child_process';
+import { exec, spawn, execSync } from 'child_process';
 import { Readable } from 'stream';
 import { pipeline } from 'stream/promises';
 import { promisify } from 'util';
@@ -27,6 +27,14 @@ import { interceptYoutubeStreams } from '../utils/puppeteerInterceptor';
 import { refreshYouTubeCookies } from '../utils/cookies';
 
 function ytDlpAuthArgs(): string[] {
+  try {
+    const stdout = execSync('bgutil-pot generate', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+    const token = stdout.trim();
+    if (token) {
+      return ['--extractor-args', `youtube:player-client=web,default;po_token=web+${token}`];
+    }
+  } catch (e) {}
+
   // If running on Colab (Linux) and the Chrome profile exists, extract fresh cookies directly!
   if (os.platform() === 'linux' && !process.env.RENDER && fs.existsSync('/root/.config/google-chrome')) {
     return ['--cookies-from-browser', 'chrome:/root/.config/google-chrome'];
@@ -466,26 +474,10 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
             }
             if (!success) throw new Error('All Tier 2 proxies failed.');
           } catch (tier2Err: any) {
-            console.error(`Tier 2 failed: ${tier2Err.message}. Triggering Tier 3 (Proxy Network 2)...`);
+            console.error(`Tier 2 failed:`, tier2Err.message);
+            console.log(`Triggering Tier 5 (@distube/ytdl-core)...`);
             try {
-              const { getRandomFreeProxies } = require('../utils/freeproxy');
-              const proxies = await getRandomFreeProxies(10);
-              let success = false;
-              for (const proxy of proxies) {
-                console.log(`Trying Tier 3 proxy: ${proxy}`);
-                try {
-                  await runYtDlpAudio(proxy);
-                  success = true;
-                  console.log(`yt-dlp AUDIO succeeded via Tier 3 Proxy`);
-                  break;
-                } catch (proxyErr) { console.warn(`Proxy ${proxy} failed.`); }
-              }
-              if (!success) throw new Error('All Tier 3 proxies failed.');
-              } catch (tier3Err: any) {
-                console.error(`Tier 3 failed:`, tier3Err.message);
-                console.log(`Triggering Tier 5 (@distube/ytdl-core)...`);
-                try {
-                  const ytdl = require('@distube/ytdl-core');
+              const ytdl = require('@distube/ytdl-core');
                   await new Promise((resolve, reject) => {
                     const exactMp3 = path.join(outputDir, `${fileId}.mp3`);
                     const stream = ytdl(cleanUrl, { quality: 'highestaudio', filter: 'audioonly' });
@@ -883,24 +875,9 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
             }
             if (!success) throw new Error('All Tier 2 proxies failed.');
           } catch (tier2Err: any) {
-            console.error(`Tier 2 failed: ${tier2Err.message}. Triggering Tier 3 (Proxy Network 2)...`);
-            try {
-              const { getRandomFreeProxies } = require('../utils/freeproxy');
-              const proxies = await getRandomFreeProxies(10);
-              let success = false;
-              for (const proxy of proxies) {
-                console.log(`Trying Tier 3 proxy: ${proxy}`);
-                try {
-                  await runYtDlpDownload(proxy);
-                  success = true;
-                  console.log(`yt-dlp UNIVERSAL succeeded via Tier 3 Proxy`);
-                  break;
-                } catch (proxyErr) { console.warn(`Proxy ${proxy} failed.`); }
-              }
-              } catch (tier3Err: any) {
-                console.error(`Tier 3 failed:`, tier3Err.message);
+            console.error(`Tier 2 failed:`, tier2Err.message);
 
-                const isYouTube = cleanUrl.includes('youtube.com') || cleanUrl.includes('youtu.be');
+            const isYouTube = cleanUrl.includes('youtube.com') || cleanUrl.includes('youtu.be');
                 if (!isYouTube) {
                   throw new Error('All download attempts failed across all tiers.');
                 }

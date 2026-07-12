@@ -28,6 +28,10 @@ RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key
     sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' && \
     apt-get update && apt-get install -y google-chrome-stable
 
+# Install bgutil-pot for YouTube PO tokens
+RUN wget -qO /usr/local/bin/bgutil-pot https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs/releases/latest/download/bgutil-pot-linux-x86_64 && \
+    chmod +x /usr/local/bin/bgutil-pot
+
 # Install the latest yt-dlp nightly build via pip
 # This avoids the PyInstaller bug that prevents Node.js from being used as a JS runtime
 RUN pip3 install -U https://github.com/yt-dlp/yt-dlp/archive/master.zip --break-system-packages
