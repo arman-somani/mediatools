@@ -454,12 +454,6 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         });
 
         try {
-          console.log(`Trying Tier 1: Native Connection (Audio) using cached cookies...`);
-          await runYtDlpAudio();
-          console.log(`yt-dlp AUDIO succeeded on Native Connection`);
-        } catch (tier1Err: any) {
-          console.error(`Tier 1 (Native Connection) failed: ${tier1Err.message}. Triggering Tier 2 (Proxy Network 1)...`);
-          try {
             const { getRandomFreeProxies } = require('../utils/freeproxy');
             const proxies = await getRandomFreeProxies(10);
             let success = false;
@@ -529,7 +523,6 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
                   }
                 }
             }
-          }
 
         // Find the actual downloaded mp3 file (saved as {fileId}.mp3 or {fileId}.m4a etc)
         const findAudioFile = (baseId: string): string | undefined => {
@@ -854,12 +847,6 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         });
 
         try {
-          console.log(`Trying Tier 1: Native Connection using cached cookies...`);
-          await runYtDlpDownload();
-          console.log(`yt-dlp UNIVERSAL succeeded on Native Connection`);
-        } catch (tier1Err: any) {
-          console.error(`Tier 1 (Native Connection) failed: ${tier1Err.message}. Triggering Tier 2 (Proxy Network 1)...`);
-          try {
             const { getRandomFreeProxies } = require('../utils/freeproxy');
             const proxies = await getRandomFreeProxies(10);
             let success = false;
@@ -980,7 +967,6 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
                   }
                 }
             }
-          }
 
         // Find the actual downloaded file by fileId prefix
         const findVideoFile = (baseId: string): string | undefined => {

@@ -91,13 +91,6 @@ router.get('/info', async (req: Request, res: Response): Promise<void> => {
     let data;
 
     try {
-      console.log(`[Extractor] Tier 1: Fetching metadata natively (using cached cookies)...`);
-      data = await runYtDlpJson(url);
-      if (!data || !data.formats) throw new Error('Invalid metadata from Native Connection');
-      console.log(`[Extractor] yt-dlp succeeded natively`);
-    } catch (tier1Err: any) {
-      console.warn(`[Extractor] Tier 1 (Native) failed: ${tier1Err.message}. Triggering Tier 2 (Proxy Network 1)...`);
-      try {
         const { getRandomFreeProxies } = require('../utils/freeproxy');
         const proxies = await getRandomFreeProxies(10);
         let success = false;
@@ -163,7 +156,6 @@ router.get('/info', async (req: Request, res: Response): Promise<void> => {
               }
             }
           }
-      }
 
     if (!data) {
       res.status(500).json({ success: false, message: 'Failed to extract video data (null returned)' });
