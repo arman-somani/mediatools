@@ -30,7 +30,7 @@ export async function refreshYouTubeCookies(force = false): Promise<void> {
     try {
       // Check if google-chrome-stable is installed (Colab environment)
       let isColab = false;
-      if (os.platform() === 'linux') {
+      if (os.platform() === 'linux' && !process.env.RENDER) {
         try {
           await execAsync('which google-chrome-stable');
           isColab = true;
@@ -45,7 +45,13 @@ export async function refreshYouTubeCookies(force = false): Promise<void> {
           await execAsync('rm -rf /root/.config/google-chrome');
           console.log('🧹 [Cookies] Wiped old Chrome profile for a forced fresh start.');
         }
-        await execAsync('google-chrome-stable --headless --no-sandbox --disable-dev-shm-usage --user-data-dir=/root/.config/google-chrome --password-store=basic --virtual-time-budget=5000 https://www.youtube.com');
+        try {
+          await execAsync('google-chrome-stable --headless --no-sandbox --disable-dev-shm-usage --user-data-dir=/root/.config/google-chrome --password-store=basic --virtual-time-budget=5000 https://www.youtube.com', { timeout: 15000 });
+        } catch (err) {
+          // ignore timeouts or errors since it might have generated the cookies anyway
+        } finally {
+          try { await execAsync('pkill -f chrome'); } catch(e) {}
+        }
       } else {
         console.log('🌐 [Cookies] Render/Docker/Local environment detected. Launching Headless Chromium via Puppeteer...');
         await refreshViaPuppeteer();

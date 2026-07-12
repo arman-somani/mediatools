@@ -28,7 +28,7 @@ import { refreshYouTubeCookies } from '../utils/cookies';
 
 function ytDlpAuthArgs(): string[] {
   // If running on Colab (Linux) and the Chrome profile exists, extract fresh cookies directly!
-  if (os.platform() === 'linux' && fs.existsSync('/root/.config/google-chrome')) {
+  if (os.platform() === 'linux' && !process.env.RENDER && fs.existsSync('/root/.config/google-chrome')) {
     return ['--cookies-from-browser', 'chrome:/root/.config/google-chrome'];
   }
   
@@ -399,8 +399,8 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
             '--audio-quality', `${audioQuality}K`,
             '-o', flatOutputTemplate,
             '--no-playlist',
-            '--concurrent-fragments', '4',
-            '--http-chunk-size', '10M',
+            '--concurrent-fragments', '2',
+            '--http-chunk-size', '5M',
           ];
           if (proxy) ytdlpArgsArr.push('--proxy', proxy);
           ytdlpArgsArr.push(cleanUrl);
@@ -811,8 +811,8 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
             '--merge-output-format', 'mkv',
             '-o', path.join(outputDir, `${fileId}.%(ext)s`),
             '--no-playlist',
-            '--concurrent-fragments', '4',
-            '--http-chunk-size', '10M',
+            '--concurrent-fragments', '2',
+            '--http-chunk-size', '5M',
             '--hls-prefer-native',
           ];
           if (proxy) ytdlpArgsArr.push('--proxy', proxy);

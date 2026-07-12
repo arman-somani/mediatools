@@ -15,7 +15,7 @@ function getYtDlpPath(): string {
 
 function ytDlpAuthArgs(): string[] {
   // If running on Colab (Linux) and the Chrome profile exists, extract fresh cookies directly!
-  if (os.platform() === 'linux' && fs.existsSync('/root/.config/google-chrome')) {
+  if (os.platform() === 'linux' && !process.env.RENDER && fs.existsSync('/root/.config/google-chrome')) {
     return ['--cookies-from-browser', 'chrome:/root/.config/google-chrome'];
   }
   
