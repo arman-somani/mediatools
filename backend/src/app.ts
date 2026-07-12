@@ -24,7 +24,6 @@ import searchRoutes from './routes/search';
 import extractorRoutes from './routes/extractor';
 import { errorHandler } from './middleware/errorHandler';
 import { cleanupOldFiles } from './utils/cleanup';
-import { refreshYouTubeCookies } from './utils/cookies';
 
 const app = express();
 
@@ -78,9 +77,6 @@ const PORT = process.env.PORT || 5000;
 const start = async () => {
   await connectDB();
 
-  // Fetch fresh cookies on startup
-  await refreshYouTubeCookies();
-
   // Create required directories
   const fs = await import('fs');
   const dirs = [
@@ -93,15 +89,6 @@ const start = async () => {
 
   // Cleanup job - run every 30 minutes
   setInterval(cleanupOldFiles, 30 * 60 * 1000);
-
-  // Auto-refresh YouTube cookies every 10 minutes to ensure they are always fresh
-  setInterval(async () => {
-    try {
-      await refreshYouTubeCookies(true); // force a refresh since 10 mins have passed
-    } catch (e) {
-      console.error('Scheduled cookie refresh failed:', e);
-    }
-  }, 10 * 60 * 1000);
 
   app.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`🚀 MediaTools Backend running on port ${PORT}`);

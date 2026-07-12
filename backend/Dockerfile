@@ -1,6 +1,6 @@
 FROM node:20-bookworm-slim
 
-# Install FFmpeg, Python (required for yt-dlp), wget, and shared libraries for Sparticuz Chromium
+# Install FFmpeg, Python (required for yt-dlp), wget, curl, and unzip
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     python3 \
@@ -8,25 +8,8 @@ RUN apt-get update && apt-get install -y \
     wget \
     curl \
     unzip \
-    libnss3 \
-    libnspr4 \
-    libatk1.0-0 \
-    libatk-bridge2.0-0 \
-    libcups2 \
-    libdrm2 \
-    libxkbcommon0 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxfixes3 \
-    libxrandr2 \
-    libgbm1 \
-    libasound2 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install native Google Chrome so Render runs exactly like Colab
-RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-    sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' && \
-    apt-get update && apt-get install -y google-chrome-stable
 
 # Install bgutil-pot for YouTube PO tokens
 RUN wget -qO /usr/local/bin/bgutil-pot https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs/releases/latest/download/bgutil-pot-linux-x86_64 && \

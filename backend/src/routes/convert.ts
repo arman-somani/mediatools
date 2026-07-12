@@ -23,8 +23,6 @@ import vm from 'vm';
 
 import { getRandomFreeProxies } from '../utils/freeproxy';
 import { uploadToGoFile } from '../utils/gofile';
-import { interceptYoutubeStreams } from '../utils/puppeteerInterceptor';
-import { refreshYouTubeCookies } from '../utils/cookies';
 
 function ytDlpAuthArgs(): string[] {
   try {
@@ -369,7 +367,6 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
     // Background processing
     (async () => {
       try {
-        await refreshYouTubeCookies(true);
         let videoTitle = req.body.title || 'Downloaded Audio';
         let thumbnail = '';
 
@@ -754,7 +751,6 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
     // Background processing
     (async () => {
       try {
-        await refreshYouTubeCookies(true);
         let videoTitle = req.body.title || 'Downloaded Video';
         let thumbnail = '';
 
