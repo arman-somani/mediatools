@@ -20,20 +20,13 @@ function ytDlpAuthArgs(): string[] {
     args.push('--force-ipv6');
   }
 
+  // 2. WARP / SOCKS5 Proxy
   if (process.env.WARP_PROXY_URL) {
     args.push('--proxy', process.env.WARP_PROXY_URL);
   }
 
-  try {
-    const stdout = execSync('bgutil-pot generate', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
-    const token = stdout.trim();
-    if (token) {
-      args.push('--extractor-args', `youtube:player-client=web,default;po_token=web+${token}`);
-    }
-  } catch (e: any) {
-    const errMsg = e.stderr ? e.stderr.toString() : e.message;
-    console.warn(`[yt-dlp] Failed to generate PO token. Error: ${errMsg}`);
-  }
+  // 3. Trigger yt-dlp PO Token Plugin
+  args.push('--extractor-args', 'youtube:player-client=web,default');
 
   const cookiePath = path.resolve(process.cwd(), process.env.YOUTUBE_COOKIES || 'cookies.txt');
   if (fs.existsSync(cookiePath)) {

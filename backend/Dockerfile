@@ -11,10 +11,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 
-# Install bgutil-pot for YouTube PO tokens
-RUN wget -qO /usr/local/bin/bgutil-pot https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs/releases/latest/download/bgutil-pot-linux-x86_64 && \
-    chmod +x /usr/local/bin/bgutil-pot
-
+# Install bgutil-ytdlp-pot-provider pip plugin for yt-dlp PO Tokens
+RUN pip3 install --no-cache-dir curl_cffi bgutil-ytdlp-pot-provider --break-system-packages
 # Install the latest yt-dlp nightly build via pip
 # This avoids the PyInstaller bug that prevents Node.js from being used as a JS runtime
 RUN pip3 install -U https://github.com/yt-dlp/yt-dlp/archive/master.zip --break-system-packages
