@@ -412,7 +412,6 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
             '--concurrent-fragments', '2',
             '--http-chunk-size', '5M',
           ];
-          if (proxy) ytdlpArgsArr.push('--proxy', proxy);
           ytdlpArgsArr.push(cleanUrl);
 
           const ytdlp = spawn(getYtDlpPath(), ytDlpArgs(ytdlpArgsArr), { windowsHide: true });
@@ -737,7 +736,6 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
             '--http-chunk-size', '5M',
             '--hls-prefer-native',
           ];
-          if (proxy) ytdlpArgsArr.push('--proxy', proxy);
           ytdlpArgsArr.push(cleanUrl);
 
           const ytdlp = spawn(getYtDlpPath(), ytDlpArgs(ytdlpArgsArr), { windowsHide: true });
