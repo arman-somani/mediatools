@@ -72,10 +72,6 @@ app.use('/api/extractor', extractorRoutes);
 // Error handler (must be last)
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 5000;
-
-import { startCookieManagerLoop } from './utils/cookieManager';
-
 const start = async () => {
   await connectDB();
 
@@ -88,12 +84,6 @@ const start = async () => {
   dirs.forEach(dir => {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   });
-
-  // Cleanup job - run every 30 minutes
-  setInterval(cleanupOldFiles, 30 * 60 * 1000);
-  
-  // Start the background YouTube cookie refresher
-  startCookieManagerLoop();
 
   app.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`🚀 MediaTools Backend running on port ${PORT}`);
