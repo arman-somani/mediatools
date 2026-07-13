@@ -25,7 +25,11 @@ import { getRandomFreeProxies } from '../utils/freeproxy';
 import { uploadToGoFile } from '../utils/gofile';
 
 function ytDlpAuthArgs(): string[] {
-  const args: string[] = ['--force-ipv6'];
+  const args: string[] = [];
+
+  if (process.env.ENABLE_IPV6 === 'true') {
+    args.push('--force-ipv6');
+  }
 
   if (process.env.WARP_PROXY_URL) {
     args.push('--proxy', process.env.WARP_PROXY_URL);
