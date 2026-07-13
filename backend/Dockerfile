@@ -1,6 +1,6 @@
 FROM node:20-bookworm-slim
 
-# Install FFmpeg, Python (required for yt-dlp), wget, curl, unzip, and chromium
+# Install FFmpeg, Python (required for yt-dlp), wget, curl, and unzip
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     python3 \
@@ -8,12 +8,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     curl \
     unzip \
-    chromium \
     && rm -rf /var/lib/apt/lists/*
-
-# Skip Puppeteer's built-in chromium download and use the system one
-ENV PUPPETEER_SKIP_DOWNLOAD=true
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 
 # Install bgutil-pot for YouTube PO tokens

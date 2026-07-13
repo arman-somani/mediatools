@@ -24,21 +24,31 @@ import vm from 'vm';
 import { getRandomFreeProxies } from '../utils/freeproxy';
 import { uploadToGoFile } from '../utils/gofile';
 
-import { getActiveCookieFile, getActiveProxy } from '../utils/cookieManager';
-
 function ytDlpAuthArgs(): string[] {
-  // Try dynamic cookies file from CookieManager first
-  const cookiePath = getActiveCookieFile() || path.resolve(process.cwd(), process.env.YOUTUBE_COOKIES || 'cookies.txt');
-  if (cookiePath && fs.existsSync(cookiePath)) {
-    return ['--cookies', cookiePath];
+  const args: string[] = ['--force-ipv6'];
+
+  if (process.env.WARP_PROXY_URL) {
+    args.push('--proxy', process.env.WARP_PROXY_URL);
   }
 
-  // Fallback to colab Chrome cookies if we are in colab without generated cookies
-  if (os.platform() === 'linux' && !process.env.RENDER && fs.existsSync('/root/.config/google-chrome')) {
-    return ['--cookies-from-browser', 'chrome:/root/.config/google-chrome'];
+  try {
+    const stdout = execSync('bgutil-pot generate', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+    const token = stdout.trim();
+    if (token) {
+      args.push('--extractor-args', `youtube:player-client=web,default;po_token=web+${token}`);
+    }
+  } catch (e) {
+    console.warn('[yt-dlp] Failed to generate PO token, continuing without it.');
+  }
+
+  const cookiePath = path.resolve(process.cwd(), process.env.YOUTUBE_COOKIES || 'cookies.txt');
+  if (fs.existsSync(cookiePath)) {
+    args.push('--cookies', cookiePath);
+  } else if (os.platform() === 'linux' && !process.env.RENDER && fs.existsSync('/root/.config/google-chrome')) {
+    args.push('--cookies-from-browser', 'chrome:/root/.config/google-chrome');
   }
   
-  return [];
+  return args;
 }
 
 Platform.shim.eval = (script: any) => {
@@ -389,7 +399,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         conversion.outputFilename = `${safeTitle}.mp3`;
         await conversion.save();
 
-        const runYtDlpAudio = (proxy?: string) => new Promise((resolve, reject) => {
+        const runYtDlpAudio = () => new Promise((resolve, reject) => {
           // Save directly as flat file, not in a subdirectory, to avoid path issues
           const flatOutputTemplate = path.join(outputDir, `${fileId}.%(ext)s`);
           const ytdlpArgsArr = [
@@ -446,8 +456,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         });
 
         try {
-          const proxy = getActiveProxy();
-          await runYtDlpAudio(proxy || undefined);
+          await runYtDlpAudio();
           console.log(`yt-dlp AUDIO succeeded`);
         } catch (err: any) {
           console.error(`yt-dlp AUDIO failed:`, err.message);
@@ -713,7 +722,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
 
         // Step 2: Download video with the user's selected quality
         console.log(`[QUALITY DEBUG] User requested: ${videoQuality} → targetHeight: ${targetHeight}`);
-        const runYtDlpDownload = (proxy?: string) => new Promise((resolve, reject) => {
+        const runYtDlpDownload = () => new Promise((resolve, reject) => {
           const formatStr = `bestvideo[height<=${targetHeight}]+bestaudio/best[height<=${targetHeight}]`;
           console.log(`[QUALITY DEBUG] yt-dlp format string: ${formatStr}`);
           const ytdlpArgsArr = [
@@ -776,8 +785,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         });
 
         try {
-          const proxy = getActiveProxy();
-          await runYtDlpDownload(proxy || undefined);
+          await runYtDlpDownload();
           console.log(`yt-dlp UNIVERSAL succeeded`);
         } catch (err: any) {
           console.error(`yt-dlp UNIVERSAL failed:`, err.message);
