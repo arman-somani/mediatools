@@ -15,17 +15,20 @@ let currentWorkingProxy: string | null = null;
 let isRefreshing = false;
 
 /**
- * Validates a proxy by sending a quick HEAD request to YouTube.
+ * Validates a proxy by sending a quick GET request to YouTube to ensure it doesn't block tunneling.
  */
 async function testProxy(proxyUrl: string): Promise<boolean> {
   try {
     const agent = new HttpsProxyAgent(proxyUrl);
     const res = await fetch('https://www.youtube.com', {
       agent: agent as any,
-      method: 'HEAD',
-      timeout: 5000,
+      method: 'GET',
+      timeout: 8000,
     });
-    return res.ok;
+    if (!res.ok) return false;
+    const text = await res.text();
+    // Ensure we actually hit YouTube and not a proxy portal
+    return text.toLowerCase().includes('youtube');
   } catch {
     return false;
   }
@@ -67,82 +70,84 @@ export async function refreshYouTubeCookies(): Promise<void> {
       return;
     }
 
-    // Shuffle and find a working proxy
+    // Shuffle proxies to randomize attempts
     const shuffled = [...proxies].sort(() => 0.5 - Math.random());
-    let workingProxy: string | null = null;
+    let success = false;
 
-    for (const proxy of shuffled.slice(0, 15)) { // Test up to 15 proxies
-      if (await testProxy(proxy)) {
-        workingProxy = proxy;
-        break;
+    // Aggressive loop: Test up to 15 proxies, and launch Puppeteer for the ones that pass the basic test
+    for (const proxy of shuffled.slice(0, 15)) {
+      console.log(`[CookieManager] Testing proxy: ${proxy}...`);
+      if (!(await testProxy(proxy))) {
+        continue;
       }
-    }
 
-    if (!workingProxy) {
-      console.warn('[CookieManager] Could not find a working proxy for cookie extraction.');
-      isRefreshing = false;
-      return;
-    }
+      console.log(`[CookieManager] Proxy passed basic test. Launching browser on: ${proxy}`);
 
-    console.log(`[CookieManager] Selected working proxy: ${workingProxy}`);
-
-    // Launch headless browser
-    const browser = await puppeteer.launch({
-      headless: true,
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-      args: [
-        `--proxy-server=${workingProxy}`,
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--disable-gpu',
-      ],
-    });
-
-    try {
-      const page = await browser.newPage();
-      
-      // Block unnecessary resources to speed up load
-      await page.setRequestInterception(true);
-      page.on('request', (req: any) => {
-        if (['image', 'stylesheet', 'font', 'media'].includes(req.resourceType())) {
-          req.abort();
-        } else {
-          req.continue();
-        }
+      const browser = await puppeteer.launch({
+        headless: true,
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+        args: [
+          `--proxy-server=${proxy}`,
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--disable-gpu',
+        ],
       });
 
-      console.log('[CookieManager] Navigating to YouTube...');
-      await page.goto('https://www.youtube.com', { waitUntil: 'domcontentloaded', timeout: 30000 });
-
-      // Optional: click accept cookies if a consent dialog appears (European IPs)
       try {
-        const acceptButtonSelector = 'button[aria-label="Accept all"]';
-        await page.waitForSelector(acceptButtonSelector, { timeout: 3000 });
-        await page.click(acceptButtonSelector);
-        await new Promise(r => setTimeout(r, 2000)); // wait for cookies to settle
-      } catch {
-        // No consent dialog found, which is fine
+        const page = await browser.newPage();
+        
+        await page.setRequestInterception(true);
+        page.on('request', (req: any) => {
+          if (['image', 'stylesheet', 'font', 'media'].includes(req.resourceType())) {
+            req.abort();
+          } else {
+            req.continue();
+          }
+        });
+
+        console.log('[CookieManager] Navigating to YouTube (up to 60s timeout)...');
+        await page.goto('https://www.youtube.com', { waitUntil: 'domcontentloaded', timeout: 60000 });
+
+        try {
+          const acceptButtonSelector = 'button[aria-label="Accept all"]';
+          await page.waitForSelector(acceptButtonSelector, { timeout: 3000 });
+          await page.click(acceptButtonSelector);
+          await new Promise(r => setTimeout(r, 2000));
+        } catch {
+          // No consent dialog
+        }
+
+        const cookies = await page.cookies();
+        if (cookies.length === 0) {
+          throw new Error('No cookies extracted from page');
+        }
+
+        const netscapeCookies = formatCookiesToNetscape(cookies);
+        fs.writeFileSync(COOKIE_FILE, netscapeCookies, 'utf8');
+
+        currentWorkingProxy = proxy;
+        success = true;
+        console.log('[CookieManager] Successfully generated and saved new cookies!');
+        
+        await browser.close();
+        break; // Stop iterating through proxies because we succeeded
+
+      } catch (err: any) {
+        console.warn(`[CookieManager] Puppeteer failed on proxy ${proxy}: ${err.message}`);
+        console.log(`[CookieManager] Closing browser and trying next proxy...`);
+        await browser.close();
       }
+    }
 
-      const cookies = await page.cookies();
-      if (cookies.length === 0) {
-        throw new Error('No cookies extracted from page');
-      }
-
-      const netscapeCookies = formatCookiesToNetscape(cookies);
-      fs.writeFileSync(COOKIE_FILE, netscapeCookies, 'utf8');
-
-      currentWorkingProxy = workingProxy;
-      console.log('[CookieManager] Successfully generated and saved new cookies!');
-    } finally {
-      await browser.close();
-      console.log('[CookieManager] Browser closed.');
+    if (!success) {
+      console.error('[CookieManager] All 15 proxy attempts failed to extract cookies. Will retry in 10 minutes.');
     }
 
   } catch (error: any) {
-    console.error('[CookieManager] Failed to refresh cookies:', error.message);
+    console.error('[CookieManager] Fatal error during refresh cycle:', error.message);
   } finally {
     isRefreshing = false;
   }
