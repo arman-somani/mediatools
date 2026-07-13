@@ -30,8 +30,9 @@ function ytDlpAuthArgs(): string[] {
     if (token) {
       args.push('--extractor-args', `youtube:player-client=web,default;po_token=web+${token}`);
     }
-  } catch (e) {
-    console.warn('[yt-dlp] Failed to generate PO token, continuing without it.');
+  } catch (e: any) {
+    const errMsg = e.stderr ? e.stderr.toString() : e.message;
+    console.warn(`[yt-dlp] Failed to generate PO token. Error: ${errMsg}`);
   }
 
   const cookiePath = path.resolve(process.cwd(), process.env.YOUTUBE_COOKIES || 'cookies.txt');
