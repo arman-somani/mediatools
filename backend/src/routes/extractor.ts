@@ -13,21 +13,31 @@ function getYtDlpPath(): string {
   return fs.existsSync(binPath) ? binPath : 'yt-dlp';
 }
 
-import { getActiveCookieFile, getActiveProxy } from '../utils/cookieManager';
-
 function ytDlpAuthArgs(): string[] {
-  // Try dynamic cookies file from CookieManager first
-  const cookiePath = getActiveCookieFile() || path.resolve(process.cwd(), process.env.YOUTUBE_COOKIES || 'cookies.txt');
-  if (cookiePath && fs.existsSync(cookiePath)) {
-    return ['--cookies', cookiePath];
+  const args: string[] = ['--force-ipv6'];
+
+  if (process.env.WARP_PROXY_URL) {
+    args.push('--proxy', process.env.WARP_PROXY_URL);
   }
 
-  // Fallback to colab Chrome cookies if we are in colab without generated cookies
-  if (os.platform() === 'linux' && !process.env.RENDER && fs.existsSync('/root/.config/google-chrome')) {
-    return ['--cookies-from-browser', 'chrome:/root/.config/google-chrome'];
+  try {
+    const stdout = execSync('bgutil-pot generate', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+    const token = stdout.trim();
+    if (token) {
+      args.push('--extractor-args', `youtube:player-client=web,default;po_token=web+${token}`);
+    }
+  } catch (e) {
+    console.warn('[yt-dlp] Failed to generate PO token, continuing without it.');
+  }
+
+  const cookiePath = path.resolve(process.cwd(), process.env.YOUTUBE_COOKIES || 'cookies.txt');
+  if (fs.existsSync(cookiePath)) {
+    args.push('--cookies', cookiePath);
+  } else if (os.platform() === 'linux' && !process.env.RENDER && fs.existsSync('/root/.config/google-chrome')) {
+    args.push('--cookies-from-browser', 'chrome:/root/.config/google-chrome');
   }
   
-  return [];
+  return args;
 }
 
 function ytDlpArgs(args: string[]): string[] {
@@ -44,11 +54,9 @@ function ytDlpArgs(args: string[]): string[] {
   return [...base, ...ytDlpAuthArgs(), ...args];
 }
 
-function runYtDlpJson(url: string, proxy?: string): Promise<any> {
+function runYtDlpJson(url: string): Promise<any> {
   return new Promise((resolve, reject) => {
     const args = ['-J', '--no-playlist', url];
-    const activeProxy = proxy || getActiveProxy();
-    if (activeProxy) args.unshift('--proxy', activeProxy);
     const child = spawn(getYtDlpPath(), ytDlpArgs(args), { windowsHide: true });
     const stdoutChunks: Buffer[] = [];
     let stderr = '';
