@@ -451,75 +451,12 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         });
 
         try {
-            const { getRandomFreeProxies } = require('../utils/freeproxy');
-            const proxies = await getRandomFreeProxies(10);
-            let success = false;
-            for (const proxy of proxies) {
-              console.log(`Trying Tier 2 proxy: ${proxy}`);
-              try {
-                await runYtDlpAudio(proxy);
-                success = true;
-                console.log(`yt-dlp AUDIO succeeded via Tier 2 Proxy`);
-                break;
-              } catch (proxyErr) { console.warn(`Proxy ${proxy} failed.`); }
-            }
-            if (!success) throw new Error('All Tier 2 proxies failed.');
-          } catch (tier2Err: any) {
-            console.error(`Tier 2 failed:`, tier2Err.message);
-            console.log(`Triggering Tier 5 (@distube/ytdl-core)...`);
-            try {
-              const ytdl = require('@distube/ytdl-core');
-                  await new Promise((resolve, reject) => {
-                    const exactMp3 = path.join(outputDir, `${fileId}.mp3`);
-                    const stream = ytdl(cleanUrl, { quality: 'highestaudio', filter: 'audioonly' });
-                    const ffmpeg = spawn('ffmpeg', [
-                      '-i', 'pipe:0',
-                      '-y',
-                      '-acodec', 'libmp3lame',
-                      '-b:a', `${audioQuality}k`,
-                      exactMp3
-                    ]);
-                    stream.pipe(ffmpeg.stdin);
-                    ffmpeg.on('close', (code) => {
-                      if (code === 0) resolve(true);
-                      else reject(new Error('ffmpeg transcoding failed with code ' + code));
-                    });
-                    ffmpeg.on('error', reject);
-                  });
-                  console.log(`ytdl-core AUDIO succeeded`);
-                } catch (tier5Err: any) {
-                  console.error(`Tier 5 failed:`, tier5Err.message);
-                  console.log(`Triggering Tier 6 (play-dl)...`);
-                  try {
-                    const play = require('play-dl');
-                    await new Promise(async (resolve, reject) => {
-                      try {
-                        const exactMp3 = path.join(outputDir, `${fileId}.mp3`);
-                        const stream = await play.stream(cleanUrl, { discordPlayerCompatibility: true });
-                        const ffmpeg = spawn('ffmpeg', [
-                          '-i', 'pipe:0',
-                          '-y',
-                          '-acodec', 'libmp3lame',
-                          '-b:a', `${audioQuality}k`,
-                          exactMp3
-                        ]);
-                        stream.stream.pipe(ffmpeg.stdin);
-                        ffmpeg.on('close', (code) => {
-                          if (code === 0) resolve(true);
-                          else reject(new Error('ffmpeg transcoding failed with code ' + code));
-                        });
-                        ffmpeg.on('error', reject);
-                      } catch (err) {
-                        reject(err);
-                      }
-                    });
-                    console.log(`play-dl AUDIO succeeded`);
-                  } catch (tier6Err: any) {
-                    console.error(`Tier 6 failed:`, tier6Err.message);
-                    throw new Error('All download attempts failed across all tiers.');
-                  }
-                }
-            }
+          await runYtDlpAudio();
+          console.log(`yt-dlp AUDIO succeeded`);
+        } catch (err: any) {
+          console.error(`yt-dlp AUDIO failed:`, err.message);
+          throw new Error('All download attempts failed.');
+        }
 
         // Find the actual downloaded mp3 file (saved as {fileId}.mp3 or {fileId}.m4a etc)
         const findAudioFile = (baseId: string): string | undefined => {
@@ -843,126 +780,12 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         });
 
         try {
-            const { getRandomFreeProxies } = require('../utils/freeproxy');
-            const proxies = await getRandomFreeProxies(10);
-            let success = false;
-            for (const proxy of proxies) {
-              console.log(`Trying Tier 2 proxy: ${proxy}`);
-              try {
-                await runYtDlpDownload(proxy);
-                success = true;
-                console.log(`yt-dlp UNIVERSAL succeeded via Tier 2 Proxy`);
-                break;
-              } catch (proxyErr) { console.warn(`Proxy ${proxy} failed.`); }
-            }
-            if (!success) throw new Error('All Tier 2 proxies failed.');
-          } catch (tier2Err: any) {
-            console.error(`Tier 2 failed:`, tier2Err.message);
-
-            const isYouTube = cleanUrl.includes('youtube.com') || cleanUrl.includes('youtu.be');
-                if (!isYouTube) {
-                  throw new Error('All download attempts failed across all tiers.');
-                }
-
-                console.log(`Triggering Tier 5 (@distube/ytdl-core) with target height ${targetHeight}...`);
-                try {
-                  const ytdl = require('@distube/ytdl-core');
-                  const targetH = parseInt(targetHeight, 10) || 720;
-                  await new Promise(async (resolve, reject) => {
-                    try {
-                      const info = await ytdl.getInfo(cleanUrl);
-                      
-                      // Find best video matching target height
-                      const videoFormats = info.formats
-                        .filter((f: any) => f.hasVideo && f.height && f.height <= targetH)
-                        .sort((a: any, b: any) => (b.height || 0) - (a.height || 0));
-                      const chosenVideo = videoFormats[0];
-
-                      // Find best audio
-                      const audioFormats = info.formats
-                        .filter((f: any) => f.hasAudio && !f.hasVideo)
-                        .sort((a: any, b: any) => (b.audioBitrate || 0) - (a.audioBitrate || 0));
-                      const chosenAudio = audioFormats[0] || info.formats.find((f: any) => f.hasAudio);
-
-                      const exactMp4 = path.join(outputDir, `${fileId}.mp4`);
-
-                      if (chosenVideo && chosenAudio && !chosenVideo.hasAudio) {
-                        console.log(`[Tier 5] Merging Video itag=${chosenVideo.itag} (${chosenVideo.height}p) and Audio itag=${chosenAudio.itag}`);
-                        const ffmpeg = spawn('ffmpeg', [
-                          '-loglevel', '8', '-hide_banner',
-                          '-i', 'pipe:3',
-                          '-i', 'pipe:4',
-                          '-map', '0:v', '-map', '1:a',
-                          '-c:v', 'copy', '-c:a', 'aac',
-                          exactMp4
-                        ], {
-                          windowsHide: true,
-                          stdio: ['inherit', 'inherit', 'inherit', 'pipe', 'pipe']
-                        });
-
-                        ffmpeg.on('close', (code) => {
-                          if (code === 0) resolve(true);
-                          else reject(new Error('Tier 5 FFmpeg merging failed with code ' + code));
-                        });
-                        ffmpeg.on('error', reject);
-
-                        const videoStream = ytdl(cleanUrl, { quality: chosenVideo.itag });
-                        const audioStream = ytdl(cleanUrl, { quality: chosenAudio.itag });
-
-                        videoStream.pipe(ffmpeg.stdio[3] as any);
-                        audioStream.pipe(ffmpeg.stdio[4] as any);
-
-                        videoStream.on('error', reject);
-                        audioStream.on('error', reject);
-                      } else {
-                        // Fallback to merged stream if no separate streams found
-                        const formats = info.formats
-                          .filter((f: any) => f.hasVideo && f.hasAudio && f.height && f.height <= targetH)
-                          .sort((a: any, b: any) => (b.height || 0) - (a.height || 0));
-                        const chosen = formats[0];
-                        const opts = chosen ? { quality: chosen.itag } : { quality: 'highest', filter: 'audioandvideo' as const };
-                        console.log(`[Tier 5] Chose merged itag=${chosen?.itag} height=${chosen?.height || 'best'}`);
-                        const stream = ytdl(cleanUrl, opts);
-                        stream.pipe(fs.createWriteStream(exactMp4));
-                        stream.on('end', () => resolve(true));
-                        stream.on('error', reject);
-                      }
-                    } catch (e) { reject(e); }
-                  });
-                  console.log(`ytdl-core UNIVERSAL succeeded`);
-                } catch (tier5Err: any) {
-                  console.error(`Tier 5 failed:`, tier5Err.message);
-                  console.log(`Triggering Tier 6 (play-dl) with target height ${targetHeight}...`);
-                  try {
-                    const play = require('play-dl');
-                    const targetH = parseInt(targetHeight, 10) || 720;
-                    const info = await play.video_info(cleanUrl);
-                    // Filter formats to match the user's requested quality
-                    const matching = info.format
-                      .filter((f: any) => f.hasVideo && f.hasAudio && f.height && f.height <= targetH)
-                      .sort((a: any, b: any) => (b.height || 0) - (a.height || 0));
-                    const format = matching[0] || info.format.find((f: any) => f.hasVideo && f.hasAudio) || info.format[0];
-                    if (!format || !format.url) throw new Error('No merged format found in play-dl');
-                    console.log(`[Tier 6] Chose format height=${format.height || 'unknown'}`);
-
-                    const fetch = require('node-fetch');
-                    const res = await fetch(format.url);
-                    if (!res.ok) throw new Error('Failed to fetch from play-dl format url');
-
-                    await new Promise((resolve, reject) => {
-                      const exactMp4 = path.join(outputDir, `${fileId}.mp4`);
-                      const writeStream = fs.createWriteStream(exactMp4);
-                      res.body.pipe(writeStream);
-                      writeStream.on('finish', () => resolve(true));
-                      writeStream.on('error', reject);
-                    });
-                    console.log(`play-dl UNIVERSAL succeeded`);
-                  } catch (tier6Err: any) {
-                    console.error(`Tier 6 failed:`, tier6Err.message);
-                    throw new Error('All download attempts failed across all tiers.');
-                  }
-                }
-            }
+          await runYtDlpDownload();
+          console.log(`yt-dlp UNIVERSAL succeeded`);
+        } catch (err: any) {
+          console.error(`yt-dlp UNIVERSAL failed:`, err.message);
+          throw new Error('All download attempts failed.');
+        }
 
         // Find the actual downloaded file by fileId prefix
         const findVideoFile = (baseId: string): string | undefined => {

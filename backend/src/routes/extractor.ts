@@ -91,71 +91,14 @@ router.get('/info', async (req: Request, res: Response): Promise<void> => {
     let data;
 
     try {
-        const { getRandomFreeProxies } = require('../utils/freeproxy');
-        const proxies = await getRandomFreeProxies(10);
-        let success = false;
-        for (const proxy of proxies) {
-          console.log(`[Extractor] Trying Tier 2 proxy: ${proxy}`);
-          try {
-            data = await runYtDlpJson(url, proxy);
-            if (data && data.formats) { success = true; break; }
-          } catch(e) { console.warn(`[Extractor] Proxy ${proxy} failed.`); }
-        }
-        if (!success) throw new Error('All Tier 2 proxies failed.');
-      } catch (tier2Err: any) {
-        console.error(`[Extractor] Tier 2 failed:`, tier2Err.message);
-        console.log(`[Extractor] Triggering Tier 5 (@distube/ytdl-core)...`);
-        try {
-            const ytdl = require('@distube/ytdl-core');
-            const info = await ytdl.getInfo(url);
-            data = {
-              title: info.videoDetails.title,
-              thumbnail: info.videoDetails.thumbnails?.[0]?.url,
-              duration: parseInt(info.videoDetails.lengthSeconds || '0', 10),
-              url: url,
-              formats: info.formats.map((f: any) => ({
-                url: f.url,
-                ext: f.container,
-                vcodec: f.hasVideo ? (f.videoCodec || 'unknown') : 'none',
-                acodec: f.hasAudio ? (f.audioCodec || 'unknown') : 'none',
-                height: f.height,
-                format_note: f.qualityLabel,
-                filesize: f.contentLength ? parseInt(f.contentLength, 10) : null,
-                fps: f.fps,
-                abr: f.audioBitrate
-              }))
-            };
-            console.log(`[Extractor] ytdl-core succeeded`);
-            } catch (tier5Err: any) {
-              console.error(`[Extractor] Tier 5 failed:`, tier5Err.message);
-              console.log(`[Extractor] Triggering Tier 6 (play-dl)...`);
-              try {
-                const play = require('play-dl');
-                const info = await play.video_info(url);
-                data = {
-                  title: info.video_details.title,
-                  thumbnail: info.video_details.thumbnails?.[0]?.url,
-                  duration: info.video_details.durationInSec,
-                  url: url,
-                  formats: info.format.map((f: any) => ({
-                    url: f.url,
-                    ext: f.mimeType ? f.mimeType.split(';')[0].split('/')[1] : 'unknown',
-                    vcodec: f.hasVideo ? 'unknown' : 'none',
-                    acodec: f.hasAudio ? 'unknown' : 'none',
-                    height: f.height || (f.qualityLabel ? parseInt(f.qualityLabel, 10) : undefined),
-                    format_note: f.qualityLabel,
-                    filesize: f.contentLength ? parseInt(f.contentLength, 10) : null,
-                    fps: f.fps,
-                    abr: f.bitrate ? Math.round(f.bitrate / 1000) : undefined
-                  }))
-                };
-                console.log(`[Extractor] play-dl succeeded`);
-              } catch (tier6Err: any) {
-                console.error(`[Extractor] Tier 6 failed:`, tier6Err.message);
-                throw new Error('All extractor attempts failed across all tiers.');
-              }
-            }
-          }
+      data = await runYtDlpJson(url);
+      if (!data || !data.formats) {
+        throw new Error('No formats found');
+      }
+    } catch (err: any) {
+      console.error(`[Extractor] failed:`, err.message);
+      throw new Error('Extractor failed.');
+    }
 
     if (!data) {
       res.status(500).json({ success: false, message: 'Failed to extract video data (null returned)' });
