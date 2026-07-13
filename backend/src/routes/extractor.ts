@@ -13,25 +13,20 @@ function getYtDlpPath(): string {
   return fs.existsSync(binPath) ? binPath : 'yt-dlp';
 }
 
-function ytDlpAuthArgs(): string[] {
-  try {
-    const stdout = execSync('bgutil-pot generate', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
-    const token = stdout.trim();
-    if (token) {
-      return ['--extractor-args', `youtube:player-client=web,default;po_token=web+${token}`];
-    }
-  } catch (e) {}
+import { getActiveCookieFile, getActiveProxy } from '../utils/cookieManager';
 
-  // If running on Colab (Linux) and the Chrome profile exists, extract fresh cookies directly!
+function ytDlpAuthArgs(): string[] {
+  // Try dynamic cookies file from CookieManager first
+  const cookiePath = getActiveCookieFile() || path.resolve(process.cwd(), process.env.YOUTUBE_COOKIES || 'cookies.txt');
+  if (cookiePath && fs.existsSync(cookiePath)) {
+    return ['--cookies', cookiePath];
+  }
+
+  // Fallback to colab Chrome cookies if we are in colab without generated cookies
   if (os.platform() === 'linux' && !process.env.RENDER && fs.existsSync('/root/.config/google-chrome')) {
     return ['--cookies-from-browser', 'chrome:/root/.config/google-chrome'];
   }
   
-  // Fallback for Windows/local development
-  const cookiePath = path.resolve(process.cwd(), process.env.YOUTUBE_COOKIES || 'cookies.txt');
-  if (fs.existsSync(cookiePath)) {
-    return ['--cookies', cookiePath];
-  }
   return [];
 }
 
@@ -52,7 +47,8 @@ function ytDlpArgs(args: string[]): string[] {
 function runYtDlpJson(url: string, proxy?: string): Promise<any> {
   return new Promise((resolve, reject) => {
     const args = ['-J', '--no-playlist', url];
-    if (proxy) args.unshift('--proxy', proxy);
+    const activeProxy = proxy || getActiveProxy();
+    if (activeProxy) args.unshift('--proxy', activeProxy);
     const child = spawn(getYtDlpPath(), ytDlpArgs(args), { windowsHide: true });
     const stdoutChunks: Buffer[] = [];
     let stderr = '';

@@ -24,25 +24,20 @@ import vm from 'vm';
 import { getRandomFreeProxies } from '../utils/freeproxy';
 import { uploadToGoFile } from '../utils/gofile';
 
-function ytDlpAuthArgs(): string[] {
-  try {
-    const stdout = execSync('bgutil-pot generate', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
-    const token = stdout.trim();
-    if (token) {
-      return ['--extractor-args', `youtube:player-client=web,default;po_token=web+${token}`];
-    }
-  } catch (e) {}
+import { getActiveCookieFile, getActiveProxy } from '../utils/cookieManager';
 
-  // If running on Colab (Linux) and the Chrome profile exists, extract fresh cookies directly!
+function ytDlpAuthArgs(): string[] {
+  // Try dynamic cookies file from CookieManager first
+  const cookiePath = getActiveCookieFile() || path.resolve(process.cwd(), process.env.YOUTUBE_COOKIES || 'cookies.txt');
+  if (cookiePath && fs.existsSync(cookiePath)) {
+    return ['--cookies', cookiePath];
+  }
+
+  // Fallback to colab Chrome cookies if we are in colab without generated cookies
   if (os.platform() === 'linux' && !process.env.RENDER && fs.existsSync('/root/.config/google-chrome')) {
     return ['--cookies-from-browser', 'chrome:/root/.config/google-chrome'];
   }
   
-  // Fallback for Windows/local development
-  const cookiePath = path.resolve(process.cwd(), process.env.YOUTUBE_COOKIES || 'cookies.txt');
-  if (fs.existsSync(cookiePath)) {
-    return ['--cookies', cookiePath];
-  }
   return [];
 }
 
@@ -451,7 +446,8 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         });
 
         try {
-          await runYtDlpAudio();
+          const proxy = getActiveProxy();
+          await runYtDlpAudio(proxy || undefined);
           console.log(`yt-dlp AUDIO succeeded`);
         } catch (err: any) {
           console.error(`yt-dlp AUDIO failed:`, err.message);
@@ -780,7 +776,8 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         });
 
         try {
-          await runYtDlpDownload();
+          const proxy = getActiveProxy();
+          await runYtDlpDownload(proxy || undefined);
           console.log(`yt-dlp UNIVERSAL succeeded`);
         } catch (err: any) {
           console.error(`yt-dlp UNIVERSAL failed:`, err.message);
