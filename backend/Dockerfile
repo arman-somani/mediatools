@@ -5,10 +5,17 @@ RUN apt-get update && apt-get install -y \
     ffmpeg \
     python3 \
     python3-pip \
-    wget \
     curl \
     unzip \
+    chromium \
     && rm -rf /var/lib/apt/lists/*
+
+# Skip Puppeteer's built-in chromium download and use the system one
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
+# Install wireproxy
+RUN wget -qO- https://github.com/pufferffish/wireproxy/releases/latest/download/wireproxy_linux_amd64.tar.gz | tar xz -C /usr/local/bin
 
 
 # Install bgutil-ytdlp-pot-provider pip plugin for yt-dlp PO Tokens
