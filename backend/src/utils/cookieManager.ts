@@ -89,6 +89,7 @@ export async function refreshYouTubeCookies(): Promise<void> {
     // Launch headless browser
     const browser = await puppeteer.launch({
       headless: true,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
       args: [
         `--proxy-server=${workingProxy}`,
         '--no-sandbox',
@@ -104,7 +105,7 @@ export async function refreshYouTubeCookies(): Promise<void> {
       
       // Block unnecessary resources to speed up load
       await page.setRequestInterception(true);
-      page.on('request', (req) => {
+      page.on('request', (req: any) => {
         if (['image', 'stylesheet', 'font', 'media'].includes(req.resourceType())) {
           req.abort();
         } else {
