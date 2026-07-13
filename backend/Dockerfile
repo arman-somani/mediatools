@@ -15,7 +15,7 @@ ENV PUPPETEER_SKIP_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 # Install wireproxy
-RUN wget -qO- https://github.com/pufferffish/wireproxy/releases/latest/download/wireproxy_linux_amd64.tar.gz | tar xz -C /usr/local/bin
+RUN curl -sL https://github.com/pufferffish/wireproxy/releases/latest/download/wireproxy_linux_amd64.tar.gz | tar xz -C /usr/local/bin
 
 
 # Install bgutil-ytdlp-pot-provider pip plugin for yt-dlp PO Tokens
