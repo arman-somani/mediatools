@@ -13,6 +13,8 @@ function getYtDlpPath(): string {
   return fs.existsSync(binPath) ? binPath : 'yt-dlp';
 }
 
+import { getActiveCookieFile } from '../utils/cookieManager';
+
 function ytDlpAuthArgs(): string[] {
   const args: string[] = [];
 
@@ -21,16 +23,23 @@ function ytDlpAuthArgs(): string[] {
   }
 
   // 2. WARP / SOCKS5 Proxy
-  if (process.env.WARP_PROXY_URL) {
+  const wireproxyConfig = path.join(process.cwd(), 'warp.conf');
+  if (fs.existsSync(wireproxyConfig)) {
+    args.push('--proxy', 'socks5://127.0.0.1:1080');
+  } else if (process.env.WARP_PROXY_URL) {
     args.push('--proxy', process.env.WARP_PROXY_URL);
   }
 
   // 3. Trigger yt-dlp PO Token Plugin
   args.push('--extractor-args', 'youtube:player-client=web,default');
 
-  const cookiePath = path.resolve(process.cwd(), process.env.YOUTUBE_COOKIES || 'cookies.txt');
-  if (fs.existsSync(cookiePath)) {
-    args.push('--cookies', cookiePath);
+  const generatedCookiePath = getActiveCookieFile();
+  const manualCookiePath = path.resolve(process.cwd(), process.env.YOUTUBE_COOKIES || 'cookies.txt');
+
+  if (generatedCookiePath) {
+    args.push('--cookies', generatedCookiePath);
+  } else if (fs.existsSync(manualCookiePath)) {
+    args.push('--cookies', manualCookiePath);
   } else if (os.platform() === 'linux' && !process.env.RENDER && fs.existsSync('/root/.config/google-chrome')) {
     args.push('--cookies-from-browser', 'chrome:/root/.config/google-chrome');
   }
