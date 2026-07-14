@@ -433,8 +433,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
           });
         });
 
-        const proxies = await getRandomFreeProxies(5);
-        const tiers = [undefined, ...proxies];
+        const tiers = await getRandomFreeProxies(6);
         let success = false;
 
         for (let i = 0; i < tiers.length; i++) {
@@ -594,8 +593,7 @@ router.post('/universal/metadata', async (req: Request, res: Response): Promise<
         cleanUrl,
       ];
 
-      const proxies = await getRandomFreeProxies(5);
-      const tiers = [undefined, ...proxies];
+      const tiers = await getRandomFreeProxies(6);
       let metaSuccess = false;
 
       for (let i = 0; i < tiers.length; i++) {
@@ -787,8 +785,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
           });
         });
 
-        const proxies = await getRandomFreeProxies(5);
-        const tiers = [undefined, ...proxies];
+        const tiers = await getRandomFreeProxies(6);
         let success = false;
 
         for (let i = 0; i < tiers.length; i++) {

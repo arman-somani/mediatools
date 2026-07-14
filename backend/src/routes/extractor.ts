@@ -74,8 +74,7 @@ router.get('/info', async (req: Request, res: Response): Promise<void> => {
 
     let data;
 
-    const proxies = await getRandomFreeProxies(5);
-    const tiers = [undefined, ...proxies];
+    const tiers = await getRandomFreeProxies(6);
     let success = false;
 
     for (let i = 0; i < tiers.length; i++) {
