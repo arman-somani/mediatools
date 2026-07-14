@@ -358,18 +358,26 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         // Step 1: Fetch metadata via yt-dlp only if we don't have it
         if (!req.body.title) {
           try {
+            const proxyTiers = await getRandomFreeProxies(10);
+            let metaSuccess = false;
             let stdout = '';
-            try {
-              const res = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--no-playlist', cleanUrl]);
-              stdout = res.stdout;
-            } catch (e: any) {
-              console.warn(`yt-dlp metadata fetch failed: ${e.message}`);
+            for (let i = 0; i < proxyTiers.length; i++) {
+              try {
+                const res = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--no-playlist', cleanUrl], proxyTiers[i]);
+                stdout = res.stdout;
+                metaSuccess = true;
+                break;
+              } catch (e: any) {
+                console.warn(`[Tier ${i + 1}/10] yt-dlp audio title fetch failed: ${e.message}`);
+              }
             }
-            const lines = stdout.trim().split('\n');
-            const dlTitle = (lines[0] || '').trim();
-            if (dlTitle && dlTitle !== 'Downloaded Audio') videoTitle = dlTitle;
-            const dlThumb = (lines[1] || '').trim();
-            if (dlThumb) thumbnail = dlThumb;
+            if (metaSuccess) {
+              const lines = stdout.trim().split('\n');
+              const dlTitle = (lines[0] || '').trim();
+              if (dlTitle && dlTitle !== 'Downloaded Audio') videoTitle = dlTitle;
+              const dlThumb = (lines[1] || '').trim();
+              if (dlThumb) thumbnail = dlThumb;
+            }
           } catch { /* keep defaults */ }
         }
 
@@ -702,18 +710,26 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         // Step 1: Fetch metadata via yt-dlp only if we don't have it
         if (!req.body.title) {
           try {
+            const proxyTiers = await getRandomFreeProxies(10);
+            let metaSuccess = false;
             let stdout = '';
-            try {
-              const res = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--no-playlist', cleanUrl]);
-              stdout = res.stdout;
-            } catch (e: any) {
-              console.warn(`yt-dlp metadata fetch failed: ${e.message}`);
+            for (let i = 0; i < proxyTiers.length; i++) {
+              try {
+                const res = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--no-playlist', cleanUrl], proxyTiers[i]);
+                stdout = res.stdout;
+                metaSuccess = true;
+                break;
+              } catch (e: any) {
+                console.warn(`[Tier ${i + 1}/10] yt-dlp video title fetch failed: ${e.message}`);
+              }
             }
-            const lines = stdout.trim().split('\n');
-            const dlTitle = (lines[0] || '').trim();
-            if (dlTitle && dlTitle !== 'Downloaded Video') videoTitle = dlTitle;
-            const dlThumb = (lines[1] || '').trim();
-            if (dlThumb) thumbnail = dlThumb;
+            if (metaSuccess) {
+              const lines = stdout.trim().split('\n');
+              const dlTitle = (lines[0] || '').trim();
+              if (dlTitle && dlTitle !== 'Downloaded Video') videoTitle = dlTitle;
+              const dlThumb = (lines[1] || '').trim();
+              if (dlThumb) thumbnail = dlThumb;
+            }
           } catch { /* keep defaults */ }
         }
 
