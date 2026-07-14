@@ -28,7 +28,8 @@ function ytDlpArgs(args: string[], proxy?: string): string[] {
     '--socket-timeout', '10',
     '--retries', '0',
     '--extractor-retries', '0',
-    '--fragment-retries', '0'
+    '--fragment-retries', '0',
+    '--no-check-certificate'
   ];
 
   return [...base, ...ytDlpAuthArgs(proxy), ...args];

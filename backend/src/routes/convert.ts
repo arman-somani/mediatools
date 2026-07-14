@@ -88,7 +88,8 @@ function ytDlpArgs(args: string[], proxy?: string): string[] {
     '--retries', '5',
     '--extractor-retries', '3',
     '--fragment-retries', '3',
-    '--no-warnings'
+    '--no-warnings',
+    '--no-check-certificate'
   ];
 
   return [...base, ...ytDlpAuthArgs(proxy), ...args];
