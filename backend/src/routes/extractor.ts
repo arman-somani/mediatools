@@ -16,35 +16,7 @@ function getYtDlpPath(): string {
 import { getActiveCookieFile } from '../utils/cookieManager';
 
 function ytDlpAuthArgs(): string[] {
-  const args: string[] = [];
-
-  if (process.env.ENABLE_IPV6 === 'true') {
-    args.push('--force-ipv6');
-  }
-
-  // 2. WARP / SOCKS5 Proxy
-  const wireproxyConfig = path.join(process.cwd(), 'warp.conf');
-  if (fs.existsSync(wireproxyConfig)) {
-    args.push('--proxy', 'socks5://127.0.0.1:1080');
-  } else if (process.env.WARP_PROXY_URL) {
-    args.push('--proxy', process.env.WARP_PROXY_URL);
-  }
-
-  // 3. Trigger yt-dlp PO Token Plugin
-  args.push('--extractor-args', 'youtube:player-client=web,default');
-
-  const generatedCookiePath = getActiveCookieFile();
-  const manualCookiePath = path.resolve(process.cwd(), process.env.YOUTUBE_COOKIES || 'cookies.txt');
-
-  if (generatedCookiePath) {
-    args.push('--cookies', generatedCookiePath);
-  } else if (fs.existsSync(manualCookiePath)) {
-    args.push('--cookies', manualCookiePath);
-  } else if (os.platform() === 'linux' && !process.env.RENDER && fs.existsSync('/root/.config/google-chrome')) {
-    args.push('--cookies-from-browser', 'chrome:/root/.config/google-chrome');
-  }
-  
-  return args;
+  return [];
 }
 
 function ytDlpArgs(args: string[]): string[] {
@@ -54,8 +26,7 @@ function ytDlpArgs(args: string[]): string[] {
     '--socket-timeout', '10',
     '--retries', '0',
     '--extractor-retries', '0',
-    '--fragment-retries', '0',
-    '--extractor-args', 'youtube:player-client=android_vr,web,default'
+    '--fragment-retries', '0'
   ];
 
   return [...base, ...ytDlpAuthArgs(), ...args];
