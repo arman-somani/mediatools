@@ -75,8 +75,7 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-import { spawn } from 'child_process';
-import { startCookieManagerLoop } from './utils/cookieManager';
+
 
 const start = async () => {
   await connectDB();
@@ -107,18 +106,7 @@ const start = async () => {
     }
   }, pingInterval);
 
-  // Start wireproxy
-  const wireproxyConfig = path.join(process.cwd(), 'warp.conf');
-  if (fs.existsSync(wireproxyConfig)) {
-    console.log(`[Wireproxy] Starting background WARP SOCKS5 proxy...`);
-    const wp = spawn('wireproxy', ['-c', wireproxyConfig], { stdio: 'inherit' });
-    wp.on('error', (err) => console.error(`[Wireproxy] failed to start:`, err.message));
-    
-    // Start the background YouTube cookie refresher
-    startCookieManagerLoop();
-  } else {
-    console.warn(`[Wireproxy] warp.conf not found. WARP proxy and CookieManager will not start.`);
-  }
+
 
   app.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`🚀 MediaTools Backend running on port ${PORT}`);
