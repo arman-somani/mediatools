@@ -378,7 +378,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         conversion.outputFilename = `${safeTitle}.mp3`;
         await conversion.save();
 
-        const runYtDlpAudio = () => new Promise((resolve, reject) => {
+        const runYtDlpAudio = (proxy?: string) => new Promise((resolve, reject) => {
           // Save directly as flat file, not in a subdirectory, to avoid path issues
           const flatOutputTemplate = path.join(outputDir, `${fileId}.%(ext)s`);
           const ytdlpArgsArr = [
@@ -393,7 +393,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
           ];
           ytdlpArgsArr.push(cleanUrl);
 
-          const ytdlp = spawn(getYtDlpPath(), ytDlpArgs(ytdlpArgsArr), { windowsHide: true });
+          const ytdlp = spawn(getYtDlpPath(), ytDlpArgs(ytdlpArgsArr, proxy), { windowsHide: true });
 
           activePolls.set(conversion._id.toString(), Date.now());
           const zombieKiller = setInterval(() => {
@@ -433,12 +433,25 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
           });
         });
 
-        try {
-          await runYtDlpAudio();
-          console.log(`yt-dlp AUDIO succeeded`);
-        } catch (err: any) {
-          console.error(`yt-dlp AUDIO failed:`, err.message);
-          throw new Error('All download attempts failed.');
+        const proxies = await getRandomFreeProxies(5);
+        const tiers = [undefined, ...proxies];
+        let success = false;
+
+        for (let i = 0; i < tiers.length; i++) {
+          const proxy = tiers[i];
+          console.log(`[Tier ${i + 1}/6] Attempting audio download${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
+          try {
+            await runYtDlpAudio(proxy);
+            console.log(`[Tier ${i + 1}/6] yt-dlp AUDIO succeeded`);
+            success = true;
+            break;
+          } catch (err: any) {
+            console.error(`[Tier ${i + 1}/6] yt-dlp AUDIO failed:`, err.message);
+          }
+        }
+
+        if (!success) {
+          throw new Error('All 6 download tiers failed.');
         }
 
         // Find the actual downloaded mp3 file (saved as {fileId}.mp3 or {fileId}.m4a etc)
@@ -581,12 +594,25 @@ router.post('/universal/metadata', async (req: Request, res: Response): Promise<
         cleanUrl,
       ];
 
-      try {
-        const res = await runYtDlp(args);
-        stdout = res.stdout;
-      } catch (e: any) {
-        console.warn(`Universal metadata native fetch failed: ${e.message}`);
-        throw new Error("Metadata extraction failed.");
+      const proxies = await getRandomFreeProxies(5);
+      const tiers = [undefined, ...proxies];
+      let metaSuccess = false;
+
+      for (let i = 0; i < tiers.length; i++) {
+        const proxy = tiers[i];
+        console.log(`[Tier ${i + 1}/6] Fetching metadata${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
+        try {
+          const res = await runYtDlp(args, proxy);
+          stdout = res.stdout;
+          metaSuccess = true;
+          break;
+        } catch (e: any) {
+          console.warn(`[Tier ${i + 1}/6] Universal metadata native fetch failed: ${e.message}`);
+        }
+      }
+
+      if (!metaSuccess) {
+        throw new Error("Metadata extraction failed across all 6 tiers.");
       }
 
       const lines = stdout.trim().split('\n');
@@ -700,7 +726,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
 
         // Step 2: Download video with the user's selected quality
         console.log(`[QUALITY DEBUG] User requested: ${videoQuality} → targetHeight: ${targetHeight}`);
-        const runYtDlpDownload = () => new Promise((resolve, reject) => {
+        const runYtDlpDownload = (proxy?: string) => new Promise((resolve, reject) => {
           const formatStr = `bestvideo[height<=${targetHeight}]+bestaudio/best[height<=${targetHeight}]`;
           console.log(`[QUALITY DEBUG] yt-dlp format string: ${formatStr}`);
           const ytdlpArgsArr = [
@@ -717,7 +743,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
           ];
           ytdlpArgsArr.push(cleanUrl);
 
-          const ytdlp = spawn(getYtDlpPath(), ytDlpArgs(ytdlpArgsArr), { windowsHide: true });
+          const ytdlp = spawn(getYtDlpPath(), ytDlpArgs(ytdlpArgsArr, proxy), { windowsHide: true });
 
           activePolls.set(conversion._id.toString(), Date.now());
           const zombieKiller = setInterval(() => {
@@ -761,12 +787,25 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
           });
         });
 
-        try {
-          await runYtDlpDownload();
-          console.log(`yt-dlp UNIVERSAL succeeded`);
-        } catch (err: any) {
-          console.error(`yt-dlp UNIVERSAL failed:`, err.message);
-          throw new Error('All download attempts failed.');
+        const proxies = await getRandomFreeProxies(5);
+        const tiers = [undefined, ...proxies];
+        let success = false;
+
+        for (let i = 0; i < tiers.length; i++) {
+          const proxy = tiers[i];
+          console.log(`[Tier ${i + 1}/6] Attempting video download${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
+          try {
+            await runYtDlpDownload(proxy);
+            console.log(`[Tier ${i + 1}/6] yt-dlp UNIVERSAL succeeded`);
+            success = true;
+            break;
+          } catch (err: any) {
+            console.error(`[Tier ${i + 1}/6] yt-dlp UNIVERSAL failed:`, err.message);
+          }
+        }
+
+        if (!success) {
+          throw new Error('All 6 download tiers failed.');
         }
 
         // Find the actual downloaded file by fileId prefix
