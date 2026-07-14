@@ -74,14 +74,27 @@ router.get('/info', async (req: Request, res: Response): Promise<void> => {
 
     let data;
 
-    try {
-      data = await runYtDlpJson(url);
-      if (!data || !data.formats) {
-        throw new Error('No formats found');
+    const proxies = await getRandomFreeProxies(5);
+    const tiers = [undefined, ...proxies];
+    let success = false;
+
+    for (let i = 0; i < tiers.length; i++) {
+      const proxy = tiers[i];
+      console.log(`[Tier ${i + 1}/6] Fetching extractor info${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
+      try {
+        data = await runYtDlpJson(url, proxy);
+        if (!data || !data.formats) {
+          throw new Error('No formats found');
+        }
+        success = true;
+        break;
+      } catch (err: any) {
+        console.warn(`[Tier ${i + 1}/6] Extractor failed:`, err.message);
       }
-    } catch (err: any) {
-      console.error(`[Extractor] failed:`, err.message);
-      throw new Error('Extractor failed.');
+    }
+
+    if (!success) {
+      throw new Error('Extractor failed across all 6 tiers.');
     }
 
     if (!data) {
