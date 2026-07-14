@@ -434,24 +434,24 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
           });
         });
 
-        const tiers = await getRandomFreeProxies(6);
+        const tiers = await getRandomFreeProxies(10);
         let success = false;
 
         for (let i = 0; i < tiers.length; i++) {
           const proxy = tiers[i];
-          console.log(`[Tier ${i + 1}/6] Attempting audio download${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
+          console.log(`[Tier ${i + 1}/10] Attempting audio download${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
           try {
             await runYtDlpAudio(proxy);
-            console.log(`[Tier ${i + 1}/6] yt-dlp AUDIO succeeded`);
+            console.log(`[Tier ${i + 1}/10] yt-dlp AUDIO succeeded`);
             success = true;
             break;
           } catch (err: any) {
-            console.error(`[Tier ${i + 1}/6] yt-dlp AUDIO failed:`, err.message);
+            console.error(`[Tier ${i + 1}/10] yt-dlp AUDIO failed:`, err.message);
           }
         }
 
         if (!success) {
-          throw new Error('All 6 download tiers failed.');
+          throw new Error('All 10 download tiers failed.');
         }
 
         // Find the actual downloaded mp3 file (saved as {fileId}.mp3 or {fileId}.m4a etc)
@@ -594,24 +594,24 @@ router.post('/universal/metadata', async (req: Request, res: Response): Promise<
         cleanUrl,
       ];
 
-      const tiers = await getRandomFreeProxies(6);
+      const tiers = await getRandomFreeProxies(10);
       let metaSuccess = false;
 
       for (let i = 0; i < tiers.length; i++) {
         const proxy = tiers[i];
-        console.log(`[Tier ${i + 1}/6] Fetching metadata${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
+        console.log(`[Tier ${i + 1}/10] Fetching metadata${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
         try {
           const res = await runYtDlp(args, proxy);
           stdout = res.stdout;
           metaSuccess = true;
           break;
         } catch (e: any) {
-          console.warn(`[Tier ${i + 1}/6] Universal metadata native fetch failed: ${e.message}`);
+          console.warn(`[Tier ${i + 1}/10] Universal metadata native fetch failed: ${e.message}`);
         }
       }
 
       if (!metaSuccess) {
-        throw new Error("Metadata extraction failed across all 6 tiers.");
+        throw new Error("Metadata extraction failed across all 10 tiers.");
       }
 
       const lines = stdout.trim().split('\n');
@@ -786,24 +786,24 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
           });
         });
 
-        const tiers = await getRandomFreeProxies(6);
+        const tiers = await getRandomFreeProxies(10);
         let success = false;
 
         for (let i = 0; i < tiers.length; i++) {
           const proxy = tiers[i];
-          console.log(`[Tier ${i + 1}/6] Attempting video download${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
+          console.log(`[Tier ${i + 1}/10] Attempting video download${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
           try {
             await runYtDlpDownload(proxy);
-            console.log(`[Tier ${i + 1}/6] yt-dlp UNIVERSAL succeeded`);
+            console.log(`[Tier ${i + 1}/10] yt-dlp UNIVERSAL succeeded`);
             success = true;
             break;
           } catch (err: any) {
-            console.error(`[Tier ${i + 1}/6] yt-dlp UNIVERSAL failed:`, err.message);
+            console.error(`[Tier ${i + 1}/10] yt-dlp UNIVERSAL failed:`, err.message);
           }
         }
 
         if (!success) {
-          throw new Error('All 6 download tiers failed.');
+          throw new Error('All 10 download tiers failed.');
         }
 
         // Find the actual downloaded file by fileId prefix

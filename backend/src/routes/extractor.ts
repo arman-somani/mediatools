@@ -75,12 +75,12 @@ router.get('/info', async (req: Request, res: Response): Promise<void> => {
 
     let data;
 
-    const tiers = await getRandomFreeProxies(6);
+    const tiers = await getRandomFreeProxies(10);
     let success = false;
 
     for (let i = 0; i < tiers.length; i++) {
       const proxy = tiers[i];
-      console.log(`[Tier ${i + 1}/6] Fetching extractor info${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
+      console.log(`[Tier ${i + 1}/10] Fetching extractor info${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
       try {
         data = await runYtDlpJson(url, proxy);
         if (!data || !data.formats) {
@@ -89,12 +89,12 @@ router.get('/info', async (req: Request, res: Response): Promise<void> => {
         success = true;
         break;
       } catch (err: any) {
-        console.warn(`[Tier ${i + 1}/6] Extractor failed:`, err.message);
+        console.warn(`[Tier ${i + 1}/10] Extractor failed:`, err.message);
       }
     }
 
     if (!success) {
-      throw new Error('Extractor failed across all 6 tiers.');
+      throw new Error('Extractor failed across all 10 tiers.');
     }
 
     if (!data) {
