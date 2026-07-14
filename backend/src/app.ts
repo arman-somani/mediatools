@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import path from 'path';
 import os from 'os';
+import axios from 'axios';
 
 // On Windows (local dev), inject the local yt-dlp binary dir into PATH
 // On Linux/Render, yt-dlp and ffmpeg are already installed system-wide via Dockerfile
@@ -92,6 +93,19 @@ const start = async () => {
 
   // Cleanup job - run every 30 minutes
   setInterval(cleanupOldFiles, 30 * 60 * 1000);
+
+  // Self-ping job to prevent sleeping (every 10 minutes)
+  const pingInterval = 10 * 60 * 1000;
+  setInterval(async () => {
+    try {
+      // Use RENDER_EXTERNAL_URL if on Render, SELF_PING_URL if provided, otherwise localhost
+      const url = process.env.RENDER_EXTERNAL_URL || process.env.SELF_PING_URL || `http://localhost:${PORT}/api/health`;
+      console.log(`[Self-Ping] Keeping server awake by pinging ${url}...`);
+      await axios.get(url);
+    } catch (err: any) {
+      console.error(`[Self-Ping] Error pinging server:`, err.message);
+    }
+  }, pingInterval);
 
   // Start wireproxy
   const wireproxyConfig = path.join(process.cwd(), 'warp.conf');
