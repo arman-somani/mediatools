@@ -23,9 +23,12 @@ import vm from 'vm';
 
 import { uploadToGoFile } from '../utils/gofile';
 import { getActiveCookieFile } from '../utils/cookieManager';
+import { getRandomFreeProxies } from '../utils/freeproxy';
 
-function ytDlpAuthArgs(): string[] {
-  return [];
+function ytDlpAuthArgs(proxy?: string): string[] {
+  const args: string[] = [];
+  if (proxy) args.push('--proxy', proxy);
+  return args;
 }
 
 Platform.shim.eval = (script: any) => {
@@ -77,7 +80,7 @@ function getYouTubeVideoId(input: string): string | null {
   return null;
 }
 
-function ytDlpArgs(args: string[]): string[] {
+function ytDlpArgs(args: string[], proxy?: string): string[] {
   const base = [
     '--remote-components', 'ejs:github',
     '--js-runtimes', 'node',
@@ -88,12 +91,12 @@ function ytDlpArgs(args: string[]): string[] {
     '--no-warnings'
   ];
 
-  return [...base, ...ytDlpAuthArgs(), ...args];
+  return [...base, ...ytDlpAuthArgs(proxy), ...args];
 }
 
-function runYtDlp(args: string[]): Promise<{ stdout: string; stderr: string }> {
+function runYtDlp(args: string[], proxy?: string): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
-    const child = spawn(getYtDlpPath(), ytDlpArgs(args), { windowsHide: true });
+    const child = spawn(getYtDlpPath(), ytDlpArgs(args, proxy), { windowsHide: true });
     let stdout = '';
     let stderr = '';
 

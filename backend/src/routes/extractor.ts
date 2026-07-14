@@ -15,11 +15,13 @@ function getYtDlpPath(): string {
 
 import { getActiveCookieFile } from '../utils/cookieManager';
 
-function ytDlpAuthArgs(): string[] {
-  return [];
+function ytDlpAuthArgs(proxy?: string): string[] {
+  const args: string[] = [];
+  if (proxy) args.push('--proxy', proxy);
+  return args;
 }
 
-function ytDlpArgs(args: string[]): string[] {
+function ytDlpArgs(args: string[], proxy?: string): string[] {
   const base = [
     '--remote-components', 'ejs:github',
     // '--rm-cache-dir', // DO NOT remove cache, oauth2 token is stored here!
@@ -29,13 +31,13 @@ function ytDlpArgs(args: string[]): string[] {
     '--fragment-retries', '0'
   ];
 
-  return [...base, ...ytDlpAuthArgs(), ...args];
+  return [...base, ...ytDlpAuthArgs(proxy), ...args];
 }
 
-function runYtDlpJson(url: string): Promise<any> {
+function runYtDlpJson(url: string, proxy?: string): Promise<any> {
   return new Promise((resolve, reject) => {
     const args = ['-J', '--no-playlist', url];
-    const child = spawn(getYtDlpPath(), ytDlpArgs(args), { windowsHide: true });
+    const child = spawn(getYtDlpPath(), ytDlpArgs(args, proxy), { windowsHide: true });
     const stdoutChunks: Buffer[] = [];
     let stderr = '';
 
