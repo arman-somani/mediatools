@@ -1,6 +1,8 @@
 import axios from 'axios';
 import fs from 'fs';
 import FormData from 'form-data';
+import https from 'https';
+import { PassThrough } from 'stream';
 
 /**
  * Uploads a local file to GoFile.io and returns the download page URL
@@ -19,27 +21,50 @@ export async function uploadToGoFile(
     const serverName = serverResponse.data.data.servers[0].name;
     const safeFilename = filename.replace(/"/g, "'");
 
-    const form = new FormData();
-    form.append('token', 'zr5lPVjXmF3Isjd2PiVtm3cgeiYWmFoN');
-    form.append('file', fs.createReadStream(localFilePath), { filename: safeFilename });
+    const fileStats = fs.statSync(localFilePath);
+    const fileSize = fileStats.size;
+    let uploadedBytes = 0;
 
-    const response = await axios.post(`https://${serverName}.gofile.io/contents/uploadfile`, form, {
-      headers: { ...form.getHeaders() },
-      maxContentLength: Infinity,
-      maxBodyLength: Infinity,
-      onUploadProgress: (progressEvent) => {
-        if (progressEvent.total) {
-          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          if (onProgress) onProgress(percent);
-        }
+    const progressStream = new PassThrough();
+    progressStream.on('data', (chunk) => {
+      uploadedBytes += chunk.length;
+      if (onProgress) {
+        const percent = Math.min(100, Math.round((uploadedBytes * 100) / fileSize));
+        onProgress(percent);
       }
     });
 
-    if (response.data?.status !== 'ok') {
-      throw new Error('GoFile upload failed: ' + JSON.stringify(response.data));
-    }
+    const form = new FormData();
+    form.append('token', 'zr5lPVjXmF3Isjd2PiVtm3cgeiYWmFoN');
+    form.append('file', fs.createReadStream(localFilePath).pipe(progressStream), { 
+      filename: safeFilename,
+      knownLength: fileSize
+    });
 
-    return response.data.data.downloadPage;
+    return await new Promise<string>((resolve, reject) => {
+      const req = https.request(`https://${serverName}.gofile.io/contents/uploadfile`, {
+        method: 'POST',
+        headers: form.getHeaders(),
+      }, (res) => {
+        let body = '';
+        res.on('data', chunk => body += chunk);
+        res.on('end', () => {
+          try {
+            const json = JSON.parse(body);
+            if (json.status !== 'ok') {
+              reject(new Error('GoFile upload failed: ' + body));
+            } else {
+              resolve(json.data.downloadPage);
+            }
+          } catch (e) {
+            reject(new Error('Failed to parse GoFile response: ' + body));
+          }
+        });
+      });
+
+      req.on('error', reject);
+      form.pipe(req);
+    });
   } catch (error: any) {
     console.error('GoFile Upload Error:', error.message);
     throw error;
