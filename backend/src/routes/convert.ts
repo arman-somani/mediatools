@@ -85,8 +85,8 @@ function ytDlpArgs(args: string[], proxy?: string): string[] {
     '--remote-components', 'ejs:github',
     '--js-runtimes', 'node',
     '--socket-timeout', '5',
-    '--retries', '5',
-    '--extractor-retries', '3',
+    '--retries', '0',
+    '--extractor-retries', '0',
     '--fragment-retries', '3',
     '--no-warnings',
     '--no-check-certificate'
@@ -244,7 +244,7 @@ router.post(
         activePolls.set(conversion._id.toString(), Date.now());
         const zombieKiller = setInterval(() => {
           const lastPoll = activePolls.get(conversion._id.toString());
-          if (lastPoll && Date.now() - lastPoll > 15000) {
+          if (lastPoll && Date.now() - lastPoll > 60000) {
              ffmpeg.kill('SIGKILL');
              clearInterval(zombieKiller);
           }
