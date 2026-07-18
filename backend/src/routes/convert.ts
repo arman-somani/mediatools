@@ -400,8 +400,6 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
             '--audio-quality', `${audioQuality}K`,
             '-o', flatOutputTemplate,
             '--no-playlist',
-            '--concurrent-fragments', '2',
-            '--http-chunk-size', '5M',
           ];
           ytdlpArgsArr.push(cleanUrl);
 
@@ -765,8 +763,6 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
             '--merge-output-format', 'mp4',
             '-o', path.join(outputDir, `${fileId}.%(ext)s`),
             '--no-playlist',
-            '--concurrent-fragments', '2',
-            '--http-chunk-size', '5M',
             '--hls-prefer-native',
           ];
           ytdlpArgsArr.push(cleanUrl);
