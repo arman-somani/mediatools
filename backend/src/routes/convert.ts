@@ -363,7 +363,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
             let stdout = '';
             for (let i = 0; i < proxyTiers.length; i++) {
               try {
-                const res = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--no-playlist', cleanUrl], proxyTiers[i]);
+                const res = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--ignore-no-formats-error', '--no-playlist', cleanUrl], proxyTiers[i]);
                 stdout = res.stdout;
                 metaSuccess = true;
                 break;
@@ -547,7 +547,7 @@ router.post('/youtube-formats', async (req: Request, res: Response): Promise<voi
 
     // Because ytdl-core broke globally, we use the incredibly reliable yt-dlp binary to decipher!
     // We request the best video up to 1080p, and the best audio.
-    const resTitle = await runYtDlp(['--print', 'title', '--no-playlist', videoUrl]);
+    const resTitle = await runYtDlp(['--print', 'title', '--ignore-no-formats-error', '--no-playlist', videoUrl]);
     const title = resTitle.stdout.trim();
 
     const resUrls = await runYtDlp(['-f', 'bestvideo[height<=1080]+bestaudio', '--get-url', videoUrl]);
@@ -598,6 +598,7 @@ router.post('/universal/metadata', async (req: Request, res: Response): Promise<
         '--print', '%(resolution)s',
         '--print', '%(filesize_approx,filesize)s',
         '--print', '%(url)s',
+        '--ignore-no-formats-error',
         '--no-playlist',
         cleanUrl,
       ];
@@ -715,7 +716,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
             let stdout = '';
             for (let i = 0; i < proxyTiers.length; i++) {
               try {
-                const res = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--no-playlist', cleanUrl], proxyTiers[i]);
+                const res = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--ignore-no-formats-error', '--no-playlist', cleanUrl], proxyTiers[i]);
                 stdout = res.stdout;
                 metaSuccess = true;
                 break;
