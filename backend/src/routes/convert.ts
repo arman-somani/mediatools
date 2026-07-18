@@ -84,7 +84,7 @@ function ytDlpArgs(args: string[], proxy?: string): string[] {
   const base = [
     '--remote-components', 'ejs:github',
     '--js-runtimes', 'node',
-    '--socket-timeout', '15',
+    '--socket-timeout', '5',
     '--retries', '5',
     '--extractor-retries', '3',
     '--fragment-retries', '3',
