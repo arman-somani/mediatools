@@ -358,17 +358,20 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         // Step 1: Fetch metadata via yt-dlp only if we don't have it
         if (!req.body.title) {
           try {
-            const proxyTiers = await getRandomFreeProxies(10);
             let metaSuccess = false;
             let stdout = '';
-            for (let i = 0; i < proxyTiers.length; i++) {
-              try {
-                const res = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--ignore-no-formats-error', '--no-playlist', cleanUrl], proxyTiers[i]);
-                stdout = res.stdout;
-                metaSuccess = true;
-                break;
-              } catch (e: any) {
-                console.warn(`[Tier ${i + 1}/10] yt-dlp audio title fetch failed: ${e.message}`);
+            outerLoopMeta:
+            for (let i = 0; i < 10; i++) {
+              const proxyTiers = await getRandomFreeProxies(10);
+              for (let j = 0; j < proxyTiers.length; j++) {
+                try {
+                  const res = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--ignore-no-formats-error', '--no-playlist', cleanUrl], proxyTiers[j]);
+                  stdout = res.stdout;
+                  metaSuccess = true;
+                  break outerLoopMeta;
+                } catch (e: any) {
+                  console.warn(`[Tier ${i + 1}/10] [Proxy ${j + 1}/10] yt-dlp audio title fetch failed: ${e.message}`);
+                }
               }
             }
             if (metaSuccess) {
@@ -442,19 +445,22 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
           });
         });
 
-        const tiers = await getRandomFreeProxies(10);
         let success = false;
 
-        for (let i = 0; i < tiers.length; i++) {
-          const proxy = tiers[i];
-          console.log(`[Tier ${i + 1}/10] Attempting audio download${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
-          try {
-            await runYtDlpAudio(proxy);
-            console.log(`[Tier ${i + 1}/10] yt-dlp AUDIO succeeded`);
-            success = true;
-            break;
-          } catch (err: any) {
-            console.error(`[Tier ${i + 1}/10] yt-dlp AUDIO failed:`, err.message);
+        outerLoopAudio:
+        for (let i = 0; i < 10; i++) {
+          const tiers = await getRandomFreeProxies(10);
+          for (let j = 0; j < tiers.length; j++) {
+            const proxy = tiers[j];
+            console.log(`[Tier ${i + 1}/10] [Proxy ${j + 1}/10] Attempting audio download${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
+            try {
+              await runYtDlpAudio(proxy);
+              console.log(`[Tier ${i + 1}/10] [Proxy ${j + 1}/10] yt-dlp AUDIO succeeded`);
+              success = true;
+              break outerLoopAudio;
+            } catch (err: any) {
+              console.error(`[Tier ${i + 1}/10] [Proxy ${j + 1}/10] yt-dlp AUDIO failed:`, err.message);
+            }
           }
         }
 
@@ -603,19 +609,22 @@ router.post('/universal/metadata', async (req: Request, res: Response): Promise<
         cleanUrl,
       ];
 
-      const tiers = await getRandomFreeProxies(10);
       let metaSuccess = false;
 
-      for (let i = 0; i < tiers.length; i++) {
-        const proxy = tiers[i];
-        console.log(`[Tier ${i + 1}/10] Fetching metadata${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
-        try {
-          const res = await runYtDlp(args, proxy);
-          stdout = res.stdout;
-          metaSuccess = true;
-          break;
-        } catch (e: any) {
-          console.warn(`[Tier ${i + 1}/10] Universal metadata native fetch failed: ${e.message}`);
+      outerLoopUnivMeta:
+      for (let i = 0; i < 10; i++) {
+        const tiers = await getRandomFreeProxies(10);
+        for (let j = 0; j < tiers.length; j++) {
+          const proxy = tiers[j];
+          console.log(`[Tier ${i + 1}/10] [Proxy ${j + 1}/10] Fetching metadata${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
+          try {
+            const res = await runYtDlp(args, proxy);
+            stdout = res.stdout;
+            metaSuccess = true;
+            break outerLoopUnivMeta;
+          } catch (e: any) {
+            console.warn(`[Tier ${i + 1}/10] [Proxy ${j + 1}/10] Universal metadata native fetch failed: ${e.message}`);
+          }
         }
       }
 
@@ -711,17 +720,20 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         // Step 1: Fetch metadata via yt-dlp only if we don't have it
         if (!req.body.title) {
           try {
-            const proxyTiers = await getRandomFreeProxies(10);
             let metaSuccess = false;
             let stdout = '';
-            for (let i = 0; i < proxyTiers.length; i++) {
-              try {
-                const res = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--ignore-no-formats-error', '--no-playlist', cleanUrl], proxyTiers[i]);
-                stdout = res.stdout;
-                metaSuccess = true;
-                break;
-              } catch (e: any) {
-                console.warn(`[Tier ${i + 1}/10] yt-dlp video title fetch failed: ${e.message}`);
+            outerLoopUnivTitle:
+            for (let i = 0; i < 10; i++) {
+              const proxyTiers = await getRandomFreeProxies(10);
+              for (let j = 0; j < proxyTiers.length; j++) {
+                try {
+                  const res = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--ignore-no-formats-error', '--no-playlist', cleanUrl], proxyTiers[j]);
+                  stdout = res.stdout;
+                  metaSuccess = true;
+                  break outerLoopUnivTitle;
+                } catch (e: any) {
+                  console.warn(`[Tier ${i + 1}/10] [Proxy ${j + 1}/10] yt-dlp video title fetch failed: ${e.message}`);
+                }
               }
             }
             if (metaSuccess) {
@@ -803,19 +815,22 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
           });
         });
 
-        const tiers = await getRandomFreeProxies(10);
         let success = false;
 
-        for (let i = 0; i < tiers.length; i++) {
-          const proxy = tiers[i];
-          console.log(`[Tier ${i + 1}/10] Attempting video download${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
-          try {
-            await runYtDlpDownload(proxy);
-            console.log(`[Tier ${i + 1}/10] yt-dlp UNIVERSAL succeeded`);
-            success = true;
-            break;
-          } catch (err: any) {
-            console.error(`[Tier ${i + 1}/10] yt-dlp UNIVERSAL failed:`, err.message);
+        outerLoopUnivDL:
+        for (let i = 0; i < 10; i++) {
+          const tiers = await getRandomFreeProxies(10);
+          for (let j = 0; j < tiers.length; j++) {
+            const proxy = tiers[j];
+            console.log(`[Tier ${i + 1}/10] [Proxy ${j + 1}/10] Attempting video download${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
+            try {
+              await runYtDlpDownload(proxy);
+              console.log(`[Tier ${i + 1}/10] [Proxy ${j + 1}/10] yt-dlp UNIVERSAL succeeded`);
+              success = true;
+              break outerLoopUnivDL;
+            } catch (err: any) {
+              console.error(`[Tier ${i + 1}/10] [Proxy ${j + 1}/10] yt-dlp UNIVERSAL failed:`, err.message);
+            }
           }
         }
 
