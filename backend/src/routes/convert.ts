@@ -408,7 +408,7 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
           activePolls.set(conversion._id.toString(), Date.now());
           const zombieKiller = setInterval(() => {
             const lastPoll = activePolls.get(conversion._id.toString());
-            if (lastPoll && Date.now() - lastPoll > 15000) {
+            if (lastPoll && Date.now() - lastPoll > 60000) {
                ytdlp.kill('SIGKILL');
                clearInterval(zombieKiller);
                reject(new Error('User closed the tab. Download cancelled.'));
@@ -772,7 +772,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
           activePolls.set(conversion._id.toString(), Date.now());
           const zombieKiller = setInterval(() => {
             const lastPoll = activePolls.get(conversion._id.toString());
-            if (lastPoll && Date.now() - lastPoll > 15000) {
+            if (lastPoll && Date.now() - lastPoll > 60000) {
                ytdlp.kill('SIGKILL');
                clearInterval(zombieKiller);
                reject(new Error('User closed the tab. Download cancelled.'));
