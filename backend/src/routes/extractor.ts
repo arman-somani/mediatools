@@ -25,7 +25,7 @@ function ytDlpArgs(args: string[], proxy?: string): string[] {
   const base = [
     '--remote-components', 'ejs:github',
     // '--rm-cache-dir', // DO NOT remove cache, oauth2 token is stored here!
-    '--socket-timeout', '10',
+    '--socket-timeout', '5',
     '--retries', '0',
     '--extractor-retries', '0',
     '--fragment-retries', '0',
