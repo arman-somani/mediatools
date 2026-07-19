@@ -11,17 +11,39 @@ export async function getFreeProxies(): Promise<string[]> {
     return cachedProxies;
   }
 
+  const urls = [
+    'https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt',
+    'https://raw.githubusercontent.com/monosans/proxy-list/main/proxies/http.txt',
+    'https://raw.githubusercontent.com/proxifly/free-proxy-list/main/proxies/protocols/http/data.txt',
+    'https://api.proxyscrape.com/v4/free-proxy-list/get?request=displayproxies&protocol=http&anonymity=elite,anonymous&timeout=10000'
+  ];
+
   try {
-    const resp = await fetch('https://api.proxyscrape.com/v4/free-proxy-list/get?request=displayproxies&protocol=http&anonymity=elite,anonymous&timeout=10000');
-    if (!resp.ok) {
-      throw new Error(`Failed to fetch free proxies: ${resp.statusText}`);
-    }
-    const text = await resp.text();
-    const proxies = text.split('\n').map(p => p.trim()).filter(p => p.length > 0);
+    const fetchPromises = urls.map(async (url) => {
+      try {
+        const resp = await fetch(url);
+        if (!resp.ok) return [];
+        const text = await resp.text();
+        return text.split('\n').map(p => p.trim()).filter(p => p.length > 0 && p.includes(':'));
+      } catch (e) {
+        return [];
+      }
+    });
+
+    const results = await Promise.all(fetchPromises);
+    const allProxies = results.flat();
     
+    if (allProxies.length === 0) {
+      throw new Error('All proxy sources failed to return proxies');
+    }
+
+    // Deduplicate
+    const uniqueProxies = Array.from(new Set(allProxies));
+
     // Add http:// prefix if missing
-    cachedProxies = proxies.map(p => p.startsWith('http') ? p : `http://${p}`);
+    cachedProxies = uniqueProxies.map(p => p.startsWith('http') ? p : `http://${p}`);
     lastFetchTime = now;
+    console.log(`[FreeProxy] Fetched ${cachedProxies.length} unique proxies from GitHub & ProxyScrape`);
     return cachedProxies;
   } catch (error) {
     console.warn('[FreeProxy] Failed to fetch proxy list:', error);
