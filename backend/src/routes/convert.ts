@@ -760,7 +760,7 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
             '-v',
             '-f', formatStr,
             '-S', `res:${targetHeight}`,
-            '--remux-video', 'mp4',
+
             '-o', path.join(outputDir, `${fileId}.%(ext)s`),
             '--no-playlist',
             '--hls-prefer-native',
