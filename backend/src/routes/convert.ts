@@ -364,30 +364,16 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         // Step 1: Fetch metadata via yt-dlp only if we don't have it
         if (!req.body.title) {
           try {
-            let metaSuccess = false;
-            let stdout = '';
-            outerLoopMeta:
-            for (let i = 0; i < 10; i++) {
-              const proxyTiers = await getRandomFreeProxies(10);
-              for (let j = 0; j < proxyTiers.length; j++) {
-                try {
-                  const res = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--ignore-no-formats-error', '--no-playlist', cleanUrl], proxyTiers[j]);
-                  stdout = res.stdout;
-                  metaSuccess = true;
-                  break outerLoopMeta;
-                } catch (e: any) {
-                  console.warn(`[Tier ${i + 1}/10] [Proxy ${j + 1}/10] yt-dlp audio title fetch failed: ${e.message}`);
-                }
-              }
+            const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(cleanUrl)}&format=json`;
+            const resp = await fetch(oembedUrl);
+            if (resp.ok) {
+              const data = await resp.json();
+              if (data.title && data.title !== 'Downloaded Audio') videoTitle = data.title;
+              if (data.thumbnail_url) thumbnail = data.thumbnail_url;
             }
-            if (metaSuccess) {
-              const lines = stdout.trim().split('\n');
-              const dlTitle = (lines[0] || '').trim();
-              if (dlTitle && dlTitle !== 'Downloaded Audio') videoTitle = dlTitle;
-              const dlThumb = (lines[1] || '').trim();
-              if (dlThumb) thumbnail = dlThumb;
-            }
-          } catch { /* keep defaults */ }
+          } catch (err) {
+            console.warn('oEmbed audio metadata fetch failed:', err);
+          }
         }
 
         const safeTitle = sanitizeFilename(videoTitle) || 'Downloaded Audio';
@@ -724,30 +710,16 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         // Step 1: Fetch metadata via yt-dlp only if we don't have it
         if (!req.body.title) {
           try {
-            let metaSuccess = false;
-            let stdout = '';
-            outerLoopUnivTitle:
-            for (let i = 0; i < 10; i++) {
-              const proxyTiers = await getRandomFreeProxies(10);
-              for (let j = 0; j < proxyTiers.length; j++) {
-                try {
-                  const res = await runYtDlp(['--print', 'title', '--print', 'thumbnail', '--ignore-no-formats-error', '--no-playlist', cleanUrl], proxyTiers[j]);
-                  stdout = res.stdout;
-                  metaSuccess = true;
-                  break outerLoopUnivTitle;
-                } catch (e: any) {
-                  console.warn(`[Tier ${i + 1}/10] [Proxy ${j + 1}/10] yt-dlp video title fetch failed: ${e.message}`);
-                }
-              }
+            const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(cleanUrl)}&format=json`;
+            const resp = await fetch(oembedUrl);
+            if (resp.ok) {
+              const data = await resp.json();
+              if (data.title && data.title !== 'Downloaded Video') videoTitle = data.title;
+              if (data.thumbnail_url) thumbnail = data.thumbnail_url;
             }
-            if (metaSuccess) {
-              const lines = stdout.trim().split('\n');
-              const dlTitle = (lines[0] || '').trim();
-              if (dlTitle && dlTitle !== 'Downloaded Video') videoTitle = dlTitle;
-              const dlThumb = (lines[1] || '').trim();
-              if (dlThumb) thumbnail = dlThumb;
-            }
-          } catch { /* keep defaults */ }
+          } catch (err) {
+            console.warn('oEmbed video metadata fetch failed:', err);
+          }
         }
 
         const safeTitle = sanitizeFilename(videoTitle) || 'Downloaded Video';
