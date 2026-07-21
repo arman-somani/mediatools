@@ -33,7 +33,9 @@ function ytDlpArgs(args: string[], proxy?: string): string[] {
     '--retries', '0',
     '--extractor-retries', '0',
     '--fragment-retries', '0',
-    '--no-check-certificate'
+    '--no-check-certificate',
+    '--extractor-args', 'youtube:player_client=tv,web_embedded;player_skip=webpage',
+    '--force-ipv4'
   ];
 
   return [...base, ...ytDlpAuthArgs(proxy), ...args];
