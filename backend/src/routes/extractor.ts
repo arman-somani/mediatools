@@ -83,27 +83,23 @@ router.get('/info', async (req: Request, res: Response): Promise<void> => {
 
     let success = false;
 
-    outerLoop:
-    for (let i = 0; i < 10; i++) {
-      const proxies = await getRandomFreeProxies(10);
-      for (let j = 0; j < proxies.length; j++) {
-        const proxy = proxies[j];
-        console.log(`[Tier ${i + 1}/10] [Proxy ${j + 1}/10] Fetching extractor info${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
-        try {
-          data = await runYtDlpJson(url, proxy);
-          if (!data || !data.formats) {
-            throw new Error('No formats found');
-          }
-          success = true;
-          break outerLoop;
-        } catch (err: any) {
-          console.warn(`[Tier ${i + 1}/10] [Proxy ${j + 1}/10] Extractor failed:`, err.message);
+    for (let i = 0; i < 3; i++) {
+      const proxy = (await getRandomFreeProxies(1))[0];
+      console.log(`[Attempt ${i + 1}/3] Fetching extractor info${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
+      try {
+        data = await runYtDlpJson(url, proxy);
+        if (!data || !data.formats) {
+          throw new Error('No formats found');
         }
+        success = true;
+        break;
+      } catch (err: any) {
+        console.warn(`[Attempt ${i + 1}/3] Extractor failed:`, err.message);
       }
     }
 
     if (!success) {
-      throw new Error('Extractor failed across all 10 tiers.');
+      throw new Error('Extractor failed across all attempts.');
     }
 
     if (!data) {
