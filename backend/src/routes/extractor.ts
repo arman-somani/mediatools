@@ -18,6 +18,10 @@ import { getActiveCookieFile } from '../utils/cookieManager';
 function ytDlpAuthArgs(proxy?: string): string[] {
   const args: string[] = [];
   if (proxy) args.push('--proxy', proxy);
+
+  const cookieFile = getActiveCookieFile();
+  if (cookieFile) args.push('--cookies', cookieFile);
+
   return args;
 }
 
