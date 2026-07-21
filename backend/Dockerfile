@@ -47,5 +47,6 @@ RUN mkdir -p uploads outputs
 ENV PORT=7860
 EXPOSE 7860
 
-# Start the application
-CMD ["npm", "start"]
+# Start the application using the auto-boot script
+RUN chmod +x start.sh
+CMD ["./start.sh"]
