@@ -123,7 +123,7 @@ export default function ConverterPage() {
                   {/* Dropzone */}
                   <div
                     {...getRootProps()}
-                    className={`relative overflow-hidden rounded-2xl border-2 border-dashed p-12 text-center cursor-pointer transition-all duration-300 ${isDragActive ? 'border-brand-purple bg-brand-purple/5 scale-[1.01]' : 'border-white/10 bg-black/[0.02] hover:border-black/20 hover:bg-black/[0.04]'}`}
+                    className={`relative overflow-hidden rounded-2xl border-2 border-dashed p-12 text-center cursor-pointer transition-all duration-300 ${isDragActive ? 'border-brand-purple bg-brand-purple/5 scale-[1.01] drag-active-pulse' : 'border-white/10 bg-black/[0.02] hover:border-black/20 hover:bg-black/[0.04]'}`}
                   >
                     <input {...getInputProps()} />
                       {file ? (
@@ -136,8 +136,8 @@ export default function ConverterPage() {
                         </div>
                       ) : (
                         <div key="empty" className="animate-in fade-in duration-300">
-                          <div className="w-16 h-16 mx-auto bg-white/5 rounded-full flex items-center justify-center mb-6 border border-white/10">
-                            <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-slate-300" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                          <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-6 border transition-all duration-300 ${isDragActive ? 'bg-brand-purple/10 border-brand-purple/30 text-brand-purple shadow-[0_0_15px_rgba(168,85,247,0.3)]' : 'bg-white/5 border-white/10 text-slate-300'}`}>
+                            <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
                           </div>
                           <h3 className="text-lg font-semibold text-white mb-2">{isDragActive ? 'Drop to upload' : 'Drag & drop your video'}</h3>
                           <p className="text-white text-sm">or click to browse files (MP4, AVI, MKV up to 250MB)</p>
@@ -186,7 +186,7 @@ export default function ConverterPage() {
                 />
               ) : (
                 <div className="py-8 text-center flex flex-col items-center animate-in fade-in zoom-in-95 duration-300">
-                  <div className="w-24 h-24 bg-emerald-500/10 rounded-full flex items-center justify-center mb-6 border border-emerald-500/20 shadow-[0_0_40px_rgba(16,185,129,0.2)]">
+                  <div className="w-24 h-24 bg-emerald-500/10 rounded-full flex items-center justify-center mb-6 border border-emerald-500/20 shadow-[0_0_40px_rgba(16,185,129,0.2)] animate-in zoom-in-50 duration-500 ease-out">
                     <svg width="40" height="40" fill="none" stroke="#10b981" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                   </div>
                   <h3 className="text-2xl sm:text-3xl font-display font-bold text-white mb-2 sm:mb-3">Conversion Complete!</h3>
@@ -207,7 +207,7 @@ export default function ConverterPage() {
                   <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
                     <a href={apiUrl(`/api/convert/download/${jobId}`)} target="_blank" rel="noopener noreferrer" className="flex-1 block">
                       <AnimeHover scaleHover={1.05} scaleTap={0.95} className="w-full">
-                        <button className="w-full btn-primary flex items-center justify-center gap-2 h-14 rounded-xl">
+                        <button className="w-full btn-primary download-btn-pulse flex items-center justify-center gap-2 h-14 rounded-xl">
                           <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                           Download Audio 
                         </button>
