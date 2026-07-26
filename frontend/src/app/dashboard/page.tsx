@@ -176,12 +176,12 @@ export default function DashboardPage() {
                         <AnimeReveal
                             delay={200}
                             direction="up"
-                            className="mb-10 w-full"
+                            className="mb-10 w-full max-w-md"
                         >
                             <div className="glass-panel p-6 rounded-2xl flex items-center gap-5 relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-brand-cyan/5 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none transition-transform group-hover:scale-150" />
                                 <div className="w-14 h-14 bg-brand-cyan/10 rounded-xl flex items-center justify-center border border-brand-cyan/20 shrink-0">
-                                    <svg width="40" height="40" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-brand-cyan">
+                                    <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-brand-cyan">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                                     </svg>
                                 </div>
