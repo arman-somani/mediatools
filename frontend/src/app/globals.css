@@ -326,11 +326,15 @@
   }
 
   .btn-primary {
-    @apply relative overflow-hidden bg-brand-green text-white font-semibold rounded-full px-6 py-3 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_20px_rgba(34, 197, 94, 0.3)];
+    @apply relative overflow-hidden bg-brand-green text-white font-semibold rounded-full px-6 py-3 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98];
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
   }
 
   .btn-primary-glow {
-    @apply relative overflow-hidden bg-gradient-to-r from-brand-violet to-brand-purple text-white font-semibold rounded-full px-6 py-3 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_0_30px_rgba(168, 85, 247, 0.4)];
+    @apply relative overflow-hidden bg-gradient-to-r from-brand-violet to-brand-purple text-white font-semibold rounded-full px-6 py-3 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98];
+  }
+  .btn-primary-glow:hover {
+    box-shadow: 0 0 30px rgba(168, 85, 247, 0.4);
   }
 
   .btn-secondary {
