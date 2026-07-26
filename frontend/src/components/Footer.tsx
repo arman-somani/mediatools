@@ -4,10 +4,7 @@ import Link from 'next/link';
 
 export default function Footer() {
   return (
-    <footer className="relative border-t border-white/10 mt-16 md:mt-24 transition-colors duration-300"
-      style={{ background: 'var(--card-bg)' }}
-    >
-      <div className="absolute inset-0 bg-gradient-to-br from-brand-violet/10 to-brand-cyan/5 pointer-events-none" />
+    <footer className="relative border-t border-white/10 mt-16 md:mt-24 transition-colors duration-300">
 
       <div className="max-w-7xl mx-auto px-5 sm:px-6 py-12 md:py-16 relative z-10">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-10 md:gap-12 mb-12 md:mb-16">
