@@ -28,7 +28,7 @@ export default function HomePage() {
             </h1>
 
             <p className="text-white/80 text-lg md:text-xl lg:text-2xl max-w-2xl mx-auto mb-10 md:mb-12 leading-relaxed px-4 sm:px-0 drop-shadow-md">
-              The fastest way to extract Audio from Video files or use our Universal URL Downloader with
+              The fastest way to extract Audio from Video files or use our YouTube URL Downloader with
               Zero quality loss.
             </p>
 
