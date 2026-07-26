@@ -368,6 +368,20 @@
   .download-btn-pulse {
     animation: pulse-glow 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
   }
+
+  /* ─── Visualizer bar animations ────────────────── */
+  @keyframes bar-grow-1 { 0%, 100% { height: 8px; } 50% { height: 28px; } }
+  @keyframes bar-grow-2 { 0%, 100% { height: 16px; } 50% { height: 32px; } }
+  @keyframes bar-grow-3 { 0%, 100% { height: 12px; } 50% { height: 24px; } }
+  @keyframes bar-grow-4 { 0%, 100% { height: 6px; } 50% { height: 20px; } }
+
+  .animate-vis-1 { animation: bar-grow-1 0.8s infinite ease-in-out; }
+  .animate-vis-2 { animation: bar-grow-2 1.1s infinite ease-in-out; }
+  .animate-vis-3 { animation: bar-grow-3 0.9s infinite ease-in-out; }
+  .animate-vis-4 { animation: bar-grow-4 0.7s infinite ease-in-out; }
+  .animate-vis-5 { animation: bar-grow-2 1.3s infinite ease-in-out; }
+  .animate-vis-6 { animation: bar-grow-3 1.0s infinite ease-in-out; }
+  .animate-vis-7 { animation: bar-grow-1 1.2s infinite ease-in-out; }
 }
 
 /* Custom Scrollbar */

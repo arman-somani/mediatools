@@ -66,6 +66,17 @@ export default function ProgressCircle({ progress, statusText, subText }: Progre
           {subText}
         </p>
       )}
+
+      {/* Animated Audio Visualizer Waveform */}
+      <div className="flex gap-1.5 justify-center mt-6 h-8 items-end">
+        <div className="w-1 bg-brand-cyan rounded-full animate-vis-1" style={{ height: '12px' }} />
+        <div className="w-1 bg-brand-purple rounded-full animate-vis-2" style={{ height: '24px' }} />
+        <div className="w-1 bg-brand-violet rounded-full animate-vis-3" style={{ height: '32px' }} />
+        <div className="w-1 bg-brand-cyan rounded-full animate-vis-4" style={{ height: '20px' }} />
+        <div className="w-1 bg-brand-purple rounded-full animate-vis-5" style={{ height: '28px' }} />
+        <div className="w-1 bg-brand-violet rounded-full animate-vis-6" style={{ height: '16px' }} />
+        <div className="w-1 bg-brand-cyan rounded-full animate-vis-7" style={{ height: '22px' }} />
+      </div>
     </div>
   );
 }
