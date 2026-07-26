@@ -4,10 +4,10 @@ import Link from 'next/link';
 
 export default function Footer() {
   return (
-    <footer className="relative border-t border-black/[0.07] mt-16 md:mt-24 transition-colors duration-300"
+    <footer className="relative border-t border-white/10 mt-16 md:mt-24 transition-colors duration-300"
       style={{ background: 'var(--card-bg)' }}
     >
-      <div className="absolute inset-0 bg-gradient-to-t from-brand-purple/5 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-brand-violet/10 to-brand-cyan/5 pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-5 sm:px-6 py-12 md:py-16 relative z-10">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-10 md:gap-12 mb-12 md:mb-16">
@@ -111,7 +111,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom Footer */}
-        <div className="pt-8 border-t border-black/[0.07] flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
+        <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
           <p className="text-white/40 text-xs md:text-sm">
             © {new Date().getFullYear()} MediaTools. All rights reserved.
           </p>
