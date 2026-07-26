@@ -190,18 +190,6 @@ export default function DashboardPage() {
                                     <p className="text-3xl font-bold text-white font-display">{userConversions}</p>
                                 </div>
                             </div>
-                            <div className="glass-panel p-6 rounded-2xl flex items-center gap-5 relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-brand-purple/5 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none transition-transform group-hover:scale-150" />
-                                <div className="w-14 h-14 bg-brand-purple/10 rounded-xl flex items-center justify-center border border-brand-purple/20 shrink-0">
-                                    <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-brand-purple">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-white/50 font-medium tracking-wide uppercase mb-1">Total Downloads</p>
-                                    <p className="text-3xl font-bold text-white font-display">{userDownloads}</p>
-                                </div>
-                            </div>
                         </AnimeReveal>
                     )}
 
