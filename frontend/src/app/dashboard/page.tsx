@@ -176,7 +176,7 @@ export default function DashboardPage() {
                         <AnimeReveal
                             delay={200}
                             direction="up"
-                            className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-10"
+                            className="mb-10 w-full max-w-md"
                         >
                             <div className="glass-panel p-6 rounded-2xl flex items-center gap-5 relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-brand-cyan/5 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none transition-transform group-hover:scale-150" />
