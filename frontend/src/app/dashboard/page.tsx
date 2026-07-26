@@ -54,7 +54,7 @@ const TOOLS = [
         bg: 'bg-red-500/5',
         icon: (
             <svg width="26" height="26" fill="currentColor" viewBox="0 0 24 24" className="text-red-500">
-                <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+                <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z" />
             </svg>
         ),
         badge: 'Fast',
@@ -181,7 +181,7 @@ export default function DashboardPage() {
                             <div className="glass-panel p-6 rounded-2xl flex items-center gap-5 relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-brand-cyan/5 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none transition-transform group-hover:scale-150" />
                                 <div className="w-14 h-14 bg-brand-cyan/10 rounded-xl flex items-center justify-center border border-brand-cyan/20 shrink-0">
-                                    <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-brand-cyan">
+                                    <svg width="40" height="40" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-brand-cyan">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                                     </svg>
                                 </div>
@@ -209,39 +209,39 @@ export default function DashboardPage() {
                                         key={tool.href}
                                         className={i === 2 && TOOLS.length === 3 ? "sm:col-span-2 sm:w-[calc(50%-10px)] sm:mx-auto w-full" : "w-full"}
                                     >
-                                    <Link
-                                        href={tool.href}
-                                        className={`flex flex-col gap-4 p-6 rounded-2xl border ${tool.border} ${tool.bg} transition-all duration-300 ${tool.shadow} group relative overflow-hidden block`}
-                                    >
-                                        {/* glow blob */}
-                                        <div className={`absolute -top-8 -right-8 w-28 h-28 rounded-full blur-2xl opacity-20 bg-gradient-to-br ${tool.gradient} pointer-events-none`} />
+                                        <Link
+                                            href={tool.href}
+                                            className={`flex flex-col gap-4 p-6 rounded-2xl border ${tool.border} ${tool.bg} transition-all duration-300 ${tool.shadow} group relative overflow-hidden block`}
+                                        >
+                                            {/* glow blob */}
+                                            <div className={`absolute -top-8 -right-8 w-28 h-28 rounded-full blur-2xl opacity-20 bg-gradient-to-br ${tool.gradient} pointer-events-none`} />
 
-                                        {/* Icon + badge */}
-                                        <div className="flex items-start justify-between">
-                                            <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-                                                {tool.icon}
+                                            {/* Icon + badge */}
+                                            <div className="flex items-start justify-between">
+                                                <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+                                                    {tool.icon}
+                                                </div>
+                                                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${tool.badgeColor}`}>
+                                                    {tool.badge}
+                                                </span>
                                             </div>
-                                            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${tool.badgeColor}`}>
-                                                {tool.badge}
-                                            </span>
-                                        </div>
 
-                                        {/* Text */}
-                                        <div>
-                                            <h3 className="text-lg font-bold text-white mb-1">{tool.label}</h3>
-                                            <p className="text-sm text-white/50 leading-relaxed">{tool.description}</p>
-                                        </div>
+                                            {/* Text */}
+                                            <div>
+                                                <h3 className="text-lg font-bold text-white mb-1">{tool.label}</h3>
+                                                <p className="text-sm text-white/50 leading-relaxed">{tool.description}</p>
+                                            </div>
 
-                                        {/* Arrow CTA */}
-                                        <div className={`flex items-center gap-2 text-sm font-semibold bg-gradient-to-r ${tool.gradient} bg-clip-text text-transparent mt-auto group-hover:gap-3 transition-all duration-200`}>
-                                            Open Tool
-                                            <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" className={`bg-gradient-to-r ${tool.gradient} bg-clip-text`}>
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                                            </svg>
-                                        </div>
-                                    </Link>
-                                </AnimeHover>
-                            ))}
+                                            {/* Arrow CTA */}
+                                            <div className={`flex items-center gap-2 text-sm font-semibold bg-gradient-to-r ${tool.gradient} bg-clip-text text-transparent mt-auto group-hover:gap-3 transition-all duration-200`}>
+                                                Open Tool
+                                                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" className={`bg-gradient-to-r ${tool.gradient} bg-clip-text`}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                                </svg>
+                                            </div>
+                                        </Link>
+                                    </AnimeHover>
+                                ))}
                             </AnimeReveal>
                         </div>
                     </AnimeReveal>
@@ -316,7 +316,7 @@ export default function DashboardPage() {
                                                     {formatBytes(conversion.fileSize)}
                                                 </div>
                                                 {conversion.youtubeUrl && (
-                                                    <Link 
+                                                    <Link
                                                         href={`${typeHref}?url=${encodeURIComponent(conversion.youtubeUrl)}`}
                                                         title="Convert Again"
                                                         className="w-8 h-8 rounded-full bg-white/5 border border-white/10 hover:bg-brand-purple hover:border-brand-purple flex items-center justify-center transition-all group"
