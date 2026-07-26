@@ -126,23 +126,23 @@ export default function ConverterPage() {
                     className={`relative overflow-hidden rounded-2xl border-2 border-dashed p-12 text-center cursor-pointer transition-all duration-300 ${isDragActive ? 'border-brand-purple bg-brand-purple/5 scale-[1.01] drag-active-pulse' : 'border-white/10 bg-black/[0.02] hover:border-black/20 hover:bg-black/[0.04]'}`}
                   >
                     <input {...getInputProps()} />
-                      {file ? (
-                        <div key="file" className="animate-in zoom-in-95 fade-in duration-300">
-                          <div className="w-20 h-20 mx-auto bg-brand-purple/20 rounded-2xl flex items-center justify-center mb-6 border border-brand-purple/30 shadow-[0_0_30px_rgba(168,85,247,0.2)]">
-                            <svg width="40" height="40" fill="none" stroke="var(--color-brand-purple)" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                          </div>
-                          <h3 className="text-xl font-semibold text-white mb-2">{file.name}</h3>
-                          <p className="text-white font-medium">{formatFileSize(file.size)}</p>
+                    {file ? (
+                      <div key="file" className="animate-in zoom-in-95 fade-in duration-300">
+                        <div className="w-20 h-20 mx-auto bg-brand-purple/20 rounded-2xl flex items-center justify-center mb-6 border border-brand-purple/30 shadow-[0_0_30px_rgba(168,85,247,0.2)]">
+                          <svg width="40" height="40" fill="none" stroke="var(--color-brand-purple)" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                         </div>
-                      ) : (
-                        <div key="empty" className="animate-in fade-in duration-300">
-                          <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-6 border transition-all duration-300 ${isDragActive ? 'bg-brand-purple/10 border-brand-purple/30 text-brand-purple shadow-[0_0_15px_rgba(168,85,247,0.3)]' : 'bg-white/5 border-white/10 text-slate-300'}`}>
-                            <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
-                          </div>
-                          <h3 className="text-lg font-semibold text-white mb-2">{isDragActive ? 'Drop to upload' : 'Drag & drop your video'}</h3>
-                          <p className="text-white text-sm">or click to browse files (MP4, AVI, MKV up to 250MB)</p>
+                        <h3 className="text-xl font-semibold text-white mb-2">{file.name}</h3>
+                        <p className="text-white font-medium">{formatFileSize(file.size)}</p>
+                      </div>
+                    ) : (
+                      <div key="empty" className="animate-in fade-in duration-300">
+                        <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-6 border transition-all duration-300 ${isDragActive ? 'bg-brand-purple/10 border-brand-purple/30 text-brand-purple shadow-[0_0_15px_rgba(168,85,247,0.3)]' : 'bg-white/5 border-white/10 text-slate-300'}`}>
+                          <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
                         </div>
-                      )}
+                        <h3 className="text-lg font-semibold text-white mb-2">{isDragActive ? 'Drop to upload' : 'Drag & drop your video'}</h3>
+                        <p className="text-white text-sm">or click to browse files (MP4, AVI, MKV up to 250MB)</p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Controls: quality + button on same row, perfectly aligned */}
@@ -209,7 +209,7 @@ export default function ConverterPage() {
                       <AnimeHover scaleHover={1.05} scaleTap={0.95} className="w-full">
                         <button className="w-full btn-primary download-btn-pulse flex items-center justify-center gap-2 h-14 rounded-xl">
                           <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                          Download Audio 
+                          Download Audio
                         </button>
                       </AnimeHover>
                     </a>
@@ -225,29 +225,29 @@ export default function ConverterPage() {
           </AnimeReveal>
 
           {/* Error Dialog Modal */}
-            {error && (
+          {error && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            >
               <div
-                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                className="glass-panel p-8 rounded-2xl max-w-md w-full text-center relative animate-in fade-in zoom-in-95 duration-300"
               >
-                <div
-                  className="glass-panel p-8 rounded-2xl max-w-md w-full text-center relative animate-in fade-in zoom-in-95 duration-300"
-                >
-                  <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/30">
-                    <svg width="32" height="32" fill="none" stroke="#ef4444" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                  </div>
-                  <h3 className="text-2xl font-bold text-white mb-2">Upload or Conversion Failed</h3>
-                  <p className="text-white/70 mb-8">
-                    {error}
-                  </p>
-                  <button
-                    onClick={() => { setError(''); setStatus('idle'); }}
-                    className="w-full py-3 bg-black/5 hover:bg-white/20 text-white font-semibold rounded-xl transition-all"
-                  >
-                    Try Again
-                  </button>
+                <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/30">
+                  <svg width="32" height="32" fill="none" stroke="#ef4444" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                 </div>
+                <h3 className="text-2xl font-bold text-white mb-2">Upload or Conversion Failed</h3>
+                <p className="text-white/70 mb-8">
+                  {error}
+                </p>
+                <button
+                  onClick={() => { setError(''); setStatus('idle'); }}
+                  className="w-full py-3 bg-black/5 hover:bg-white/20 text-white font-semibold rounded-xl transition-all"
+                >
+                  Try Again
+                </button>
               </div>
-            )}
+            </div>
+          )}
         </div>
       </PageWrapper>
     </ProtectedRoute>
