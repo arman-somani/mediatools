@@ -126,7 +126,7 @@ export default function HomePage() {
             ].map((feature, i) => (
               <AnimeHover
                 key={i}
-                scaleHover={1.02}
+                scaleHover={1.03}
                 scaleTap={0.98}
                 className="glass-panel glass-panel-hover p-8 opacity-0 relative overflow-hidden"
               >

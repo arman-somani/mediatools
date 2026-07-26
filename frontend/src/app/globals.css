@@ -332,6 +332,42 @@
   .hover-lift {
     @apply transition-transform duration-200 hover:-translate-y-0.5;
   }
+
+  /* ─── Theme toggle transitions ─────────────────── */
+  .theme-icon {
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .theme-toggle-btn:hover .theme-icon {
+    transform: rotate(45deg) scale(1.1);
+  }
+
+  /* ─── Drag & Drop pulse animation ──────────────── */
+  @keyframes drag-pulse {
+    0%, 100% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.4);
+    }
+    50% {
+      transform: scale(1.04);
+      box-shadow: 0 0 15px 4px rgba(168, 85, 247, 0.6);
+    }
+  }
+  .drag-active-pulse {
+    animation: drag-pulse 1.2s infinite ease-in-out;
+  }
+
+  /* ─── Download button pulse-glow ───────────────── */
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 20px 4px rgba(168, 85, 247, 0.6), 0 0 30px 8px rgba(6, 182, 212, 0.2);
+    }
+  }
+  .download-btn-pulse {
+    animation: pulse-glow 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+  }
 }
 
 /* Custom Scrollbar */
