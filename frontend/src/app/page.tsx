@@ -4,22 +4,12 @@ import Link from 'next/link';
 import PageWrapper from '@/components/PageWrapper';
 import AnimeReveal from '@/components/AnimeReveal';
 import AnimeHover from '@/components/AnimeHover';
-import AnimeBackground from '@/components/AnimeBackground';
 import AnimatedText from '@/components/AnimatedText';
 
 export default function HomePage() {
   return (
     <PageWrapper>
       <main className="min-h-screen text-white relative">
-        <div className="fixed inset-0 z-[-1]">
-          <AnimeBackground />
-          {/* Video Background */}
-          <video autoPlay loop muted playsInline className="absolute top-1/2 left-1/2 min-w-full min-h-full w-auto h-auto -translate-x-1/2 -translate-y-1/2 object-cover opacity-50">
-            <source src="https://cdn.pixabay.com/video/2020/05/25/40141-425126867_large.mp4" type="video/mp4" />
-          </video>
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0f172a]/70 via-[#0f172a]/50 to-[#0f172a] pointer-events-none" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[500px] md:w-[800px] h-[300px] md:h-[400px] bg-brand-purple/20 blur-[100px] md:blur-[140px] rounded-full pointer-events-none" />
-        </div>
 
         {/* Hero Section */}
         <section className="relative flex flex-col items-center justify-center text-center px-4 md:px-6 pt-32 md:pt-40 pb-16 md:pb-24 min-h-[85vh]">
