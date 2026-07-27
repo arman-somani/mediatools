@@ -53,7 +53,7 @@ function VerifyEmailForm() {
             </svg>
           </div>
           <h1 className="font-display font-bold text-3xl tracking-tight text-white mb-2">Verify Your Email</h1>
-          <p className="text-white/60">We sent a 6-digit code to <strong className="text-white">{email || 'your email'}</strong>.</p>
+          <p className="text-white/60">We sent a 6-digit code to verify you if email is not recived then check the spam folder.<strong className="text-white">{email || 'your email'}</strong>.</p>
         </div>
 
         <div className="glass-panel p-8">
