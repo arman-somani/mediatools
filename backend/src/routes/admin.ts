@@ -47,29 +47,21 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
     const [
       totalUsers,
       totalConversions,
-      recentUsers,
-      recentConversions,
       liveUsers
     ] = await Promise.all([
       User.countDocuments(),
       Conversion.countDocuments(),
-      User.find().sort({ createdAt: -1 }).limit(10).select('-password'),
-      Conversion.find().sort({ createdAt: -1 }).limit(10).populate('userId', 'name email'),
       User.countDocuments({ lastActiveAt: { $gte: activeThreshold } })
     ]);
 
     res.json({
       success: true,
       data: {
-        stats: {
-          totalUsers,
-          totalConversions,
-          liveUsers,
-          totalBandwidthUsed,
-          totalDownloads
-        },
-        recentUsers,
-        recentConversions,
+        totalUsers,
+        totalConversions,
+        liveUsers,
+        totalBandwidthUsed,
+        totalDownloads
       }
     });
   } catch (error: any) {
