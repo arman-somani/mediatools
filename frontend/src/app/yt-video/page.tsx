@@ -8,10 +8,12 @@ import ProgressCircle from '@/components/ProgressCircle';
 import PageWrapper from '@/components/PageWrapper';
 import AnimeReveal from '@/components/AnimeReveal';
 import { requestNotificationPermission, sendNotification } from '@/lib/notifications';
+import { useAuthStore } from '@/lib/store';
 
 type VideoQuality = '360p' | '480p' | '720p' | '1080p' | '4K' | '8K';
 
 export default function YtVideoPage() {
+  const { user } = useAuthStore();
   const [url, setUrl] = useState('');
   const [quality, setQuality] = useState<VideoQuality>('720p');
   const [status, setStatus] = useState<'idle' | 'processing' | 'uploading' | 'completed' | 'failed'>('idle');
@@ -209,15 +211,22 @@ export default function YtVideoPage() {
                     <div className="flex-1">
                       <label className="quality-label">VIDEO QUALITY</label>
                       <div className="quality-track">
-                        {(['360p', '480p', '720p', '1080p', '4K', '8K'] as VideoQuality[]).map(q => (
-                          <button
-                            key={q}
-                            onClick={() => setQuality(q)}
-                            className={`quality-btn${quality === q ? ' active' : ''}`}
-                          >
-                            {q}
-                          </button>
-                        ))}
+                        {(['360p', '480p', '720p', '1080p', '4K', '8K'] as VideoQuality[]).map(q => {
+                          const isPremiumOnly = q === '4K' || q === '8K';
+                          const canSelect = !isPremiumOnly || user?.role === 'admin' || user?.isPremium;
+                          return (
+                            <button
+                              key={q}
+                              onClick={() => {
+                                if (canSelect) setQuality(q);
+                                else alert('4K and 8K qualities are reserved for Premium users.');
+                              }}
+                              className={`quality-btn${quality === q ? ' active' : ''} ${!canSelect ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                              {q} {!canSelect && <span className="ml-1 text-[10px]">👑</span>}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
 

@@ -37,7 +37,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
 router.get('/users', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const users = await User.find({})
-      .select('name email role totalConversions totalDownloads isPremium isBanned createdAt')
+      .select('name email role totalConversions totalDownloads isPremium isBanned monthlyBandwidthUsed createdAt')
       .sort({ createdAt: -1 });
     
     res.json({

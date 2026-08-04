@@ -19,6 +19,8 @@ export interface IUser extends Document {
   totalDownloads: number;
   monthlyConversionsUsed: number;
   monthlyConversionsLimit: number;
+  monthlyBandwidthUsed: number;
+  lastBandwidthReset: Date;
   role: 'user' | 'admin';
   isBanned: boolean;
   createdAt: Date;
@@ -95,6 +97,14 @@ const userSchema = new Schema<IUser>(
     monthlyConversionsLimit: {
       type: Number,
       default: 999999,
+    },
+    monthlyBandwidthUsed: {
+      type: Number,
+      default: 0,
+    },
+    lastBandwidthReset: {
+      type: Date,
+      default: Date.now,
     },
     role: {
       type: String,

@@ -144,6 +144,33 @@ async function writeAsyncIterableToFile(stream: AsyncIterable<Uint8Array>, fileP
   await pipeline(Readable.from(stream as any), fs.createWriteStream(filePath));
 }
 
+const BANDWIDTH_LIMIT = 100 * 1024 * 1024; // 100MB
+
+async function validateUserLimits(userId: string, requestedQuality: string, isUniversal: boolean) {
+  const user = await User.findById(userId);
+  if (!user) throw new Error('User not found');
+  
+  const now = new Date();
+  const resetDate = new Date(user.lastBandwidthReset || now);
+  if (now.getTime() - resetDate.getTime() > 30 * 24 * 60 * 60 * 1000) {
+    user.monthlyBandwidthUsed = 0;
+    user.lastBandwidthReset = now;
+    await user.save();
+  }
+
+  if (user.role !== 'admin') {
+    if (user.monthlyBandwidthUsed >= BANDWIDTH_LIMIT) {
+      throw new Error('You have reached your 100MB monthly bandwidth limit.');
+    }
+  }
+
+  if (isUniversal && (requestedQuality === '4K' || requestedQuality === '8K')) {
+    if (user.role !== 'admin' && !user.isPremium) {
+      throw new Error('4K and 8K qualities are for premium users only.');
+    }
+  }
+}
+
 router.get('/version', (req: Request, res: Response) => {
   res.json({ version: 'v4_nightly_build_fix' });
 });
@@ -221,6 +248,8 @@ router.post(
       if (!userId) { res.status(401).json({ success: false, message: 'Unauthorized' }); return; }
       if (!file) { res.status(400).json({ success: false, message: 'No file uploaded' }); return; }
 
+      await validateUserLimits(userId, quality, false);
+
       const outputFilename = `${uuidv4()}.mp3`;
       const outputPath = path.join(outputDir, outputFilename);
 
@@ -286,6 +315,9 @@ router.post(
         });
 
         conversion.fileSize = getFileSize(outputPath);
+        if (conversion.fileSize) {
+          await User.findByIdAndUpdate(userId, { $inc: { monthlyBandwidthUsed: conversion.fileSize } });
+        }
         // GoFile upload removed
 
         conversion.status = 'completed';
@@ -317,8 +349,11 @@ router.post(
   }
 );
 /* ── YOUTUBE TO MP3 ─────────────────────────────────────── */
-router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/youtube', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    const userId = req.user?.id;
+    if (!userId) { res.status(401).json({ success: false, message: 'Unauthorized' }); return; }
+
     const videoUrl = req.body.youtubeUrl || req.body.url;
     const reqQuality = String(req.body.quality || '320');
     const audioQuality = ['128', '192', '320'].includes(reqQuality) ? reqQuality : '320';
@@ -327,6 +362,8 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
       res.status(400).json({ success: false, message: 'Video URL is required' });
       return;
     }
+
+    await validateUserLimits(userId, audioQuality, false);
 
     const cleanUrl = String(videoUrl).trim();
     const fileId = uuidv4();
@@ -475,6 +512,11 @@ router.post('/youtube', optionalAuth, async (req: AuthRequest, res: Response): P
         conversion.outputPath = downloadedFilePath;
         conversion.outputFilename = videoTitle.replace(/[\/\\\\?%*:|"<>]/g, '-') + '.mp3';
         conversion.fileSize = getFileSize(downloadedFilePath);
+        
+        if (conversion.fileSize) {
+          await User.findByIdAndUpdate(userId, { $inc: { monthlyBandwidthUsed: conversion.fileSize } });
+        }
+
         // Use tmpfiles.org for 1 Gbps direct download unthrottled links
         try {
           conversion.status = 'uploading';
@@ -642,8 +684,11 @@ router.post('/universal/metadata', async (req: Request, res: Response): Promise<
 });
 
 /* ΓöÇΓöÇ UNIVERSAL VIDEO DOWNLOADER ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
-router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/universal', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    const userId = req.user?.id;
+    if (!userId) { res.status(401).json({ success: false, message: 'Unauthorized' }); return; }
+
     const videoUrl = req.body.url;
     const reqQuality = String(req.body.mp4Quality || req.body.videoQuality || req.body.quality || '720p');
     const videoQuality: string = (['360p', '480p', '720p', '1080p', '4K', '8K'].includes(reqQuality))
@@ -653,6 +698,8 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
       res.status(400).json({ success: false, message: 'Video URL is required' });
       return;
     }
+
+    await validateUserLimits(userId, videoQuality, true);
 
     const cleanUrl = String(videoUrl).trim();
     const fileId = uuidv4();
@@ -825,6 +872,10 @@ router.post('/universal', optionalAuth, async (req: AuthRequest, res: Response):
         conversion.outputPath = downloadedFilePath;
         conversion.outputFilename = videoTitle.replace(/[\/\\\\?%*:|"<>]/g, '-') + path.extname(downloadedFilePath);
         conversion.fileSize = getFileSize(downloadedFilePath);
+        
+        if (conversion.fileSize) {
+          await User.findByIdAndUpdate(userId, { $inc: { monthlyBandwidthUsed: conversion.fileSize } });
+        }
         
         try {
           const { stdout: resOut } = await execAsync(`ffprobe -v error -select_streams v:0 -show_entries stream=height -of csv=s=x:p=0 "${downloadedFilePath}"`);

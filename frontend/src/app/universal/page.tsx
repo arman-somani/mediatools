@@ -8,6 +8,7 @@ import ProgressCircle from '@/components/ProgressCircle';
 import AnimeReveal from '@/components/AnimeReveal';
 import AnimeHover from '@/components/AnimeHover';
 import { requestNotificationPermission, sendNotification } from '@/lib/notifications';
+import { useAuthStore } from '@/lib/store';
 
 type ApiError = { response?: { data?: { message?: string } } };
 
@@ -26,8 +27,9 @@ const getQualityLabel = (resolution: string) => {
 };
 
 export default function UniversalPage() {
+  const { user } = useAuthStore();
   const [url, setUrl] = useState('');
-  const [quality, setQuality] = useState('8K');
+  const [quality, setQuality] = useState('720p');
   const [preflightInfo, setPreflightInfo] = useState<{ title: string; thumbnail: string; resolution: string; sizeBytes: number; videoUrl?: string } | null>(null);
   const [isFetchingInfo, setIsFetchingInfo] = useState(false);
   const [status, setStatus] = useState<'idle' | 'processing' | 'uploading' | 'completed' | 'failed'>('idle');
@@ -167,7 +169,27 @@ export default function UniversalPage() {
                     />
                   </div>
 
-                  {/* Quality selector removed, defaults to 8K / Highest Quality */}
+                  <div className="flex-1 mt-6">
+                    <label className="quality-label">VIDEO QUALITY</label>
+                    <div className="quality-track">
+                      {(['360p', '480p', '720p', '1080p', '4K', '8K']).map(q => {
+                        const isPremiumOnly = q === '4K' || q === '8K';
+                        const canSelect = !isPremiumOnly || user?.role === 'admin' || user?.isPremium;
+                        return (
+                          <button
+                            key={q}
+                            onClick={() => {
+                              if (canSelect) setQuality(q);
+                              else alert('4K and 8K qualities are reserved for Premium users.');
+                            }}
+                            className={`quality-btn${quality === q ? ' active' : ''} ${!canSelect ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          >
+                            {q} {!canSelect && <span className="ml-1 text-[10px]">👑</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
 
                     {preflightInfo && (
                       <div

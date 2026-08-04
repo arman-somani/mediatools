@@ -16,6 +16,7 @@ type UserData = {
     totalDownloads: number;
     isPremium: boolean;
     isBanned: boolean;
+    monthlyBandwidthUsed: number;
     createdAt: string;
 };
 
@@ -153,6 +154,7 @@ export default function AdminPage() {
                                                 <th className="py-4 px-6 font-medium">Joined</th>
                                                 <th className="py-4 px-6 font-medium text-center">Conversions</th>
                                                 <th className="py-4 px-6 font-medium text-center">Downloads</th>
+                                                <th className="py-4 px-6 font-medium text-center">Bandwidth</th>
                                                 <th className="py-4 px-6 font-medium text-center">Status</th>
                                                 <th className="py-4 px-6 font-medium text-right">Actions</th>
                                             </tr>
@@ -175,6 +177,9 @@ export default function AdminPage() {
                                                     </td>
                                                     <td className="py-4 px-6 text-center text-sm font-mono text-white/80">
                                                         {u.totalDownloads}
+                                                    </td>
+                                                    <td className="py-4 px-6 text-center text-sm font-mono text-white/80">
+                                                        {u.role === 'admin' ? 'Unlimited' : `${(u.monthlyBandwidthUsed / (1024 * 1024)).toFixed(1)} MB`}
                                                     </td>
                                                     <td className="py-4 px-6 text-center">
                                                         {u.isBanned ? (
