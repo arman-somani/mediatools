@@ -140,7 +140,7 @@ export default function AdminPage() {
                                     <h3 className="text-3xl font-bold">
                                         {stats ? (stats.totalBandwidthUsed / (1024 * 1024 * 1024)).toFixed(2) : 0} GB
                                     </h3>
-                                    <p className="text-sm text-white/50">Server Bandwidth Used (out of 5 GB)</p>
+                                    <p className="text-sm text-white/50">Real Server Bandwidth (out of 5 GB)</p>
                                 </div>
                             </AnimeReveal>
 

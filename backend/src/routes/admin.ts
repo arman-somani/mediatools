@@ -20,10 +20,30 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
     ]);
     const totalDownloads = downloadsAgg[0]?.total || 0;
 
-    const bandwidthAgg = await User.aggregate([
-      { $group: { _id: null, total: { $sum: "$monthlyBandwidthUsed" } } }
-    ]);
-    const totalBandwidthUsed = bandwidthAgg[0]?.total || 0;
+    let totalBandwidthUsed = 0;
+    try {
+      if (process.env.RENDER_API_KEY && process.env.RENDER_SERVICE_ID) {
+        const now = new Date();
+        const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+        const resRender = await fetch(`https://api.render.com/v1/metrics/bandwidth?resource=${process.env.RENDER_SERVICE_ID}&startTime=${startOfMonth.toISOString()}&endTime=${now.toISOString()}`, {
+          headers: { 'Authorization': `Bearer ${process.env.RENDER_API_KEY}` }
+        });
+        if (resRender.ok) {
+          const json = await resRender.json();
+          if (json && json[0] && json[0].values) {
+            const sumMB = json[0].values.reduce((acc: number, curr: any) => acc + (curr.value || 0), 0);
+            totalBandwidthUsed = sumMB * 1024 * 1024; // Convert MB to Bytes
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Render API bandwidth fetch failed', e);
+      // Fallback
+      const bandwidthAgg = await User.aggregate([
+        { $group: { _id: null, total: { $sum: "$monthlyBandwidthUsed" } } }
+      ]);
+      totalBandwidthUsed = bandwidthAgg[0]?.total || 0;
+    }
 
     res.json({
       success: true,
