@@ -36,8 +36,9 @@ export default function UniversalPage() {
   const [progress, setProgress] = useState(0);
   const [jobId, setJobId] = useState('');
   const [fileSize, setFileSize] = useState<number | null>(null);
-  const [videoInfo, setVideoInfo] = useState<{ title?: string; thumbnail?: string } | null>(null);
+  const [videoInfo, setVideoInfo] = useState<{ title?: string; thumbnail?: string; sizeBytes?: number; } | null>(null);
   const [gofileUrl, setGofileUrl] = useState<string | null>(null);
+  const [isDirectDownloading, setIsDirectDownloading] = useState(false);
   const [error, setError] = useState('');
   const [conversionTime, setConversionTime] = useState<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
@@ -119,7 +120,27 @@ export default function UniversalPage() {
     } catch (err: unknown) {
       setStatus('failed');
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setError(msg || 'Failed to start download');
+      setError(msg || 'Download failed. Please try again.');
+    }
+  };
+
+  const handleDirectDownload = async () => {
+    if (!url) { setError('Please enter a valid URL'); return; }
+    setError('');
+    setIsDirectDownloading(true);
+    try {
+      const { data } = await api.post('/direct', { url });
+      if (data.success && data.data?.directUrl) {
+        window.open(data.data.directUrl, '_blank');
+        alert("Direct link opened! If it plays instead of downloading, simply press Ctrl+S (or Cmd+S) to save the video.");
+      } else {
+        throw new Error('Could not get direct URL');
+      }
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setError(msg || 'Direct Download failed. Please try the regular Download Video button.');
+    } finally {
+      setIsDirectDownloading(false);
     }
   };
 
@@ -232,12 +253,23 @@ export default function UniversalPage() {
                         <AnimeHover scaleHover={1.02} scaleTap={0.96} className="w-full sm:w-[280px]">
                           <button
                             onClick={handleDownload}
-                            disabled={!url}
-                            className={`w-full h-14 rounded-xl font-semibold text-lg transition-all duration-300 btn-primary`}
+                            disabled={!url || isDirectDownloading}
+                            className={`w-full h-14 rounded-xl font-semibold text-lg transition-all duration-300 ${!url || isDirectDownloading ? 'bg-white/5 text-white/40 cursor-not-allowed' : 'btn-primary'}`}
                           >
                             Download Video 
                           </button>
                         </AnimeHover>
+                        
+                        <AnimeHover scaleHover={1.02} scaleTap={0.96} className="w-full sm:w-[280px]">
+                          <button
+                            onClick={handleDirectDownload}
+                            disabled={!url || isDirectDownloading}
+                            className={`w-full h-14 rounded-xl font-semibold text-base transition-all duration-300 border ${!url || isDirectDownloading ? 'border-white/10 text-white/40 cursor-not-allowed' : 'border-brand-purple text-brand-purple hover:bg-brand-purple/10'}`}
+                          >
+                            {isDirectDownloading ? 'Fetching...' : 'Direct Download (Fast & Free)'} 
+                          </button>
+                        </AnimeHover>
+
                         <AnimeHover scaleHover={1.02} scaleTap={0.96} className="w-full sm:w-[200px]">
                           <button
                             onClick={reset}

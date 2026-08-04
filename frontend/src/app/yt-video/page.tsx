@@ -24,6 +24,7 @@ export default function YtVideoPage() {
   const [error, setError] = useState('');
   const [videoInfo, setVideoInfo] = useState<{ title?: string; thumbnail?: string } | null>(null);
   const [gofileUrl, setGofileUrl] = useState<string | null>(null);
+  const [isDirectDownloading, setIsDirectDownloading] = useState(false);
 
   
   useEffect(() => {
@@ -120,6 +121,26 @@ export default function YtVideoPage() {
       setStatus('failed');
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setError(msg || 'Download failed. Please try again.');
+    }
+  };
+
+  const handleDirectDownload = async () => {
+    if (!isValidYouTubeUrl(url)) { setError('Please enter a valid YouTube URL'); return; }
+    setError('');
+    setIsDirectDownloading(true);
+    try {
+      const { data } = await api.post('/direct', { url });
+      if (data.success && data.data?.directUrl) {
+        window.open(data.data.directUrl, '_blank');
+        alert("Direct link opened! If it plays instead of downloading, simply press Ctrl+S (or Cmd+S) to save the video.");
+      } else {
+        throw new Error('Could not get direct URL');
+      }
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setError(msg || 'Direct Download failed. Please try the regular Download Video button.');
+    } finally {
+      setIsDirectDownloading(false);
     }
   };
 
@@ -235,10 +256,19 @@ export default function YtVideoPage() {
                       <label className="quality-label opacity-0 select-none">BTN</label>
                       <button
                         onClick={handleDownload}
-                        disabled={!url}
-                        className={`min-w-[200px] h-[46px] rounded-xl font-semibold text-base transition-all duration-300 flex-shrink-0 ${!url ? 'bg-white/5 text-white/40 cursor-not-allowed' : 'btn-primary'}`}
+                        disabled={!url || isDirectDownloading}
+                        className={`min-w-[200px] h-[46px] rounded-xl font-semibold text-base transition-all duration-300 flex-shrink-0 ${!url || isDirectDownloading ? 'bg-white/5 text-white/40 cursor-not-allowed' : 'btn-primary'}`}
                       >
                         Download Video </button>
+                      
+                      <button
+                        onClick={handleDirectDownload}
+                        disabled={!url || isDirectDownloading}
+                        className={`min-w-[200px] mt-3 h-[46px] rounded-xl font-semibold text-base transition-all duration-300 flex-shrink-0 border ${!url || isDirectDownloading ? 'border-white/10 text-white/40 cursor-not-allowed' : 'border-brand-purple text-brand-purple hover:bg-brand-purple/10'}`}
+                      >
+                        {isDirectDownloading ? 'Fetching...' : 'Direct Download (Fast & Free)'} 
+                      </button>
+                      <p className="text-[10px] text-white/40 text-center mt-1">Direct Download max 720p</p>
                     </div>
                   </div>
 

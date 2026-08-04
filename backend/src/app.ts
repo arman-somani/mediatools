@@ -24,6 +24,7 @@ import feedbackRoutes from './routes/feedback';
 import searchRoutes from './routes/search';
 import extractorRoutes from './routes/extractor';
 import adminRoutes from './routes/admin';
+import directRoutes from './routes/direct';
 import { errorHandler } from './middleware/errorHandler';
 import { cleanupOldFiles } from './utils/cleanup';
 
@@ -71,6 +72,7 @@ app.use('/api/feedback', feedbackRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/extractor', extractorRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/direct', directRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);
