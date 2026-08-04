@@ -21,9 +21,13 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
       role: string;
     };
 
-    const user = await User.findById(decoded.id).select('_id email role isPremium');
+    const user = await User.findById(decoded.id).select('_id email role isPremium isBanned');
     if (!user) {
       res.status(401).json({ success: false, message: 'User not found' });
+      return;
+    }
+    if (user.isBanned) {
+      res.status(403).json({ success: false, message: 'Your account has been suspended.' });
       return;
     }
 

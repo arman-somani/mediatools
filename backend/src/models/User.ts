@@ -20,6 +20,7 @@ export interface IUser extends Document {
   monthlyConversionsUsed: number;
   monthlyConversionsLimit: number;
   role: 'user' | 'admin';
+  isBanned: boolean;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -99,6 +100,10 @@ const userSchema = new Schema<IUser>(
       type: String,
       enum: ['user', 'admin'],
       default: 'user',
+    },
+    isBanned: {
+      type: Boolean,
+      default: false,
     },
   },
   {

@@ -121,6 +121,11 @@ router.post(
       return;
     }
 
+    if (user.isBanned) {
+      res.status(403).json({ success: false, message: 'Your account has been suspended.' });
+      return;
+    }
+
     if (!user.isEmailVerified) {
       res.status(403).json({ success: false, message: 'Please verify your email address to log in' });
       return;
@@ -166,6 +171,11 @@ router.post('/google', authLimiter, async (req: Request, res: Response): Promise
       user.googleId = googleId;
       if (avatar) user.avatar = avatar;
       await user.save();
+    }
+
+    if (user.isBanned) {
+      res.status(403).json({ success: false, message: 'Your account has been suspended.' });
+      return;
     }
 
     const tokens = generateTokens(user._id.toString(), user.email, user.role);

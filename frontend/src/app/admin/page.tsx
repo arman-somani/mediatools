@@ -3,48 +3,219 @@
 import { useAuthStore } from '@/lib/store';
 import PageWrapper from '@/components/PageWrapper';
 import AnimeReveal from '@/components/AnimeReveal';
+import api from '@/lib/api';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
+type UserData = {
+    _id: string;
+    name: string;
+    email: string;
+    role: string;
+    totalConversions: number;
+    totalDownloads: number;
+    isPremium: boolean;
+    isBanned: boolean;
+    createdAt: string;
+};
+
+type AdminStats = {
+    totalUsers: number;
+    totalConversions: number;
+    totalDownloads: number;
+};
 
 export default function AdminPage() {
-    const { user } = useAuthStore();
+    const { user, accessToken } = useAuthStore();
     const router = useRouter();
+    const [stats, setStats] = useState<AdminStats | null>(null);
+    const [users, setUsers] = useState<UserData[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
     useEffect(() => {
+        if (!accessToken) {
+            router.push('/auth/login');
+            return;
+        }
         if (user && user.role !== 'admin') {
             router.push('/dashboard');
+            return;
         }
-    }, [user, router]);
+
+        const fetchAdminData = async () => {
+            try {
+                const [statsRes, usersRes] = await Promise.all([
+                    api.get('/admin'),
+                    api.get('/admin/users')
+                ]);
+                
+                if (statsRes.data.success) {
+                    setStats(statsRes.data.data);
+                }
+                if (usersRes.data.success) {
+                    setUsers(usersRes.data.data);
+                }
+            } catch (err: any) {
+                console.error(err);
+                setError('Failed to load admin data.');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchAdminData();
+    }, [user, accessToken, router]);
+
+    const handleToggleBan = async (userId: string, isCurrentlyBanned: boolean) => {
+        if (!confirm(`Are you sure you want to ${isCurrentlyBanned ? 'unban' : 'ban'} this user?`)) return;
+        
+        try {
+            const { data } = await api.post(`/admin/users/${userId}/ban`);
+            if (data.success) {
+                setUsers(prev => prev.map(u => 
+                    u._id === userId ? { ...u, isBanned: data.data.isBanned } : u
+                ));
+            }
+        } catch (err: any) {
+            alert(err.response?.data?.message || 'Failed to toggle ban status');
+        }
+    };
 
     if (!user || user.role !== 'admin') {
-        return null;
+        return null; // Don't render until redirect
     }
 
     return (
         <PageWrapper>
-            <main className="min-h-screen w-full px-6 pt-32 pb-20 text-white">
+            <main className="min-h-screen w-full px-4 sm:px-6 pt-32 pb-20 text-white">
                 <section className="mx-auto max-w-7xl">
                     <AnimeReveal delay={100} direction="up" className="mb-10">
                         <h1 className="text-5xl font-bold text-white mb-4">Admin Panel</h1>
                         <p className="text-white/60">
-                            Welcome to the admin panel. Here you can manage users, view analytics, and configure system settings.
+                            Manage your users, view platform usage, and enforce bans.
                         </p>
                     </AnimeReveal>
 
-                    <AnimeReveal delay={300} direction="up" className="glass-panel p-8 rounded-3xl mt-10">
-                        <div className="flex flex-col items-center justify-center py-20 text-center">
-                            <div className="w-16 h-16 bg-brand-cyan/10 border border-brand-cyan/20 rounded-2xl flex items-center justify-center mb-6 text-brand-cyan shadow-[0_0_30px_rgba(34,211,238,0.2)]">
-                                <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                            </div>
-                            <h2 className="text-2xl font-bold text-white mb-2">Admin Features Coming Soon</h2>
-                            <p className="text-white/50 max-w-md mx-auto">
-                                You have successfully accessed the admin route! The full administrative dashboard is currently under construction.
-                            </p>
+                    {error && (
+                        <div className="mb-6 rounded-xl bg-red-500/10 border border-red-500/20 p-4 text-red-600">
+                            {error}
                         </div>
-                    </AnimeReveal>
+                    )}
+
+                    {loading ? (
+                        <div className="flex items-center justify-center py-20">
+                            <div className="w-8 h-8 border-4 border-brand-cyan border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                    ) : (
+                        <>
+                            {/* Stats Cards */}
+                            <AnimeReveal delay={300} direction="up" className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                                <div className="glass-panel p-6 rounded-2xl flex flex-col items-center text-center">
+                                    <div className="text-brand-purple mb-2">
+                                        <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                        </svg>
+                                    </div>
+                                    <h3 className="text-3xl font-bold">{stats?.totalUsers || 0}</h3>
+                                    <p className="text-sm text-white/50">Total Users</p>
+                                </div>
+                                <div className="glass-panel p-6 rounded-2xl flex flex-col items-center text-center">
+                                    <div className="text-brand-cyan mb-2">
+                                        <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                        </svg>
+                                    </div>
+                                    <h3 className="text-3xl font-bold">{stats?.totalConversions || 0}</h3>
+                                    <p className="text-sm text-white/50">Total Conversions</p>
+                                </div>
+                                <div className="glass-panel p-6 rounded-2xl flex flex-col items-center text-center">
+                                    <div className="text-brand-green mb-2">
+                                        <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                        </svg>
+                                    </div>
+                                    <h3 className="text-3xl font-bold">{stats?.totalDownloads || 0}</h3>
+                                    <p className="text-sm text-white/50">Total Downloads</p>
+                                </div>
+                            </AnimeReveal>
+
+                            {/* Users Table */}
+                            <AnimeReveal delay={500} direction="up" className="glass-panel rounded-3xl overflow-hidden">
+                                <div className="p-6 border-b border-white/10">
+                                    <h2 className="text-xl font-bold">User Management</h2>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left border-collapse min-w-[800px]">
+                                        <thead>
+                                            <tr className="border-b border-white/5 text-sm text-white/50 bg-white/[0.02]">
+                                                <th className="py-4 px-6 font-medium">User</th>
+                                                <th className="py-4 px-6 font-medium">Joined</th>
+                                                <th className="py-4 px-6 font-medium text-center">Conversions</th>
+                                                <th className="py-4 px-6 font-medium text-center">Downloads</th>
+                                                <th className="py-4 px-6 font-medium text-center">Status</th>
+                                                <th className="py-4 px-6 font-medium text-right">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-white/5">
+                                            {users.map(u => (
+                                                <tr key={u._id} className="hover:bg-white/[0.02] transition-colors group">
+                                                    <td className="py-4 px-6">
+                                                        <div className="font-semibold text-white">{u.name}</div>
+                                                        <div className="text-xs text-white/50">{u.email}</div>
+                                                        {u.role === 'admin' && (
+                                                            <span className="inline-block mt-1 text-[10px] uppercase font-bold text-brand-purple bg-brand-purple/10 px-2 py-0.5 rounded">Admin</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="py-4 px-6 text-sm text-white/70">
+                                                        {new Date(u.createdAt).toLocaleDateString()}
+                                                    </td>
+                                                    <td className="py-4 px-6 text-center text-sm font-mono text-white/80">
+                                                        {u.totalConversions}
+                                                    </td>
+                                                    <td className="py-4 px-6 text-center text-sm font-mono text-white/80">
+                                                        {u.totalDownloads}
+                                                    </td>
+                                                    <td className="py-4 px-6 text-center">
+                                                        {u.isBanned ? (
+                                                            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-red-500/20 text-red-500 border border-red-500/20">
+                                                                Banned
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-500 border border-emerald-500/20">
+                                                                Active
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td className="py-4 px-6 text-right">
+                                                        {u.role !== 'admin' && (
+                                                            <button
+                                                                onClick={() => handleToggleBan(u._id, u.isBanned)}
+                                                                className={`text-xs font-semibold px-4 py-2 rounded-lg transition-all border ${
+                                                                    u.isBanned 
+                                                                    ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20'
+                                                                    : 'bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500/20'
+                                                                }`}
+                                                            >
+                                                                {u.isBanned ? 'Unban User' : 'Ban User'}
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {users.length === 0 && (
+                                                <tr>
+                                                    <td colSpan={6} className="py-8 text-center text-white/50">
+                                                        No users found.
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </AnimeReveal>
+                        </>
+                    )}
                 </section>
             </main>
         </PageWrapper>

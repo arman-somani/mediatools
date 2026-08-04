@@ -23,6 +23,7 @@ import contactRoutes from './routes/contact';
 import feedbackRoutes from './routes/feedback';
 import searchRoutes from './routes/search';
 import extractorRoutes from './routes/extractor';
+import adminRoutes from './routes/admin';
 import { errorHandler } from './middleware/errorHandler';
 import { cleanupOldFiles } from './utils/cleanup';
 
@@ -69,6 +70,7 @@ app.use('/api/contact', contactRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/extractor', extractorRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);
