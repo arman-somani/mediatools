@@ -23,6 +23,7 @@ export interface IUser extends Document {
   lastBandwidthReset: Date;
   role: 'user' | 'admin';
   isBanned: boolean;
+  lastActiveAt?: Date;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -114,6 +115,9 @@ const userSchema = new Schema<IUser>(
     isBanned: {
       type: Boolean,
       default: false,
+    },
+    lastActiveAt: {
+      type: Date,
     },
   },
   {

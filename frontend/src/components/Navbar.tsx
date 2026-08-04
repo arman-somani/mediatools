@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
 import { useState, useRef, useEffect } from 'react';
 import anime from 'animejs';
+import api from '@/lib/api';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -74,6 +75,24 @@ export default function Navbar() {
     .add({ targets: icon1Ref.current, opacity: 1, duration: 500 }, step * 4 - 500);
 
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const pingServer = async () => {
+      try {
+        await api.post('/user/ping');
+      } catch (err) {
+        // Ignore ping errors
+      }
+    };
+    
+    // Initial ping on load
+    pingServer();
+    
+    // Ping every 60 seconds
+    const interval = setInterval(pingServer, 60000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   const handleSignOut = () => {
     clearAuth();

@@ -23,8 +23,9 @@ type UserData = {
 type AdminStats = {
     totalUsers: number;
     totalConversions: number;
-    totalDownloads: number;
+    liveUsers: number;
     totalBandwidthUsed: number;
+    totalDownloads: number;
 };
 
 export default function AdminPage() {
@@ -125,11 +126,11 @@ export default function AdminPage() {
                                 <div className="glass-panel p-6 rounded-2xl flex flex-col items-center text-center">
                                     <div className="text-brand-cyan mb-2">
                                         <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                                         </svg>
                                     </div>
-                                    <h3 className="text-3xl font-bold">{stats?.totalConversions || 0}</h3>
-                                    <p className="text-sm text-white/50">Total Conversions</p>
+                                    <h3 className="text-3xl font-bold">{stats?.liveUsers || 0}</h3>
+                                    <p className="text-sm text-white/50">Live Users</p>
                                 </div>
                                 <div className="glass-panel p-6 rounded-2xl flex flex-col items-center text-center">
                                     <div className="text-brand-green mb-2">

@@ -13,9 +13,6 @@ router.use(requireAdmin);
 // GET /api/admin
 router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const totalUsers = await User.countDocuments();
-    const totalConversions = await Conversion.countDocuments();
-    
     const downloadsAgg = await Conversion.aggregate([
       { $group: { _id: null, total: { $sum: "$downloadCount" } } }
     ]);
@@ -45,13 +42,34 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
       totalBandwidthUsed = bandwidthAgg[0]?.total || 0;
     }
 
+    const activeThreshold = new Date(Date.now() - 5 * 60 * 1000); // 5 minutes
+    
+    const [
+      totalUsers,
+      totalConversions,
+      recentUsers,
+      recentConversions,
+      liveUsers
+    ] = await Promise.all([
+      User.countDocuments(),
+      Conversion.countDocuments(),
+      User.find().sort({ createdAt: -1 }).limit(10).select('-password'),
+      Conversion.find().sort({ createdAt: -1 }).limit(10).populate('userId', 'name email'),
+      User.countDocuments({ lastActiveAt: { $gte: activeThreshold } })
+    ]);
+
     res.json({
       success: true,
       data: {
-        totalUsers,
-        totalConversions,
-        totalDownloads,
-        totalBandwidthUsed
+        stats: {
+          totalUsers,
+          totalConversions,
+          liveUsers,
+          totalBandwidthUsed,
+          totalDownloads
+        },
+        recentUsers,
+        recentConversions,
       }
     });
   } catch (error: any) {

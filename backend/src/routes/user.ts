@@ -11,6 +11,7 @@ import streamifier from 'streamifier';
 const router = Router();
 
 // GET /api/user/profile
+// GET /api/user/profile
 router.get('/profile', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
   const user = await User.findById(req.user!.id).select('-password -emailVerificationToken -resetPasswordToken');
 
@@ -20,6 +21,16 @@ router.get('/profile', authenticate, async (req: AuthRequest, res: Response): Pr
   }
 
   res.json({ success: true, data: user });
+});
+
+// POST /api/user/ping
+router.post('/ping', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    await User.findByIdAndUpdate(req.user!.id, { lastActiveAt: new Date() });
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).send();
+  }
 });
 
 // PUT /api/user/profile
