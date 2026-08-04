@@ -20,12 +20,18 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
     ]);
     const totalDownloads = downloadsAgg[0]?.total || 0;
 
+    const bandwidthAgg = await User.aggregate([
+      { $group: { _id: null, total: { $sum: "$monthlyBandwidthUsed" } } }
+    ]);
+    const totalBandwidthUsed = bandwidthAgg[0]?.total || 0;
+
     res.json({
       success: true,
       data: {
         totalUsers,
         totalConversions,
-        totalDownloads
+        totalDownloads,
+        totalBandwidthUsed
       }
     });
   } catch (error: any) {
