@@ -42,6 +42,11 @@ router.post(
 
     const { name, email, password } = req.body;
 
+    if (!email.toLowerCase().endsWith('@gmail.com')) {
+      res.status(400).json({ success: false, message: 'Only @gmail.com domains are allowed. Institute and temp mail logins will not get registered.' });
+      return;
+    }
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       res.status(409).json({ success: false, message: 'Email already registered' });
@@ -84,6 +89,11 @@ router.post(
     }
 
     const { email, password } = req.body;
+
+    if (!email.toLowerCase().endsWith('@gmail.com')) {
+      res.status(400).json({ success: false, message: 'Only @gmail.com domains are allowed. Institute and temp mail logins will not get registered.' });
+      return;
+    }
     const user = await User.findOne({ email }).select('+password');
 
     if (!user || !(await user.comparePassword(password))) {
@@ -122,6 +132,11 @@ router.post('/google', authLimiter, async (req: Request, res: Response): Promise
     });
 
     const { sub: googleId, email, name, picture: avatar } = data;
+
+    if (!email.toLowerCase().endsWith('@gmail.com')) {
+      res.status(400).json({ success: false, message: 'Only @gmail.com domains are allowed. Institute and temp mail logins will not get registered.' });
+      return;
+    }
 
     let user = await User.findOne({ $or: [{ googleId }, { email }] });
 

@@ -11,6 +11,7 @@ export default function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { setAuth } = useAuthStore();
@@ -18,6 +19,14 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!agreedToTerms) {
+      setError('You must agree to the Terms and Privacy Policy to register.');
+      return;
+    }
+    if (!email.toLowerCase().endsWith('@gmail.com')) {
+      setError('Only @gmail.com domains are allowed. Institute and temp mail logins will not get registered.');
+      return;
+    }
     if (password.length < 8) { setError('Password must be at least 8 characters'); return; }
     setLoading(true); setError('');
     try {
@@ -97,19 +106,29 @@ export default function RegisterPage() {
               </div>
             </div>
 
+            <div className="flex items-start gap-3 mt-4 mb-2">
+              <input
+                type="checkbox"
+                id="terms"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-white/20 text-brand-cyan focus:ring-brand-cyan bg-white/5 cursor-pointer accent-brand-cyan"
+                required
+              />
+              <label htmlFor="terms" className="text-white/60 text-xs leading-relaxed cursor-pointer select-none">
+                I agree to the <Link href="/terms" className="text-brand-cyan hover:text-white transition-colors">Terms</Link> and <Link href="/privacy" className="text-brand-cyan hover:text-white transition-colors">Privacy Policy</Link>
+              </label>
+            </div>
+
             {error && (
               <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-sm">
-                Error {error}
+                {error}
               </div>
             )}
 
             <button type="submit" disabled={loading} className="w-full btn-primary h-12 mt-2">
               {loading ? 'Creating account...' : 'Create Free Account'}
             </button>
-
-            <p className="text-center text-white/40 text-xs mt-4 leading-relaxed">
-              By signing up you agree to our <Link href="/terms" className="text-white hover:text-brand-cyan transition-colors">Terms</Link> and <Link href="/privacy" className="text-white hover:text-brand-cyan transition-colors">Privacy Policy</Link>
-            </p>
           </form>
 
           <p className="text-center text-white/50 text-sm mt-8">

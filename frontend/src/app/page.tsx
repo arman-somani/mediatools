@@ -146,7 +146,7 @@ export default function HomePage() {
                 100% Free No Limits
               </h2>
               <p className="text-white/60 text-base md:text-lg mb-8">
-                No subscriptions, no hidden fees. Every feature is free  unlimited conversions Always.
+                No subscriptions, no hidden fees. Every feature is free always with unlimited conversions.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center flex-wrap w-full">
                 <Link href="/converter" className="btn-primary px-6 md:px-8 py-3 rounded-xl w-full sm:w-auto text-center">

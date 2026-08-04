@@ -28,6 +28,10 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email.toLowerCase().endsWith('@gmail.com')) {
+      setError('Only @gmail.com domains are allowed. Institute and temp mail logins will not get registered.');
+      return;
+    }
     if (!isServerReady) {
       setShowServerPopup(true);
       setCountdown(60);
