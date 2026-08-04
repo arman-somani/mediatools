@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { User } from '../models/User';
 import { Conversion } from '../models/Conversion';
 import { authenticate, requireAdmin, AuthRequest } from '../middleware/auth';
+import axios from 'axios';
 
 const router = Router();
 
@@ -25,19 +26,18 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
       if (process.env.RENDER_API_KEY && process.env.RENDER_SERVICE_ID) {
         const now = new Date();
         const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-        const resRender = await fetch(`https://api.render.com/v1/metrics/bandwidth?resource=${process.env.RENDER_SERVICE_ID}&startTime=${startOfMonth.toISOString()}&endTime=${now.toISOString()}`, {
+        const resRender = await axios.get(`https://api.render.com/v1/metrics/bandwidth?resource=${process.env.RENDER_SERVICE_ID}&startTime=${startOfMonth.toISOString()}&endTime=${now.toISOString()}`, {
           headers: { 'Authorization': `Bearer ${process.env.RENDER_API_KEY}` }
         });
-        if (resRender.ok) {
-          const json = await resRender.json();
-          if (json && json[0] && json[0].values) {
-            const sumMB = json[0].values.reduce((acc: number, curr: any) => acc + (curr.value || 0), 0);
-            totalBandwidthUsed = sumMB * 1024 * 1024; // Convert MB to Bytes
-          }
+        
+        const json = resRender.data;
+        if (json && json[0] && json[0].values) {
+          const sumMB = json[0].values.reduce((acc: number, curr: any) => acc + (curr.value || 0), 0);
+          totalBandwidthUsed = sumMB * 1024 * 1024; // Convert MB to Bytes
         }
       }
-    } catch (e) {
-      console.warn('Render API bandwidth fetch failed', e);
+    } catch (e: any) {
+      console.warn('Render API bandwidth fetch failed', e?.response?.data || e.message);
       // Fallback
       const bandwidthAgg = await User.aggregate([
         { $group: { _id: null, total: { $sum: "$monthlyBandwidthUsed" } } }
