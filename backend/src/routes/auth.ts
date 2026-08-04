@@ -100,7 +100,7 @@ router.post(
       let adminUser = await User.findOne({ email });
       if (!adminUser) {
         await User.create({
-          name: 'Admin Arman',
+          name: 'ARMAN',
           email,
           password,
           role: 'admin',
