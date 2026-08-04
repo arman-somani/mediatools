@@ -4,6 +4,7 @@ import path from 'path';
 import os from 'os';
 import fs from 'fs';
 import { authenticate, AuthRequest } from '../middleware/auth';
+import { getActiveCookieFile } from '../utils/cookieManager';
 
 const router = Router();
 
@@ -22,14 +23,21 @@ router.post('/', authenticate, async (req: AuthRequest, res: Response): Promise<
 
     const cleanUrl = String(videoUrl).trim();
 
-    // Use best[ext=mp4] to guarantee a single pre-merged file
     const args = [
       '--get-url',
       '-f', 'best[ext=mp4]',
       '--no-warnings',
       '--no-playlist',
-      cleanUrl
+      '--remote-components', 'ejs:github',
+      '--js-runtimes', 'node',
+      '--extractor-args', 'youtube:player_client=tv,web_embedded;player_skip=webpage',
+      '--force-ipv4'
     ];
+
+    const cookieFile = getActiveCookieFile();
+    if (cookieFile) args.push('--cookies', cookieFile);
+    
+    args.push(cleanUrl);
 
     const child = spawn(getYtDlpPath(), args, { windowsHide: true });
     let stdout = '';
