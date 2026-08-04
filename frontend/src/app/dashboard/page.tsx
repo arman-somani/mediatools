@@ -84,7 +84,7 @@ export default function DashboardPage() {
     const [userDownloads, setUserDownloads] = useState(0);
     const [recentConversions, setRecentConversions] = useState<RecentConversion[]>([]);
     const [error, setError] = useState('');
-    const { user, accessToken } = useAuthStore();
+    const { user, accessToken, updateUser } = useAuthStore();
 
     useEffect(() => {
         if (!accessToken && !user) {
@@ -98,6 +98,9 @@ export default function DashboardPage() {
             try {
                 const { data } = await api.get('/user/dashboard');
                 if (data.success) {
+                    if (data.data.user && data.data.user.role !== user?.role) {
+                        updateUser({ role: data.data.user.role });
+                    }
                     setUserConversions(data.data.stats.totalConversions || 0);
                     setUserDownloads(data.data.stats.totalDownloads || 0);
                     setRecentConversions(data.data.recentConversions || []);
