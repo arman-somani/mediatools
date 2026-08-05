@@ -108,6 +108,8 @@ export default function DashboardPage() {
             } catch (err: any) {
                 if (err?.response?.status === 401) {
                     setError('Session expired. Please log in again.');
+                } else if (err?.response?.status === 403) {
+                    setError('Your account is suspended due to security reasons.');
                 } else {
                     setError('Failed to load dashboard. Make sure the backend is running.');
                 }
