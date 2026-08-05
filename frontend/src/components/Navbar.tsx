@@ -26,7 +26,6 @@ export default function Navbar() {
     { name: 'Video to Audio', href: '/converter' },
     { name: 'YouTube Audio', href: '/youtube' },
     { name: 'YouTube Video', href: '/yt-video' },
-    ...(user?.role === 'admin' ? [{ name: 'Admin Panel', href: '/admin' }] : []),
   ];
 
   useEffect(() => {
