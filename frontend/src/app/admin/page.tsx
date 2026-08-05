@@ -35,8 +35,15 @@ export default function AdminPage() {
     const [users, setUsers] = useState<UserData[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (!isMounted) return;
+
         if (!accessToken) {
             router.push('/auth/login');
             return;
@@ -68,7 +75,7 @@ export default function AdminPage() {
         };
 
         fetchAdminData();
-    }, [user, accessToken, router]);
+    }, [user, accessToken, router, isMounted]);
 
     const handleToggleBan = async (userId: string, isCurrentlyBanned: boolean) => {
         if (!confirm(`Are you sure you want to ${isCurrentlyBanned ? 'unban' : 'ban'} this user?`)) return;
