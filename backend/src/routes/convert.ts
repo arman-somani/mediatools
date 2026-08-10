@@ -158,11 +158,12 @@ async function validateUserLimits(userId: string, requestedQuality: string, isUn
     await user.save();
   }
 
-  if (user.role !== 'admin') {
-    if (user.monthlyBandwidthUsed >= BANDWIDTH_LIMIT) {
-      throw new Error('You have reached your 100MB monthly bandwidth limit.');
-    }
-  }
+  // Bandwidth limit removed as requested: let it be unlimited but show usage
+  // if (user.role !== 'admin') {
+  //   if (user.monthlyBandwidthUsed >= BANDWIDTH_LIMIT) {
+  //     throw new Error('You have reached your 100MB monthly bandwidth limit.');
+  //   }
+  // }
 
   if (isUniversal && (requestedQuality === '4K' || requestedQuality === '8K')) {
     if (user.role !== 'admin' && !user.isPremium) {

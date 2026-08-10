@@ -190,7 +190,7 @@ export default function AdminPage() {
                                                         {u.totalDownloads}
                                                     </td>
                                                     <td className="py-4 px-6 text-center text-sm font-mono text-white/80">
-                                                        {u.role === 'admin' ? 'Unlimited' : `${(u.monthlyBandwidthUsed / (1024 * 1024)).toFixed(1)} MB`}
+                                                        {`${(u.monthlyBandwidthUsed / (1024 * 1024)).toFixed(1)} MB`}
                                                     </td>
                                                     <td className="py-4 px-6 text-center">
                                                         {u.isBanned ? (
