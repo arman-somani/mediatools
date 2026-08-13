@@ -221,7 +221,7 @@ export default function YouTubePage() {
                             disabled={!url}
                             className={`w-full min-w-[160px] h-[46px] rounded-xl font-semibold transition-all duration-300 ${!url ? 'bg-white/5 text-white/40 border border-white/10 cursor-not-allowed' : 'btn-primary'}`}
                           >
-                            Download Audio </button>
+                            Convert Audio </button>
                         </AnimeHover>
                       </div>
                     </div>
