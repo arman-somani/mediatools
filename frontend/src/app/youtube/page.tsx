@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import api, { apiUrl } from '@/lib/api';
+import api, { audioApi, apiUrl, audioApiUrl } from '@/lib/api';
 import { isValidYouTubeUrl, getYouTubeVideoId, formatFileSize } from '@/lib/utils';
 import Image from 'next/image';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -73,7 +73,7 @@ export default function YouTubePage() {
   const poll = (id: string) => {
     pollRef.current = setInterval(async () => {
       try {
-        const { data } = await api.get(`/convert/status/${id}`);
+        const { data } = await audioApi.get(`/convert/status/${id}`);
         const conv = data.data;
         setProgress(Math.round(conv.progress || 0));
         if (conv.status === 'queued') {
@@ -88,7 +88,7 @@ export default function YouTubePage() {
           setFileSize(conv.fileSize || null);
           if (conv.gofileUrl) setGofileUrl(conv.gofileUrl);
           const finalUrl = conv.outputUrl || `/api/convert/download/${id}`;
-          setJobId(finalUrl.startsWith('http') ? finalUrl : apiUrl(finalUrl));
+          setJobId(finalUrl.startsWith('http') ? finalUrl : audioApiUrl(finalUrl));
           sendNotification('Audio Ready! 🎵', 'Your audio file has finished converting and is ready to save.');
         } else if (conv.status === 'failed') {
           clearInterval(pollRef.current!);
@@ -111,7 +111,7 @@ export default function YouTubePage() {
     requestNotificationPermission();
     setError(''); setStatus('processing'); setProgress(0); setConversionTime(null);
     try {
-      const { data } = await api.post('/convert/youtube', { url, quality });
+      const { data } = await audioApi.post('/convert/youtube', { url, quality });
       setJobId(data.data.jobId);
       if (data.data.title) setVideoInfo({ title: data.data.title, thumbnail: data.data.thumbnail });
       poll(data.data.jobId);

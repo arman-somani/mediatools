@@ -1,7 +1,7 @@
 'use client';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
-import api, { apiUrl } from '@/lib/api';
+import api, { audioApi, apiUrl, audioApiUrl } from '@/lib/api';
 import { formatFileSize } from '@/lib/utils';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ProgressCircle from '@/components/ProgressCircle';
@@ -50,7 +50,7 @@ export default function ConverterPage() {
   const pollStatus = (jobId: string) => {
     pollRef.current = setInterval(async () => {
       try {
-        const { data } = await api.get(`/convert/status/${jobId}`);
+        const { data } = await audioApi.get(`/convert/status/${jobId}`);
         const conv = data.data;
         const totalProgress = 40 + Math.round((conv.progress || 0) * 0.6);
         setProgress(totalProgress);
@@ -85,7 +85,7 @@ export default function ConverterPage() {
     formData.append('quality', quality);
 
     try {
-      const { data } = await api.post('/convert/upload', formData, {
+      const { data } = await audioApi.post('/convert/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
         onUploadProgress: (e) => {
           if (e.total) setProgress(Math.round((e.loaded / e.total) * 40));
@@ -209,7 +209,7 @@ export default function ConverterPage() {
                   {!fileSize && <div className="mb-8" />}
 
                   <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
-                    <a href={apiUrl(`/api/convert/download/${jobId}`)} target="_blank" rel="noopener noreferrer" className="flex-1 block">
+                    <a href={audioApiUrl(`/api/convert/download/${jobId}`)} target="_blank" rel="noopener noreferrer" className="flex-1 block">
                       <AnimeHover scaleHover={1.05} scaleTap={0.95} className="w-full">
                         <button className="w-full btn-primary download-btn-pulse flex items-center justify-center gap-2 h-14 rounded-xl">
                           <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
