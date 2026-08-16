@@ -4,7 +4,7 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "dev": "nodemon --watch src --ext ts --exec \"ts-node -r dotenv/config src/app.ts\"",
+        "dev": "nodemon --watch src --ext ts --exec \"ts-node --max-old-space-size=200 -r dotenv/config src/app.ts\"",
         "build": "node scripts/download-ytdlp.js && tsc",
         "start": "./start.sh"
     },

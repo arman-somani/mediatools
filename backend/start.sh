@@ -31,4 +31,4 @@ wireproxy -c wgcf-profile.conf &
 sleep 3
 
 echo "[WARP] Proxy started! Launching Node backend..."
-exec node -r dotenv/config dist/app.js
+exec node --max-old-space-size=200 -r dotenv/config dist/app.js
