@@ -22,6 +22,7 @@ import { Innertube, UniversalCache, Platform, ClientType } from 'youtubei.js';
 import ytdl from '@distube/ytdl-core';
 import vm from 'vm';
 
+import { conversionQueue } from '../utils/queue';
 import { uploadToGoFile } from '../utils/gofile';
 import { getActiveCookieFile } from '../utils/cookieManager';
 import { getRandomFreeProxies } from '../utils/freeproxy';
@@ -275,80 +276,83 @@ router.post(
           console.warn('ffprobe failed, progress may be inaccurate');
         }
 
-        const ffmpeg = spawn('ffmpeg', ['-y', '-i', file.path, '-vn', '-ab', `${quality}k`, outputPath]);
+        res.json({
+          success: true,
+          message: 'Upload conversion queued',
+          data: {
+            jobId: conversion._id.toString(),
+            conversionId: conversion._id.toString(),
+          },
+        });
 
-        activePolls.set(conversion._id.toString(), Date.now());
-        const zombieKiller = setInterval(() => {
-          const lastPoll = activePolls.get(conversion._id.toString());
-          if (lastPoll && Date.now() - lastPoll > 60000) {
-             ffmpeg.kill('SIGKILL');
-             clearInterval(zombieKiller);
-          }
-        }, 5000);
+        conversionQueue.add({
+          id: conversion._id.toString(),
+          execute: async () => {
+            try {
+              const ffmpeg = spawn('ffmpeg', ['-y', '-i', file.path, '-threads', '1', '-vn', '-ab', `${quality}k`, outputPath]);
 
-        let lastUpdate = Date.now();
-        ffmpeg.stderr.on('data', (data) => {
-          if (!totalDurationSecs || totalDurationSecs <= 0) return;
-          const output = data.toString();
-          const match = output.match(/time=(\d{2}):(\d{2}):(\d{2}\.\d{2})/);
-          if (match) {
-            const h = parseFloat(match[1]);
-            const m = parseFloat(match[2]);
-            const s = parseFloat(match[3]);
-            const currentSecs = h * 3600 + m * 60 + s;
-            const progress = Math.min(Math.round((currentSecs / totalDurationSecs) * 100), 99);
+              activePolls.set(conversion._id.toString(), Date.now());
+              const zombieKiller = setInterval(() => {
+                const lastPoll = activePolls.get(conversion._id.toString());
+                if (lastPoll && Date.now() - lastPoll > 60000) {
+                  ffmpeg.kill('SIGKILL');
+                  clearInterval(zombieKiller);
+                }
+              }, 5000);
 
-            const now = Date.now();
-            if (now - lastUpdate > 1000) {
-              lastUpdate = now;
-              Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
+              let lastUpdate = Date.now();
+              ffmpeg.stderr.on('data', (data) => {
+                if (!totalDurationSecs || totalDurationSecs <= 0) return;
+                const output = data.toString();
+                const match = output.match(/time=(\d{2}):(\d{2}):(\d{2}\.\d{2})/);
+                if (match) {
+                  const h = parseFloat(match[1]);
+                  const m = parseFloat(match[2]);
+                  const s = parseFloat(match[3]);
+                  const currentSecs = h * 3600 + m * 60 + s;
+                  const progress = Math.min(Math.round((currentSecs / totalDurationSecs) * 100), 99);
+
+                  const now = Date.now();
+                  if (now - lastUpdate > 1000) {
+                    lastUpdate = now;
+                    Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
+                  }
+                }
+              });
+
+              await new Promise((resolve, reject) => {
+                ffmpeg.on('close', (code) => {
+                  clearInterval(zombieKiller);
+                  activePolls.delete(conversion._id.toString());
+                  if (code === 0) resolve(true);
+                  else reject(new Error('FFmpeg failed with code ' + code));
+                });
+              });
+
+              conversion.fileSize = getFileSize(outputPath);
+              if (conversion.fileSize) {
+                await User.findByIdAndUpdate(userId, { $inc: { monthlyBandwidthUsed: conversion.fileSize } });
+              }
+
+              conversion.status = 'completed';
+              conversion.progress = 100;
+              await conversion.save();
+              await User.findByIdAndUpdate(userId, { $inc: { totalConversions: 1 } });
+            } catch (ffmpegError: any) {
+              conversion.status = 'failed';
+              conversion.errorMessage = ffmpegError.message || 'FFmpeg failed';
+              await conversion.save();
+            } finally {
+              if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
             }
           }
         });
-
-        await new Promise((resolve, reject) => {
-          ffmpeg.on('close', (code) => {
-            clearInterval(zombieKiller);
-            activePolls.delete(conversion._id.toString());
-            if (code === 0) resolve(true);
-            else reject(new Error('FFmpeg failed with code ' + code));
-          });
-        });
-
-        conversion.fileSize = getFileSize(outputPath);
-        if (conversion.fileSize) {
-          await User.findByIdAndUpdate(userId, { $inc: { monthlyBandwidthUsed: conversion.fileSize } });
-        }
-        // GoFile upload removed
-
-        conversion.status = 'completed';
-        conversion.progress = 100;
-        await conversion.save();
-        await User.findByIdAndUpdate(userId, { $inc: { totalConversions: 1 } });
-      } catch (ffmpegError: any) {
-        conversion.status = 'failed';
-        conversion.errorMessage = ffmpegError.message || 'FFmpeg failed';
-        await conversion.save();
+      } catch (error: any) {
+        console.error('Video error:', error);
+        res.status(500).json({ success: false, message: error.message || 'Conversion failed' });
       }
-
-      if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
-
-      res.json({
-        success: true,
-        message: 'Conversion complete',
-        data: {
-          jobId: conversion._id.toString(),
-          conversionId: conversion._id.toString(),
-          fileSize: conversion.fileSize,
-          downloadUrl: `http://localhost:5000/api/convert/download/${conversion._id}`,
-        },
-      });
-    } catch (error: any) {
-      console.error('Video error:', error);
-      res.status(500).json({ success: false, message: error.message || 'Conversion failed' });
     }
-  }
-);
+  );
 /* ── YOUTUBE TO MP3 ─────────────────────────────────────── */
 router.post('/youtube', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -394,8 +398,10 @@ router.post('/youtube', authenticate, async (req: AuthRequest, res: Response): P
     });
 
     // Background processing
-    (async () => {
-      try {
+    conversionQueue.add({
+      id: conversion._id.toString(),
+      execute: async () => {
+        try {
         let videoTitle = req.body.title || 'Downloaded Audio';
         let thumbnail = '';
 
@@ -564,7 +570,8 @@ router.post('/youtube', authenticate, async (req: AuthRequest, res: Response): P
           await conversion.save();
         } catch { }
       }
-    })();
+    }
+    });
 
   } catch (error: any) {
     console.error('YouTube audio route error:', error);
@@ -743,8 +750,10 @@ router.post('/universal', authenticate, async (req: AuthRequest, res: Response):
     });
 
     // Background processing
-    (async () => {
-      try {
+    conversionQueue.add({
+      id: conversion._id.toString(),
+      execute: async () => {
+        try {
         let videoTitle = req.body.title || 'Downloaded Video';
         let thumbnail = '';
 
@@ -946,7 +955,8 @@ router.post('/universal', authenticate, async (req: AuthRequest, res: Response):
           await conversion.save();
         } catch { }
       }
-    })();
+    }
+    });
 
   } catch (error: any) {
     console.error('Universal route error:', error);
@@ -965,11 +975,16 @@ router.get('/status/:id', async (req: Request, res: Response): Promise<void> => 
       res.status(404).json({ success: false, message: 'Conversion not found' });
       return;
     }
+    const pos = conversionQueue.getQueuePosition(req.params.id);
+    let currentStatus = conversion.status;
+    if (pos > 0) currentStatus = 'queued';
+
     res.json({
       success: true,
       data: {
         jobId: conversion._id.toString(),
-        status: conversion.status,
+        status: currentStatus,
+        queuePosition: pos,
         progress: conversion.progress,
         outputFilename: conversion.outputFilename,
         outputUrl: conversion.outputUrl,
