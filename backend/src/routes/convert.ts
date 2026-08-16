@@ -236,10 +236,7 @@ function sanitizeFilename(name: string): string {
     .slice(0, 200);
 }
 
-/* ── Video TO Audio ───────────────────────────────────────────────────────────── */
-const SERVER_ROLE = process.env.SERVER_ROLE || 'all';
-
-if (SERVER_ROLE === 'all' || SERVER_ROLE === 'audio') {
+/* ΓöÇΓöÇ Video TO Audio ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
 router.post(
   '/upload',
   authenticate,
@@ -270,7 +267,7 @@ router.post(
         progress: 0,
       });
 
-
+      try {
         let totalDurationSecs = 0;
         try {
           const { stdout: probeOut } = await execAsync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${file.path}"`);
@@ -356,7 +353,6 @@ router.post(
       }
     }
   );
-
 /* ── YOUTUBE TO MP3 ─────────────────────────────────────── */
 router.post('/youtube', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -582,10 +578,8 @@ router.post('/youtube', authenticate, async (req: AuthRequest, res: Response): P
     res.status(500).json({ success: false, message: error.message || 'YouTube audio conversion failed' });
   }
 });
-} // END audio routes
 
-if (SERVER_ROLE === 'all' || SERVER_ROLE === 'video') {
-/* ── YOUTUBE FORMATS EXTRACTOR (Used by WASM Extension) ──────────── */
+/* ΓöÇΓöÇ YOUTUBE FORMATS EXTRACTOR (Used by WASM Extension) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
 router.post('/youtube-formats', async (req: Request, res: Response): Promise<void> => {
   try {
     const videoUrl = req.body.url;
@@ -969,9 +963,10 @@ router.post('/universal', authenticate, async (req: AuthRequest, res: Response):
     res.status(500).json({ success: false, message: error.message || 'Universal video download failed' });
   }
 });
-} // END video routes
 
-/* ── GET STATUS (frontend polls this) ────────────────────────────────── */
+
+
+/* ΓöÇΓöÇ GET STATUS (frontend polls this) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
 router.get('/status/:id', async (req: Request, res: Response): Promise<void> => {
   try {
     activePolls.set(req.params.id, Date.now());
