@@ -15,6 +15,7 @@ function getYtDlpPath(): string {
 }
 
 import { authenticate, optionalAuth, AuthRequest } from '../middleware/auth';
+import { convertLimiter } from '../middleware/rateLimiter';
 import { Conversion } from '../models/Conversion';
 import { User } from '../models/User';
 import { Innertube, UniversalCache, Platform, ClientType } from 'youtubei.js';
@@ -43,6 +44,15 @@ Platform.shim.eval = (script: any) => {
 
 
 const router = Router();
+
+// Apply rate limiting to all conversion initialization requests
+router.use((req, res, next) => {
+  if (req.method === 'POST') {
+    return convertLimiter(req, res, next);
+  }
+  next();
+});
+
 const activePolls = new Map<string, number>();
 const execAsync = promisify(exec);
 
@@ -174,16 +184,6 @@ async function validateUserLimits(userId: string, requestedQuality: string, isUn
 
 router.get('/version', (req: Request, res: Response) => {
   res.json({ version: 'v4_nightly_build_fix' });
-});
-
-router.post('/test-ytdlp', async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { args } = req.body;
-    const { stdout, stderr } = await execAsync(`"${getYtDlpPath()}" ${args}`);
-    res.json({ stdout, stderr });
-  } catch (e: any) {
-    res.json({ error: e.message, stdout: e.stdout?.toString(), stderr: e.stderr?.toString() });
-  }
 });
 
 router.get('/test-ytdlcore', async (req: Request, res: Response): Promise<void> => {

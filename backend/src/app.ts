@@ -33,8 +33,17 @@ const app = express();
 // Security middleware
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
-  contentSecurityPolicy: false,
-  xFrameOptions: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      connectSrc: ["'self'", "https://*", "http://*"],
+      imgSrc: ["'self'", "data:", "https://*"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      frameSrc: ["'self'"]
+    }
+  },
+  xFrameOptions: { action: "sameorigin" },
 }));
 app.use(cors({
   origin: (process.env.FRONTEND_URL || 'http://localhost:3000').trim(),
