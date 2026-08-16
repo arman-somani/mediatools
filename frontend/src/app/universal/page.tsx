@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import api, { apiUrl } from '@/lib/api';
+import api, { videoApi, apiUrl, videoApiUrl } from '@/lib/api';
 import { formatFileSize } from '@/lib/utils';
 import Image from 'next/image';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -55,7 +55,7 @@ export default function UniversalPage() {
   const poll = (id: string) => {
     pollRef.current = setInterval(async () => {
       try {
-        const { data } = await api.get(`/convert/status/${id}`);
+        const { data } = await videoApi.get(`/convert/status/${id}`);
         const conv = data.data;
         setProgress(Math.round(conv.progress || 0));
         if (conv.status === 'queued') {
@@ -70,7 +70,7 @@ export default function UniversalPage() {
           setFileSize(conv.fileSize || null);
           if (conv.gofileUrl) setGofileUrl(conv.gofileUrl);
           const finalUrl = conv.outputUrl || `/api/convert/download/${id}`;
-          setJobId(finalUrl.startsWith('http') ? finalUrl : apiUrl(finalUrl));
+          setJobId(finalUrl.startsWith('http') ? finalUrl : videoApiUrl(finalUrl));
           sendNotification('Download Complete! 🎉', 'Your video has finished downloading and is ready to save.');
         } else if (conv.status === 'failed') {
           clearInterval(pollRef.current!);
@@ -116,7 +116,7 @@ export default function UniversalPage() {
     requestNotificationPermission();
     setError(''); setStatus('processing'); setProgress(0); setConversionTime(null);
     try {
-      const { data } = await api.post('/convert/universal', { url, videoQuality: quality });
+      const { data } = await videoApi.post('/convert/universal', { url, videoQuality: quality });
       setJobId(data.data.jobId);
       if (data.data.title) setVideoInfo({ title: data.data.title });
       poll(data.data.jobId);

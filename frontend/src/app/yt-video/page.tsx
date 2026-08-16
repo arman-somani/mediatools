@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import api, { apiUrl } from '@/lib/api';
+import api, { videoApi, apiUrl, videoApiUrl } from '@/lib/api';
 import { isValidYouTubeUrl, getYouTubeVideoId, formatFileSize } from '@/lib/utils';
 import Image from 'next/image';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -73,7 +73,7 @@ export default function YtVideoPage() {
   const poll = (id: string) => {
     pollRef.current = setInterval(async () => {
       try {
-        const { data } = await api.get(`/convert/status/${id}`);
+        const { data } = await videoApi.get(`/convert/status/${id}`);
         const conv = data.data;
         setProgress(Math.round(conv.progress || 0));
         if (conv.status === 'queued') {
@@ -89,7 +89,7 @@ export default function YtVideoPage() {
           setFileSize(conv.fileSize || null);
           if (conv.gofileUrl) setGofileUrl(conv.gofileUrl);
           const finalUrl = conv.outputUrl || `/api/convert/download/${id}`;
-          setJobId(finalUrl.startsWith('http') ? finalUrl : apiUrl(finalUrl));
+          setJobId(finalUrl.startsWith('http') ? finalUrl : videoApiUrl(finalUrl));
           sendNotification('Video Ready! 🎵', 'Your video file has finished converting and is ready to save.');
         } else if (conv.status === 'failed') {
           clearInterval(pollRef.current!);
@@ -112,7 +112,7 @@ export default function YtVideoPage() {
     requestNotificationPermission();
     setError(''); setStatus('processing'); setProgress(0); setConversionTime(null);
     try {
-      const { data } = await api.post('/convert/universal', { url, videoQuality: quality, type: 'youtube-Video' });
+      const { data } = await videoApi.post('/convert/universal', { url, videoQuality: quality, type: 'youtube-Video' });
       
       if (data.success && data.data?.jobId) {
         setJobId(data.data.jobId);
