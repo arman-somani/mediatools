@@ -16,7 +16,8 @@ export default function YtVideoPage() {
   const { user } = useAuthStore();
   const [url, setUrl] = useState('');
   const [quality, setQuality] = useState<VideoQuality>('720p');
-  const [status, setStatus] = useState<'idle' | 'processing' | 'uploading' | 'completed' | 'failed'>('idle');
+  const [status, setStatus] = useState<'idle' | 'queued' | 'processing' | 'uploading' | 'completed' | 'failed'>('idle');
+  const [queuePosition, setQueuePosition] = useState(0);
   const [progress, setProgress] = useState(0);
   const [jobId, setJobId] = useState('');
     const [fileSize, setFileSize] = useState<number | null>(null);
@@ -75,7 +76,10 @@ export default function YtVideoPage() {
         const { data } = await api.get(`/convert/status/${id}`);
         const conv = data.data;
         setProgress(Math.round(conv.progress || 0));
-        if (conv.status === 'completed') {
+        if (conv.status === 'queued') {
+          setStatus('queued');
+          setQueuePosition(conv.queuePosition);
+        } else if (conv.status === 'completed') {
           clearInterval(pollRef.current!);
           setStatus('completed');
           setProgress(100);
@@ -242,16 +246,14 @@ export default function YtVideoPage() {
                     </div>
                   </div>
 
-                </div>
-
-              ) : status === 'processing' || status === 'uploading' ? (
+                  </div>
+                ) : status === 'processing' || status === 'uploading' || status === 'queued' ? (
                 <ProgressCircle
                   progress={progress}
-                  statusText={status === 'uploading' ? "Your link is getting ready..." : "Downloading Video..."}
-                  subText={status === 'uploading' ? "Generating high-speed CDN link" : "Fetching highest quality video securely"}
+                  statusText={status === 'queued' ? `Queued (Position: ${queuePosition})` : status === 'uploading' ? "Your link is getting ready..." : "Downloading Video..."}
+                  subText={status === 'queued' ? 'Waiting for other conversions to finish...' : status === 'uploading' ? "Generating high-speed CDN link" : "Fetching highest quality video securely"}
                 />
-
-              ) : (
+                ) : (
                 <div key="done" className="py-8 text-center flex flex-col items-center">
                   {videoInfo?.thumbnail && (
                     <div className="w-full max-w-sm aspect-video relative rounded-2xl overflow-hidden border border-white/10 mb-8 shadow-2xl">

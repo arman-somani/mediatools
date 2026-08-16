@@ -11,7 +11,7 @@ import AnimeReveal from '@/components/AnimeReveal';
 import AnimeHover from '@/components/AnimeHover';
 
 type Quality = '128' | '192' | '320';
-type Status = 'idle' | 'uploading' | 'processing' | 'completed' | 'failed';
+type Status = 'idle' | 'queued' | 'uploading' | 'processing' | 'completed' | 'failed';
 
 
 
@@ -19,6 +19,7 @@ export default function ConverterPage() {
   const [file, setFile] = useState<File | null>(null);
   const [quality, setQuality] = useState<Quality>('192');
   const [status, setStatus] = useState<Status>('idle');
+  const [queuePosition, setQueuePosition] = useState(0);
   const [progress, setProgress] = useState(0);
   const [jobId, setJobId] = useState('');
   const [fileSize, setFileSize] = useState<number | null>(null);
@@ -53,7 +54,10 @@ export default function ConverterPage() {
         const conv = data.data;
         const totalProgress = 40 + Math.round((conv.progress || 0) * 0.6);
         setProgress(totalProgress);
-        if (conv.status === 'completed') {
+        if (conv.status === 'queued') {
+          setStatus('queued');
+          setQueuePosition(conv.queuePosition);
+        } else if (conv.status === 'completed') {
           clearInterval(pollRef.current!);
           setStatus('completed');
           setProgress(100);
@@ -178,11 +182,11 @@ export default function ConverterPage() {
                   </div>
 
                 </div>
-              ) : status === 'processing' || status === 'uploading' ? (
+              ) : status === 'processing' || status === 'uploading' || status === 'queued' ? (
                 <ProgressCircle
                   progress={progress}
-                  statusText={status === 'uploading' ? 'Uploading & Analyzing...' : 'Converting Audio...'}
-                  subText={`Please wait while we process your file.`}
+                  statusText={status === 'queued' ? `Queued (Position: ${queuePosition})` : status === 'uploading' ? 'Uploading & Analyzing...' : 'Converting Audio...'}
+                  subText={status === 'queued' ? 'Waiting for other conversions to finish...' : `Please wait while we process your file.`}
                 />
               ) : (
                 <div className="py-8 text-center flex flex-col items-center animate-in fade-in zoom-in-95 duration-300">

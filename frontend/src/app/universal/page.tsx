@@ -32,7 +32,8 @@ export default function UniversalPage() {
   const [quality, setQuality] = useState('720p');
   const [preflightInfo, setPreflightInfo] = useState<{ title: string; thumbnail: string; resolution: string; sizeBytes: number; videoUrl?: string } | null>(null);
   const [isFetchingInfo, setIsFetchingInfo] = useState(false);
-  const [status, setStatus] = useState<'idle' | 'processing' | 'uploading' | 'completed' | 'failed'>('idle');
+  const [status, setStatus] = useState<'idle' | 'queued' | 'processing' | 'uploading' | 'completed' | 'failed'>('idle');
+  const [queuePosition, setQueuePosition] = useState(0);
   const [progress, setProgress] = useState(0);
   const [jobId, setJobId] = useState('');
   const [fileSize, setFileSize] = useState<number | null>(null);
@@ -57,7 +58,10 @@ export default function UniversalPage() {
         const { data } = await api.get(`/convert/status/${id}`);
         const conv = data.data;
         setProgress(Math.round(conv.progress || 0));
-        if (conv.status === 'completed') {
+        if (conv.status === 'queued') {
+          setStatus('queued');
+          setQueuePosition(conv.queuePosition);
+        } else if (conv.status === 'completed') {
           clearInterval(pollRef.current!);
           setStatus('completed');
           setProgress(100);
@@ -252,11 +256,11 @@ export default function UniversalPage() {
 
                 </div>
 
-              ) : status === 'processing' || status === 'uploading' ? (
+              ) : status === 'processing' || status === 'uploading' || status === 'queued' ? (
                 <ProgressCircle
                   progress={progress}
-                  statusText={status === 'uploading' ? "Your link is getting ready..." : "Downloading Video..."}
-                  subText={status === 'uploading' ? "Generating high-speed CDN link" : "Fetching highest quality video securely"}
+                  statusText={status === 'queued' ? `Queued (Position: ${queuePosition})` : status === 'uploading' ? "Finalizing high-speed link..." : "Downloading Video..."}
+                  subText={status === 'queued' ? 'Waiting for other conversions to finish...' : status === 'uploading' ? "Generating high-speed CDN link" : "Fetching highest quality video securely"}
                 />
 
               ) : (
