@@ -59,9 +59,7 @@ export default function RegisterPage() {
 
       <AnimeReveal direction="up" className="w-full max-w-md relative z-10">
         <div className="text-center mb-10">
-          <div className="w-16 h-16 bg-white/5 rounded-2xl mx-auto flex items-center justify-center mb-6 shadow-xl border border-white/10 text-white">
-            <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-          </div>
+
           <h1 className="font-display font-bold text-3xl tracking-tight text-white mb-2">Create an Account</h1>
           <p className="text-white/60">Start converting your Audio for free.</p>
         </div>

@@ -32,7 +32,12 @@ function ytDlpAuthArgs(proxy?: string): string[] {
   if (proxy) args.push('--proxy', proxy);
   
   const cookieFile = getActiveCookieFile();
-  if (cookieFile) args.push('--cookies', cookieFile);
+  if (cookieFile) {
+    args.push('--cookies', cookieFile);
+  } else {
+    // Fallback for Colab environments where Chrome writes to the default directory
+    args.push('--cookies-from-browser', 'chrome::/root/.config/google-chrome');
+  }
   
   return args;
 }
