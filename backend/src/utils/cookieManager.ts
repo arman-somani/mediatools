@@ -34,6 +34,7 @@ export async function refreshYouTubeCookies(): Promise<void> {
     headless: true,
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
     args: [
+      `--proxy-server=socks5://127.0.0.1:1080`,
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-dev-shm-usage',

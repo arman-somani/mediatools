@@ -84,7 +84,7 @@ router.get('/info', async (req: Request, res: Response): Promise<void> => {
     let success = false;
 
     for (let i = 0; i < 3; i++) {
-      const proxy = undefined;
+      const proxy = 'socks5://127.0.0.1:1080';
       console.log(`[Attempt ${i + 1}/3] Fetching extractor info${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
       try {
         data = await runYtDlpJson(url, proxy);

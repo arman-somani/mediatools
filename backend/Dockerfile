@@ -41,12 +41,6 @@ COPY . .
 # Build the TypeScript code
 RUN npm run build
 
-# Clone and build the PO Token server
-RUN git clone https://github.com/Brainicism/bgutil-ytdlp-pot-provider.git /pot-provider && \
-    cd /pot-provider/server && \
-    npm ci && \
-    npx tsc
-
 # Create necessary directories for the app
 RUN mkdir -p uploads outputs
 
