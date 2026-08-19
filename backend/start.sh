@@ -1,34 +1,23 @@
 #!/bin/bash
 
-echo "[WARP] Initializing Cloudflare WARP..."
+echo "[PO Token] Initializing bgutil-ytdlp-pot-provider..."
 
-# Download wgcf if not exists
-if [ ! -f "/usr/local/bin/wgcf" ]; then
-    echo "[WARP] Downloading wgcf..."
-    curl -fsSL -o /usr/local/bin/wgcf "https://github.com/ViRb3/wgcf/releases/download/v2.2.22/wgcf_2.2.22_linux_amd64"
-    chmod +x /usr/local/bin/wgcf
+# Clone and build the PO Token server if not exists
+if [ ! -d "bgutil-ytdlp-pot-provider" ]; then
+    echo "[PO Token] Cloning repository..."
+    git clone https://github.com/Brainicism/bgutil-ytdlp-pot-provider.git
+    cd bgutil-ytdlp-pot-provider/server
+    npm ci && npx tsc
+    cd ../../
 fi
 
-# Generate WARP config if not exists
-if [ ! -f "wgcf-profile.conf" ]; then
-    echo "[WARP] Registering new WARP account..."
-    yes | wgcf register --accept-tos
-    echo "[WARP] Generating WireGuard config..."
-    wgcf generate
-    
-    echo "[WARP] Appending SOCKS5 settings to config..."
-    cat >> wgcf-profile.conf << 'EOF'
+echo "[PO Token] Starting server in the background..."
+node bgutil-ytdlp-pot-provider/server/build/main.js &
 
-[Socks5]
-BindAddress = 127.0.0.1:1080
-EOF
-fi
+export YT_DLP_POT_PROVIDER_URL="http://127.0.0.1:4416"
 
-echo "[WARP] Starting wireproxy on port 1080..."
-wireproxy -c wgcf-profile.conf &
-
-# Wait for proxy to boot
+# Wait for PO token server to boot
 sleep 3
 
-echo "[WARP] Proxy started! Launching Node backend..."
+echo "[PO Token] Server started! Launching Node backend..."
 exec node --max-old-space-size=200 -r dotenv/config dist/app.js

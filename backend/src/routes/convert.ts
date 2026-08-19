@@ -34,9 +34,6 @@ function ytDlpAuthArgs(proxy?: string): string[] {
   const cookieFile = getActiveCookieFile();
   if (cookieFile) {
     args.push('--cookies', cookieFile);
-  } else {
-    // Fallback for Colab environments where Chrome writes to the default directory
-    args.push('--cookies-from-browser', 'chrome::/root/.config/google-chrome');
   }
   
   return args;
@@ -491,7 +488,7 @@ router.post('/youtube', authenticate, async (req: AuthRequest, res: Response): P
         let success = false;
 
         for (let i = 0; i < 3; i++) {
-          const proxy = 'socks5://127.0.0.1:1080';
+          const proxy = undefined;
           console.log(`[Attempt ${i + 1}/3] Attempting audio download${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
           try {
             await runYtDlpAudio(proxy);
@@ -660,7 +657,7 @@ router.post('/universal/metadata', async (req: Request, res: Response): Promise<
       let metaSuccess = false;
 
       for (let i = 0; i < 3; i++) {
-        const proxy = 'socks5://127.0.0.1:1080';
+        const proxy = undefined;
         console.log(`[Attempt ${i + 1}/3] Fetching metadata${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
         try {
           const res = await runYtDlp(args, proxy);
@@ -853,7 +850,7 @@ router.post('/universal', authenticate, async (req: AuthRequest, res: Response):
         let success = false;
 
         for (let i = 0; i < 3; i++) {
-          const proxy = 'socks5://127.0.0.1:1080';
+          const proxy = undefined;
           console.log(`[Attempt ${i + 1}/3] Attempting video download${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
           try {
             await runYtDlpDownload(proxy);
