@@ -491,7 +491,7 @@ router.post('/youtube', authenticate, async (req: AuthRequest, res: Response): P
         let success = false;
 
         for (let i = 0; i < 3; i++) {
-          const proxy = (await getRandomFreeProxies(1))[0];
+          const proxy = 'socks5://127.0.0.1:1080';
           console.log(`[Attempt ${i + 1}/3] Attempting audio download${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
           try {
             await runYtDlpAudio(proxy);
@@ -660,7 +660,7 @@ router.post('/universal/metadata', async (req: Request, res: Response): Promise<
       let metaSuccess = false;
 
       for (let i = 0; i < 3; i++) {
-        const proxy = (await getRandomFreeProxies(1))[0];
+        const proxy = 'socks5://127.0.0.1:1080';
         console.log(`[Attempt ${i + 1}/3] Fetching metadata${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
         try {
           const res = await runYtDlp(args, proxy);
@@ -853,7 +853,7 @@ router.post('/universal', authenticate, async (req: AuthRequest, res: Response):
         let success = false;
 
         for (let i = 0; i < 3; i++) {
-          const proxy = (await getRandomFreeProxies(1))[0];
+          const proxy = 'socks5://127.0.0.1:1080';
           console.log(`[Attempt ${i + 1}/3] Attempting video download${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
           try {
             await runYtDlpDownload(proxy);
