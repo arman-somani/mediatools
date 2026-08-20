@@ -17,7 +17,7 @@ type Quality = '128' | '192' | '320';
 export default function YouTubePage() {
   const [url, setUrl] = useState('');
   const [quality, setQuality] = useState<Quality>('192');
-  const [status, setStatus] = useState<'idle' | 'queued' | 'processing' | 'uploading' | 'completed' | 'failed'>('idle');
+  const [status, setStatus] = useState<'idle' | 'queued' | 'processing' | 'uploading' | 'completed' | 'downloading' | 'failed'>('idle');
   const [queuePosition, setQueuePosition] = useState(0);
   const [progress, setProgress] = useState(0);
   const [jobId, setJobId] = useState('');
@@ -119,6 +119,39 @@ export default function YouTubePage() {
       setStatus('failed');
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setError(msg || 'Failed to start conversion');
+    }
+  };
+
+  const downloadFile = async () => {
+    if (!jobId) return;
+    setStatus('downloading');
+    setProgress(0);
+    try {
+      const response = await api.get(jobId, {
+        responseType: 'blob',
+        onDownloadProgress: (e) => {
+          if (e.total) {
+            setProgress(Math.round((e.loaded / e.total) * 100));
+          } else if (fileSize) {
+            setProgress(Math.round((e.loaded / fileSize) * 100));
+          }
+        },
+      });
+      
+      const urlBlob = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = urlBlob;
+      link.setAttribute('download', `${videoInfo?.title?.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'audio'}.mp3`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      
+      setStatus('completed');
+      setProgress(100);
+    } catch (err: unknown) {
+      console.error('Download failed', err);
+      setStatus('failed');
+      setError('Download failed. Please try again.');
     }
   };
 
@@ -231,11 +264,11 @@ export default function YouTubePage() {
                     </div>
 
                   </div>
-                ) : status === 'processing' || status === 'uploading' || status === 'queued' ? (
+                ) : status === 'processing' || status === 'uploading' || status === 'queued' || status === 'downloading' ? (
                 <ProgressCircle
                   progress={progress}
-                  statusText={status === 'queued' ? `Queued (Position: ${queuePosition})` : status === 'uploading' ? "Your link is getting ready..." : "Downloading Audio..."}
-                  subText={status === 'queued' ? 'Waiting for other conversions to finish...' : status === 'uploading' ? "Generating high-speed CDN link" : "Fetching highest quality audio securely"}
+                  statusText={status === 'queued' ? `Queued (Position: ${queuePosition})` : status === 'uploading' ? "Your link is getting ready..." : status === 'downloading' ? "Downloading Audio..." : "Fetching Audio..."}
+                  subText={status === 'queued' ? 'Waiting for other conversions to finish...' : status === 'uploading' ? "Generating high-speed CDN link" : status === 'downloading' ? "Saving file to your device." : "Fetching highest quality audio securely"}
                 />
                 ) : (
                   <div key="done" className="py-8 flex-1 text-center flex flex-col items-center animate-in fade-in zoom-in-95 duration-300">
@@ -264,7 +297,7 @@ export default function YouTubePage() {
                       <div className="flex flex-col gap-3 flex-1">
                         <AnimeHover scaleHover={1.02} scaleTap={0.96} className="w-full">
                           <button 
-                            onClick={() => { window.open(jobId, '_blank'); }}
+                            onClick={downloadFile}
                             className="w-full font-semibold rounded-xl flex items-center justify-center gap-2 h-14 transition-all duration-300 btn-primary">
                             <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                             Download Audio 

@@ -16,7 +16,7 @@ export default function YtVideoPage() {
   const { user } = useAuthStore();
   const [url, setUrl] = useState('');
   const [quality, setQuality] = useState<VideoQuality>('720p');
-  const [status, setStatus] = useState<'idle' | 'queued' | 'processing' | 'uploading' | 'completed' | 'failed'>('idle');
+  const [status, setStatus] = useState<'idle' | 'queued' | 'processing' | 'uploading' | 'completed' | 'downloading' | 'failed'>('idle');
   const [queuePosition, setQueuePosition] = useState(0);
   const [progress, setProgress] = useState(0);
   const [jobId, setJobId] = useState('');
@@ -124,6 +124,39 @@ export default function YtVideoPage() {
       setStatus('failed');
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setError(msg || 'Download failed. Please try again.');
+    }
+  };
+
+  const downloadFile = async () => {
+    if (!jobId) return;
+    setStatus('downloading');
+    setProgress(0);
+    try {
+      const response = await api.get(jobId, {
+        responseType: 'blob',
+        onDownloadProgress: (e) => {
+          if (e.total) {
+            setProgress(Math.round((e.loaded / e.total) * 100));
+          } else if (fileSize) {
+            setProgress(Math.round((e.loaded / fileSize) * 100));
+          }
+        },
+      });
+      
+      const urlBlob = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = urlBlob;
+      link.setAttribute('download', `${videoInfo?.title?.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'video'}.mp4`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      
+      setStatus('completed');
+      setProgress(100);
+    } catch (err: unknown) {
+      console.error('Download failed', err);
+      setStatus('failed');
+      setError('Download failed. Please try again.');
     }
   };
 
@@ -247,11 +280,11 @@ export default function YtVideoPage() {
                   </div>
 
                   </div>
-                ) : status === 'processing' || status === 'uploading' || status === 'queued' ? (
+                ) : status === 'processing' || status === 'uploading' || status === 'queued' || status === 'downloading' ? (
                 <ProgressCircle
                   progress={progress}
-                  statusText={status === 'queued' ? `Queued (Position: ${queuePosition})` : status === 'uploading' ? "Your link is getting ready..." : "Downloading Video..."}
-                  subText={status === 'queued' ? 'Waiting for other conversions to finish...' : status === 'uploading' ? "Generating high-speed CDN link" : "Fetching highest quality video securely"}
+                  statusText={status === 'queued' ? `Queued (Position: ${queuePosition})` : status === 'uploading' ? "Your link is getting ready..." : status === 'downloading' ? "Downloading Video..." : "Fetching Video..."}
+                  subText={status === 'queued' ? 'Waiting for other conversions to finish...' : status === 'uploading' ? "Generating high-speed CDN link" : status === 'downloading' ? "Saving file to your device." : "Fetching highest quality video securely"}
                 />
                 ) : (
                 <div key="done" className="py-8 text-center flex flex-col items-center">
@@ -290,7 +323,7 @@ export default function YtVideoPage() {
                   <div className="flex flex-col sm:flex-row gap-4 w-full max-w-lg">
                     <div className="flex flex-col gap-3 flex-1">
                       <button 
-                        onClick={() => { window.open(jobId, '_blank'); }}
+                        onClick={downloadFile}
                         className="w-full font-semibold rounded-xl flex items-center justify-center gap-2 h-14 transition-all duration-300 btn-primary"
                       >
                         <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">

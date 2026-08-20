@@ -11,7 +11,7 @@ import AnimeReveal from '@/components/AnimeReveal';
 import AnimeHover from '@/components/AnimeHover';
 
 type Quality = '128' | '192' | '320';
-type Status = 'idle' | 'queued' | 'uploading' | 'processing' | 'completed' | 'failed';
+type Status = 'idle' | 'queued' | 'uploading' | 'processing' | 'completed' | 'downloading' | 'failed';
 
 
 
@@ -52,8 +52,7 @@ export default function ConverterPage() {
       try {
         const { data } = await audioApi.get(`/convert/status/${jobId}`);
         const conv = data.data;
-        const totalProgress = 40 + Math.round((conv.progress || 0) * 0.6);
-        setProgress(totalProgress);
+        setProgress(Math.round(conv.progress || 0));
         if (conv.status === 'queued') {
           setStatus('queued');
           setQueuePosition(conv.queuePosition);
@@ -88,17 +87,50 @@ export default function ConverterPage() {
       const { data } = await audioApi.post('/convert/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
         onUploadProgress: (e) => {
-          if (e.total) setProgress(Math.round((e.loaded / e.total) * 40));
+          if (e.total) setProgress(Math.round((e.loaded / e.total) * 100));
         },
       });
       const newJobId: string = data.data.jobId;
       setJobId(newJobId);
       setStatus('processing');
+      setProgress(0);
       pollStatus(newJobId);
     } catch (err: unknown) {
       setStatus('failed');
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setError(msg || 'Upload failed. Please try again.');
+    }
+  };
+
+  const downloadFile = async () => {
+    setStatus('downloading');
+    setProgress(0);
+    try {
+      const response = await audioApi.get(`/convert/download/${jobId}`, {
+        responseType: 'blob',
+        onDownloadProgress: (e) => {
+          if (e.total) {
+            setProgress(Math.round((e.loaded / e.total) * 100));
+          } else if (fileSize) {
+            setProgress(Math.round((e.loaded / fileSize) * 100));
+          }
+        },
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${file?.name.split('.')[0] || 'audio'}.mp3`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      
+      setStatus('completed');
+      setProgress(100);
+    } catch (err: unknown) {
+      console.error('Download failed', err);
+      setStatus('failed');
+      setError('Download failed. Please try again.');
     }
   };
 
@@ -182,11 +214,11 @@ export default function ConverterPage() {
                   </div>
 
                 </div>
-              ) : status === 'processing' || status === 'uploading' || status === 'queued' ? (
+              ) : status === 'processing' || status === 'uploading' || status === 'queued' || status === 'downloading' ? (
                 <ProgressCircle
                   progress={progress}
-                  statusText={status === 'queued' ? `Queued (Position: ${queuePosition})` : status === 'uploading' ? 'Uploading & Analyzing...' : 'Converting Audio...'}
-                  subText={status === 'queued' ? 'Waiting for other conversions to finish...' : `Please wait while we process your file.`}
+                  statusText={status === 'queued' ? `Queued (Position: ${queuePosition})` : status === 'uploading' ? 'Uploading File...' : status === 'downloading' ? 'Downloading Audio...' : 'Converting Audio...'}
+                  subText={status === 'queued' ? 'Waiting for other conversions to finish...' : status === 'downloading' ? 'Saving file to your device.' : `Please wait while we process your file.`}
                 />
               ) : (
                 <div className="py-8 text-center flex flex-col items-center animate-in fade-in zoom-in-95 duration-300">
@@ -209,14 +241,14 @@ export default function ConverterPage() {
                   {!fileSize && <div className="mb-8" />}
 
                   <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
-                    <a href={audioApiUrl(`/api/convert/download/${jobId}`)} target="_blank" rel="noopener noreferrer" className="flex-1 block">
+                    <div className="flex-1 block">
                       <AnimeHover scaleHover={1.05} scaleTap={0.95} className="w-full">
-                        <button className="w-full btn-primary download-btn-pulse flex items-center justify-center gap-2 h-14 rounded-xl">
+                        <button onClick={downloadFile} className="w-full btn-primary download-btn-pulse flex items-center justify-center gap-2 h-14 rounded-xl">
                           <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                           Download Audio
                         </button>
                       </AnimeHover>
-                    </a>
+                    </div>
                     <AnimeHover scaleHover={1.05} scaleTap={0.95} className="w-full sm:w-auto">
                       <button onClick={reset} className="glass-panel hover:bg-white/5 border border-white/20 h-14 w-full px-8 whitespace-nowrap text-white transition-all rounded-xl">
                         Convert Another
