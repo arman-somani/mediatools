@@ -23,3 +23,5 @@ We don't want to just keep the server alive; we want to completely **restart the
 3. Paste the code into the Console and press **Enter**.
 
 You can now completely close the Hugging Face tab and turn off your laptop. The Hugging Face Virtual Desktop will stay online 24/7, and every 60 minutes, the bot will automatically click "Restart and run all" to boot a fresh Colab server!
+
+
