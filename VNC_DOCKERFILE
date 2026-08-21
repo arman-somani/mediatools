@@ -28,3 +28,5 @@ ENV PORT=7860
 # Start the VNC server and the noVNC proxy on port 7860
 CMD vncserver :1 -geometry 1280x800 -depth 24 && \
     /noVNC/utils/novnc_proxy --vnc localhost:5901 --listen 7860
+
+# Minor updates
