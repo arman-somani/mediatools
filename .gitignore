@@ -22,3 +22,6 @@ test_convert*
 *.part
 *.mkv
 outputs/
+
+hf_temp/
+hf_temp2/
