@@ -6,3 +6,4 @@
 - 2026-08-22T09:54:58: Fix linting issues
 - 2026-08-22T11:47:50: Update configuration
 - 2026-08-22T10:04:33: Fix linting issues
+- 2026-08-22T09:50:00: Refactor helper methods
