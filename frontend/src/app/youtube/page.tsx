@@ -122,36 +122,9 @@ export default function YouTubePage() {
     }
   };
 
-  const downloadFile = async () => {
-    if (!jobId) return;
-    setStatus('downloading');
-    setProgress(0);
-    try {
-      const response = await api.get(jobId, {
-        responseType: 'blob',
-        onDownloadProgress: (e) => {
-          if (e.total) {
-            setProgress(Math.round((e.loaded / e.total) * 100));
-          } else if (fileSize) {
-            setProgress(Math.round((e.loaded / fileSize) * 100));
-          }
-        },
-      });
-      
-      const urlBlob = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = urlBlob;
-      link.setAttribute('download', `${videoInfo?.title?.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'audio'}.mp3`);
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode?.removeChild(link);
-      
-      setStatus('completed');
-      setProgress(100);
-    } catch (err: unknown) {
-      console.error('Download failed', err);
-      setStatus('failed');
-      setError('Download failed. Please try again.');
+  const downloadFile = () => {
+    if (jobId) {
+      window.open(jobId, '_blank');
     }
   };
 

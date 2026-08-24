@@ -62,6 +62,8 @@ export default function ConverterPage() {
           setProgress(100);
           if (startTimeRef.current) setConversionTime(Math.round((Date.now() - startTimeRef.current) / 1000));
           setFileSize(conv.fileSize || null);
+          const finalUrl = conv.outputUrl || `/api/convert/download/${jobId}`;
+          setJobId(finalUrl.startsWith('http') ? finalUrl : audioApiUrl(finalUrl));
           sendNotification('Conversion Complete! 🔄', 'Your local file has finished converting and is ready to save.');
         } else if (conv.status === 'failed') {
           clearInterval(pollRef.current!);
@@ -102,35 +104,9 @@ export default function ConverterPage() {
     }
   };
 
-  const downloadFile = async () => {
-    setStatus('downloading');
-    setProgress(0);
-    try {
-      const response = await audioApi.get(`/convert/download/${jobId}`, {
-        responseType: 'blob',
-        onDownloadProgress: (e) => {
-          if (e.total) {
-            setProgress(Math.round((e.loaded / e.total) * 100));
-          } else if (fileSize) {
-            setProgress(Math.round((e.loaded / fileSize) * 100));
-          }
-        },
-      });
-      
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `${file?.name.split('.')[0] || 'audio'}.mp3`);
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode?.removeChild(link);
-      
-      setStatus('completed');
-      setProgress(100);
-    } catch (err: unknown) {
-      console.error('Download failed', err);
-      setStatus('failed');
-      setError('Download failed. Please try again.');
+  const downloadFile = () => {
+    if (jobId) {
+      window.open(jobId, '_blank');
     }
   };
 
