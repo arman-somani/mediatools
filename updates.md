@@ -21,3 +21,4 @@
 - 2026-08-27T19:43:37: Format codebase
 - 2026-08-27T12:16:53: Clean up unused variables
 - 2026-08-28T11:53:24: Fix minor typo
+- 2026-08-28T19:27:00: Refactor helper methods
