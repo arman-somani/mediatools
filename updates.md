@@ -25,3 +25,4 @@
 - 2026-08-28T17:09:38: Fix linting issues
 - 2026-08-30T17:10:46: Update dependencies
 - 2026-08-30T17:52:18: Update dependencies
+- 2026-08-30T12:13:36: Add comments to utils
