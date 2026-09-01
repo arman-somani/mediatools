@@ -82,14 +82,11 @@ function getYouTubeVideoId(input: string): string | null {
 }
 
 function ytDlpArgs(args: string[], proxy?: string): string[] {
-  // Use non-web clients that do not require PO tokens to bypass bot detection!
-  // Fallback chain: tv_downgraded -> android_vr -> tv -> web_embedded
-  let youtubeExtractorArgs = 'youtube:player_client=tv_downgraded,android_vr,tv,web_embedded;player_skip=webpage';
+  // Use the exact yt-dlp-rescue quick fix arguments
+  let youtubeExtractorArgs = 'youtube:player_client=tv,web_embedded;player_skip=webpage';
   
-  if (process.env.POTOKEN) {
-    // If a PO Token is provided, append the web client at the end as a last resort
-    youtubeExtractorArgs = `youtube:player_client=tv_downgraded,android_vr,tv,web_embedded,web;po_token=web+${process.env.POTOKEN};player_skip=webpage`;
-  }
+  // Set the PO Token provider URL for yt-dlp to use natively
+  process.env.YT_DLP_POT_PROVIDER_URL = 'http://127.0.0.1:4416';
 
   const base = [
     '--remote-components', 'ejs:github',
@@ -480,14 +477,12 @@ router.post('/youtube', authenticate, async (req: AuthRequest, res: Response): P
 
         let success = false;
 
-        for (let i = 0; i < 3; i++) {
-          const proxy = i > 0 ? process.env.PROXY_URL : undefined;
-          console.log(`[Attempt ${i + 1}/3] Attempting audio download${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
-          try {
-            await runYtDlpAudio(proxy);
-            console.log(`[Attempt ${i + 1}/3] yt-dlp AUDIO succeeded`);
-            success = true;
-            break;
+        const proxy = undefined; // Removed proxy completely as requested
+        console.log(`[Audio Download] Attempting audio download directly (using PO Token server)...`);
+        try {
+          await runYtDlpAudio(proxy);
+          console.log(`[Audio Download] yt-dlp AUDIO succeeded`);
+          success = true;
           } catch (err: any) {
             console.error(`[Attempt ${i + 1}/3] yt-dlp AUDIO failed:`, err.message);
             if (err.message.includes('User closed the tab')) break;

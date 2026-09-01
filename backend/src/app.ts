@@ -116,7 +116,14 @@ const start = async () => {
     }
   }, pingInterval);
 
-
+  // Start the PO Token Microservice in the background
+  console.log('[Microservice] Starting PO Token Provider on port 4416...');
+  const potProviderProcess = spawn('node', ['build/main.js'], {
+    cwd: path.join(__dirname, '..', 'bgutil-ytdlp-pot-provider', 'server'),
+    stdio: 'ignore', // Let it run quietly in background
+    detached: true
+  });
+  potProviderProcess.unref();
 
   app.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`🚀 MediaTools Backend running on port ${PORT}`);
