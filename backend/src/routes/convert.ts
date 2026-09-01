@@ -780,7 +780,8 @@ router.post('/universal', authenticate, async (req: AuthRequest, res: Response):
         // Step 2: Download video with the user's selected quality
         console.log(`[QUALITY DEBUG] User requested: ${videoQuality} → targetHeight: ${targetHeight}`);
         const runYtDlpDownload = (proxy?: string) => new Promise((resolve, reject) => {
-          const formatStr = `bestvideo[height<=${targetHeight}]+bestaudio/best[height<=${targetHeight}]`;
+          // yt-dlp-rescue quality fix: bestvideo* with progressive fallback
+          const formatStr = `bestvideo*[height<=${targetHeight}]+bestaudio/best[height<=${targetHeight}]`;
           console.log(`[QUALITY DEBUG] yt-dlp format string: ${formatStr}`);
           const ytdlpArgsArr = [
             '--newline',
