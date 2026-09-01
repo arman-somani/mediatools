@@ -41,6 +41,9 @@ COPY . .
 # Build the TypeScript code
 RUN npm run build
 
+# Build the PO Token Microservice
+RUN cd bgutil-ytdlp-pot-provider/server && npm ci && npx tsc
+
 # Create necessary directories for the app
 RUN mkdir -p uploads outputs
 
