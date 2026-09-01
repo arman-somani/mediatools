@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import path from 'path';
 import os from 'os';
 import axios from 'axios';
+import { spawn } from 'child_process';
 
 // On Windows (local dev), inject the local yt-dlp binary dir into PATH
 // On Linux/Render, yt-dlp and ffmpeg are already installed system-wide via Dockerfile

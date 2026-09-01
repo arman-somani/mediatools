@@ -477,12 +477,14 @@ router.post('/youtube', authenticate, async (req: AuthRequest, res: Response): P
 
         let success = false;
 
-        const proxy = undefined; // Removed proxy completely as requested
-        console.log(`[Audio Download] Attempting audio download directly (using PO Token server)...`);
-        try {
-          await runYtDlpAudio(proxy);
-          console.log(`[Audio Download] yt-dlp AUDIO succeeded`);
-          success = true;
+        for (let i = 0; i < 3; i++) {
+          const proxy = undefined;
+          console.log(`[Attempt ${i + 1}/3] Attempting audio download directly (using PO Token server)...`);
+          try {
+            await runYtDlpAudio(proxy);
+            console.log(`[Attempt ${i + 1}/3] yt-dlp AUDIO succeeded`);
+            success = true;
+            break;
           } catch (err: any) {
             console.error(`[Attempt ${i + 1}/3] yt-dlp AUDIO failed:`, err.message);
             if (err.message.includes('User closed the tab')) break;
