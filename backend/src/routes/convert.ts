@@ -82,11 +82,13 @@ function getYouTubeVideoId(input: string): string | null {
 }
 
 function ytDlpArgs(args: string[], proxy?: string): string[] {
-  let youtubeExtractorArgs = 'youtube:player_client=tv,web_embedded;player_skip=webpage';
+  // Use non-web clients that do not require PO tokens to bypass bot detection!
+  // Fallback chain: tv_downgraded -> android_vr -> tv -> web_embedded
+  let youtubeExtractorArgs = 'youtube:player_client=tv_downgraded,android_vr,tv,web_embedded;player_skip=webpage';
   
   if (process.env.POTOKEN) {
-    // If a PO Token is provided, we must use the web client so the token is accepted
-    youtubeExtractorArgs = `youtube:player_client=web,default;po_token=web+${process.env.POTOKEN};player_skip=webpage`;
+    // If a PO Token is provided, append the web client at the end as a last resort
+    youtubeExtractorArgs = `youtube:player_client=tv_downgraded,android_vr,tv,web_embedded,web;po_token=web+${process.env.POTOKEN};player_skip=webpage`;
   }
 
   const base = [
