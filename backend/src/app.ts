@@ -15,7 +15,6 @@ if (isWin) {
 
 
 import { connectDB } from './config/database';
-import { generalLimiter } from './middleware/rateLimiter';
 import authRoutes from './routes/auth';
 import convertRoutes from './routes/convert';
 import userRoutes from './routes/user';
@@ -29,6 +28,7 @@ import { errorHandler } from './middleware/errorHandler';
 import { cleanupOldFiles } from './utils/cleanup';
 
 const app = express();
+app.set('trust proxy', 1); // Required for express-rate-limit behind a reverse proxy (like Render)
 
 // Security middleware
 app.use(helmet({
@@ -58,9 +58,6 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Static file serving for downloads
 app.use('/outputs', express.static(path.join(__dirname, '../outputs')));
-
-// Rate limiting
-app.use('/api', generalLimiter);
 
 // Health check
 app.get('/api/health', (_req, res) => {

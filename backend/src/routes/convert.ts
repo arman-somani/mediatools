@@ -15,7 +15,6 @@ function getYtDlpPath(): string {
 }
 
 import { authenticate, optionalAuth, AuthRequest } from '../middleware/auth';
-import { convertLimiter } from '../middleware/rateLimiter';
 import { Conversion } from '../models/Conversion';
 import { User } from '../models/User';
 import { Innertube, UniversalCache, Platform, ClientType } from 'youtubei.js';
@@ -24,18 +23,11 @@ import vm from 'vm';
 
 import { conversionQueue } from '../utils/queue';
 import { uploadToGoFile } from '../utils/gofile';
-import { getActiveCookieFile } from '../utils/cookieManager';
 import { getRandomFreeProxies } from '../utils/freeproxy';
 
 function ytDlpAuthArgs(proxy?: string): string[] {
   const args: string[] = [];
   if (proxy) args.push('--proxy', proxy);
-  
-  const cookieFile = getActiveCookieFile();
-  if (cookieFile) {
-    args.push('--cookies', cookieFile);
-  }
-  
   return args;
 }
 
@@ -47,14 +39,6 @@ Platform.shim.eval = (script: any) => {
 
 
 const router = Router();
-
-// Apply rate limiting to all conversion initialization requests
-router.use((req, res, next) => {
-  if (req.method === 'POST') {
-    return convertLimiter(req, res, next);
-  }
-  next();
-});
 
 const activePolls = new Map<string, number>();
 const execAsync = promisify(exec);
@@ -98,6 +82,13 @@ function getYouTubeVideoId(input: string): string | null {
 }
 
 function ytDlpArgs(args: string[], proxy?: string): string[] {
+  let youtubeExtractorArgs = 'youtube:player_client=tv,web_embedded;player_skip=webpage';
+  
+  if (process.env.POTOKEN) {
+    // If a PO Token is provided, we must use the web client so the token is accepted
+    youtubeExtractorArgs = `youtube:player_client=web,default;po_token=web+${process.env.POTOKEN};player_skip=webpage`;
+  }
+
   const base = [
     '--remote-components', 'ejs:github',
     '--js-runtimes', 'node',
@@ -107,7 +98,7 @@ function ytDlpArgs(args: string[], proxy?: string): string[] {
     '--fragment-retries', '3',
     '--no-warnings',
     '--no-check-certificate',
-    '--extractor-args', 'youtube:player_client=tv,web_embedded;player_skip=webpage',
+    '--extractor-args', youtubeExtractorArgs,
     '--force-ipv4'
   ];
 
