@@ -5,6 +5,7 @@ import path from 'path';
 import os from 'os';
 import axios from 'axios';
 import { execFile } from 'child_process';
+import { startCookieManagerLoop } from './utils/cookieManager';
 
 // On Windows (local dev), inject the local yt-dlp binary dir into PATH
 // On Linux/Render, yt-dlp and ffmpeg are already installed system-wide via Dockerfile
@@ -142,6 +143,9 @@ const start = async () => {
 
   // Cleanup job - run every 30 minutes
   setInterval(cleanupOldFiles, 30 * 60 * 1000);
+
+  // Start automatic YouTube cookie refresh (headless Chromium, every 30m)
+  startCookieManagerLoop();
 
   // Self-ping job to prevent Render's free-tier spin-down (every 10 minutes).
   // RENDER_EXTERNAL_URL is a bare origin with no path, so join it to the real

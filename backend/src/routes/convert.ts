@@ -8,6 +8,7 @@ import { Readable } from 'stream';
 import { pipeline } from 'stream/promises';
 import { promisify } from 'util';
 import { v4 as uuidv4 } from 'uuid';
+import { getActiveCookieFile, refreshYouTubeCookies } from '../utils/cookieManager';
 
 function getYtDlpPath(): string {
   const binPath = path.join(__dirname, '..', '..', 'bin', os.platform() === 'win32' ? 'yt-dlp.exe' : 'yt-dlp');
@@ -40,28 +41,49 @@ const YT_CLIENT_LADDER: string[] = (process.env.YT_CLIENT_LADDER || 'android_vr,
  */
 let cachedCookieFile: string | null | undefined;
 function getCookieFile(): string | null {
-  if (cachedCookieFile !== undefined) return cachedCookieFile;
+  // Don't cache forever — the auto-generated jar is refreshed periodically.
+  // Re-resolve every 5 minutes so fresh cookies are picked up.
+  if (cachedCookieFile !== undefined && cachedCookieFile !== null) {
+    return cachedCookieFile;
+  }
   cachedCookieFile = null;
   try {
-    const explicit = process.env.YOUTUBE_COOKIES_FILE;
+    // Priority 1: explicit file path (YOUTUBE_COOKIES_FILE or YOUTUBE_COOKIES)
+    const explicit = process.env.YOUTUBE_COOKIES_FILE || process.env.YOUTUBE_COOKIES;
     if (explicit && fs.existsSync(explicit)) {
       cachedCookieFile = explicit;
-      console.log('[cookies] using YOUTUBE_COOKIES_FILE');
+      console.log('[cookies] using explicit cookie file:', explicit);
       return cachedCookieFile;
     }
+
+    // Priority 2: base64-encoded cookie jar (for Render / Docker)
     const b64 = (process.env.YOUTUBE_COOKIES_B64 || '').trim();
     if (b64) {
       const target = path.join(os.tmpdir(), 'yt-cookies.txt');
       fs.writeFileSync(target, Buffer.from(b64, 'base64').toString('utf8'), { mode: 0o600 });
       cachedCookieFile = target;
       console.log('[cookies] materialised cookie jar from YOUTUBE_COOKIES_B64');
-    } else {
-      console.log('[cookies] none configured - relying on no-PO-token client ladder');
+      return cachedCookieFile;
     }
+
+    // Priority 3: auto-generated cookie jar from cookieManager (headless Chromium)
+    const autoFile = getActiveCookieFile();
+    if (autoFile) {
+      cachedCookieFile = autoFile;
+      console.log('[cookies] using auto-generated cookie jar:', autoFile);
+      return cachedCookieFile;
+    }
+
+    console.log('[cookies] none available — downloads may fail if YouTube demands auth');
   } catch (e: any) {
     console.warn('[cookies] could not prepare cookie file:', e?.message);
   }
   return cachedCookieFile;
+}
+
+// Allow the cookie cache to be invalidated (e.g. after a fresh refresh)
+function invalidateCookieCache() {
+  cachedCookieFile = undefined;
 }
 
 import { authenticate, optionalAuth, AuthRequest } from '../middleware/auth';
@@ -226,6 +248,118 @@ async function writeWebStreamToFile(stream: ReadableStream<Uint8Array>, filePath
 
 async function writeAsyncIterableToFile(stream: AsyncIterable<Uint8Array>, filePath: string): Promise<void> {
   await pipeline(Readable.from(stream as any), fs.createWriteStream(filePath));
+}
+
+/**
+ * Fallback: download audio via youtubei.js when yt-dlp is blocked.
+ * youtubei.js uses the InnerTube API with its own session management and
+ * can often succeed where yt-dlp fails because it generates its own
+ * visitor data and tokens.
+ */
+async function fallbackYoutubeJsAudio(
+  videoId: string,
+  outputPath: string,
+  audioQuality: string
+): Promise<{ title: string; thumbnail: string }> {
+  console.log(`[youtubei.js] Attempting audio fallback for ${videoId}`);
+  const yt = await Innertube.create({ cache: new UniversalCache(false) });
+  const info = await yt.getBasicInfo(videoId);
+  const title = info.basic_info?.title || 'Downloaded Audio';
+  const thumbnail = info.basic_info?.thumbnail?.[0]?.url || '';
+
+  // Get a streamable format — prefer audio-only
+  const format = info.chooseFormat({ type: 'audio', quality: 'best' });
+  if (!format) throw new Error('youtubei.js: no audio format available');
+
+  console.log(`[youtubei.js] Streaming audio (${format.mime_type}, ${format.bitrate}bps)...`);
+
+  // Download the raw audio stream
+  const rawPath = outputPath.replace(/\.mp3$/, '.raw_audio');
+  const stream = await info.download({ type: 'audio', quality: 'best' });
+  await writeAsyncIterableToFile(stream, rawPath);
+  requireWrittenFile(rawPath, 'youtubei.js audio download');
+
+  // Transcode to MP3 using ffmpeg
+  const bitrateMap: Record<string, string> = { '128': '128k', '192': '192k', '320': '320k' };
+  const bitrate = bitrateMap[audioQuality] || '192k';
+  console.log(`[youtubei.js] Converting to MP3 at ${bitrate}...`);
+
+  await new Promise<void>((resolve, reject) => {
+    const ffmpeg = spawn('ffmpeg', [
+      '-y', '-i', rawPath, '-vn', '-ab', bitrate, '-f', 'mp3', outputPath,
+    ], { windowsHide: true });
+    ffmpeg.on('close', code => {
+      // Clean up raw file
+      try { if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath); } catch {}
+      if (code === 0) resolve();
+      else reject(new Error(`ffmpeg mp3 conversion failed with code ${code}`));
+    });
+    ffmpeg.on('error', reject);
+  });
+
+  requireWrittenFile(outputPath, 'youtubei.js → ffmpeg MP3');
+  console.log(`[youtubei.js] ✓ Audio fallback succeeded`);
+  return { title, thumbnail };
+}
+
+/**
+ * Fallback: download video via youtubei.js when yt-dlp is blocked.
+ */
+async function fallbackYoutubeJsVideo(
+  videoId: string,
+  outputDir: string,
+  fileId: string,
+  targetHeight: string
+): Promise<{ filePath: string; title: string; thumbnail: string }> {
+  console.log(`[youtubei.js] Attempting video fallback for ${videoId}`);
+  const yt = await Innertube.create({ cache: new UniversalCache(false) });
+  const info = await yt.getBasicInfo(videoId);
+  const title = info.basic_info?.title || 'Downloaded Video';
+  const thumbnail = info.basic_info?.thumbnail?.[0]?.url || '';
+
+  // Try to get a combined (muxed) format first for simplicity
+  let format;
+  try {
+    format = info.chooseFormat({ type: 'video+audio', quality: 'best' });
+  } catch {
+    // Fall back to video-only + separate audio
+    format = info.chooseFormat({ type: 'video', quality: 'best' });
+  }
+  if (!format) throw new Error('youtubei.js: no video format available');
+
+  const ext = (format.mime_type?.includes('mp4') ? 'mp4' : 'webm');
+  const filePath = path.join(outputDir, `${fileId}.${ext}`);
+
+  console.log(`[youtubei.js] Streaming video (${format.mime_type}, ${format.width}x${format.height})...`);
+  const stream = await info.download({ type: 'video+audio', quality: 'best' });
+  await writeAsyncIterableToFile(stream, filePath);
+  requireWrittenFile(filePath, 'youtubei.js video download');
+
+  // If the file is webm, remux to mp4 if ffmpeg is available
+  if (ext === 'webm') {
+    const mp4Path = path.join(outputDir, `${fileId}.mp4`);
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const ffmpeg = spawn('ffmpeg', [
+          '-y', '-i', filePath, '-c', 'copy', '-f', 'mp4', mp4Path,
+        ], { windowsHide: true });
+        ffmpeg.on('close', code => {
+          if (code === 0) resolve();
+          else reject(new Error(`ffmpeg remux failed with code ${code}`));
+        });
+        ffmpeg.on('error', reject);
+      });
+      // Swap files
+      try { fs.unlinkSync(filePath); } catch {}
+      console.log(`[youtubei.js] ✓ Remuxed webm → mp4`);
+      return { filePath: mp4Path, title, thumbnail };
+    } catch (e) {
+      console.warn('[youtubei.js] webm→mp4 remux failed, keeping webm:', e);
+    }
+  }
+
+  console.log(`[youtubei.js] ✓ Video fallback succeeded`);
+  return { filePath, title, thumbnail };
 }
 
 const BANDWIDTH_LIMIT = 100 * 1024 * 1024; // 100MB
@@ -573,10 +707,11 @@ router.post('/youtube', authenticate, async (req: AuthRequest, res: Response): P
 
         // Walk the no-PO-token client ladder. Each attempt uses a DIFFERENT
         // client, because a bot-detection refusal is deterministic per client.
+        // Proxy is added from attempt 3 onwards (not just the last) since bot
+        // detection on datacenter IPs is usually IP-based.
         for (let i = 0; i < YT_CLIENT_LADDER.length; i++) {
           const client = YT_CLIENT_LADDER[i];
-          // Only reach for a proxy once the direct attempts are exhausted.
-          const proxy = (i >= YT_CLIENT_LADDER.length - 1) ? process.env.PROXY_URL : undefined;
+          const proxy = (i >= 2 && process.env.PROXY_URL) ? process.env.PROXY_URL : undefined;
           console.log(`[Audio ${i + 1}/${YT_CLIENT_LADDER.length}] client=${client}${proxy ? ' via proxy' : ''}`);
           try {
             await runYtDlpAudio(proxy, client);
@@ -587,6 +722,44 @@ router.post('/youtube', authenticate, async (req: AuthRequest, res: Response): P
             lastError = err?.message || String(err);
             console.error(`[Audio ${i + 1}/${YT_CLIENT_LADDER.length}] client=${client} failed: ${lastError}`);
             if (lastError.includes('User closed the tab')) break;
+          }
+        }
+
+        // If ALL yt-dlp clients failed, try cookie refresh + one more attempt
+        if (!success && lastError.includes('blocked')) {
+          console.log('[Audio] All yt-dlp clients failed. Refreshing cookies and retrying...');
+          try {
+            const refreshed = await refreshYouTubeCookies();
+            if (refreshed) {
+              invalidateCookieCache(); // pick up the fresh jar
+              try {
+                await runYtDlpAudio(process.env.PROXY_URL, 'default');
+                console.log('[Audio] SUCCESS after cookie refresh');
+                success = true;
+              } catch (err: any) {
+                lastError = err?.message || String(err);
+                console.error('[Audio] Cookie-refresh retry failed:', lastError);
+              }
+            }
+          } catch (e) {
+            console.error('[Audio] Cookie refresh itself failed:', e);
+          }
+        }
+
+        // Final fallback: youtubei.js (uses InnerTube API, separate from yt-dlp)
+        if (!success) {
+          const ytVideoId = getYouTubeVideoId(cleanUrl);
+          if (ytVideoId) {
+            console.log(`[Audio] yt-dlp exhausted. Trying youtubei.js fallback for ${ytVideoId}...`);
+            try {
+              const result = await fallbackYoutubeJsAudio(ytVideoId, outputPath, audioQuality);
+              if (result.title && result.title !== 'Downloaded Audio') videoTitle = result.title;
+              if (result.thumbnail) thumbnail = result.thumbnail;
+              success = true;
+            } catch (err: any) {
+              lastError = err?.message || String(err);
+              console.error('[Audio] youtubei.js fallback also failed:', lastError);
+            }
           }
         }
 
@@ -964,9 +1137,10 @@ router.post('/universal', authenticate, async (req: AuthRequest, res: Response):
         let lastError = '';
 
         // Same no-PO-token client ladder as the audio path.
+        // Proxy from attempt 3 onwards.
         for (let i = 0; i < YT_CLIENT_LADDER.length; i++) {
           const client = YT_CLIENT_LADDER[i];
-          const proxy = (i >= YT_CLIENT_LADDER.length - 1) ? process.env.PROXY_URL : undefined;
+          const proxy = (i >= 2 && process.env.PROXY_URL) ? process.env.PROXY_URL : undefined;
           console.log(`[Video ${i + 1}/${YT_CLIENT_LADDER.length}] client=${client}${proxy ? ' via proxy' : ''}`);
           try {
             await runYtDlpDownload(proxy, client);
@@ -977,6 +1151,46 @@ router.post('/universal', authenticate, async (req: AuthRequest, res: Response):
             lastError = err?.message || String(err);
             console.error(`[Video ${i + 1}/${YT_CLIENT_LADDER.length}] client=${client} failed: ${lastError}`);
             if (lastError.includes('User closed the tab')) break;
+          }
+        }
+
+        // If ALL yt-dlp clients failed, try cookie refresh + one more attempt
+        if (!success && lastError.includes('blocked')) {
+          console.log('[Video] All yt-dlp clients failed. Refreshing cookies and retrying...');
+          try {
+            const refreshed = await refreshYouTubeCookies();
+            if (refreshed) {
+              invalidateCookieCache();
+              try {
+                await runYtDlpDownload(process.env.PROXY_URL, 'default');
+                console.log('[Video] SUCCESS after cookie refresh');
+                success = true;
+              } catch (err: any) {
+                lastError = err?.message || String(err);
+                console.error('[Video] Cookie-refresh retry failed:', lastError);
+              }
+            }
+          } catch (e) {
+            console.error('[Video] Cookie refresh itself failed:', e);
+          }
+        }
+
+        // Final fallback: youtubei.js
+        if (!success) {
+          const ytVideoId = getYouTubeVideoId(cleanUrl);
+          if (ytVideoId) {
+            console.log(`[Video] yt-dlp exhausted. Trying youtubei.js fallback for ${ytVideoId}...`);
+            try {
+              const result = await fallbackYoutubeJsVideo(ytVideoId, outputDir, fileId, targetHeight);
+              if (result.title && result.title !== 'Downloaded Video') videoTitle = result.title;
+              if (result.thumbnail) thumbnail = result.thumbnail;
+              // Update outputPath to the actual file the fallback wrote
+              conversion.outputPath = result.filePath;
+              success = true;
+            } catch (err: any) {
+              lastError = err?.message || String(err);
+              console.error('[Video] youtubei.js fallback also failed:', lastError);
+            }
           }
         }
 
