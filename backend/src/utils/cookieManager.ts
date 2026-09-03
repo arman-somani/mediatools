@@ -6,6 +6,20 @@ import os from 'os';
 
 puppeteer.use(StealthPlugin());
 
+// Common realistic user agents
+const USER_AGENTS = [
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:121.0) Gecko/20100101 Firefox/121.0',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0'
+];
+
+function getRandomDelay(min: number, max: number): Promise<void> {
+  const delay = Math.floor(Math.random() * (max - min + 1)) + min;
+  return new Promise(r => setTimeout(r, delay));
+}
+
 /**
  * The generated cookie jar. Lives inside /tmp so it survives hot-restarts
  * on Render (the filesystem is ephemeral but /tmp lasts the container's life).
@@ -71,11 +85,14 @@ export async function refreshYouTubeCookies(): Promise<boolean> {
 
     const page = await browser.newPage();
 
-    // Set a realistic UA so YouTube doesn't immediately flag this session
-    await page.setUserAgent(
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
-    );
-    await page.setViewport({ width: 1280, height: 720 });
+    // Randomize User Agent
+    const randomUA = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
+    await page.setUserAgent(randomUA);
+    
+    // Randomize Viewport slightly
+    const randomWidth = Math.floor(Math.random() * (1920 - 1024 + 1)) + 1024;
+    const randomHeight = Math.floor(Math.random() * (1080 - 768 + 1)) + 768;
+    await page.setViewport({ width: randomWidth, height: randomHeight });
 
     // Block heavy resources to keep memory usage low
     await page.setRequestInterception(true);
@@ -93,6 +110,8 @@ export async function refreshYouTubeCookies(): Promise<boolean> {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
+    
+    await getRandomDelay(2000, 5000); // Human-like delay
 
     // Step 2: Accept consent dialog if it appears (EU / GDPR)
     try {
@@ -101,8 +120,9 @@ export async function refreshYouTubeCookies(): Promise<boolean> {
         { timeout: 4000 }
       );
       if (acceptBtn) {
+        await getRandomDelay(1000, 2500); // Delay before clicking
         await acceptBtn.click();
-        await new Promise(r => setTimeout(r, 2000));
+        await getRandomDelay(2000, 4000); // Delay after clicking
         console.log('[CookieManager] Accepted consent dialog');
       }
     } catch {
@@ -117,8 +137,8 @@ export async function refreshYouTubeCookies(): Promise<boolean> {
         waitUntil: 'domcontentloaded',
         timeout: 30000,
       });
-      // Wait a moment for YouTube to set all cookies
-      await new Promise(r => setTimeout(r, 3000));
+      // Wait a moment for YouTube to set all cookies (human-like viewing time)
+      await getRandomDelay(4000, 8000);
     } catch (e) {
       console.warn('[CookieManager] Video page navigation failed, using homepage cookies');
     }
