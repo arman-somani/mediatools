@@ -702,7 +702,7 @@ router.post('/youtube', authenticate, async (req: AuthRequest, res: Response): P
         }
 
         // If ALL yt-dlp clients failed, try cookie refresh + one more attempt
-        if (!success && lastError.includes('blocked')) {
+        if (!success && (lastError.includes('Sign in') || lastError.toLowerCase().includes('bot') || lastError.includes('403') || lastError.includes('blocked'))) {
           console.log('[Audio] All yt-dlp clients failed. Refreshing cookies and retrying...');
           try {
             const refreshed = await refreshYouTubeCookies();
@@ -1131,7 +1131,7 @@ router.post('/universal', authenticate, async (req: AuthRequest, res: Response):
         }
 
         // If ALL yt-dlp clients failed, try cookie refresh + one more attempt
-        if (!success && lastError.includes('blocked')) {
+        if (!success && (lastError.includes('Sign in') || lastError.toLowerCase().includes('bot') || lastError.includes('403') || lastError.includes('blocked'))) {
           console.log('[Video] All yt-dlp clients failed. Refreshing cookies and retrying...');
           try {
             const refreshed = await refreshYouTubeCookies();
