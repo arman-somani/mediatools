@@ -88,31 +88,7 @@ function invalidateCookieCache() {
 
 import { authenticate, optionalAuth, AuthRequest } from '../middleware/auth';
 
-/**
- * Turn raw yt-dlp stderr into something a user can act on. Previously every
- * failure surfaced as "yt-dlp failed with code 1", which made the real cause
- * (bot detection vs unavailable vs geo-block) impossible to tell apart.
- */
-function explainYtDlpFailure(stderr: string, code: number | null): string {
-  const s = (stderr || '').toLowerCase();
-  if (s.includes('sign in to confirm') || s.includes('not a bot')) {
-    return 'YouTube blocked this request as automated traffic. Retrying with a different extraction client, or add YOUTUBE_COOKIES_B64, may resolve it.';
-  }
-  if (s.includes('video unavailable')) return 'This video is unavailable.';
-  if (s.includes('private video')) return 'This video is private.';
-  if (s.includes('age') && s.includes('restrict')) return 'This video is age-restricted and needs account cookies.';
-  if (s.includes('members-only') || s.includes('join this channel')) return 'This video is members-only.';
-  if (s.includes('is not available in your country') || s.includes('geo')) return 'This video is geo-blocked from the server region.';
-  if (s.includes('drm')) return 'Only DRM-protected formats were offered for this video.';
-  if (s.includes('requested format is not available')) return 'No downloadable format matched the requested quality.';
-  if (s.includes("this content isn't available") || s.includes('try again later')) {
-    return 'YouTube is rate-limiting this server. Wait a few minutes and retry.';
-  }
-  if (s.includes('unable to download') && s.includes('403')) return 'YouTube rejected the media URL (403). Signature extraction likely failed.';
-  // Surface the last real ERROR line rather than a bare exit code.
-  const errLine = (stderr || '').split('\n').reverse().find(l => l.includes('ERROR'));
-  return errLine ? errLine.trim().slice(0, 300) : `yt-dlp exited with code ${code}`;
-}
+
 
 
 import { Conversion } from '../models/Conversion';
@@ -698,7 +674,7 @@ router.post('/youtube', authenticate, async (req: AuthRequest, res: Response): P
             clearInterval(zombieKiller);
             activePolls.delete(conversion._id.toString());
             if (code === 0) resolve(true);
-            else reject(new Error(explainYtDlpFailure(audioStderr, code)));
+            else reject(new Error((audioStderr || `yt-dlp failed with code ${code}`).trim()));
           });
         });
 
@@ -1129,7 +1105,7 @@ router.post('/universal', authenticate, async (req: AuthRequest, res: Response):
             clearInterval(zombieKiller);
             activePolls.delete(conversion._id.toString());
             if (code === 0) resolve(true);
-            else reject(new Error(explainYtDlpFailure(videoStderr, code)));
+            else reject(new Error((videoStderr || `yt-dlp failed with code ${code}`).trim()));
           });
         });
 
