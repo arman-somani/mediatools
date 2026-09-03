@@ -42,7 +42,14 @@ function formatCookiesToNetscape(cookies: any[]): string {
     const includeSubDomain = domain.startsWith('.') ? 'TRUE' : 'FALSE';
     const cookiePath = cookie.path;
     const secure = cookie.secure ? 'TRUE' : 'FALSE';
-    const expiry = Math.round(cookie.expires || Date.now() / 1000 + 86400 * 365);
+    let expiry = cookie.expires;
+    // Puppeteer sets session cookies with expires: -1. Netscape format uses 0 for session cookies.
+    if (!expiry || expiry === -1) {
+      expiry = 0;
+    } else {
+      expiry = Math.round(expiry);
+    }
+    
     const name = cookie.name;
     const value = cookie.value;
     netscape += `${domain}\t${includeSubDomain}\t${cookiePath}\t${secure}\t${expiry}\t${name}\t${value}\n`;
