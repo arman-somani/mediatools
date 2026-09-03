@@ -14,7 +14,85 @@ function getYtDlpPath(): string {
   return fs.existsSync(binPath) ? binPath : 'yt-dlp';
 }
 
+/**
+ * Extraction clients tried in order, widest-reaching first.
+ *
+ * Per the yt-dlp PO Token Guide, these clients need NO PO Token at all:
+ *   android_vr   - no token, no cookies needed. Only gap: "Made for kids" videos.
+ *   tv           - no token, but returns DRM-only formats unless cookies are supplied.
+ *   web_safari   - its HLS/m3u8 formats are exempt from the GVS token.
+ *   web_embedded - no token, but only works for embeddable videos.
+ * 'default' lets yt-dlp pick, which is the right last resort as YouTube shifts.
+ *
+ * Each retry uses a DIFFERENT client. Retrying the same client is pointless:
+ * a bot-detection rejection is deterministic, not transient.
+ */
+const YT_CLIENT_LADDER: string[] = (process.env.YT_CLIENT_LADDER || 'android_vr,tv,web_safari,web_embedded,default')
+  .split(',').map(s => s.trim()).filter(Boolean);
+
+/**
+ * Resolve a Netscape-format cookie jar for yt-dlp, if one is configured.
+ * YOUTUBE_COOKIES_FILE = path on disk, or
+ * YOUTUBE_COOKIES_B64  = base64 of the jar (the only practical way to ship
+ * one to Render, since the filesystem is ephemeral and .env is gitignored).
+ * Cookies are optional: the ladder above is designed to work without them,
+ * but supplying them unlocks the `tv` client and age-restricted videos.
+ */
+let cachedCookieFile: string | null | undefined;
+function getCookieFile(): string | null {
+  if (cachedCookieFile !== undefined) return cachedCookieFile;
+  cachedCookieFile = null;
+  try {
+    const explicit = process.env.YOUTUBE_COOKIES_FILE;
+    if (explicit && fs.existsSync(explicit)) {
+      cachedCookieFile = explicit;
+      console.log('[cookies] using YOUTUBE_COOKIES_FILE');
+      return cachedCookieFile;
+    }
+    const b64 = (process.env.YOUTUBE_COOKIES_B64 || '').trim();
+    if (b64) {
+      const target = path.join(os.tmpdir(), 'yt-cookies.txt');
+      fs.writeFileSync(target, Buffer.from(b64, 'base64').toString('utf8'), { mode: 0o600 });
+      cachedCookieFile = target;
+      console.log('[cookies] materialised cookie jar from YOUTUBE_COOKIES_B64');
+    } else {
+      console.log('[cookies] none configured - relying on no-PO-token client ladder');
+    }
+  } catch (e: any) {
+    console.warn('[cookies] could not prepare cookie file:', e?.message);
+  }
+  return cachedCookieFile;
+}
+
 import { authenticate, optionalAuth, AuthRequest } from '../middleware/auth';
+
+/**
+ * Turn raw yt-dlp stderr into something a user can act on. Previously every
+ * failure surfaced as "yt-dlp failed with code 1", which made the real cause
+ * (bot detection vs unavailable vs geo-block) impossible to tell apart.
+ */
+function explainYtDlpFailure(stderr: string, code: number | null): string {
+  const s = (stderr || '').toLowerCase();
+  if (s.includes('sign in to confirm') || s.includes('not a bot')) {
+    return 'YouTube blocked this request as automated traffic. Retrying with a different extraction client, or add YOUTUBE_COOKIES_B64, may resolve it.';
+  }
+  if (s.includes('video unavailable')) return 'This video is unavailable.';
+  if (s.includes('private video')) return 'This video is private.';
+  if (s.includes('age') && s.includes('restrict')) return 'This video is age-restricted and needs account cookies.';
+  if (s.includes('members-only') || s.includes('join this channel')) return 'This video is members-only.';
+  if (s.includes('is not available in your country') || s.includes('geo')) return 'This video is geo-blocked from the server region.';
+  if (s.includes('drm')) return 'Only DRM-protected formats were offered for this video.';
+  if (s.includes('requested format is not available')) return 'No downloadable format matched the requested quality.';
+  if (s.includes("this content isn't available") || s.includes('try again later')) {
+    return 'YouTube is rate-limiting this server. Wait a few minutes and retry.';
+  }
+  if (s.includes('unable to download') && s.includes('403')) return 'YouTube rejected the media URL (403). Signature extraction likely failed.';
+  // Surface the last real ERROR line rather than a bare exit code.
+  const errLine = (stderr || '').split('\n').reverse().find(l => l.includes('ERROR'));
+  return errLine ? errLine.trim().slice(0, 300) : `yt-dlp exited with code ${code}`;
+}
+
+
 import { Conversion } from '../models/Conversion';
 import { User } from '../models/User';
 import { Innertube, UniversalCache, Platform, ClientType } from 'youtubei.js';
@@ -27,6 +105,8 @@ import { getRandomFreeProxies } from '../utils/freeproxy';
 
 function ytDlpAuthArgs(proxy?: string): string[] {
   const args: string[] = [];
+  const cookieFile = getCookieFile();
+  if (cookieFile) args.push('--cookies', cookieFile);
   if (proxy) args.push('--proxy', proxy);
   return args;
 }
@@ -81,25 +161,26 @@ function getYouTubeVideoId(input: string): string | null {
   return null;
 }
 
-function ytDlpArgs(args: string[], proxy?: string): string[] {
-  // Use the exact yt-dlp-rescue quick fix arguments
-  let youtubeExtractorArgs = 'youtube:player_client=tv,web_embedded;player_skip=webpage';
-  
-  // Set the PO Token provider URL for yt-dlp to use natively
-  process.env.YT_DLP_POT_PROVIDER_URL = 'http://127.0.0.1:4416';
-
+function ytDlpArgs(args: string[], proxy?: string, client?: string): string[] {
   const base = [
+    // Fetch yt-dlp's JS challenge solver + give it a JS runtime. Without these,
+    // signature/n-parameter deciphering fails and every format URL 403s.
     '--remote-components', 'ejs:github',
-    '--js-runtimes', 'node',
-    '--socket-timeout', '15',
-    '--retries', '0',
-    '--extractor-retries', '0',
-    '--fragment-retries', '3',
+    '--js-runtimes', process.env.YT_JS_RUNTIME || 'deno,node',
+    '--socket-timeout', '20',
+    // Real retries. These were previously 0, so any transient hiccup was fatal.
+    '--retries', '3',
+    '--extractor-retries', '3',
+    '--fragment-retries', '5',
+    // Stay under YouTube's ~300 req/hr guest ceiling on bursty traffic.
+    '--sleep-requests', process.env.YT_SLEEP_REQUESTS || '1',
     '--no-warnings',
-    '--no-check-certificate',
-    '--extractor-args', youtubeExtractorArgs,
-    '--force-ipv4'
+    '--force-ipv4',
   ];
+
+  if (client && client !== 'default') {
+    base.push('--extractor-args', `youtube:player_client=${client}`);
+  }
 
   return [...base, ...ytDlpAuthArgs(proxy), ...args];
 }
@@ -379,10 +460,14 @@ router.post('/youtube', authenticate, async (req: AuthRequest, res: Response): P
       youtubeTitle: req.body.title || 'Fetching info...',
       outputFilename: diskFilename,
       outputPath,
-      outputUrl: `/outputs/${diskFilename}`,
       quality: audioQuality as any,
       progress: 0,
     });
+
+    // See the note in /universal: resolve through the by-id streaming route
+    // rather than guessing a static /outputs path.
+    conversion.outputUrl = `/api/convert/download/${conversion._id}`;
+    await conversion.save();
 
     res.json({
       success: true,
@@ -422,7 +507,7 @@ router.post('/youtube', authenticate, async (req: AuthRequest, res: Response): P
         conversion.outputFilename = `${safeTitle}.mp3`;
         await conversion.save();
 
-        const runYtDlpAudio = (proxy?: string) => new Promise((resolve, reject) => {
+        const runYtDlpAudio = (proxy?: string, client?: string) => new Promise((resolve, reject) => {
           // Save directly as flat file, not in a subdirectory, to avoid path issues
           const flatOutputTemplate = path.join(outputDir, `${fileId}.%(ext)s`);
           const ytdlpArgsArr = [
@@ -435,7 +520,7 @@ router.post('/youtube', authenticate, async (req: AuthRequest, res: Response): P
           ];
           ytdlpArgsArr.push(cleanUrl);
 
-          const ytdlp = spawn(getYtDlpPath(), ytDlpArgs(ytdlpArgsArr, proxy), { windowsHide: true });
+          const ytdlp = spawn(getYtDlpPath(), ytDlpArgs(ytdlpArgsArr, proxy, client), { windowsHide: true });
 
           activePolls.set(conversion._id.toString(), Date.now());
           const zombieKiller = setInterval(() => {
@@ -463,36 +548,50 @@ router.post('/youtube', authenticate, async (req: AuthRequest, res: Response): P
             }
           });
 
+          let audioStderr = '';
           ytdlp.stderr.on('data', (data) => {
-            console.error(`[yt-dlp AUDIO ERROR]:`, data.toString());
+            const msg = data.toString();
+            audioStderr += msg;
+            console.error(`[yt-dlp AUDIO ${client || 'default'}]:`, msg.trim());
+          });
+
+          ytdlp.on('error', (e: any) => {
+            clearInterval(zombieKiller);
+            reject(new Error(`Could not start yt-dlp (${e?.code || e?.message}). Is it installed and on PATH?`));
           });
 
           ytdlp.on('close', (code) => {
             clearInterval(zombieKiller);
             activePolls.delete(conversion._id.toString());
             if (code === 0) resolve(true);
-            else reject(new Error('yt-dlp audio failed with code ' + code));
+            else reject(new Error(explainYtDlpFailure(audioStderr, code)));
           });
         });
 
         let success = false;
+        let lastError = '';
 
-        for (let i = 0; i < 3; i++) {
-          const proxy = undefined;
-          console.log(`[Attempt ${i + 1}/3] Attempting audio download directly (using PO Token server)...`);
+        // Walk the no-PO-token client ladder. Each attempt uses a DIFFERENT
+        // client, because a bot-detection refusal is deterministic per client.
+        for (let i = 0; i < YT_CLIENT_LADDER.length; i++) {
+          const client = YT_CLIENT_LADDER[i];
+          // Only reach for a proxy once the direct attempts are exhausted.
+          const proxy = (i >= YT_CLIENT_LADDER.length - 1) ? process.env.PROXY_URL : undefined;
+          console.log(`[Audio ${i + 1}/${YT_CLIENT_LADDER.length}] client=${client}${proxy ? ' via proxy' : ''}`);
           try {
-            await runYtDlpAudio(proxy);
-            console.log(`[Attempt ${i + 1}/3] yt-dlp AUDIO succeeded`);
+            await runYtDlpAudio(proxy, client);
+            console.log(`[Audio ${i + 1}/${YT_CLIENT_LADDER.length}] SUCCESS with client=${client}`);
             success = true;
             break;
           } catch (err: any) {
-            console.error(`[Attempt ${i + 1}/3] yt-dlp AUDIO failed:`, err.message);
-            if (err.message.includes('User closed the tab')) break;
+            lastError = err?.message || String(err);
+            console.error(`[Audio ${i + 1}/${YT_CLIENT_LADDER.length}] client=${client} failed: ${lastError}`);
+            if (lastError.includes('User closed the tab')) break;
           }
         }
 
         if (!success) {
-          throw new Error('All download attempts failed.');
+          throw new Error(lastError || 'All download attempts failed.');
         }
 
         // Find the actual downloaded mp3 file (saved as {fileId}.mp3 or {fileId}.m4a etc)
@@ -731,11 +830,17 @@ router.post('/universal', authenticate, async (req: AuthRequest, res: Response):
       youtubeTitle: req.body.title || 'Fetching info...',
       outputFilename: diskFilename,
       outputPath,
-      outputUrl: `/outputs/${diskFilename}`,
       quality: '192',
       videoQuality: videoQuality as any,
       progress: 0,
     });
+
+    // Point at the by-id streaming route, which resolves the REAL file recorded
+    // in outputPath and sets Content-Disposition. The previous static guess
+    // (`/outputs/<uuid>.mp4`) 404'd whenever yt-dlp wrote a different container,
+    // and because it was always truthy it also dead-ended the CDN fallbacks below.
+    conversion.outputUrl = `/api/convert/download/${conversion._id}`;
+    await conversion.save();
 
     // Respond immediately ? frontend starts polling
     res.json({
@@ -778,23 +883,33 @@ router.post('/universal', authenticate, async (req: AuthRequest, res: Response):
 
         // Step 2: Download video with the user's selected quality
         console.log(`[QUALITY DEBUG] User requested: ${videoQuality} → targetHeight: ${targetHeight}`);
-        const runYtDlpDownload = (proxy?: string) => new Promise((resolve, reject) => {
-          // yt-dlp-rescue quality fix: bestvideo* with progressive fallback
-          const formatStr = `bestvideo*[height<=${targetHeight}]+bestaudio/best[height<=${targetHeight}]`;
-          console.log(`[QUALITY DEBUG] yt-dlp format string: ${formatStr}`);
+        const runYtDlpDownload = (proxy?: string, client?: string) => new Promise((resolve, reject) => {
+          // Prefer H.264 video + AAC audio so the merge is a pure stream copy
+          // into a real .mp4. Two reasons this matters:
+          //  1) yt-dlp's default pick here was AV1+Opus, which merges to .webm -
+          //     and the DB row promised /outputs/<id>.mp4, so the download 404'd.
+          //  2) avc1/mp4a remuxes with -c copy, which is nearly free on a 512MB
+          //     instance; re-encoding AV1 would OOM.
+          const formatStr = [
+            `bv*[height<=${targetHeight}][vcodec^=avc1]+ba[acodec^=mp4a]`,
+            `bv*[height<=${targetHeight}]+ba`,
+            `b[height<=${targetHeight}]`,
+            `bv*+ba/b`,
+          ].join('/');
+          console.log(`[QUALITY] ${videoQuality} -> height<=${targetHeight}, client=${client || 'default'}`);
           const ytdlpArgsArr = [
             '--newline',
-            '-v',
             '-f', formatStr,
-            '-S', `res:${targetHeight}`,
-
+            '-S', `res:${targetHeight},vcodec:h264,acodec:aac,ext:mp4`,
+            // Guarantee the container matches the .mp4 we advertise.
+            '--merge-output-format', 'mp4',
             '-o', path.join(outputDir, `${fileId}.%(ext)s`),
             '--no-playlist',
             '--hls-prefer-native',
           ];
           ytdlpArgsArr.push(cleanUrl);
 
-          const ytdlp = spawn(getYtDlpPath(), ytDlpArgs(ytdlpArgsArr, proxy), { windowsHide: true });
+          const ytdlp = spawn(getYtDlpPath(), ytDlpArgs(ytdlpArgsArr, proxy, client), { windowsHide: true });
 
           activePolls.set(conversion._id.toString(), Date.now());
           const zombieKiller = setInterval(() => {
@@ -822,40 +937,51 @@ router.post('/universal', authenticate, async (req: AuthRequest, res: Response):
             }
           });
 
+          let videoStderr = '';
           ytdlp.stderr.on('data', (data) => {
             const msg = data.toString();
+            videoStderr += msg;
             // Log format selection and download info for debugging quality issues
             if (msg.includes('Downloading') || msg.includes('format') || msg.includes('Merging') || msg.includes('ERROR')) {
-              console.log(`[yt-dlp VERBOSE]:`, msg.trim());
+              console.log(`[yt-dlp ${client || 'default'}]:`, msg.trim());
             }
+          });
+
+          ytdlp.on('error', (e: any) => {
+            clearInterval(zombieKiller);
+            reject(new Error(`Could not start yt-dlp (${e?.code || e?.message}). Is it installed and on PATH?`));
           });
 
           ytdlp.on('close', (code) => {
             clearInterval(zombieKiller);
             activePolls.delete(conversion._id.toString());
             if (code === 0) resolve(true);
-            else reject(new Error('yt-dlp failed with code ' + code));
+            else reject(new Error(explainYtDlpFailure(videoStderr, code)));
           });
         });
 
         let success = false;
+        let lastError = '';
 
-        for (let i = 0; i < 3; i++) {
-          const proxy = i > 0 ? process.env.PROXY_URL : undefined;
-          console.log(`[Attempt ${i + 1}/3] Attempting video download${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
+        // Same no-PO-token client ladder as the audio path.
+        for (let i = 0; i < YT_CLIENT_LADDER.length; i++) {
+          const client = YT_CLIENT_LADDER[i];
+          const proxy = (i >= YT_CLIENT_LADDER.length - 1) ? process.env.PROXY_URL : undefined;
+          console.log(`[Video ${i + 1}/${YT_CLIENT_LADDER.length}] client=${client}${proxy ? ' via proxy' : ''}`);
           try {
-            await runYtDlpDownload(proxy);
-            console.log(`[Attempt ${i + 1}/3] yt-dlp UNIVERSAL succeeded`);
+            await runYtDlpDownload(proxy, client);
+            console.log(`[Video ${i + 1}/${YT_CLIENT_LADDER.length}] SUCCESS with client=${client}`);
             success = true;
             break;
           } catch (err: any) {
-            console.error(`[Attempt ${i + 1}/3] yt-dlp UNIVERSAL failed:`, err.message);
-            if (err.message.includes('User closed the tab')) break;
+            lastError = err?.message || String(err);
+            console.error(`[Video ${i + 1}/${YT_CLIENT_LADDER.length}] client=${client} failed: ${lastError}`);
+            if (lastError.includes('User closed the tab')) break;
           }
         }
 
         if (!success) {
-          throw new Error('All download attempts failed.');
+          throw new Error(lastError || 'All download attempts failed.');
         }
 
         // Find the actual downloaded file by fileId prefix

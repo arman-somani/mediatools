@@ -1,0 +1,24 @@
+node_modules
+dist
+outputs/*
+!outputs/.gitkeep
+uploads/*
+!uploads/.gitkeep
+
+# Windows-only binaries are useless in a Linux image and cost ~36MB of build
+# context. yt-dlp/ffmpeg come from the Dockerfile instead.
+bin/*.exe
+bin/*.exe.old
+
+# The PO token provider is no longer used.
+bgutil-ytdlp-pot-provider
+
+*.env
+.env*
+!.env.example
+npm-debug.log*
+*.md
+.git
+.vscode
+warp.conf
+test-*.js

@@ -1,6 +1,7 @@
 FROM node:20-bookworm-slim
 
-# Install FFmpeg, Python (required for yt-dlp), wget, curl, and unzip
+# FFmpeg (+ffprobe) for merging/transcoding, Python for yt-dlp, chromium for the
+# optional puppeteer cookie refresher.
 RUN apt-get update && apt-get install -y \
     git \
     ffmpeg \
@@ -15,19 +16,18 @@ RUN apt-get update && apt-get install -y \
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
-# Install wireproxy
-RUN curl -sL https://github.com/pufferffish/wireproxy/releases/latest/download/wireproxy_linux_amd64.tar.gz | tar xz -C /usr/local/bin
+# curl_cffi powers yt-dlp's --impersonate (real browser TLS fingerprints),
+# which helps against bot detection. Kept deliberately.
+RUN pip3 install --no-cache-dir curl_cffi --break-system-packages
 
-
-# Install bgutil-ytdlp-pot-provider pip plugin for yt-dlp PO Tokens
-RUN pip3 install --no-cache-dir curl_cffi bgutil-ytdlp-pot-provider --break-system-packages
-# Install the latest yt-dlp nightly build via pip
-# This avoids the PyInstaller bug that prevents Node.js from being used as a JS runtime
+# Latest yt-dlp from master. Installed via pip rather than the PyInstaller
+# binary so Node/Deno can be used as the JS runtime for signature solving.
 RUN pip3 install -U https://github.com/yt-dlp/yt-dlp/archive/master.zip --break-system-packages
 
-# Install Deno as the bulletproof JS runtime for yt-dlp
+# Deno as the JS runtime for yt-dlp's n-parameter / signature challenges.
 RUN curl -fsSL https://deno.land/install.sh | sh && \
     ln -s /root/.deno/bin/deno /usr/local/bin/deno
+ENV PATH="/root/.deno/bin:${PATH}"
 
 WORKDIR /app
 
@@ -41,16 +41,14 @@ COPY . .
 # Build the TypeScript code
 RUN npm run build
 
-# Build the PO Token Microservice
-RUN cd bgutil-ytdlp-pot-provider/server && npm ci && npx tsc
-
 # Create necessary directories for the app
 RUN mkdir -p uploads outputs
 
-# Hugging Face Spaces requires the app to listen on port 7860
-ENV PORT=7860
-EXPOSE 7860
+# Render injects PORT at runtime; 5000 is only the local/default fallback.
+EXPOSE 5000
 
-# Start the application using the auto-boot script
-RUN chmod +x start.sh
-CMD ["./start.sh"]
+# Start the compiled server directly. (The old start.sh booted a Cloudflare WARP
+# wireproxy that no download path ever used, adding ~10s to every cold start.)
+# Heap is capped well below the 512MB instance limit so the yt-dlp (python) and
+# ffmpeg child processes still have room.
+CMD ["node", "--max-old-space-size=256", "-r", "dotenv/config", "dist/app.js"]

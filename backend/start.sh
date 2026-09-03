@@ -1,34 +1,9 @@
 #!/bin/bash
+# Thin launcher for `npm start`. The Dockerfile invokes node directly.
+#
+# Removed: the Cloudflare WARP / wireproxy bootstrap that used to run here.
+# It downloaded wgcf from GitHub on every cold start and opened a SOCKS5 proxy
+# on 127.0.0.1:1080 that no MP3/MP4 download path ever referenced.
+set -e
 
-echo "[WARP] Initializing Cloudflare WARP..."
-
-# Download wgcf if not exists
-if [ ! -f "/usr/local/bin/wgcf" ]; then
-    echo "[WARP] Downloading wgcf..."
-    curl -fsSL -o /usr/local/bin/wgcf "https://github.com/ViRb3/wgcf/releases/download/v2.2.22/wgcf_2.2.22_linux_amd64"
-    chmod +x /usr/local/bin/wgcf
-fi
-
-# Generate WARP config if not exists
-if [ ! -f "wgcf-profile.conf" ]; then
-    echo "[WARP] Registering new WARP account..."
-    yes | wgcf register --accept-tos
-    echo "[WARP] Generating WireGuard config..."
-    wgcf generate
-    
-    echo "[WARP] Appending SOCKS5 settings to config..."
-    cat >> wgcf-profile.conf << 'EOF'
-
-[Socks5]
-BindAddress = 127.0.0.1:1080
-EOF
-fi
-
-echo "[WARP] Starting wireproxy on port 1080..."
-wireproxy -c wgcf-profile.conf &
-
-# Wait for proxy to boot
-sleep 3
-
-echo "[WARP] Proxy started! Launching Node backend..."
-exec node --max-old-space-size=200 -r dotenv/config dist/app.js
+exec node --max-old-space-size=256 -r dotenv/config dist/app.js

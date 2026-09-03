@@ -6,10 +6,32 @@ services:
     plan: free
     dockerContext: .
     dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 5000
 
-# Format updates
+      # ---- Required. sync:false means Render prompts for the value and never
+      # ---- stores it in git. The service exits on boot without these.
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      # Comma-separated list of allowed browser origins, e.g.
+      # https://mediatools.vercel.app,http://localhost:3000
+      - key: FRONTEND_URL
+        sync: false
+
+      # ---- Optional ----
+      # Base64 of a Netscape cookies.txt exported from an incognito YouTube
+      # session. Not required (the client ladder works without it) but it
+      # unlocks the `tv` client and age-restricted videos.
+      #   Linux/macOS: base64 -w0 cookies.txt
+      #   Windows:     certutil -encodehex -f cookies.txt out.b64 0x40000001
+      - key: YOUTUBE_COOKIES_B64
+        sync: false
+      # Outbound proxy used only as the last rung of the client ladder.
+      - key: PROXY_URL
+        sync: false

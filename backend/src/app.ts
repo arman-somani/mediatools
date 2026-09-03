@@ -4,7 +4,7 @@ import helmet from 'helmet';
 import path from 'path';
 import os from 'os';
 import axios from 'axios';
-import { spawn } from 'child_process';
+import { execFile } from 'child_process';
 
 // On Windows (local dev), inject the local yt-dlp binary dir into PATH
 // On Linux/Render, yt-dlp and ffmpeg are already installed system-wide via Dockerfile
@@ -46,8 +46,24 @@ app.use(helmet({
   },
   xFrameOptions: { action: "sameorigin" },
 }));
+// Allow a comma-separated list so the deployed frontend and localhost can
+// both talk to this API. Previously this was a single origin defaulting to
+// localhost:3000, so with FRONTEND_URL unset on Render every browser request
+// from the real site was blocked by CORS.
+const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
+  .split(',').map(o => o.trim().replace(/\/$/, '')).filter(Boolean);
+
 app.use(cors({
-  origin: (process.env.FRONTEND_URL || 'http://localhost:3000').trim(),
+  origin: (origin, callback) => {
+    // Non-browser callers (curl, health checks, the self-ping) send no Origin.
+    if (!origin) return callback(null, true);
+    const normalised = origin.replace(/\/$/, '');
+    if (allowedOrigins.includes(normalised) || allowedOrigins.includes('*')) {
+      return callback(null, true);
+    }
+    console.warn(`[CORS] blocked origin: ${origin} (allowed: ${allowedOrigins.join(', ')})`);
+    return callback(null, false);
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'ngrok-skip-browser-warning'],
@@ -86,10 +102,33 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
+/**
+ * Log the resolved version of each external binary the downloader depends on.
+ * A missing yt-dlp or ffmpeg previously showed up only as an opaque
+ * "yt-dlp failed with code 1" per-job, with nothing at boot to point at it.
+ */
+const preflight = () => {
+  const checks: Array<[string, string[]]> = [
+    ['yt-dlp', ['--version']],
+    ['ffmpeg', ['-version']],
+    ['ffprobe', ['-version']],
+  ];
+  for (const [bin, args] of checks) {
+    execFile(bin, args, { timeout: 15000 }, (err, stdout) => {
+      if (err) {
+        console.error(`[preflight] ✗ ${bin} NOT USABLE: ${err.message}`);
+      } else {
+        console.log(`[preflight] ✓ ${bin} ${String(stdout).split('\n')[0].trim()}`);
+      }
+    });
+  }
+};
+
 
 
 const start = async () => {
   await connectDB();
+  preflight();
 
   // Create required directories
   const fs = await import('fs');
@@ -104,27 +143,25 @@ const start = async () => {
   // Cleanup job - run every 30 minutes
   setInterval(cleanupOldFiles, 30 * 60 * 1000);
 
-  // Self-ping job to prevent sleeping (every 10 minutes)
+  // Self-ping job to prevent Render's free-tier spin-down (every 10 minutes).
+  // RENDER_EXTERNAL_URL is a bare origin with no path, so join it to the real
+  // health endpoint instead of relying on the catch-all "/" route.
   const pingInterval = 10 * 60 * 1000;
+  const pingTarget = (() => {
+    if (process.env.SELF_PING_URL) return process.env.SELF_PING_URL;
+    if (process.env.RENDER_EXTERNAL_URL) {
+      return `${process.env.RENDER_EXTERNAL_URL.replace(/\/$/, '')}/api/health`;
+    }
+    return `http://localhost:${PORT}/api/health`;
+  })();
   setInterval(async () => {
     try {
-      // Use RENDER_EXTERNAL_URL if on Render, SELF_PING_URL if provided, otherwise localhost
-      const url = process.env.RENDER_EXTERNAL_URL || process.env.SELF_PING_URL || `http://localhost:${PORT}/api/health`;
-      console.log(`[Self-Ping] Keeping server awake by pinging ${url}...`);
-      await axios.get(url);
+      await axios.get(pingTarget, { timeout: 15000 });
     } catch (err: any) {
-      console.error(`[Self-Ping] Error pinging server:`, err.message);
+      console.error('[Self-Ping] failed:', err.message);
     }
   }, pingInterval);
-
-  // Start the PO Token Microservice in the background
-  console.log('[Microservice] Starting PO Token Provider on port 4416...');
-  const potProviderProcess = spawn('node', ['build/main.js'], {
-    cwd: path.join(__dirname, '..', 'bgutil-ytdlp-pot-provider', 'server'),
-    stdio: 'ignore', // Let it run quietly in background
-    detached: true
-  });
-  potProviderProcess.unref();
+  console.log(`[Self-Ping] keep-alive every 10m -> ${pingTarget}`);
 
   app.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`🚀 MediaTools Backend running on port ${PORT}`);
