@@ -34,3 +34,4 @@
 - 2026-08-30T11:17:31: Refactor configuration
 - 2026-08-30T09:14:07: Update dependencies
 - 2026-09-06T13:07:20: Improve error handling
+- 2026-09-06T10:52:37: Refactor helper methods
