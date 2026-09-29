@@ -1,204 +1,63 @@
 import { Router, Response, Request } from 'express';
 import multer from 'multer';
 import path from 'path';
-import os from 'os';
 import fs from 'fs';
-import { exec, spawn, execSync } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { Readable } from 'stream';
 import { pipeline } from 'stream/promises';
 import { promisify } from 'util';
 import { v4 as uuidv4 } from 'uuid';
-import { getActiveCookieFile, refreshYouTubeCookies } from '../utils/cookieManager';
 
-function getYtDlpPath(): string {
-  const binPath = path.join(__dirname, '..', '..', 'bin', os.platform() === 'win32' ? 'yt-dlp.exe' : 'yt-dlp');
-  return fs.existsSync(binPath) ? binPath : 'yt-dlp';
-}
+import {
+  ytDlpBinary,
+  buildArgs,
+  runWithClientLadder,
+  orderedClients,
+  rememberWorkingClient,
+  assertSafeUrl,
+  parseYouTubeId,
+  classifyYtDlpError,
+  ExtractError,
+} from '../services/ytdlp';
 
-/**
- * Extraction clients tried in order, widest-reaching first.
- *
- * Per the yt-dlp PO Token Guide, these clients need NO PO Token at all:
- *   android_vr   - no token, no cookies needed. Only gap: "Made for kids" videos.
- *   tv           - no token, but returns DRM-only formats unless cookies are supplied.
- *   web_safari   - its HLS/m3u8 formats are exempt from the GVS token.
- *   web_embedded - no token, but only works for embeddable videos.
- * 'default' lets yt-dlp pick, which is the right last resort as YouTube shifts.
- *
- * Each retry uses a DIFFERENT client. Retrying the same client is pointless:
- * a bot-detection rejection is deterministic, not transient.
- */
-const YT_CLIENT_LADDER: string[] = (process.env.YT_CLIENT_LADDER || 'android_vr,tv,web_safari,web_embedded,default')
-  .split(',').map(s => s.trim()).filter(Boolean);
-
-/**
- * Resolve a Netscape-format cookie jar for yt-dlp, if one is configured.
- * YOUTUBE_COOKIES_FILE = path on disk, or
- * YOUTUBE_COOKIES_B64  = base64 of the jar (the only practical way to ship
- * one to Render, since the filesystem is ephemeral and .env is gitignored).
- * Cookies are optional: the ladder above is designed to work without them,
- * but supplying them unlocks the `tv` client and age-restricted videos.
- */
-let cachedCookieFile: string | null | undefined;
-function getCookieFile(): string | null {
-  // Don't cache forever — the auto-generated jar is refreshed periodically.
-  // Re-resolve every 5 minutes so fresh cookies are picked up.
-  if (cachedCookieFile !== undefined && cachedCookieFile !== null) {
-    return cachedCookieFile;
-  }
-  cachedCookieFile = null;
-  try {
-    // Priority 1: explicit file path (YOUTUBE_COOKIES_FILE or YOUTUBE_COOKIES)
-    const explicit = process.env.YOUTUBE_COOKIES_FILE || process.env.YOUTUBE_COOKIES;
-    if (explicit && fs.existsSync(explicit)) {
-      cachedCookieFile = explicit;
-      console.log('[cookies] using explicit cookie file:', explicit);
-      return cachedCookieFile;
-    }
-
-    // Priority 2: base64-encoded cookie jar (for Render / Docker)
-    const b64 = (process.env.YOUTUBE_COOKIES_B64 || '').trim();
-    if (b64) {
-      const target = path.join(os.tmpdir(), 'yt-cookies.txt');
-      fs.writeFileSync(target, Buffer.from(b64, 'base64').toString('utf8'), { mode: 0o600 });
-      cachedCookieFile = target;
-      console.log('[cookies] materialised cookie jar from YOUTUBE_COOKIES_B64');
-      return cachedCookieFile;
-    }
-
-    // Priority 3: auto-generated cookie jar from cookieManager (headless Chromium)
-    const autoFile = getActiveCookieFile();
-    if (autoFile) {
-      cachedCookieFile = autoFile;
-      console.log('[cookies] using auto-generated cookie jar:', autoFile);
-      return cachedCookieFile;
-    }
-
-    console.log('[cookies] none available — downloads may fail if YouTube demands auth');
-  } catch (e: any) {
-    console.warn('[cookies] could not prepare cookie file:', e?.message);
-  }
-  return cachedCookieFile;
-}
-
-// Allow the cookie cache to be invalidated (e.g. after a fresh refresh)
-function invalidateCookieCache() {
-  cachedCookieFile = undefined;
-}
-
-import { authenticate, optionalAuth, AuthRequest } from '../middleware/auth';
-
-
-
+import { authenticate, AuthRequest } from '../middleware/auth';
+import { convertLimiter, metadataLimiter, downloadLimiter } from '../middleware/rateLimiter';
+import { buildDownloadUrl, verifyDownloadToken } from '../services/downloadToken';
+import { asyncHandler } from '../utils/http';
+import { env } from '../config/env';
 
 import { Conversion } from '../models/Conversion';
 import { User } from '../models/User';
-import { Innertube, UniversalCache, Platform, ClientType } from 'youtubei.js';
-import ytdl from '@distube/ytdl-core';
+import { Innertube, UniversalCache, Platform } from 'youtubei.js';
 import vm from 'vm';
 
 import { conversionQueue } from '../utils/queue';
 import { uploadToGoFile } from '../utils/gofile';
-import { getRandomFreeProxies } from '../utils/freeproxy';
 
-function ytDlpAuthArgs(proxy?: string): string[] {
-  const args: string[] = [];
-  const cookieFile = getCookieFile();
-  if (cookieFile) args.push('--cookies', cookieFile);
-  if (proxy) args.push('--proxy', proxy);
-  return args;
-}
-
+/**
+ * youtubei.js needs to evaluate YouTube's signature-deciphering JS. Running it
+ * in a fresh V8 context keeps it out of this module's scope, so the remote
+ * script cannot reach `process`, `require` or any local binding.
+ */
 Platform.shim.eval = (script: any) => {
   const code = typeof script === 'string' ? script : script.output;
-  return vm.runInNewContext('new Function(' + JSON.stringify(code) + ')()');
+  return vm.runInNewContext('new Function(' + JSON.stringify(code) + ')()', Object.create(null), {
+    timeout: 5000,
+  });
 };
-
-
 
 const router = Router();
 
 const activePolls = new Map<string, number>();
 const execAsync = promisify(exec);
 
-// Dummy comment to trigger GitHub auto-sync test 2
-
-function getYouTubeVideoId(input: string): string | null {
-  const trimmed = input.trim();
-  if (!trimmed) return null;
-
-  // Instantly return if it's already a raw 11-character Video ID
-  if (/^[0-9A-Za-z_-]{11}$/.test(trimmed)) {
-    return trimmed;
-  }
-
-  try {
-    const parsed = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
-    const host = parsed.hostname.replace(/^www\./, '').replace(/^m\./, '');
-
-    if (host === 'youtu.be') {
-      const id = parsed.pathname.split('/').filter(Boolean)[0];
-      return /^[0-9A-Za-z_-]{11}$/.test(id || '') ? id : null;
-    }
-
-    if (host === 'youtube.com' || host === 'music.youtube.com') {
-      const watchId = parsed.searchParams.get('v');
-      if (/^[0-9A-Za-z_-]{11}$/.test(watchId || '')) return watchId;
-
-      const parts = parsed.pathname.split('/').filter(Boolean);
-      const pathId = parts.find((part, index) =>
-        ['shorts', 'embed', 'live'].includes(parts[index - 1]) && /^[0-9A-Za-z_-]{11}$/.test(part)
-      );
-      return pathId || null;
-    }
-  } catch {
-    const match = trimmed.match(/(?:v=|youtu\.be\/|shorts\/|embed\/|live\/)([0-9A-Za-z_-]{11})/);
-    return match?.[1] || null;
-  }
-
-  return null;
-}
-
-function ytDlpArgs(args: string[], proxy?: string, client?: string): string[] {
-  const base = [
-    // Fetch yt-dlp's JS challenge solver + give it a JS runtime. Without these,
-    // signature/n-parameter deciphering fails and every format URL 403s.
-    '--remote-components', 'ejs:github',
-    '--js-runtimes', process.env.YT_JS_RUNTIME || 'deno,node',
-    '--socket-timeout', '20',
-    // Real retries. These were previously 0, so any transient hiccup was fatal.
-    '--retries', '3',
-    '--extractor-retries', '3',
-    '--fragment-retries', '5',
-    // Stay under YouTube's ~300 req/hr guest ceiling on bursty traffic.
-    '--sleep-requests', process.env.YT_SLEEP_REQUESTS || '1',
-    '--no-warnings',
-    '--force-ipv4',
-  ];
-
-  if (client && client !== 'default') {
-    base.push('--extractor-args', `youtube:player_client=${client}`);
-  }
-
-  return [...base, ...ytDlpAuthArgs(proxy), ...args];
-}
-
-function runYtDlp(args: string[], proxy?: string): Promise<{ stdout: string; stderr: string }> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(getYtDlpPath(), ytDlpArgs(args, proxy), { windowsHide: true });
-    let stdout = '';
-    let stderr = '';
-
-    child.stdout.on('data', data => { stdout += data.toString(); });
-    child.stderr.on('data', data => { stderr += data.toString(); });
-    child.on('error', reject);
-    child.on('close', code => {
-      if (code === 0) resolve({ stdout, stderr });
-      else reject(new Error((stderr || stdout || `yt-dlp failed with code ${code}`).trim()));
-    });
-  });
-}
-
+/**
+ * URL parsing and yt-dlp invocation both live in ../services/ytdlp now.
+ * They used to be reimplemented here, in extractor.ts and in direct.ts with
+ * three slightly different sets of flags and three different bugs.
+ */
+const getYtDlpPath = ytDlpBinary;
+const getYouTubeVideoId = parseYouTubeId;
 
 
 function findDownloadedFile(fileId: string): string | null {
@@ -338,51 +197,43 @@ async function fallbackYoutubeJsVideo(
   return { filePath, title, thumbnail };
 }
 
-const BANDWIDTH_LIMIT = 100 * 1024 * 1024; // 100MB
+/** Qualities gated behind a premium subscription. */
+const PREMIUM_QUALITIES = new Set(['4K', '8K']);
 
-async function validateUserLimits(userId: string, requestedQuality: string, isUniversal: boolean) {
-  const user = await User.findById(userId);
-  if (!user) throw new Error('User not found');
-  
-  const now = new Date();
-  const resetDate = new Date(user.lastBandwidthReset || now);
-  if (now.getTime() - resetDate.getTime() > 30 * 24 * 60 * 60 * 1000) {
+/**
+ * Enforces per-account limits before a job is queued.
+ *
+ * Throws an error carrying an HTTP `status`, so the shared error handler turns
+ * it into a 403 rather than the 500 a bare `Error` used to produce — the
+ * frontend showed "Internal server error" when a free account picked 4K.
+ */
+async function validateUserLimits(
+  userId: string,
+  requestedQuality: string
+): Promise<void> {
+  const user = await User.findById(userId).select(
+    '_id role isPremium monthlyBandwidthUsed lastBandwidthReset'
+  );
+  if (!user) {
+    throw Object.assign(new Error('Account not found.'), { status: 401 });
+  }
+
+  // Roll the bandwidth window over lazily, on first use in a new period.
+  const now = Date.now();
+  const lastReset = new Date(user.lastBandwidthReset || now).getTime();
+  if (now - lastReset > 30 * 24 * 60 * 60 * 1000) {
     user.monthlyBandwidthUsed = 0;
-    user.lastBandwidthReset = now;
+    user.lastBandwidthReset = new Date(now);
     await user.save();
   }
 
-  // Bandwidth limit removed as requested: let it be unlimited but show usage
-  // if (user.role !== 'admin') {
-  //   if (user.monthlyBandwidthUsed >= BANDWIDTH_LIMIT) {
-  //     throw new Error('You have reached your 100MB monthly bandwidth limit.');
-  //   }
-  // }
-
-  if (isUniversal && (requestedQuality === '4K' || requestedQuality === '8K')) {
-    if (user.role !== 'admin' && !user.isPremium) {
-      throw new Error('4K and 8K qualities are for premium users only.');
-    }
+  if (PREMIUM_QUALITIES.has(requestedQuality) && user.role !== 'admin' && !user.isPremium) {
+    throw Object.assign(
+      new Error('4K and 8K downloads are available on premium accounts.'),
+      { status: 403 }
+    );
   }
 }
-
-router.get('/version', (req: Request, res: Response) => {
-  res.json({ version: 'v4_nightly_build_fix' });
-});
-
-router.get('/test-ytdlcore', async (req: Request, res: Response): Promise<void> => {
-  try {
-    const videoId = req.query.id as string || 'dQw4w9WgXcQ';
-    const info = await ytdl.getInfo(videoId);
-    const format = ytdl.chooseFormat(info.formats, { quality: 'highestaudio' });
-
-    // Test the download url
-    const r = await fetch(format.url, { headers: { 'Range': 'bytes=0-99' } });
-    res.json({ success: true, title: info.videoDetails.title, formatUrl: format.url.slice(0, 50), downloadStatus: r.status });
-  } catch (e: any) {
-    res.json({ success: false, error: e.message });
-  }
-});
 
 const uploadDir = path.resolve(process.env.UPLOAD_DIR || path.join(__dirname, '../../uploads'));
 const outputDir = path.resolve(process.env.OUTPUT_DIR || path.join(__dirname, '../../outputs'));
@@ -412,11 +263,39 @@ function safeAudioQuality(value: unknown): '128' | '192' | '320' {
 }
 
 function sanitizeFilename(name: string): string {
-  return name
+  const ext = path.extname(name).slice(0, 12);
+  const stem = (ext ? name.slice(0, -ext.length) : name)
     .replace(/[<>:"/\\|?*\x00-\x1F]/g, '')
     .replace(/\s+/g, ' ')
     .trim()
-    .slice(0, 200);
+    // Truncating the whole string to 200 chars used to cut the extension off a
+    // long title, so the browser saved an extensionless file that nothing would
+    // open. Trim the stem and keep the extension intact.
+    .slice(0, 180);
+  return `${stem || 'download'}${ext}`;
+}
+
+/**
+ * Resolves a stored output path to a real file, or null.
+ *
+ * The containment check matters because `outputPath` is read back from Mongo
+ * and handed to `res.download`. Confining it to the output directory means a
+ * document whose path was ever set from user-influenced input still cannot
+ * serve `/etc/passwd` or the app's own `.env`.
+ */
+function resolveOutputPath(stored: string | undefined | null): string | null {
+  if (!stored) return null;
+  const abs = path.resolve(stored);
+  const root = outputDir.endsWith(path.sep) ? outputDir : outputDir + path.sep;
+  if (abs !== outputDir && !abs.startsWith(root)) {
+    console.error(`[download] refusing path outside the output directory: ${abs}`);
+    return null;
+  }
+  try {
+    return fs.statSync(abs).isFile() ? abs : null;
+  } catch {
+    return null;
+  }
 }
 
 /* ── Video TO Audio ───────────────────────────────────────────────────────────── */
@@ -436,7 +315,7 @@ router.post(
       if (!userId) { res.status(401).json({ success: false, message: 'Unauthorized' }); return; }
       if (!file) { res.status(400).json({ success: false, message: 'No file uploaded' }); return; }
 
-      await validateUserLimits(userId, quality, false);
+      await validateUserLimits(userId, quality);
 
       const outputFilename = `${uuidv4()}.mp3`;
       const outputPath = path.join(outputDir, outputFilename);
@@ -555,7 +434,7 @@ router.post('/youtube', authenticate, async (req: AuthRequest, res: Response): P
       return;
     }
 
-    await validateUserLimits(userId, audioQuality, false);
+    await validateUserLimits(userId, audioQuality);
 
     const cleanUrl = String(videoUrl).trim();
     const fileId = uuidv4();
@@ -617,42 +496,46 @@ router.post('/youtube', authenticate, async (req: AuthRequest, res: Response): P
         conversion.outputFilename = `${safeTitle}.mp3`;
         await conversion.save();
 
-        const runYtDlpAudio = (proxy?: string, client?: string) => new Promise((resolve, reject) => {
-          // Save directly as flat file, not in a subdirectory, to avoid path issues
+        const runYtDlpAudio = (client?: string) => new Promise((resolve, reject) => {
+          // Save directly as a flat file, not in a subdirectory, to avoid path issues
           const flatOutputTemplate = path.join(outputDir, `${fileId}.%(ext)s`);
-          const ytdlpArgsArr = [
+          const flags = [
             '--newline',
             '-f', 'ba/b',
             '-x', '--audio-format', 'mp3',
             '--audio-quality', `${audioQuality}K`,
             '-o', flatOutputTemplate,
-            '--no-playlist',
           ];
-          ytdlpArgsArr.push(cleanUrl);
 
-          const ytdlp = spawn(getYtDlpPath(), ytDlpArgs(ytdlpArgsArr, proxy, client), { windowsHide: true });
+          // cleanUrl is passed as a separate positional list so buildArgs can
+          // place it after `--`. Appending it into the flags array (as this
+          // did before) is what allowed a URL of "--exec=..." to be read as an
+          // option and execute a shell command on the server.
+          const ytdlp = spawn(getYtDlpPath(), buildArgs(flags, [cleanUrl], client), {
+            windowsHide: true,
+            stdio: ['ignore', 'pipe', 'pipe'],
+          });
 
           activePolls.set(conversion._id.toString(), Date.now());
           const zombieKiller = setInterval(() => {
             const lastPoll = activePolls.get(conversion._id.toString());
             if (lastPoll && Date.now() - lastPoll > 60000) {
-               ytdlp.kill('SIGKILL');
-               clearInterval(zombieKiller);
-               reject(new Error('User closed the tab. Download cancelled.'));
+              ytdlp.kill('SIGKILL');
+              clearInterval(zombieKiller);
+              reject(new ExtractError('TIMEOUT', 'Download cancelled — the page stopped responding.', false));
             }
           }, 5000);
 
           let lastUpdate = Date.now();
           ytdlp.stdout.on('data', (data) => {
-            const output = data.toString();
-            const match = output.match(/\[download\]\s+([\d.]+)%/);
+            const match = data.toString().match(/\[download\]\s+([\d.]+)%/);
             if (match) {
               const progress = parseFloat(match[1]);
               if (!isNaN(progress)) {
                 const now = Date.now();
                 if (now - lastUpdate > 1000) {
                   lastUpdate = now;
-                  Conversion.findByIdAndUpdate(conversion._id, { progress: progress }).catch(() => { });
+                  Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
                 }
               }
             }
@@ -660,87 +543,71 @@ router.post('/youtube', authenticate, async (req: AuthRequest, res: Response): P
 
           let audioStderr = '';
           ytdlp.stderr.on('data', (data) => {
-            const msg = data.toString();
-            audioStderr += msg;
-            console.error(`[yt-dlp AUDIO ${client || 'default'}]:`, msg.trim());
+            audioStderr += data.toString();
+            if (audioStderr.length > 64_000) audioStderr = audioStderr.slice(-32_000);
           });
 
           ytdlp.on('error', (e: any) => {
             clearInterval(zombieKiller);
-            reject(new Error(`Could not start yt-dlp (${e?.code || e?.message}). Is it installed and on PATH?`));
+            reject(new ExtractError(
+              'UNKNOWN',
+              e?.code === 'ENOENT' ? 'yt-dlp is not installed on this server.' : `Could not start yt-dlp: ${e?.message}`,
+              false
+            ));
           });
 
           ytdlp.on('close', (code) => {
             clearInterval(zombieKiller);
             activePolls.delete(conversion._id.toString());
             if (code === 0) resolve(true);
-            else reject(new Error((audioStderr || `yt-dlp failed with code ${code}`).trim()));
+            else reject(classifyYtDlpError(audioStderr));
           });
         });
 
         let success = false;
-        let lastError = '';
+        let lastFailure: ExtractError | null = null;
 
-        // Walk the no-PO-token client ladder. Each attempt uses a DIFFERENT
-        // client, because a bot-detection refusal is deterministic per client.
-        // Proxy is added from attempt 3 onwards (not just the last) since bot
-        // detection on datacenter IPs is usually IP-based.
-        for (let i = 0; i < YT_CLIENT_LADDER.length; i++) {
-          const client = YT_CLIENT_LADDER[i];
-          const proxy = (i >= 2 && process.env.PROXY_URL) ? process.env.PROXY_URL : undefined;
-          console.log(`[Audio ${i + 1}/${YT_CLIENT_LADDER.length}] client=${client}${proxy ? ' via proxy' : ''}`);
+        // Walk the no-PO-token client ladder, most-recently-successful first.
+        // A non-retriable verdict (bot check, private, geo-block) ends the loop
+        // immediately: those are deterministic, so trying four more clients
+        // only burns ~30s and more requests against an already-throttled IP.
+        for (const client of orderedClients()) {
+          console.log(`[audio] trying client=${client}`);
           try {
-            await runYtDlpAudio(proxy, client);
-            console.log(`[Audio ${i + 1}/${YT_CLIENT_LADDER.length}] SUCCESS with client=${client}`);
+            await runYtDlpAudio(client);
+            console.log(`[audio] succeeded with client=${client}`);
             success = true;
             break;
           } catch (err: any) {
-            lastError = err?.message || String(err);
-            console.error(`[Audio ${i + 1}/${YT_CLIENT_LADDER.length}] client=${client} failed: ${lastError}`);
-            if (lastError.includes('User closed the tab')) break;
+            const failure = err instanceof ExtractError
+              ? err
+              : new ExtractError('UNKNOWN', String(err?.message || err), true);
+            lastFailure = failure;
+            console.warn(`[audio] client=${client} failed: ${failure.code} — ${failure.message}`);
+            if (!failure.retriable) break;
           }
         }
 
-        // If ALL yt-dlp clients failed, try cookie refresh + one more attempt
-        if (!success && (lastError.includes('Sign in') || lastError.toLowerCase().includes('bot') || lastError.includes('403') || lastError.includes('blocked'))) {
-          console.log('[Audio] All yt-dlp clients failed. Refreshing cookies and retrying...');
-          try {
-            const refreshed = await refreshYouTubeCookies();
-            if (refreshed) {
-              invalidateCookieCache(); // pick up the fresh jar
-              try {
-                await runYtDlpAudio(process.env.PROXY_URL, 'default');
-                console.log('[Audio] SUCCESS after cookie refresh');
-                success = true;
-              } catch (err: any) {
-                lastError = err?.message || String(err);
-                console.error('[Audio] Cookie-refresh retry failed:', lastError);
-              }
-            }
-          } catch (e) {
-            console.error('[Audio] Cookie refresh itself failed:', e);
-          }
-        }
-
-        // Final fallback: youtubei.js (uses InnerTube API, separate from yt-dlp)
-        if (!success) {
+        // Final fallback: youtubei.js talks to the InnerTube API directly, so
+        // it fails independently of yt-dlp. Only worth trying when the failure
+        // was retriable — it cannot un-private a private video.
+        if (!success && (lastFailure?.retriable ?? true)) {
           const ytVideoId = getYouTubeVideoId(cleanUrl);
           if (ytVideoId) {
-            console.log(`[Audio] yt-dlp exhausted. Trying youtubei.js fallback for ${ytVideoId}...`);
+            console.log(`[audio] yt-dlp exhausted, trying youtubei.js for ${ytVideoId}`);
             try {
               const result = await fallbackYoutubeJsAudio(ytVideoId, outputPath, audioQuality);
               if (result.title && result.title !== 'Downloaded Audio') videoTitle = result.title;
               if (result.thumbnail) thumbnail = result.thumbnail;
               success = true;
             } catch (err: any) {
-              lastError = err?.message || String(err);
-              console.error('[Audio] youtubei.js fallback also failed:', lastError);
+              console.error('[audio] youtubei.js fallback also failed:', err?.message || err);
             }
           }
         }
 
         if (!success) {
-          throw new Error(lastError || 'All download attempts failed.');
+          throw lastFailure ?? new ExtractError('UNKNOWN', 'All download attempts failed.', false);
         }
 
         // Find the actual downloaded mp3 file (saved as {fileId}.mp3 or {fileId}.m4a etc)
@@ -825,117 +692,79 @@ router.post('/youtube', authenticate, async (req: AuthRequest, res: Response): P
 } // END audio routes
 
 if (SERVER_ROLE === 'all' || SERVER_ROLE === 'video') {
-/* ── YOUTUBE FORMATS EXTRACTOR (Used by WASM Extension) ──────────── */
-router.post('/youtube-formats', async (req: Request, res: Response): Promise<void> => {
-  try {
-    const videoUrl = req.body.url;
-    if (!videoUrl) {
-      res.status(400).json({ success: false, message: 'Video URL is required' });
-      return;
-    }
+/* ── YOUTUBE FORMATS EXTRACTOR (used by the browser extension) ───── */
+router.post('/youtube-formats', metadataLimiter, asyncHandler(async (req: Request, res: Response) => {
+  // assertSafeUrl before the value can reach an argv array. This endpoint is
+  // unauthenticated, so it is the most exposed yt-dlp call site in the app.
+  const videoUrl = assertSafeUrl(req.body.url);
 
-    // Because ytdl-core broke globally, we use the incredibly reliable yt-dlp binary to decipher!
-    // We request the best video up to 1080p, and the best audio.
-    const resTitle = await runYtDlp(['--print', 'title', '--ignore-no-formats-error', '--no-playlist', videoUrl]);
-    const title = resTitle.stdout.trim();
+  // One pass, printing both the title and the two resolved media URLs, instead
+  // of two separate extractions of the same video.
+  const result = await runWithClientLadder(
+    [
+      '-f', 'bestvideo[height<=1080]+bestaudio/best[height<=1080]',
+      '--print', '%(title)s',
+      '--print', '%(urls)s',
+      '--ignore-no-formats-error',
+    ],
+    [videoUrl],
+    { timeoutMs: 60_000 }
+  );
 
-    const resUrls = await runYtDlp(['-f', 'bestvideo[height<=1080]+bestaudio', '--get-url', videoUrl]);
-    const urls = resUrls.stdout.trim().split('\n').filter(line => line.startsWith('http'));
+  const lines = result.stdout.trim().split('\n').map(l => l.trim()).filter(Boolean);
+  const title = lines[0] || 'Video';
+  const urls = lines.slice(1).filter(line => line.startsWith('http'));
 
-    if (urls.length < 2) {
-      // Fallback if video+audio extraction failed
-      res.status(400).json({ success: false, message: 'Could not find separated audio and video formats for merging.' });
-      return;
-    }
-
-    res.json({
-      success: true,
-      videoUrl: urls[0], // First URL is video
-      audioUrl: urls[1], // Second URL is audio
-      title: title
+  if (urls.length < 2) {
+    res.status(422).json({
+      success: false,
+      code: 'FORMAT_UNAVAILABLE',
+      message: 'Could not find separate audio and video streams to merge for this video.',
     });
-  } catch (error: any) {
-    console.error('youtube-formats error:', error);
-    res.status(500).json({ success: false, message: error.message || 'Failed to extract formats via yt-dlp' });
+    return;
   }
-});
 
-/* ΓöÇΓöÇ UNIVERSAL VIDEO METADATA ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
-router.post('/universal/metadata', async (req: Request, res: Response): Promise<void> => {
-  try {
-    const videoUrl = req.body.url;
-    if (!videoUrl) {
-      res.status(400).json({ success: false, message: 'Video URL is required' });
-      return;
-    }
+  res.json({ success: true, title, videoUrl: urls[0], audioUrl: urls[1] });
+}));
 
-    const cleanUrl = String(videoUrl).trim();
+/* ── UNIVERSAL VIDEO METADATA ────────────────────────────────────── */
+router.post('/universal/metadata', metadataLimiter, asyncHandler(async (req: Request, res: Response) => {
+  const cleanUrl = assertSafeUrl(req.body.url);
 
-    let title = 'Downloaded Video';
-    let thumbnail = '';
-    let resolution = 'Best Available';
-    let sizeBytes = 0;
-    let directVideoUrl = '';
-    let success = false;
+  // One extraction, five `--print` templates, walking the client ladder.
+  // The old loop retried the *same* arguments three times and only differed by
+  // whether PROXY_URL was attached — so on a bot check it took three full
+  // extractions to report a verdict the first one already had.
+  const { stdout } = await runWithClientLadder(
+    [
+      '--print', '%(title)s',
+      '--print', '%(thumbnail)s',
+      '--print', '%(resolution)s',
+      '--print', '%(filesize_approx,filesize)s',
+      '--print', '%(duration)s',
+      '--ignore-no-formats-error',
+    ],
+    [cleanUrl],
+    { timeoutMs: 45_000 }
+  );
 
-    if (!success) {
-      console.log('[Universal] Trying yt-dlp...');
-      let stdout = '';
-      const args = [
-        '--print', '%(title)s',
-        '--print', '%(thumbnail)s',
-        '--print', '%(resolution)s',
-        '--print', '%(filesize_approx,filesize)s',
-        '--print', '%(url)s',
-        '--ignore-no-formats-error',
-        '--no-playlist',
-        cleanUrl,
-      ];
+  const lines = stdout.trim().split('\n').map(l => l.trim());
+  const naToEmpty = (v: string) => (!v || v === 'NA' ? '' : v);
 
-      let metaSuccess = false;
+  const sizeBytes = Number.parseInt(naToEmpty(lines[3] || ''), 10);
+  const duration = Number.parseFloat(naToEmpty(lines[4] || ''));
 
-      for (let i = 0; i < 3; i++) {
-        const proxy = i > 0 ? process.env.PROXY_URL : undefined;
-        console.log(`[Attempt ${i + 1}/3] Fetching metadata${proxy ? ` with proxy: ${proxy}` : ' directly'}...`);
-        try {
-          const res = await runYtDlp(args, proxy);
-          stdout = res.stdout;
-          metaSuccess = true;
-          break;
-        } catch (e: any) {
-          console.warn(`[Attempt ${i + 1}/3] Universal metadata native fetch failed: ${e.message}`);
-        }
-      }
-
-      if (!metaSuccess) {
-        throw new Error("Metadata extraction failed across all attempts.");
-      }
-
-      const lines = stdout.trim().split('\n');
-      title = (lines[0] || '').trim() || 'Downloaded Video';
-      thumbnail = (lines[1] || '').trim();
-      if (thumbnail === 'NA') thumbnail = '';
-      resolution = (lines[2] || '').trim() || 'Best Available';
-      sizeBytes = parseInt((lines[3] || '').trim(), 10);
-      directVideoUrl = (lines[4] || '').trim();
-      if (isNaN(sizeBytes)) sizeBytes = 0;
-    }
-
-    res.json({
-      success: true,
-      data: {
-        title,
-        thumbnail,
-        resolution: resolution === 'NA' ? 'Best Available' : resolution,
-        sizeBytes,
-        videoUrl: directVideoUrl === 'NA' ? '' : directVideoUrl
-      },
-    });
-  } catch (error: any) {
-    console.error('Universal metadata error:', error);
-    res.status(500).json({ success: false, message: error.message || 'Failed to fetch video info' });
-  }
-});
+  res.json({
+    success: true,
+    data: {
+      title: naToEmpty(lines[0] || '') || 'Video',
+      thumbnail: naToEmpty(lines[1] || ''),
+      resolution: naToEmpty(lines[2] || '') || 'Best available',
+      sizeBytes: Number.isFinite(sizeBytes) ? sizeBytes : 0,
+      duration: Number.isFinite(duration) ? Math.round(duration) : 0,
+    },
+  });
+}));
 
 /* ΓöÇΓöÇ UNIVERSAL VIDEO DOWNLOADER ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
 router.post('/universal', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
@@ -953,7 +782,7 @@ router.post('/universal', authenticate, async (req: AuthRequest, res: Response):
       return;
     }
 
-    await validateUserLimits(userId, videoQuality, true);
+    await validateUserLimits(userId, videoQuality);
 
     const cleanUrl = String(videoUrl).trim();
     const fileId = uuidv4();
@@ -1046,41 +875,42 @@ router.post('/universal', authenticate, async (req: AuthRequest, res: Response):
             `bv*+ba/b`,
           ].join('/');
           console.log(`[QUALITY] ${videoQuality} -> height<=${targetHeight}, client=${client || 'default'}`);
-          const ytdlpArgsArr = [
+          const flags = [
             '--newline',
             '-f', formatStr,
             '-S', `res:${targetHeight},vcodec:h264,acodec:aac,ext:mp4`,
             // Guarantee the container matches the .mp4 we advertise.
             '--merge-output-format', 'mp4',
             '-o', path.join(outputDir, `${fileId}.%(ext)s`),
-            '--no-playlist',
             '--hls-prefer-native',
           ];
-          ytdlpArgsArr.push(cleanUrl);
 
-          const ytdlp = spawn(getYtDlpPath(), ytDlpArgs(ytdlpArgsArr, proxy, client), { windowsHide: true });
+          // Positional URL kept out of the flags array — see the audio path.
+          const ytdlp = spawn(getYtDlpPath(), buildArgs(flags, [cleanUrl], client), {
+            windowsHide: true,
+            stdio: ['ignore', 'pipe', 'pipe'],
+          });
 
           activePolls.set(conversion._id.toString(), Date.now());
           const zombieKiller = setInterval(() => {
             const lastPoll = activePolls.get(conversion._id.toString());
             if (lastPoll && Date.now() - lastPoll > 60000) {
-               ytdlp.kill('SIGKILL');
-               clearInterval(zombieKiller);
-               reject(new Error('User closed the tab. Download cancelled.'));
+              ytdlp.kill('SIGKILL');
+              clearInterval(zombieKiller);
+              reject(new ExtractError('TIMEOUT', 'Download cancelled — the page stopped responding.', false));
             }
           }, 5000);
 
           let lastUpdate = Date.now();
           ytdlp.stdout.on('data', (data) => {
-            const output = data.toString();
-            const match = output.match(/\[download\]\s+([\d.]+)%/);
+            const match = data.toString().match(/\[download\]\s+([\d.]+)%/);
             if (match) {
               const progress = parseFloat(match[1]);
               if (!isNaN(progress)) {
                 const now = Date.now();
                 if (now - lastUpdate > 1000) {
                   lastUpdate = now;
-                  Conversion.findByIdAndUpdate(conversion._id, { progress: progress }).catch(() => { });
+                  Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
                 }
               }
             }
@@ -1088,90 +918,68 @@ router.post('/universal', authenticate, async (req: AuthRequest, res: Response):
 
           let videoStderr = '';
           ytdlp.stderr.on('data', (data) => {
-            const msg = data.toString();
-            videoStderr += msg;
-            // Log format selection and download info for debugging quality issues
-            if (msg.includes('Downloading') || msg.includes('format') || msg.includes('Merging') || msg.includes('ERROR')) {
-              console.log(`[yt-dlp ${client || 'default'}]:`, msg.trim());
-            }
+            videoStderr += data.toString();
+            if (videoStderr.length > 64_000) videoStderr = videoStderr.slice(-32_000);
           });
 
           ytdlp.on('error', (e: any) => {
             clearInterval(zombieKiller);
-            reject(new Error(`Could not start yt-dlp (${e?.code || e?.message}). Is it installed and on PATH?`));
+            reject(new ExtractError(
+              'UNKNOWN',
+              e?.code === 'ENOENT' ? 'yt-dlp is not installed on this server.' : `Could not start yt-dlp: ${e?.message}`,
+              false
+            ));
           });
 
           ytdlp.on('close', (code) => {
             clearInterval(zombieKiller);
             activePolls.delete(conversion._id.toString());
             if (code === 0) resolve(true);
-            else reject(new Error((videoStderr || `yt-dlp failed with code ${code}`).trim()));
+            else reject(classifyYtDlpError(videoStderr));
           });
         });
 
         let success = false;
-        let lastError = '';
+        let lastFailure: ExtractError | null = null;
 
-        // Same no-PO-token client ladder as the audio path.
-        // Proxy from attempt 3 onwards.
-        for (let i = 0; i < YT_CLIENT_LADDER.length; i++) {
-          const client = YT_CLIENT_LADDER[i];
-          const proxy = (i >= 2 && process.env.PROXY_URL) ? process.env.PROXY_URL : undefined;
-          console.log(`[Video ${i + 1}/${YT_CLIENT_LADDER.length}] client=${client}${proxy ? ' via proxy' : ''}`);
+        // Same no-PO-token client ladder as the audio path, most-recently
+        // successful client first, stopping on any deterministic verdict.
+        for (const client of orderedClients()) {
+          console.log(`[video] trying client=${client}`);
           try {
-            await runYtDlpDownload(proxy, client);
-            console.log(`[Video ${i + 1}/${YT_CLIENT_LADDER.length}] SUCCESS with client=${client}`);
+            await runYtDlpDownload(client);
+            console.log(`[video] succeeded with client=${client}`);
             success = true;
             break;
           } catch (err: any) {
-            lastError = err?.message || String(err);
-            console.error(`[Video ${i + 1}/${YT_CLIENT_LADDER.length}] client=${client} failed: ${lastError}`);
-            if (lastError.includes('User closed the tab')) break;
+            const failure = err instanceof ExtractError
+              ? err
+              : new ExtractError('UNKNOWN', String(err?.message || err), true);
+            lastFailure = failure;
+            console.warn(`[video] client=${client} failed: ${failure.code} — ${failure.message}`);
+            if (!failure.retriable) break;
           }
         }
 
-        // If ALL yt-dlp clients failed, try cookie refresh + one more attempt
-        if (!success && (lastError.includes('Sign in') || lastError.toLowerCase().includes('bot') || lastError.includes('403') || lastError.includes('blocked'))) {
-          console.log('[Video] All yt-dlp clients failed. Refreshing cookies and retrying...');
-          try {
-            const refreshed = await refreshYouTubeCookies();
-            if (refreshed) {
-              invalidateCookieCache();
-              try {
-                await runYtDlpDownload(process.env.PROXY_URL, 'default');
-                console.log('[Video] SUCCESS after cookie refresh');
-                success = true;
-              } catch (err: any) {
-                lastError = err?.message || String(err);
-                console.error('[Video] Cookie-refresh retry failed:', lastError);
-              }
-            }
-          } catch (e) {
-            console.error('[Video] Cookie refresh itself failed:', e);
-          }
-        }
-
-        // Final fallback: youtubei.js
-        if (!success) {
+        // Final fallback: youtubei.js, which reaches InnerTube independently.
+        if (!success && (lastFailure?.retriable ?? true)) {
           const ytVideoId = getYouTubeVideoId(cleanUrl);
           if (ytVideoId) {
-            console.log(`[Video] yt-dlp exhausted. Trying youtubei.js fallback for ${ytVideoId}...`);
+            console.log(`[video] yt-dlp exhausted, trying youtubei.js for ${ytVideoId}`);
             try {
               const result = await fallbackYoutubeJsVideo(ytVideoId, outputDir, fileId, targetHeight);
               if (result.title && result.title !== 'Downloaded Video') videoTitle = result.title;
               if (result.thumbnail) thumbnail = result.thumbnail;
-              // Update outputPath to the actual file the fallback wrote
               conversion.outputPath = result.filePath;
               success = true;
             } catch (err: any) {
-              lastError = err?.message || String(err);
-              console.error('[Video] youtubei.js fallback also failed:', lastError);
+              console.error('[video] youtubei.js fallback also failed:', err?.message || err);
             }
           }
         }
 
         if (!success) {
-          throw new Error(lastError || 'All download attempts failed.');
+          throw lastFailure ?? new ExtractError('UNKNOWN', 'All download attempts failed.', false);
         }
 
         // Find the actual downloaded file by fileId prefix
@@ -1280,172 +1088,253 @@ router.post('/universal', authenticate, async (req: AuthRequest, res: Response):
 });
 } // END video routes
 
-/* ── GET STATUS (frontend polls this) ────────────────────────────────── */
-router.get('/status/:id', async (req: Request, res: Response): Promise<void> => {
+/* ── STATUS (the frontend polls this) ────────────────────────────────── */
+
+/**
+ * GET /api/convert/status/:id
+ *
+ * Authenticated and ownership-checked. Previously open to anyone, which leaked
+ * the title, thumbnail and output URL of every job on the instance to anybody
+ * who could produce an ObjectId — and see services/downloadToken.ts on why
+ * ObjectIds are close to enumerable.
+ */
+router.get('/status/:id', authenticate, asyncHandler(async (req: AuthRequest, res: Response) => {
+  const conversion = await Conversion.findById(req.params.id).select('-outputPath');
+
+  // One response for "no such job" and "not your job", so this cannot be used
+  // to probe which ids exist.
+  if (!conversion || (conversion.userId && conversion.userId !== req.user!.id)) {
+    res.status(404).json({ success: false, code: 'NOT_FOUND', message: 'Conversion not found' });
+    return;
+  }
+
+  const id = conversion._id.toString();
+
+  // Recorded only for a job that actually exists. The previous line ran
+  // `activePolls.set(req.params.id, ...)` before the lookup, so any request
+  // with a made-up id added a permanent map entry — an unbounded,
+  // attacker-controlled cache on a 512MB instance.
+  activePolls.set(id, Date.now());
+
+  const queuePosition = conversionQueue.getQueuePosition(id);
+
+  res.json({
+    success: true,
+    data: {
+      jobId: id,
+      status: queuePosition > 0 ? 'queued' : conversion.status,
+      queuePosition,
+      progress: conversion.progress,
+      outputFilename: conversion.outputFilename,
+      // Both spellings. The frontend reads `fileSize` in some components and
+      // `filesize` in others, and the mismatch showed downloads as "0 B".
+      fileSize: conversion.fileSize,
+      filesize: conversion.fileSize,
+      videoQuality: conversion.videoQuality,
+      youtubeTitle: conversion.youtubeTitle,
+      youtubeThumbnail: conversion.youtubeThumbnail,
+      errorMessage: conversion.errorMessage,
+      // A signed, expiring link, issued only to the owner and only once the
+      // file is ready. This is what makes the download endpoint safe to expose
+      // to a header-less browser navigation.
+      downloadUrl: conversion.status === 'completed' ? buildDownloadUrl(id) : null,
+      // External mirrors, when the file was uploaded off-instance.
+      gofileUrl: conversion.gofileUrl || null,
+      cdnUrl: conversion.cdnUrl || null,
+    },
+  });
+}));
+
+/* ── DOWNLOAD ────────────────────────────────────────────────────────── */
+
+/** Hosts we are willing to 302 a user towards. */
+const ALLOWED_REDIRECT_HOSTS = new Set([
+  'gofile.io',
+  'store1.gofile.io',
+  'tmpfiles.org',
+]);
+
+function isAllowedRedirect(target: string): boolean {
   try {
-    activePolls.set(req.params.id, Date.now());
-    const conversion: any = await Conversion.findById(req.params.id).select('-outputPath');
-    if (!conversion) {
-      res.status(404).json({ success: false, message: 'Conversion not found' });
+    const url = new URL(target);
+    if (url.protocol !== 'https:') return false;
+    const host = url.hostname.toLowerCase();
+    return ALLOWED_REDIRECT_HOSTS.has(host)
+      || host.endsWith('.gofile.io')
+      || host.endsWith('.tmpfiles.org');
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Streams a completed conversion to the caller.
+ *
+ * Authorised by *either* a valid signed token in `?t=` or a bearer token from
+ * the owning account, so both a browser navigation and a scripted client work.
+ */
+router.get('/download/:id', downloadLimiter, asyncHandler(async (req: AuthRequest, res: Response) => {
+  const id = req.params.id;
+  const verdict = verifyDownloadToken(id, req.query.t);
+
+  if (verdict === 'expired') {
+    res.status(410).json({
+      success: false,
+      code: 'LINK_EXPIRED',
+      message: 'This download link has expired. Refresh the page to get a new one.',
+    });
+    return;
+  }
+
+  const conversion = await Conversion.findById(id);
+  if (!conversion) {
+    res.status(404).json({ success: false, code: 'NOT_FOUND', message: 'Conversion not found' });
+    return;
+  }
+
+  // No valid signature, so fall back to proving ownership with a bearer token.
+  if (verdict !== 'valid') {
+    const owner = conversion.userId;
+    if (!owner || owner !== req.user?.id) {
+      res.status(403).json({
+        success: false,
+        code: 'FORBIDDEN',
+        message: 'This download link is not valid for your account.',
+      });
       return;
     }
-    const pos = conversionQueue.getQueuePosition(req.params.id);
-    let currentStatus = conversion.status;
-    if (pos > 0) currentStatus = 'queued';
-
-    res.json({
-      success: true,
-      data: {
-        jobId: conversion._id.toString(),
-        status: currentStatus,
-        queuePosition: pos,
-        progress: conversion.progress,
-        outputFilename: conversion.outputFilename,
-        outputUrl: conversion.outputUrl,
-        gofileUrl: conversion.gofileUrl,
-        fileSize: conversion.fileSize,
-        videoQuality: conversion.videoQuality,
-        youtubeTitle: conversion.youtubeTitle,
-        youtubeThumbnail: conversion.youtubeThumbnail,
-        errorMessage: conversion.errorMessage,
-      },
-    });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message || 'Failed to get status' });
   }
-});
 
-/* ── DOWNLOAD (serves file with proper title as filename) ── */
-router.get('/download/:id', async (req: Request, res: Response): Promise<void> => {
-  try {
-    const conversion: any = await Conversion.findById(req.params.id);
-    if (!conversion) {
-      res.status(404).json({ success: false, message: 'Conversion not found' });
+  // A user file must never be stored by a shared cache. The previous handler
+  // sent `Cache-Control: public, max-age=604800`, which invited any
+  // intermediary or CDN to keep one user's media for a week and hand it to the
+  // next caller of the same URL.
+  res.setHeader('Cache-Control', 'private, no-store');
+
+  // Mirror links, validated against an allow-list. `res.redirect(outputUrl)`
+  // on an unchecked stored string was an open redirect.
+  const mirror = conversion.cdnUrl || conversion.gofileUrl
+    || (conversion.outputUrl?.startsWith('http') ? conversion.outputUrl : null);
+
+  if (mirror) {
+    if (!isAllowedRedirect(mirror)) {
+      console.error(`[download] refusing redirect to non-allow-listed host: ${mirror}`);
+      res.status(502).json({
+        success: false,
+        code: 'BAD_MIRROR',
+        message: 'The stored download location is not trusted.',
+      });
       return;
     }
-
-    if (conversion.cdnUrl) {
-      // Do not touch GoFile
-      if (conversion.cdnUrl.includes('gofile.io')) {
-        res.redirect(302, conversion.cdnUrl);
-        return;
-      }
-    }
-
-    conversion.downloadCount = (conversion.downloadCount || 0) + 1;
-    await conversion.save();
-
-    // If it's an external URL (from a CDN), redirect to it
-    if (conversion.outputUrl && conversion.outputUrl.startsWith('http')) {
-      res.redirect(conversion.outputUrl);
-      return;
-    }
-
-    // Resolve to absolute path to handle both old relative and new absolute stored paths
-    let filePath = conversion.outputPath;
-    if (filePath && !path.isAbsolute(filePath)) {
-      filePath = path.resolve(filePath);
-    }
-
-    if (!filePath || !fs.existsSync(filePath)) {
-      res.status(404).json({ success: false, message: 'File expired or not found on server' }); return;
-    }
-
-    const userFilename = conversion.outputFilename || path.basename(filePath);
-
-    // Enable caching at Cloudflare Edge to turbo-charge speeds
-    res.setHeader('Cache-Control', 'public, max-age=604800');
-
-    res.download(filePath, userFilename, (err) => {
-      if (err) console.error('Download stream error:', err);
-      // Schedule cleanup 21 mins after download is initiated
-      setTimeout(() => {
-        try {
-          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-          console.log(`[CLEANUP] Deleted ${filePath} after download.`);
-        } catch (e) { console.error('Cleanup error:', e); }
-      }, 21 * 60 * 1000);
-    });
-
-  } catch (error: any) {
-    console.error('Download error:', error);
-    res.status(500).json({ success: false, message: error.message || 'Download failed' });
+    await Conversion.updateOne({ _id: id }, { $inc: { downloadCount: 1 } });
+    res.redirect(302, mirror);
+    return;
   }
-});
 
-/* ── DOWNLOAD-TEMP (finds audio file by fileId prefix) ── */
-router.get('/download-temp/:fileId', async (req: Request, res: Response): Promise<void> => {
+  const filePath = resolveOutputPath(conversion.outputPath);
+  if (!filePath) {
+    res.status(404).json({
+      success: false,
+      code: 'FILE_GONE',
+      message: 'This file has expired. Please run the conversion again.',
+    });
+    return;
+  }
+
+  // Counted with $inc rather than a read-modify-write `save()`, which lost
+  // concurrent increments and could overwrite fields the background job was
+  // still updating.
+  await Conversion.updateOne({ _id: id }, { $inc: { downloadCount: 1 } });
+
+  // No per-download `setTimeout` deleting the file afterwards. That fired even
+  // when the transfer failed, scheduled a fresh timer on every request, and
+  // could delete a file out from under a second in-flight download. Expiry is
+  // handled centrally by utils/cleanup.ts and the model's TTL index.
+  res.download(filePath, sanitizeFilename(conversion.outputFilename || path.basename(filePath)), err => {
+    if (err && !res.headersSent) {
+      console.error(`[download] stream failed for ${id}: ${err.message}`);
+    }
+  });
+}));
+
+/* ── DOWNLOAD-TEMP (audio path, keyed by job file id) ────────────────── */
+
+/**
+ * GET /api/convert/download-temp/:fileId
+ *
+ * The old implementation resolved the file with
+ * `files.find(f => f.startsWith(fileId))` against the whole output directory.
+ * Because that is a *prefix* match on an unvalidated parameter, a request for
+ * `/download-temp/a` returned the first file in the directory beginning with
+ * "a" — someone else's download. Requiring a full UUID plus a signature
+ * closes both halves of that.
+ */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+router.get('/download-temp/:fileId', downloadLimiter, asyncHandler(async (req: Request, res: Response) => {
+  const { fileId } = req.params;
+
+  if (!UUID_RE.test(fileId)) {
+    res.status(400).json({ success: false, code: 'BAD_ID', message: 'Malformed file id.' });
+    return;
+  }
+
+  const verdict = verifyDownloadToken(fileId, req.query.t);
+  if (verdict === 'expired') {
+    res.status(410).json({ success: false, code: 'LINK_EXPIRED', message: 'This download link has expired.' });
+    return;
+  }
+  if (verdict !== 'valid') {
+    res.status(403).json({ success: false, code: 'FORBIDDEN', message: 'This download link is not valid.' });
+    return;
+  }
+
+  // Exact prefix on a full UUID, and the candidate must resolve to a real file
+  // inside the output directory.
+  let entries: string[];
   try {
-    const { fileId } = req.params;
-
-    // Find file in outputDir that starts with this fileId
-    const files = fs.readdirSync(outputDir);
-    const found = files.find(f => f.startsWith(fileId) && !f.endsWith('.part') && !f.endsWith('.ytdl'));
-
-    if (!found) {
-      res.status(404).json({ success: false, message: 'File not found or already expired' }); return;
-    }
-
-    const filePath = path.join(outputDir, found);
-    if (!fs.existsSync(filePath)) {
-      res.status(404).json({ success: false, message: 'File expired' }); return;
-    }
-
-    // Try to get the user-facing filename from DB
-    const conversion: any = await Conversion.findOne({ outputPath: filePath }).select('outputFilename');
-    const userFilename = conversion?.outputFilename || found;
-
-    // Enable caching at Cloudflare Edge to turbo-charge speeds
-    res.setHeader('Cache-Control', 'public, max-age=604800');
-
-    res.download(filePath, userFilename, (err) => {
-      if (err) console.error('Download-temp stream error:', err);
-    });
-  } catch (error: any) {
-    console.error('Download-temp error:', error);
-    res.status(500).json({ success: false, message: 'Download failed' });
+    entries = fs.readdirSync(outputDir);
+  } catch {
+    res.status(404).json({ success: false, code: 'FILE_GONE', message: 'File not found.' });
+    return;
   }
+
+  const found = entries.find(f =>
+    f.startsWith(`${fileId}.`) && !f.endsWith('.part') && !f.endsWith('.ytdl')
+  );
+  if (!found) {
+    res.status(404).json({ success: false, code: 'FILE_GONE', message: 'File not found or already expired.' });
+    return;
+  }
+
+  const filePath = resolveOutputPath(path.join(outputDir, found));
+  if (!filePath) {
+    res.status(404).json({ success: false, code: 'FILE_GONE', message: 'File not found.' });
+    return;
+  }
+
+  const conversion = await Conversion.findOne({ outputPath: filePath }).select('outputFilename');
+
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.download(filePath, sanitizeFilename(conversion?.outputFilename || found), err => {
+    if (err && !res.headersSent) {
+      console.error(`[download-temp] stream failed for ${fileId}: ${err.message}`);
+    }
+  });
+}));
+
+/* ── PUBLIC-FILE (legacy alias) ──────────────────────────────────────── */
+
+/**
+ * Retained only so old links do not 404 silently. It carried the same IDOR as
+ * /download/:id and had no authorisation of any kind, so it now redirects into
+ * the signed flow rather than serving bytes itself.
+ */
+router.get('/public-file/:id', downloadLimiter, (req: Request, res: Response) => {
+  const token = typeof req.query.t === 'string' ? req.query.t : '';
+  res.redirect(308, `/api/convert/download/${encodeURIComponent(req.params.id)}${token ? `?t=${encodeURIComponent(token)}` : ''}`);
 });
 
-
-/* ΓöÇΓöÇ PUBLIC FILE (legacy alias) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
-router.get('/public-file/:id', async (req: Request, res: Response): Promise<void> => {
-  try {
-    const conversion: any = await Conversion.findById(req.params.id);
-    if (!conversion || !conversion.outputPath) {
-      res.status(404).json({ success: false, message: 'File not found' }); return;
-    }
-    if (!fs.existsSync(conversion.outputPath)) {
-      res.status(404).json({ success: false, message: 'File expired or deleted' }); return;
-    }
-    res.download(conversion.outputPath, conversion.outputFilename || 'download', (err) => {
-      let delayMs = 21 * 60 * 1000; // 21 min default
-      try {
-        if (fs.existsSync(conversion.outputPath)) {
-          const stats = fs.statSync(conversion.outputPath);
-          if (stats.size > 500 * 1024 * 1024) { // > 500MB
-            delayMs = 35 * 60 * 1000; // 35 mins
-          }
-        }
-      } catch (e) { }
-
-      // Schedule cleanup
-      setTimeout(async () => {
-        try {
-          if (fs.existsSync(conversion.outputPath)) {
-            fs.unlinkSync(conversion.outputPath);
-          }
-          // Do NOT delete the database record so it stays in user's history
-          console.log(`[CLEANUP] Deleted file for public-file ${conversion._id} after ${delayMs / 60000} mins.`);
-        } catch (e) {
-          console.error('Cleanup error:', e);
-        }
-      }, delayMs);
-    });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message || 'Download failed' });
-  }
-});
 
 export default router;
 

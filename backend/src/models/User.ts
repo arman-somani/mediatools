@@ -10,6 +10,8 @@ export interface IUser extends Document {
   isEmailVerified: boolean;
   emailVerificationToken?: string;
   emailVerificationExpiry?: Date;
+  emailVerificationAttempts: number;
+  /** SHA-256 of the reset token. The raw token only ever exists in the email. */
   resetPasswordToken?: string;
   resetPasswordExpiry?: Date;
   isPremium: boolean;
@@ -64,6 +66,13 @@ const userSchema = new Schema<IUser>(
     },
     emailVerificationExpiry: {
       type: Date,
+    },
+    // A 6-digit code has only 10^6 possibilities and lives for 24h. Per-IP
+    // rate limiting alone does not close that, so failed attempts are counted
+    // against the account itself and the code is burned after 5 misses.
+    emailVerificationAttempts: {
+      type: Number,
+      default: 0,
     },
     resetPasswordToken: {
       type: String,
