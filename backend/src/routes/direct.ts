@@ -1,76 +1,57 @@
-import { Router, Request, Response } from 'express';
-import { spawn } from 'child_process';
-import path from 'path';
-import os from 'os';
-import fs from 'fs';
+import { Router, Response } from 'express';
 import { authenticate, AuthRequest } from '../middleware/auth';
-import { getActiveCookieFile } from '../utils/cookieManager';
+import { metadataLimiter } from '../middleware/rateLimiter';
+import { asyncHandler } from '../utils/http';
+import { assertSafeUrl, runWithClientLadder, isYouTubeUrl } from '../services/ytdlp';
 
 const router = Router();
 
-function getYtDlpPath(): string {
-  const binPath = path.join(__dirname, '..', '..', 'bin', os.platform() === 'win32' ? 'yt-dlp.exe' : 'yt-dlp');
-  return fs.existsSync(binPath) ? binPath : 'yt-dlp';
-}
+/**
+ * POST /api/direct — resolves a playable media URL without proxying the bytes.
+ *
+ * Worth being clear about the limitation, because it is not obvious and it is
+ * the reason this endpoint appears flaky: YouTube's `googlevideo.com` URLs are
+ * bound to the IP that requested them and expire within a few hours. A URL
+ * resolved here is resolved from the *server's* address, so a browser on a
+ * different address will usually get a 403 when it follows the link. That is
+ * upstream behaviour, not a bug we can fix, so the response says so rather
+ * than presenting the URL as a reliable download link.
+ *
+ * For non-YouTube hosts, which mostly serve plain unsigned files, it works as
+ * expected — that is where this endpoint earns its keep.
+ */
+router.post('/', authenticate, metadataLimiter, asyncHandler(async (req: AuthRequest, res: Response) => {
+  const url = assertSafeUrl(req.body.url);
 
-router.post('/', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const videoUrl = req.body.url;
-    if (!videoUrl) {
-      res.status(400).json({ success: false, message: 'Video URL is required' });
-      return;
-    }
+  const { stdout, client } = await runWithClientLadder(
+    ['--print', '%(urls)s', '-f', 'best[ext=mp4]/best'],
+    [url],
+    { timeoutMs: 45_000 }
+  );
 
-    const cleanUrl = String(videoUrl).trim();
-
-    const args = [
-      '--get-url',
-      '-f', 'best[ext=mp4]',
-      '--no-warnings',
-      '--no-playlist',
-      '--remote-components', 'ejs:github',
-      '--js-runtimes', 'node',
-      '--extractor-args', 'youtube:player_client=tv,web_embedded;player_skip=webpage',
-      '--force-ipv4'
-    ];
-
-    const cookieFile = getActiveCookieFile();
-    if (cookieFile) args.push('--cookies', cookieFile);
-    
-    args.push(cleanUrl);
-
-    const child = spawn(getYtDlpPath(), args, { windowsHide: true });
-    let stdout = '';
-    let stderr = '';
-
-    child.stdout.on('data', data => { stdout += data.toString(); });
-    child.stderr.on('data', data => { stderr += data.toString(); });
-
-    await new Promise((resolve, reject) => {
-      child.on('error', reject);
-      child.on('close', code => {
-        if (code === 0) resolve(true);
-        else reject(new Error((stderr || stdout || `yt-dlp failed with code ${code}`).trim()));
-      });
+  const urls = stdout.trim().split('\n').map(l => l.trim()).filter(l => l.startsWith('http'));
+  if (urls.length === 0) {
+    res.status(422).json({
+      success: false,
+      code: 'FORMAT_UNAVAILABLE',
+      message: 'No single-file stream is available for this link.',
     });
-
-    const urls = stdout.trim().split('\n').filter(line => line.startsWith('http'));
-    if (urls.length === 0) {
-      res.status(400).json({ success: false, message: 'Could not extract direct URL.' });
-      return;
-    }
-
-    res.json({
-      success: true,
-      data: {
-        directUrl: urls[0]
-      }
-    });
-
-  } catch (error: any) {
-    console.error('Direct download error:', error);
-    res.status(500).json({ success: false, message: error.message || 'Failed to extract direct URL' });
+    return;
   }
-});
+
+  const ipBound = isYouTubeUrl(url);
+  res.json({
+    success: true,
+    data: {
+      directUrl: urls[0],
+      client,
+      ipBound,
+      ...(ipBound && {
+        note: 'YouTube ties this URL to the requesting IP address and expires it within a few hours. '
+          + 'Use the standard conversion endpoints for a link you can share or open in a browser.',
+      }),
+    },
+  });
+}));
 
 export default router;

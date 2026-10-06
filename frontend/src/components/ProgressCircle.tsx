@@ -9,73 +9,69 @@ interface ProgressCircleProps {
   subText?: string;
 }
 
+const R = 52;
+const CIRC = 2 * Math.PI * R;
+
 export default function ProgressCircle({ progress, statusText, subText }: ProgressCircleProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
   const circleRef = useRef<SVGCircleElement>(null);
 
   useEffect(() => {
-    if (containerRef.current) {
-      anime({
-        targets: containerRef.current,
-        opacity: [0, 1],
-        duration: 500,
-        easing: 'easeOutSine'
-      });
-    }
-  }, []);
-
-  useEffect(() => {
     if (circleRef.current) {
-      const targetDash = Math.max(0, Math.min(progress, 100)) * 2.9;
+      const pct = Math.max(0, Math.min(progress, 100)) / 100;
       anime({
         targets: circleRef.current,
-        strokeDasharray: `${targetDash} 300`,
-        duration: 500,
-        easing: 'easeOutQuart'
+        strokeDashoffset: CIRC * (1 - pct),
+        duration: 600,
+        easing: 'easeOutQuart',
       });
     }
   }, [progress]);
 
   return (
-    <div ref={containerRef} className="py-12 flex-1 flex flex-col items-center justify-center text-center opacity-0">
-      <div className="relative w-32 h-32 mb-8">
-        <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8" />
+    <div className="py-10 flex-1 flex flex-col items-center justify-center text-center anim-fade-in" role="status" aria-live="polite">
+      <div className="relative w-44 h-44 mb-8">
+        {/* Glow + glass disc */}
+        <div className="absolute inset-3 rounded-full bg-gradient-to-br from-violet-500/30 via-fuchsia-500/20 to-cyan-400/30 blur-2xl" />
+        <div className="absolute inset-5 rounded-full border border-white/15 bg-white/[0.05] shadow-[inset_0_1px_0_rgba(255,255,255,0.25),inset_0_-10px_30px_rgba(0,0,0,0.25)]" />
+        {/* Rotating sheen */}
+        <div className="absolute inset-0 rounded-full anim-spin-slow" style={{ background: 'conic-gradient(from 0deg, transparent 0 75%, rgba(255,255,255,0.12) 90%, transparent 100%)' }} />
+
+        <svg className="relative w-full h-full -rotate-90" viewBox="0 0 120 120">
+          <defs>
+            <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#22d3ee" />
+              <stop offset="50%" stopColor="#a855f7" />
+              <stop offset="100%" stopColor="#ec4899" />
+            </linearGradient>
+            <filter id="progressGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="3" result="b" />
+              <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+            </filter>
+          </defs>
+          <circle cx="60" cy="60" r={R} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="7" />
           <circle
             ref={circleRef}
-            cx="50" cy="50" r="46" fill="none"
-            stroke="url(#progressGradient)" strokeWidth="8" strokeLinecap="round"
-            style={{ strokeDasharray: '0 300' }}
+            cx="60" cy="60" r={R} fill="none"
+            stroke="url(#progressGradient)" strokeWidth="7" strokeLinecap="round"
+            filter="url(#progressGlow)"
+            style={{ strokeDasharray: CIRC, strokeDashoffset: CIRC }}
           />
-          <defs>
-            <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#06b6d4" /> {/* brand-cyan */}
-              <stop offset="100%" stopColor="#a855f7" /> {/* brand-purple */}
-            </linearGradient>
-          </defs>
         </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-3xl font-bold font-display text-white">{Math.round(progress)}%</span>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-4xl font-bold font-display text-white tabular-nums">{Math.round(progress)}<span className="text-xl text-white/60">%</span></span>
         </div>
       </div>
-      <h3 className="text-2xl font-display font-bold mb-2 text-white">
-        {statusText}
-      </h3>
+
+      <h3 className="text-xl sm:text-2xl font-display font-bold mb-2 text-white">{statusText}</h3>
       {subText && (
-        <p className="text-white/60 text-sm sm:text-base px-4 max-w-sm w-full leading-relaxed break-words">
-          {subText}
-        </p>
+        <p className="text-muted text-sm sm:text-base px-4 max-w-sm w-full leading-relaxed break-words">{subText}</p>
       )}
 
-      {/* Animated Audio Visualizer Waveform */}
-      <div className="flex gap-1.5 justify-center mt-6 h-8 items-end">
-        <div className="w-1 bg-brand-cyan rounded-full animate-vis-1" style={{ height: '12px' }} />
-        <div className="w-1 bg-brand-purple rounded-full animate-vis-2" style={{ height: '24px' }} />
-        <div className="w-1 bg-brand-violet rounded-full animate-vis-3" style={{ height: '32px' }} />
-        <div className="w-1 bg-brand-cyan rounded-full animate-vis-4" style={{ height: '20px' }} />
-        <div className="w-1 bg-brand-purple rounded-full animate-vis-5" style={{ height: '28px' }} />
-        <div className="w-1 bg-brand-violet rounded-full animate-vis-6" style={{ height: '16px' }} />
-        <div className="w-1 bg-brand-cyan rounded-full animate-vis-7" style={{ height: '22px' }} />
+      {/* Audio visualizer */}
+      <div className="flex gap-1.5 justify-center mt-7 h-8 items-end" aria-hidden="true">
+        {['animate-vis-1', 'animate-vis-2', 'animate-vis-3', 'animate-vis-4', 'animate-vis-5', 'animate-vis-6', 'animate-vis-7'].map((c, i) => (
+          <div key={c} className={`w-1.5 rounded-full ${c}`} style={{ height: 12, background: ['#22d3ee', '#a855f7', '#ec4899'][i % 3], boxShadow: `0 0 10px ${['#22d3ee', '#a855f7', '#ec4899'][i % 3]}` }} />
+        ))}
       </div>
     </div>
   );

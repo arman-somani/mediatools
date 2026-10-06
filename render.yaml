@@ -1,3 +1,10 @@
+# Render service definition.
+#
+# Only the three variables under "Required" must be set for the service to boot
+# and be reachable. Everything below that is optional and degrades cleanly:
+# the API reports what is and is not configured at /api/health/ready, so a
+# half-configured deploy is diagnosable instead of mysteriously broken.
+
 services:
   - type: web
     name: mediatools-backend
@@ -6,32 +13,152 @@ services:
     plan: free
     dockerContext: .
     dockerfilePath: ./Dockerfile
+
+    # Points at the cheap liveness endpoint, not /api/health/ready. Render
+    # restarts a service whose health check fails, and a transient Mongo blip
+    # or a dead token sidecar is not a reason to reboot and kill in-flight
+    # downloads. Use /api/health/ready manually to see component status.
     healthCheckPath: /api/health
+
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 5000
 
-      # ---- Required. sync:false means Render prompts for the value and never
-      # ---- stores it in git. The service exits on boot without these.
+      # ---- Required -------------------------------------------------------
+      # sync:false means Render prompts for the value and never stores it in
+      # git. The process exits at boot if MONGODB_URI or JWT_SECRET is absent,
+      # deliberately: serving traffic signed with a default key is worse than
+      # not serving traffic.
       - key: MONGODB_URI
         sync: false
       - key: JWT_SECRET
         sync: false
       # Comma-separated list of allowed browser origins, e.g.
-      # https://mediatools.vercel.app,http://localhost:3000
+      #   https://mediatools.vercel.app,http://localhost:3000
+      # Not technically required, but it defaults to http://localhost:3000, so
+      # leaving it unset means CORS rejects your real frontend and every
+      # request fails in the browser while curl works fine.
       - key: FRONTEND_URL
         sync: false
 
-      # ---- Optional ----
-      # Base64 of a Netscape cookies.txt exported from an incognito YouTube
-      # session. Not required (the client ladder works without it) but it
-      # unlocks the `tv` client and age-restricted videos.
+      # ---- YouTube extraction ---------------------------------------------
+      # PO tokens are generated locally, inside this container. No account, no
+      # cookies, no third-party service — the generator solves the challenge
+      # itself. This is the single most effective thing available in code alone.
+      #
+      # It runs in "script mode": yt-dlp spawns the generator only when a token
+      # is needed and it exits straight after, caching the result on disk. That
+      # matters on a 512MB instance. The alternative HTTP-server mode keeps a
+      # second Node process resident for the container's whole life (~130MB)
+      # and would be holding that memory *while* ffmpeg merges a video, which
+      # is how you get OOM-killed mid-download.
+      #
+      # Set false to drop PO token support entirely; extraction then uses only
+      # the clients that need no token, which works but exposes fewer formats.
+      - key: ENABLE_POT_PROVIDER
+        value: "true"
+
+      # Reinstall yt-dlp from master at every boot. Off by default because it
+      # adds 10-20s to a cold start. Turn it on if the site has been working
+      # and suddenly stops: YouTube ships breaking extractor changes without
+      # notice and fixes land on master within days, so a stale yt-dlp is the
+      # most common single cause.
+      - key: YTDLP_AUTO_UPDATE
+        value: "false"
+
+      # Order of extraction clients to try. Leave unset to use the built-in
+      # ladder (android_vr, tv_simply, web_safari, tv_embedded, default), which
+      # gains the web clients automatically when token generation is available.
+      - key: YT_CLIENT_LADDER
+        sync: false
+
+      # ---- Memory budget (512MB instance) ---------------------------------
+      # Peak usage is the API plus yt-dlp plus one of (token generator | ffmpeg),
+      # which do not overlap. Roughly: 190 + 70 + 120 = 380MB.
+      #
+      # Raising NODE_HEAP_MB without reducing something else is the fastest way
+      # to get the container killed. Conversions already run strictly one at a
+      # time; that is a deliberate constraint, not a limitation to remove.
+      - key: NODE_HEAP_MB
+        value: "192"
+      # Jobs allowed to wait behind the running one. Beyond this, new requests
+      # get a 503 with Retry-After rather than joining a backlog that cannot be
+      # cleared before the finished files expire.
+      - key: MAX_QUEUE_DEPTH
+        value: "12"
+
+      # ---- Optional: better YouTube success rate ---------------------------
+      # Honest expectation setting: YouTube's bot detection keys substantially
+      # on IP reputation, and Render's egress addresses are datacenter ranges
+      # that are already heavily rate-limited. The token provider and client
+      # ladder above are the whole of what code can do. If a meaningful share
+      # of requests still come back as "Sign in to confirm you're not a bot",
+      # a residential proxy in PROXY_URL is the only remaining lever — the code
+      # already routes through it when set, so it is a one-variable change.
+      - key: PROXY_URL
+        sync: false
+      # Base64 of a Netscape cookies.txt. Not required; unlocks age-restricted
+      # videos and the `tv` client.
       #   Linux/macOS: base64 -w0 cookies.txt
       #   Windows:     certutil -encodehex -f cookies.txt out.b64 0x40000001
+      # Use a throwaway account: these cookies grant access to it.
       - key: YOUTUBE_COOKIES_B64
         sync: false
-      # Outbound proxy used only as the last rung of the client ladder.
-      - key: PROXY_URL
+
+      # ---- Optional: limits ------------------------------------------------
+      - key: MAX_DURATION_SECONDS
+        value: "5400"
+      - key: MAX_FILE_SIZE_MB
+        value: "250"
+      # Hours a finished file stays on disk. Render's disk is ephemeral and
+      # small, and the Conversion TTL index expires the database record on the
+      # same clock.
+      - key: FILE_TTL_HOURS
+        value: "1"
+
+      # ---- Optional: email -------------------------------------------------
+      # Without these, signup still works but verification and password-reset
+      # mail is skipped and the API says so rather than silently succeeding.
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: FROM_NAME
+        value: MediaTools
+      - key: FROM_EMAIL
+        sync: false
+
+      # ---- Optional: admin -------------------------------------------------
+      # The account with this email is promoted to admin on login. Replaces the
+      # credentials that used to be hardcoded in the auth route.
+      - key: ADMIN_EMAIL
+        sync: false
+
+      # ---- Optional: keep-warm --------------------------------------------
+      # Leave false. The free plan allows 750 instance-hours per month and a
+      # month is about 730 hours, so pinging around the clock consumes the
+      # entire allowance for the whole account. It also cannot wake a service
+      # Render has already spun down, because the timer doing the pinging is
+      # inside the stopped container.
+      - key: SELF_PING
+        value: "false"
+
+      # ---- Optional: payments and media storage ---------------------------
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
         sync: false
