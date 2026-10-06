@@ -247,8 +247,109 @@ export function isYouTubeUrl(url: string): boolean {
  */
 const DEFAULT_LADDER = ['android_vr', 'tv_simply', 'web_safari', 'tv_embedded', 'default'];
 
-export const CLIENT_LADDER: string[] = (process.env.YT_CLIENT_LADDER || DEFAULT_LADDER.join(','))
+/**
+ * Clients that only become useful once a PO token source exists.
+ *
+ * The `web` family is what YouTube serves browsers, so it exposes the fullest
+ * set of formats — but it is also where the token requirement is enforced
+ * hardest. Attempting these without a provider burns a ladder rung on a
+ * deterministic rejection, which is why they are appended rather than listed
+ * in DEFAULT_LADDER: the ladder grows a rung precisely when that rung can work.
+ */
+const POT_DEPENDENT_CLIENTS = ['web', 'mweb'];
+
+/** Clients that never need a token, used when the provider is unavailable. */
+const TOKENLESS_CLIENTS = new Set(['android_vr', 'tv_simply', 'tv_embedded', 'default']);
+
+const CONFIGURED_LADDER: string[] = (process.env.YT_CLIENT_LADDER || DEFAULT_LADDER.join(','))
   .split(',').map(s => s.trim()).filter(Boolean);
+
+/**
+ * How PO tokens are currently obtainable, if at all.
+ *
+ * Deliberately not just `Boolean(env.youtube.potProviderUrl)`. A configured URL
+ * says someone intended a provider to exist, not that one does, and passing a
+ * provider argument that points at a closed port made yt-dlp exhaust its retry
+ * budget on connection refusals and then report a generic extraction failure —
+ * identical in appearance to being blocked by YouTube. This is set only after
+ * the generator has been verified, and cleared if it stops being usable.
+ */
+export type PotMode = 'none' | 'script' | 'http';
+
+let potMode: PotMode = 'none';
+
+export function setPotMode(mode: PotMode): void {
+  if (potMode !== mode) {
+    console.log(`[ytdlp] PO token source: ${mode}`);
+  }
+  potMode = mode;
+}
+
+export function getPotMode(): PotMode {
+  return potMode;
+}
+
+export function isPotProviderReady(): boolean {
+  return potMode !== 'none';
+}
+
+/**
+ * Determines how tokens can be generated, preferring script mode.
+ *
+ * Script mode spawns the generator per extraction and lets it exit, so it costs
+ * memory only while it runs. HTTP mode keeps a second Node process resident for
+ * the life of the container — about 130MB that competes with ffmpeg during a
+ * merge, which on a 512MB box is the difference between finishing a job and
+ * being OOM-killed. So an external HTTP provider is used only when no local
+ * script is available.
+ *
+ * Called at boot and on a timer from app.ts, so the ladder reflects what is
+ * actually usable rather than what was usable when the container started.
+ */
+export async function probePotProvider(): Promise<boolean> {
+  const home = env.youtube.potServerHome;
+  if (home) {
+    const script = path.join(home, 'build', 'generate_once.js');
+    if (fs.existsSync(script)) {
+      setPotMode('script');
+      return true;
+    }
+  }
+
+  const base = env.youtube.potProviderUrl;
+  if (base) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 4000);
+      const response = await fetch(`${base.replace(/\/$/, '')}/ping`, { signal: controller.signal });
+      clearTimeout(timer);
+      if (response.ok) {
+        setPotMode('http');
+        return true;
+      }
+    } catch {
+      // Falls through to 'none'.
+    }
+  }
+
+  setPotMode('none');
+  return false;
+}
+
+/** The ladder as it applies right now, given provider availability. */
+export function currentLadder(): string[] {
+  if (potMode !== 'none') {
+    const extra = POT_DEPENDENT_CLIENTS.filter(c => !CONFIGURED_LADDER.includes(c));
+    return [...CONFIGURED_LADDER, ...extra];
+  }
+  // No token source, so drop the rungs that cannot succeed without one. A
+  // cookie jar substitutes for a provider on the web clients, so it counts.
+  if (getCookieFile()) return [...CONFIGURED_LADDER];
+  return CONFIGURED_LADDER.filter(c => TOKENLESS_CLIENTS.has(c) || c.startsWith('web_safari'));
+}
+
+/** Retained for callers that want the raw configured list. */
+export const CLIENT_LADDER = CONFIGURED_LADDER;
 
 /**
  * Remembers which client last worked, so the common case costs one attempt
@@ -259,12 +360,15 @@ let preferredClient: { name: string; at: number } | null = null;
 const PREFERRED_TTL_MS = 30 * 60 * 1000;
 
 export function orderedClients(): string[] {
+  const ladder = currentLadder();
   if (preferredClient && Date.now() - preferredClient.at < PREFERRED_TTL_MS) {
-    const rest = CLIENT_LADDER.filter(c => c !== preferredClient!.name);
-    return [preferredClient.name, ...rest];
+    const name = preferredClient.name;
+    if (ladder.includes(name)) {
+      return [name, ...ladder.filter(c => c !== name)];
+    }
   }
   preferredClient = null;
-  return [...CLIENT_LADDER];
+  return ladder;
 }
 
 export function rememberWorkingClient(name: string): void {
@@ -372,7 +476,14 @@ export function buildArgs(flags: string[], urls: string[], client?: string): str
 
   if (env.youtube.proxyUrl) args.push('--proxy', env.youtube.proxyUrl);
 
-  if (env.youtube.potProviderUrl) {
+  // Only passed once the generator has been verified. Advertising a provider we
+  // have not checked made every extraction spend its retry budget on a refused
+  // connection and then fail as if YouTube had blocked us.
+  if (potMode === 'script') {
+    // The generator is spawned per call and exits, so it costs memory for a few
+    // seconds instead of holding ~130MB resident the way the HTTP server does.
+    args.push('--extractor-args', `youtubepot-bgutilscript:server_home=${env.youtube.potServerHome}`);
+  } else if (potMode === 'http' && env.youtube.potProviderUrl) {
     args.push('--extractor-args', `youtubepot-bgutilhttp:base_url=${env.youtube.potProviderUrl}`);
   }
 

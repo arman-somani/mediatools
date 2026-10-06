@@ -1,47 +1,102 @@
-type Task = {
-  id: string; // The conversion or job ID
-  execute: () => Promise<void>;
-};
+import { env } from '../config/env';
 
+export interface Task {
+  /** The conversion id, used to report queue position to the client. */
+  id: string;
+  execute: () => Promise<void>;
+}
+
+/** Thrown when the backlog is full. Surfaces as a 503 with a Retry-After. */
+export class QueueFullError extends Error {
+  readonly status = 503;
+  readonly code = 'QUEUE_FULL';
+  constructor(depth: number) {
+    super(
+      `The server is already working through ${depth} downloads. `
+      + 'Please try again in a few minutes.'
+    );
+    this.name = 'QueueFullError';
+  }
+}
+
+/**
+ * Runs conversions one at a time.
+ *
+ * Serial execution is not a simplification, it is the constraint. A single
+ * 1080p merge holds yt-dlp and ffmpeg open together for most of a container's
+ * memory budget; running two at once on a 512MB instance reliably ends in the
+ * kernel killing the process group, which looks to users like the site randomly
+ * dropping their download halfway through.
+ *
+ * The queue is bounded for the same reason. Previously it accepted work without
+ * limit, so a burst of traffic produced a backlog that could not be worked
+ * through before the jobs' own output files expired — every one of those users
+ * waited for a file that was deleted before they could reach it. Refusing work
+ * with an honest "try again shortly" is better than accepting work that cannot
+ * be delivered.
+ */
 class TaskQueue {
   private queue: Task[] = [];
   private isProcessing = false;
   private currentTaskId: string | null = null;
 
-  add(task: Task) {
+  /** @throws QueueFullError when the backlog is at capacity. */
+  add(task: Task): void {
+    if (this.queue.length >= env.maxQueueDepth) {
+      throw new QueueFullError(this.queue.length);
+    }
     this.queue.push(task);
-    this.process();
+    void this.drain();
   }
 
+  /** 1-based position, or 0 when running or finished. */
   getQueuePosition(id: string): number {
     const index = this.queue.findIndex(t => t.id === id);
-    if (index !== -1) {
-      return index + 1; // 1-based position in the queue
-    }
-    return 0; // Not in queue (either currently processing or finished)
+    return index === -1 ? 0 : index + 1;
   }
 
   isCurrentlyProcessing(id: string): boolean {
     return this.currentTaskId === id;
   }
 
-  private async process() {
-    if (this.isProcessing || this.queue.length === 0) return;
+  /** Waiting jobs, excluding the one currently running. */
+  get depth(): number {
+    return this.queue.length;
+  }
+
+  get busy(): boolean {
+    return this.isProcessing;
+  }
+
+  /**
+   * Drains the queue in a loop.
+   *
+   * The previous implementation called itself recursively after each task. It
+   * worked, but a loop makes it obvious that nothing re-enters the critical
+   * section and there is no stack to grow.
+   */
+  private async drain(): Promise<void> {
+    if (this.isProcessing) return;
     this.isProcessing = true;
-    
-    const task = this.queue.shift();
-    if (task) {
-      this.currentTaskId = task.id;
-      try {
-        await task.execute();
-      } catch (err) {
-        console.error('Queue execution error:', err);
+
+    try {
+      let task = this.queue.shift();
+      while (task) {
+        this.currentTaskId = task.id;
+        try {
+          await task.execute();
+        } catch (error) {
+          // A task is responsible for recording its own failure on the
+          // Conversion document. Reaching here means it threw anyway, and
+          // swallowing it is deliberate: one bad job must not stop the queue.
+          console.error(`[queue] task ${task.id} threw:`, error);
+        }
+        this.currentTaskId = null;
+        task = this.queue.shift();
       }
-      this.currentTaskId = null;
+    } finally {
+      this.isProcessing = false;
     }
-    
-    this.isProcessing = false;
-    this.process();
   }
 }
 

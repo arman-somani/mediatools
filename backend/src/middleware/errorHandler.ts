@@ -101,19 +101,35 @@ export const errorHandler = (
 
   const status = err.status || err.statusCode || 500;
 
-  // Deliberately generic above 499. The old handler echoed `err.message` for
-  // every 500, which leaked file paths, Mongo connection strings and raw
-  // stderr to anyone who could trigger an exception.
-  const clientMessage = status >= 500
+  /**
+   * Errors we raise on purpose, whose message is written for the user and
+   * contains nothing internal. Without this allow-list the blanket 5xx rule
+   * below replaced deliberately helpful text — "the server is already working
+   * through N downloads, try again shortly" — with a generic apology that tells
+   * the user nothing about what to do next.
+   */
+  const SAFE_CODES = new Set(['QUEUE_FULL', 'SERVICE_UNAVAILABLE', 'UPSTREAM_UNAVAILABLE']);
+  const isIntentional = Boolean(err.code && SAFE_CODES.has(err.code));
+
+  // Deliberately generic above 499 otherwise. The old handler echoed
+  // `err.message` for every 500, which leaked file paths, Mongo connection
+  // strings and raw stderr to anyone who could trigger an exception.
+  const clientMessage = status >= 500 && !isIntentional
     ? 'Something went wrong on our side. Please try again.'
     : err.message;
 
   console.error(`[error] ${status} on ${req.method} ${req.path}: ${err.message}`);
-  if (status >= 500 && err.stack) console.error(err.stack);
+  if (status >= 500 && !isIntentional && err.stack) console.error(err.stack);
+
+  // Tells well-behaved clients when to come back instead of retrying immediately
+  // and deepening the backlog that caused the rejection.
+  if (status === 503 || status === 429) {
+    res.setHeader('Retry-After', '120');
+  }
 
   res.status(status).json({
     success: false,
-    code: 'INTERNAL_ERROR',
+    code: err.code && isIntentional ? err.code : 'INTERNAL_ERROR',
     message: clientMessage,
     ...(env.isProduction ? {} : { detail: err.message, stack: err.stack }),
   });

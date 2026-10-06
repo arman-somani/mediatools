@@ -48,7 +48,29 @@ Platform.shim.eval = (script: any) => {
 
 const router = Router();
 
+/**
+ * Last-seen timestamp per conversion the frontend is actively watching.
+ *
+ * The download workers consult this to abandon a job whose browser tab has
+ * gone away, which on a 512MB instance is the difference between finishing the
+ * queue and being OOM-killed by work nobody is waiting for.
+ *
+ * Entries are normally removed when the job settles, but a crash or a redeploy
+ * between `set` and `delete` would leave one behind forever, so the map is also
+ * swept. Keys are only ever written for a conversion that exists and belongs to
+ * the caller — see the status route.
+ */
 const activePolls = new Map<string, number>();
+const POLL_ENTRY_TTL_MS = 30 * 60 * 1000;
+
+const pollSweeper = setInterval(() => {
+  const cutoff = Date.now() - POLL_ENTRY_TTL_MS;
+  for (const [id, seen] of activePolls) {
+    if (seen < cutoff) activePolls.delete(id);
+  }
+}, 10 * 60 * 1000);
+pollSweeper.unref();
+
 const execAsync = promisify(exec);
 
 /**
@@ -305,6 +327,7 @@ if (SERVER_ROLE === 'all' || SERVER_ROLE === 'audio') {
 router.post(
   '/upload',
   authenticate,
+  convertLimiter,
   upload.single('file'),
   async (req: AuthRequest, res: Response): Promise<void> => {
     try {
@@ -420,7 +443,7 @@ router.post(
   );
 
 /* ── YOUTUBE TO MP3 ─────────────────────────────────────── */
-router.post('/youtube', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/youtube', authenticate, convertLimiter, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id;
     if (!userId) { res.status(401).json({ success: false, message: 'Unauthorized' }); return; }
@@ -767,7 +790,7 @@ router.post('/universal/metadata', metadataLimiter, asyncHandler(async (req: Req
 }));
 
 /* ΓöÇΓöÇ UNIVERSAL VIDEO DOWNLOADER ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
-router.post('/universal', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/universal', authenticate, convertLimiter, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id;
     if (!userId) { res.status(401).json({ success: false, message: 'Unauthorized' }); return; }

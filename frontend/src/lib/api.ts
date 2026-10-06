@@ -15,11 +15,17 @@ export function videoApiUrl(path: string): string {
 }
 
 const baseConfig = {
-  headers: { 
+  headers: {
     'Content-Type': 'application/json',
-    'ngrok-skip-browser-warning': '69420'
+    'ngrok-skip-browser-warning': '69420',
   },
   withCredentials: false,
+  // Without a timeout axios waits indefinitely. On Render's free tier the
+  // instance spins down after inactivity and the first request after that sits
+  // unanswered for the better part of a minute while the container boots, so a
+  // missing timeout showed up as a UI that hung with no feedback rather than an
+  // error anyone could act on. 45s is long enough to absorb a cold start.
+  timeout: 45_000,
 };
 
 export const api = axios.create({ baseURL: `${API_BASE_URL}/api`, ...baseConfig });

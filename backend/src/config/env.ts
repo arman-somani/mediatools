@@ -113,13 +113,39 @@ export const env = {
     cookieFile: optional('YOUTUBE_COOKIES_FILE'),
     cookiesB64: optional('YOUTUBE_COOKIES_B64'),
     proxyUrl: optional('PROXY_URL'),
+    /**
+     * PO token generation.
+     *
+     * Two modes, and on a 512MB instance the choice matters more than it looks.
+     *
+     * `potServerHome` is script mode: yt-dlp spawns the generator only when a
+     * token is actually needed and it exits immediately after, so it costs
+     * memory for a few seconds per extraction rather than permanently. Tokens
+     * are cached on disk between runs.
+     *
+     * `potProviderUrl` is HTTP mode, which keeps a second Node process resident
+     * for the life of the container. That is roughly 130MB that cannot be
+     * reclaimed, competing directly with ffmpeg during a merge. Use it only
+     * when the provider runs on a different host.
+     *
+     * Script mode is the default for exactly that reason.
+     */
+    potServerHome: optional('POT_SERVER_HOME', '/app/bgutil-ytdlp-pot-provider/server'),
     potProviderUrl: optional('POT_PROVIDER_URL'),
     jsRuntime: optional('YT_JS_RUNTIME', 'deno,node'),
   },
 
-  /** Hard ceiling on a single download, to protect a 512MB instance. */
+  /**
+   * Hard ceilings, sized for a 512MB container.
+   *
+   * At peak the box holds the API (~190MB), yt-dlp (~70MB) and either the
+   * token generator or ffmpeg (~80-120MB). The queue runs one job at a time;
+   * raising that is the fastest way to get OOM-killed here.
+   */
   maxDurationSeconds: Number(optional('MAX_DURATION_SECONDS', '5400')),
   maxFileSizeMb: Number(optional('MAX_FILE_SIZE_MB', '250')),
+  /** Jobs allowed to wait behind the running one before new ones are refused. */
+  maxQueueDepth: Number(optional('MAX_QUEUE_DEPTH', '12')),
 };
 
 export type Env = typeof env;

@@ -1,19 +1,24 @@
 'use client';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
-import api, { audioApi, apiUrl, audioApiUrl } from '@/lib/api';
+import { FileAudio, UploadCloud } from 'lucide-react';
+import api, { audioApi, audioApiUrl } from '@/lib/api';
+import { pollConversion, describeFailure } from '@/lib/conversion';
 import { formatFileSize } from '@/lib/utils';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ProgressCircle from '@/components/ProgressCircle';
 import { requestNotificationPermission, sendNotification } from '@/lib/notifications';
-import PageWrapper from '@/components/PageWrapper';
 import AnimeReveal from '@/components/AnimeReveal';
 import AnimeHover from '@/components/AnimeHover';
 
+import PageHeader from '@/components/ui/PageHeader';
+import ToolPanel from '@/components/ui/ToolPanel';
+import QualitySelector, { type QualityOption } from '@/components/ui/QualitySelector';
+import CompletionCard from '@/components/ui/CompletionCard';
+import ErrorDialog from '@/components/ui/ErrorDialog';
+
 type Quality = '128' | '192' | '320';
 type Status = 'idle' | 'queued' | 'uploading' | 'processing' | 'completed' | 'downloading' | 'failed';
-
-
 
 export default function ConverterPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -22,11 +27,13 @@ export default function ConverterPage() {
   const [queuePosition, setQueuePosition] = useState(0);
   const [progress, setProgress] = useState(0);
   const [jobId, setJobId] = useState('');
+  const [downloadUrl, setDownloadUrl] = useState('');
   const [fileSize, setFileSize] = useState<number | null>(null);
   const [error, setError] = useState('');
+  const [canRetry, setCanRetry] = useState(false);
   const [conversionTime, setConversionTime] = useState<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const cancelPollRef = useRef<(() => void) | null>(null);
 
   const onDrop = useCallback((accepted: File[]) => {
     if (accepted[0]) { setFile(accepted[0]); setError(''); setStatus('idle'); setJobId(''); }
@@ -47,40 +54,47 @@ export default function ConverterPage() {
     },
   });
 
-  const pollStatus = (jobId: string) => {
-    pollRef.current = setInterval(async () => {
-      try {
-        const { data } = await audioApi.get(`/convert/status/${jobId}`);
-        const conv = data.data;
-        setProgress(Math.round(conv.progress || 0));
-        if (conv.status === 'queued') {
+  const pollStatus = (id: string) => {
+    cancelPollRef.current?.();
+    cancelPollRef.current = pollConversion({
+      client: audioApi,
+      jobId: id,
+      toAbsolute: audioApiUrl,
+      handlers: {
+        onQueued: (position) => {
           setStatus('queued');
-          setQueuePosition(conv.queuePosition);
-        } else if (conv.status === 'completed') {
-          clearInterval(pollRef.current!);
+          setQueuePosition(position);
+        },
+        onProgress: (value) => {
+          setStatus('processing');
+          setProgress(value);
+        },
+        onCompleted: (url, snapshot) => {
           setStatus('completed');
           setProgress(100);
-          if (startTimeRef.current) setConversionTime(Math.round((Date.now() - startTimeRef.current) / 1000));
-          setFileSize(conv.fileSize || null);
-          const finalUrl = conv.outputUrl || `/api/convert/download/${jobId}`;
-          setJobId(finalUrl.startsWith('http') ? finalUrl : audioApiUrl(finalUrl));
+          if (startTimeRef.current) {
+            setConversionTime(Math.round((Date.now() - startTimeRef.current) / 1000));
+          }
+          setFileSize(snapshot.fileSize ?? null);
+          setDownloadUrl(url);
           sendNotification('Conversion Complete! 🔄', 'Your local file has finished converting and is ready to save.');
-        } else if (conv.status === 'failed') {
-          clearInterval(pollRef.current!);
+        },
+        onFailed: (failure) => {
           setStatus('failed');
-          setError(conv.errorMessage || 'Conversion failed');
-        }
-      } catch { clearInterval(pollRef.current!); }
-    }, 1500);
+          setError(failure.message);
+          setCanRetry(failure.retriable);
+        },
+      },
+    });
   };
 
-  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
+  useEffect(() => () => cancelPollRef.current?.(), []);
 
   const handleConvert = async () => {
     startTimeRef.current = Date.now();
     if (!file) return;
     requestNotificationPermission();
-    setStatus('uploading'); setProgress(0); setError(''); setJobId(''); setFileSize(null); setConversionTime(null);
+    setStatus('uploading'); setProgress(0); setError(''); setCanRetry(false); setJobId(''); setDownloadUrl(''); setFileSize(null); setConversionTime(null);
     const formData = new FormData();
     formData.append('file', file);
     formData.append('quality', quality);
@@ -99,169 +113,128 @@ export default function ConverterPage() {
       pollStatus(newJobId);
     } catch (err: unknown) {
       setStatus('failed');
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setError(msg || 'Upload failed. Please try again.');
+      const failure = describeFailure(err);
+      setError(failure.message);
+      setCanRetry(failure.retriable);
     }
   };
 
   const downloadFile = () => {
-    if (jobId) {
-      window.open(jobId, '_blank');
-    }
+    if (downloadUrl) window.open(downloadUrl, '_blank');
   };
 
-  const reset = () => { setFile(null); setStatus('idle'); setProgress(0); setJobId(''); setFileSize(null); setError(''); setConversionTime(null); };
+  const reset = () => {
+    cancelPollRef.current?.();
+    setFile(null); setStatus('idle'); setProgress(0);
+    setJobId(''); setDownloadUrl(''); setFileSize(null);
+    setError(''); setCanRetry(false); setConversionTime(null);
+  };
+
+  const qualityOptions: QualityOption<Quality>[] = [
+    { value: '128', label: '128k' },
+    { value: '192', label: '192k' },
+    { value: '320', label: '320k' },
+  ];
 
   return (
     <ProtectedRoute>
-      <PageWrapper>
-        <div className="w-full max-w-4xl mx-auto px-6 py-20 flex flex-col items-center">
-          <AnimeReveal direction="up" className="w-full text-center mb-12 pt-8">
-            <h1 className="font-display font-bold text-4xl md:text-5xl tracking-tight mb-4 text-white">
+      <div className="w-full max-w-4xl mx-auto px-6 py-20 flex flex-col items-center">
+        <PageHeader
+          icon={<FileAudio className="w-5 h-5" />}
+          eyebrow="Local Converter"
+          title={
+            <>
               High-Fidelity <span className="text-gradient">Audio Extraction</span>
-            </h1>
-            <p className="text-white max-w-2x.5 mx-auto text-lg">
-              Drop your video file below. Our cloud cluster will extract the Audio track without losing quality.
-            </p>
-          </AnimeReveal>
+            </>
+          }
+          subtitle="Drop your video file below. Our cloud cluster will extract the Audio track without losing quality."
+          accent="fuchsia"
+        />
 
-          <AnimeReveal delay={100} direction="up" className="w-full">
-            <div className="glass-panel p-5 sm:p-8 md:p-12 relative overflow-hidden">
-              {/* Subtle background glow */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-brand-purple/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
-
-              {status === 'idle' || status === 'failed' ? (
-                <div className="relative z-10 space-y-8">
-                  {/* Dropzone */}
-                  <div
-                    {...getRootProps()}
-                    className={`relative overflow-hidden rounded-2xl border-2 border-dashed p-12 text-center cursor-pointer transition-all duration-300 ${isDragActive ? 'border-brand-purple bg-brand-purple/5 scale-[1.01] drag-active-pulse' : 'border-white/10 bg-black/[0.02] hover:border-black/20 hover:bg-black/[0.04]'}`}
-                  >
-                    <input {...getInputProps()} />
-                    {file ? (
-                      <div key="file" className="animate-in zoom-in-95 fade-in duration-300">
-                        <div className="w-20 h-20 mx-auto bg-brand-purple/20 rounded-2xl flex items-center justify-center mb-6 border border-brand-purple/30 shadow-[0_0_30px_rgba(168,85,247,0.2)]">
-                          <svg width="40" height="40" fill="none" stroke="var(--color-brand-purple)" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                        </div>
-                        <h3 className="text-xl font-semibold text-white mb-2">{file.name}</h3>
-                        <p className="text-white font-medium">{formatFileSize(file.size)}</p>
+        <AnimeReveal delay={100} direction="up" className="w-full mt-12">
+          <ToolPanel accent="fuchsia">
+            {status === 'idle' || status === 'failed' ? (
+              <div className="relative z-10 space-y-8">
+                {/* Dropzone */}
+                <div
+                  {...getRootProps()}
+                  className={`relative overflow-hidden rounded-2xl border-2 border-dashed p-12 text-center cursor-pointer transition-all duration-300 ${isDragActive ? 'border-fuchsia-400 bg-fuchsia-400/5 scale-[1.01] drag-active-pulse' : 'border-white/10 bg-black/[0.02] hover:border-white/20 hover:bg-black/[0.04]'}`}
+                >
+                  <input {...getInputProps()} />
+                  {file ? (
+                    <div key="file" className="animate-in zoom-in-95 fade-in duration-300">
+                      <div className="w-20 h-20 mx-auto bg-fuchsia-400/20 rounded-2xl flex items-center justify-center mb-6 border border-fuchsia-400/30 shadow-[0_0_30px_rgba(232,121,249,0.2)]">
+                        <FileAudio className="w-10 h-10 text-fuchsia-300" />
                       </div>
-                    ) : (
-                      <div key="empty" className="animate-in fade-in duration-300">
-                        <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-6 border transition-all duration-300 ${isDragActive ? 'bg-brand-purple/10 border-brand-purple/30 text-brand-purple shadow-[0_0_15px_rgba(168,85,247,0.3)]' : 'bg-white/5 border-white/10 text-slate-300'}`}>
-                          <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
-                        </div>
-                        <h3 className="text-lg font-semibold text-white mb-2">{isDragActive ? 'Drop to upload' : 'Drag & drop your video'}</h3>
-                        <p className="text-white text-sm">or click to browse files (MP4, AVI, MKV up to 250MB)</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Controls: quality + button on same row, perfectly aligned */}
-                  <div className="flex flex-col md:flex-row gap-4">
-                    {/* Quality selector */}
-                    <div className="flex-1">
-                      <label className="quality-label">OUTPUT QUALITY</label>
-                      <div className="quality-track">
-                        {(['128', '192', '320'] as Quality[]).map(q => (
-                          <button
-                            key={q}
-                            onClick={() => setQuality(q)}
-                            className={`quality-btn${quality === q ? ' active' : ''}`}
-                          >
-                            {q}k
-                          </button>
-                        ))}
-                      </div>
+                      <h3 className="text-xl font-semibold text-white mb-2">{file.name}</h3>
+                      <p className="text-white/70 font-medium">{formatFileSize(file.size)}</p>
                     </div>
-
-                    {/* Button ? aligned to quality track top using invisible spacer label */}
-                    <div className="flex flex-col justify-start">
-                      <label className="quality-label opacity-0 select-none">BTN</label>
-                      <AnimeHover scaleHover={file ? 1.05 : 1} scaleTap={file ? 0.95 : 1}>
-                        <button
-                          onClick={handleConvert}
-                          disabled={!file}
-                          className={`w-full min-w-[160px] h-[46px] rounded-xl font-semibold transition-colors duration-300 ${!file ? 'bg-white/5 text-white/40 border border-white/10 cursor-not-allowed' : 'btn-primary'}`}
-                        >
-                          Convert to Audio </button>
-                      </AnimeHover>
-                    </div>
-                  </div>
-
-                </div>
-              ) : status === 'processing' || status === 'uploading' || status === 'queued' || status === 'downloading' ? (
-                <ProgressCircle
-                  progress={progress}
-                  statusText={status === 'queued' ? `Queued (Position: ${queuePosition})` : status === 'uploading' ? 'Uploading File...' : status === 'downloading' ? 'Downloading Audio...' : 'Converting Audio...'}
-                  subText={status === 'queued' ? 'Waiting for other conversions to finish...' : status === 'downloading' ? 'Saving file to your device.' : `Please wait while we process your file.`}
-                />
-              ) : (
-                <div className="py-8 text-center flex flex-col items-center animate-in fade-in zoom-in-95 duration-300">
-                  <div className="w-24 h-24 bg-emerald-500/10 rounded-full flex items-center justify-center mb-6 border border-emerald-500/20 shadow-[0_0_40px_rgba(16,185,129,0.2)] animate-in zoom-in-50 duration-500 ease-out">
-                    <svg width="40" height="40" fill="none" stroke="#10b981" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  </div>
-                  <h3 className="text-2xl sm:text-3xl font-display font-bold text-white mb-2 sm:mb-3">Conversion Complete!</h3>
-                  <p className="text-white mb-4 text-base sm:text-lg px-2">Your Audio file is successfully extracted and ready for download.</p>
-                  {fileSize && (
-                    <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-sm font-medium mb-8 px-4 py-2 rounded-lg" style={{ background: 'var(--quality-track-bg)', color: 'var(--quality-btn-idle-color)' }}>
-                      <span>Actual Size: <strong className="text-brand-purple">{formatFileSize(fileSize)}</strong></span>
-                      {conversionTime !== null && (
-                        <span className="hidden sm:inline">|</span>
-                      )}
-                      {conversionTime !== null && (
-                        <span>Time Taken: <strong className="text-brand-purple">{conversionTime}s</strong></span>
-                      )}
+                  ) : (
+                    <div key="empty" className="animate-in fade-in duration-300">
+                      <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-6 border transition-all duration-300 ${isDragActive ? 'bg-fuchsia-400/10 border-fuchsia-400/30 text-fuchsia-400 shadow-[0_0_15px_rgba(232,121,249,0.3)]' : 'bg-white/5 border-white/10 text-white/50'}`}>
+                        <UploadCloud className="w-7 h-7" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-white mb-2">{isDragActive ? 'Drop to upload' : 'Drag & drop your video'}</h3>
+                      <p className="text-white/50 text-sm">or click to browse files (MP4, AVI, MKV up to 250MB)</p>
                     </div>
                   )}
-                  {!fileSize && <div className="mb-8" />}
+                </div>
 
-                  <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
-                    <div className="flex-1 block">
-                      <AnimeHover scaleHover={1.05} scaleTap={0.95} className="w-full">
-                        <button onClick={downloadFile} className="w-full btn-primary download-btn-pulse flex items-center justify-center gap-2 h-14 rounded-xl">
-                          <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                          Download Audio
-                        </button>
-                      </AnimeHover>
-                    </div>
-                    <AnimeHover scaleHover={1.05} scaleTap={0.95} className="w-full sm:w-auto">
-                      <button onClick={reset} className="glass-panel hover:bg-white/5 border border-white/20 h-14 w-full px-8 whitespace-nowrap text-white transition-all rounded-xl">
-                        Convert Another
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex-1">
+                    <QualitySelector
+                      label="OUTPUT QUALITY"
+                      options={qualityOptions}
+                      value={quality}
+                      onSelect={setQuality}
+                    />
+                  </div>
+
+                  <div className="flex flex-col justify-start">
+                    <label className="quality-label opacity-0 select-none">BTN</label>
+                    <AnimeHover scaleHover={file ? 1.05 : 1} scaleTap={file ? 0.95 : 1}>
+                      <button
+                        onClick={handleConvert}
+                        disabled={!file}
+                        className={`w-full min-w-[160px] h-[46px] rounded-xl font-semibold transition-colors duration-300 ${!file ? 'bg-white/5 text-white/40 border border-white/10 cursor-not-allowed' : 'btn-primary'}`}
+                      >
+                        Convert to Audio
                       </button>
                     </AnimeHover>
                   </div>
                 </div>
-              )}
-            </div>
-          </AnimeReveal>
 
-          {/* Error Dialog Modal */}
-          {error && (
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-            >
-              <div
-                className="glass-panel p-8 rounded-2xl max-w-md w-full text-center relative animate-in fade-in zoom-in-95 duration-300"
-              >
-                <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/30">
-                  <svg width="32" height="32" fill="none" stroke="#ef4444" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-2">Upload or Conversion Failed</h3>
-                <p className="text-white/70 mb-8">
-                  {error}
-                </p>
-                <button
-                  onClick={() => { setError(''); setStatus('idle'); }}
-                  className="w-full py-3 bg-black/5 hover:bg-white/20 text-white font-semibold rounded-xl transition-all"
-                >
-                  Try Again
-                </button>
               </div>
-            </div>
-          )}
-        </div>
-      </PageWrapper>
+            ) : status === 'processing' || status === 'uploading' || status === 'queued' || status === 'downloading' ? (
+              <ProgressCircle
+                progress={progress}
+                statusText={status === 'queued' ? `Queued (Position: ${queuePosition})` : status === 'uploading' ? 'Uploading File...' : status === 'downloading' ? 'Downloading Audio...' : 'Converting Audio...'}
+                subText={status === 'queued' ? 'Waiting for other conversions to finish...' : status === 'downloading' ? 'Saving file to your device.' : `Please wait while we process your file.`}
+              />
+            ) : (
+              <CompletionCard
+                accent="fuchsia"
+                heading="Conversion Complete!"
+                message="Your Audio file is successfully extracted and ready for download."
+                fileSize={fileSize}
+                conversionTime={conversionTime}
+                downloadLabel="Download Audio"
+                onDownload={downloadFile}
+                resetLabel="Convert Another"
+                onReset={reset}
+              />
+            )}
+          </ToolPanel>
+        </AnimeReveal>
+
+        <ErrorDialog
+          open={!!error}
+          title={canRetry ? 'Conversion Did Not Complete' : 'This File Cannot Be Converted'}
+          message={error}
+          actionLabel={canRetry ? 'Try Again' : 'Choose A Different File'}
+          onClose={() => { setError(''); setCanRetry(false); setStatus('idle'); }}
+        />
+      </div>
     </ProtectedRoute>
   );
 }

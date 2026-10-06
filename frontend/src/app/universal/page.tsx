@@ -1,48 +1,41 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import api, { videoApi, apiUrl, videoApiUrl } from '@/lib/api';
+import { MonitorPlay } from 'lucide-react';
+import api, { videoApi, videoApiUrl } from '@/lib/api';
+import { pollConversion, describeFailure } from '@/lib/conversion';
 import { formatFileSize } from '@/lib/utils';
-import Image from 'next/image';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ProgressCircle from '@/components/ProgressCircle';
-import AnimeReveal from '@/components/AnimeReveal';
-import AnimeHover from '@/components/AnimeHover';
 import { requestNotificationPermission, sendNotification } from '@/lib/notifications';
 import { useAuthStore } from '@/lib/store';
+import AnimeReveal from '@/components/AnimeReveal';
+import AnimeHover from '@/components/AnimeHover';
 
-type ApiError = { response?: { data?: { message?: string } } };
-
-const getQualityLabel = (resolution: string) => {
-  if (!resolution || resolution === 'Best Available' || resolution === 'NA') return '';
-  const match = resolution.match(/x(\d+)/);
-  if (!match) return '';
-  const h = parseInt(match[1]);
-  if (h >= 4320) return ' (8K UHD)';
-  if (h >= 2160) return ' (4K UHD)';
-  if (h >= 1440) return ' (2K QHD)';
-  if (h >= 1080) return ' (1080p HD)';
-  if (h >= 720) return ' (720p HD)';
-  if (h >= 480) return ' (480p SD)';
-  return ` (${h}p)`;
-};
+import PageHeader from '@/components/ui/PageHeader';
+import ToolPanel from '@/components/ui/ToolPanel';
+import UrlInput from '@/components/ui/UrlInput';
+import QualitySelector, { type QualityOption } from '@/components/ui/QualitySelector';
+import CompletionCard from '@/components/ui/CompletionCard';
+import ErrorDialog from '@/components/ui/ErrorDialog';
 
 export default function UniversalPage() {
   const { user } = useAuthStore();
   const [url, setUrl] = useState('');
   const [quality, setQuality] = useState('720p');
-  const [preflightInfo, setPreflightInfo] = useState<{ title: string; thumbnail: string; resolution: string; sizeBytes: number; videoUrl?: string } | null>(null);
+  const [preflightInfo, setPreflightInfo] = useState<{ title: string; thumbnail: string; resolution: string; sizeBytes: number } | null>(null);
   const [isFetchingInfo, setIsFetchingInfo] = useState(false);
   const [status, setStatus] = useState<'idle' | 'queued' | 'processing' | 'uploading' | 'completed' | 'failed'>('idle');
   const [queuePosition, setQueuePosition] = useState(0);
   const [progress, setProgress] = useState(0);
   const [jobId, setJobId] = useState('');
+  const [downloadUrl, setDownloadUrl] = useState('');
+  const [canRetry, setCanRetry] = useState(false);
   const [fileSize, setFileSize] = useState<number | null>(null);
   const [videoInfo, setVideoInfo] = useState<{ title?: string; thumbnail?: string; sizeBytes?: number; } | null>(null);
-  const [gofileUrl, setGofileUrl] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [conversionTime, setConversionTime] = useState<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const cancelPollRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -53,43 +46,47 @@ export default function UniversalPage() {
   }, []);
 
   const poll = (id: string) => {
-    pollRef.current = setInterval(async () => {
-      try {
-        const { data } = await videoApi.get(`/convert/status/${id}`);
-        const conv = data.data;
-        setProgress(Math.round(conv.progress || 0));
-        if (conv.status === 'queued') {
+    cancelPollRef.current?.();
+    cancelPollRef.current = pollConversion({
+      client: videoApi,
+      jobId: id,
+      toAbsolute: videoApiUrl,
+      intervalMs: 2500,
+      handlers: {
+        onQueued: (position) => {
           setStatus('queued');
-          setQueuePosition(conv.queuePosition);
-        } else if (conv.status === 'completed') {
-          clearInterval(pollRef.current!);
+          setQueuePosition(position);
+        },
+        onProgress: (value, snapshot) => {
+          setStatus(snapshot.status === 'uploading' ? 'uploading' : 'processing');
+          setProgress(value);
+        },
+        onCompleted: (downloadLink, snapshot) => {
           setStatus('completed');
           setProgress(100);
-          if (startTimeRef.current) setConversionTime(Math.round((Date.now() - startTimeRef.current) / 1000));
-          setVideoInfo({ title: conv.youtubeTitle, thumbnail: conv.youtubeThumbnail });
-          setFileSize(conv.fileSize || null);
-          if (conv.gofileUrl) setGofileUrl(conv.gofileUrl);
-          const finalUrl = conv.outputUrl || `/api/convert/download/${id}`;
-          setJobId(finalUrl.startsWith('http') ? finalUrl : videoApiUrl(finalUrl));
+          if (startTimeRef.current) {
+            setConversionTime(Math.round((Date.now() - startTimeRef.current) / 1000));
+          }
+          setVideoInfo({ title: snapshot.youtubeTitle, thumbnail: snapshot.youtubeThumbnail });
+          setFileSize(snapshot.fileSize ?? null);
+          setDownloadUrl(downloadLink);
           sendNotification('Download Complete! 🎉', 'Your video has finished downloading and is ready to save.');
-        } else if (conv.status === 'failed') {
-          clearInterval(pollRef.current!);
+        },
+        onFailed: (failure) => {
           setStatus('failed');
-          setError(conv.errorMessage || 'Download failed');
-        } else if (conv.status === 'uploading') {
-          setStatus('uploading');
-        } else {
-          setStatus('processing');
-        }
-      } catch { clearInterval(pollRef.current!); }
-    }, 2500);
+          setError(failure.message);
+          setCanRetry(failure.retriable);
+        },
+      },
+    });
   };
 
-  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
+  useEffect(() => () => cancelPollRef.current?.(), []);
 
   const handleCheckInfo = async () => {
     if (!url.startsWith('http')) { setError('Please enter a valid URL starting with http:// or https://'); return; }
     setError('');
+    setCanRetry(false);
     setIsFetchingInfo(true);
     try {
       const { data } = await api.get(`/extractor/info?url=${encodeURIComponent(url)}`);
@@ -99,12 +96,12 @@ export default function UniversalPage() {
         title: info.title || 'Video',
         thumbnail: info.thumbnail || '',
         resolution: bestVideo?.quality || 'Best Available',
-        sizeBytes: bestVideo?.filesize || 0,
-        videoUrl: info.videoUrl || bestVideo?.url
+        sizeBytes: bestVideo?.size ?? 0,
       });
     } catch (err: unknown) {
-      const apiError = err as ApiError;
-      setError(apiError.response?.data?.message || 'Failed to fetch video info');
+      const failure = describeFailure(err);
+      setError(failure.message);
+      setCanRetry(failure.retriable);
     } finally {
       setIsFetchingInfo(false);
     }
@@ -114,7 +111,7 @@ export default function UniversalPage() {
     startTimeRef.current = Date.now();
     if (!url.startsWith('http')) { setError('Please enter a valid URL starting with http:// or https://'); return; }
     requestNotificationPermission();
-    setError(''); setStatus('processing'); setProgress(0); setConversionTime(null);
+    setError(''); setCanRetry(false); setStatus('processing'); setProgress(0); setDownloadUrl(''); setConversionTime(null);
     try {
       const { data } = await videoApi.post('/convert/universal', { url, videoQuality: quality });
       setJobId(data.data.jobId);
@@ -122,227 +119,156 @@ export default function UniversalPage() {
       poll(data.data.jobId);
     } catch (err: unknown) {
       setStatus('failed');
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setError(msg || 'Download failed. Please try again.');
+      const failure = describeFailure(err);
+      setError(failure.message);
+      setCanRetry(failure.retriable);
     }
   };
 
   const reset = () => {
+    cancelPollRef.current?.();
     setUrl(''); setStatus('idle'); setProgress(0);
-    setJobId(''); setVideoInfo(null); setFileSize(null); setGofileUrl(null); setError(''); setPreflightInfo(null); setConversionTime(null);
+    setJobId(''); setDownloadUrl(''); setVideoInfo(null); setFileSize(null);
+    setError(''); setCanRetry(false); setPreflightInfo(null); setConversionTime(null);
   };
+
+  const qualityOptions: QualityOption<string>[] = ['360p', '480p', '720p', '1080p', '4K', '8K'].map(q => ({
+    value: q,
+    locked: (q === '4K' || q === '8K') && user?.role !== 'admin' && !user?.isPremium
+  }));
 
   return (
     <ProtectedRoute>
       <div className="w-full max-w-4xl mx-auto px-6 py-20 flex flex-col items-center">
-        {/* Header */}
-        <AnimeReveal direction="up" className="w-full text-center mb-12 pt-8">
-          <h1 className="font-display font-bold text-4xl md:text-5xl tracking-tight mb-4 text-white">
-            Universal <span className="text-gradient">Downloader</span>
-          </h1>
-          <p className="text-white max-w-2xl mx-auto text-lg">
-            Paste a link of Instagram, TikTok, Reddit, or any Video URL and download the video as an Video file.
-          </p>
-        </AnimeReveal>
+        <PageHeader
+          icon={<MonitorPlay className="w-5 h-5" />}
+          eyebrow="Universal Downloader"
+          title={
+            <>
+              Universal <span className="text-gradient">Downloader</span>
+            </>
+          }
+          subtitle="Paste a link of Instagram, TikTok, Reddit, or any Video URL and download the video."
+          accent="violet"
+        />
 
-        <AnimeReveal delay={100} direction="up" className="w-full">
-          <div className="glass-panel p-5 sm:p-8 md:p-12 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-brand-violet/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
-
-              {status === 'idle' || status === 'failed' ? (
-                <div key="input" className="relative z-10 space-y-8 animate-in fade-in duration-300">
-
-                  <div className="relative group">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none z-10 text-white/40 transition-colors duration-200 group-focus-within:text-brand-purple">
-                      <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                      </svg>
-                    </div>
-                    <input
-                      type="text"
-                      value={url}
-                      onChange={(e) => { setUrl(e.target.value); setError(''); setPreflightInfo(null); }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          if (preflightInfo) handleDownload();
-                          else handleCheckInfo();
-                        }
-                      }}
-                      placeholder="https://www.instagram.com/p/..."
-                      className="url-input-field"
-                    />
-                  </div>
-
-                  <div className="flex-1 mt-6">
-                    <label className="quality-label">VIDEO QUALITY</label>
-                    <div className="quality-track">
-                      {(['360p', '480p', '720p', '1080p', '4K', '8K']).map(q => {
-                        const isPremiumOnly = q === '4K' || q === '8K';
-                        const canSelect = !isPremiumOnly || user?.role === 'admin' || user?.isPremium;
-                        return (
-                          <button
-                            key={q}
-                            onClick={() => {
-                              if (canSelect) setQuality(q);
-                              else alert('4K and 8K qualities are reserved for Premium users.');
-                            }}
-                            className={`quality-btn${quality === q ? ' active' : ''} ${!canSelect ? 'opacity-50 cursor-not-allowed' : ''}`}
-                          >
-                            {q} {!canSelect && <span className="ml-1 text-[10px]">👑</span>}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                    {preflightInfo && (
-                      <div
-                        className="overflow-hidden rounded-2xl relative border border-white/10 w-full bg-black/40 mt-6 animate-in slide-in-from-top-2 fade-in duration-300"
-                      >
-                        <div className="p-4 sm:p-6 flex flex-col items-center text-center gap-2">
-                          <div className="w-16 h-16 bg-brand-cyan/10 rounded-full flex items-center justify-center mb-2 border border-brand-cyan/20">
-                            <svg width="32" height="32" fill="none" stroke="#22d3ee" strokeWidth="2" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                            </svg>
-                          </div>
-                          <h3 className="text-base sm:text-xl font-bold text-white line-clamp-2">{preflightInfo.title}</h3>
-                          {preflightInfo.sizeBytes > 0 && (
-                            <div className="flex flex-wrap gap-2 sm:gap-4 text-sm font-medium mt-2">
-                              <span className="bg-brand-cyan/10 px-4 py-2 rounded-xl text-brand-cyan border border-brand-cyan/20">
-                                Actual Size: {formatFileSize(preflightInfo.sizeBytes)}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                  <div className="flex justify-center mt-6">
-                    {!preflightInfo ? (
-                      <button
-                        onClick={handleCheckInfo}
-                        disabled={!url || isFetchingInfo}
-                        className={`w-[280px] h-14 rounded-xl font-semibold text-lg transition-all duration-300 flex items-center justify-center gap-2 ${!url ? 'bg-white/5 text-white/40 cursor-not-allowed' : 'btn-primary'}`}
-                      >
-                        {isFetchingInfo ? (
-                          <>
-                            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                            Checking...
-                          </>
-                        ) : 'Check Video Info'}
-                      </button>
-                    ) : (
-                      <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
-                        <AnimeHover scaleHover={1.02} scaleTap={0.96} className="w-full sm:w-[280px]">
-                          <button
-                            onClick={handleDownload}
-                            disabled={!url}
-                            className={`w-full h-14 rounded-xl font-semibold text-lg transition-all duration-300 btn-primary`}
-                          >
-                            Download Video 
-                          </button>
-                        </AnimeHover>
-                        <AnimeHover scaleHover={1.02} scaleTap={0.96} className="w-full sm:w-[200px]">
-                          <button
-                            onClick={reset}
-                            className={`w-full h-14 rounded-xl font-semibold text-base transition-all duration-300 glass-panel hover:bg-white/5 border border-white/20 text-white`}
-                          >
-                            Convert Another
-                          </button>
-                        </AnimeHover>
-                      </div>
-                    )}
-                  </div>
-
-                </div>
-
-              ) : status === 'processing' || status === 'uploading' || status === 'queued' ? (
-                <ProgressCircle
-                  progress={progress}
-                  statusText={status === 'queued' ? `Queued (Position: ${queuePosition})` : status === 'uploading' ? "Finalizing high-speed link..." : "Downloading Video..."}
-                  subText={status === 'queued' ? 'Waiting for other conversions to finish...' : status === 'uploading' ? "Generating high-speed CDN link" : "Fetching highest quality video securely"}
+        <AnimeReveal delay={100} direction="up" className="w-full mt-12">
+          <ToolPanel accent="violet">
+            {status === 'idle' || status === 'failed' ? (
+              <div key="input" className="relative z-10 space-y-8 animate-in fade-in duration-300">
+                
+                <UrlInput
+                  id="universal-url"
+                  placeholder="https://www.instagram.com/p/..."
+                  value={url}
+                  onChange={(v) => { setUrl(v); setError(''); setPreflightInfo(null); }}
+                  onEnter={() => {
+                    if (preflightInfo) handleDownload();
+                    else handleCheckInfo();
+                  }}
                 />
 
-              ) : (
-                <div key="done" className="py-8 text-center flex flex-col items-center animate-in fade-in zoom-in-95 duration-300">
-                  {/* Removed Thumbnail */}
+                <QualitySelector
+                  label="VIDEO QUALITY"
+                  options={qualityOptions}
+                  value={quality}
+                  onSelect={setQuality}
+                  onLocked={() => alert('4K and 8K qualities are reserved for Premium users.')}
+                />
 
-                  {/* Clean Icon Fallback */}
-                  <div className="w-24 h-24 bg-brand-violet/10 rounded-full flex items-center justify-center mb-6 border border-brand-violet/20 shadow-[0_0_40px_rgba(124,58,237,0.2)]">
-                    <svg width="40" height="40" fill="none" stroke="#7c3aed" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-
-                  <h3 className="text-2xl sm:text-3xl font-display font-bold text-white mb-2 sm:mb-3">Video is Ready!</h3>
-                  {videoInfo?.title && (
-                    <p className="max-w-sm w-full line-clamp-2 mb-2 text-xs sm:text-sm text-white px-4">{videoInfo.title}</p>
-                  )}
-                  <p className="text-white mb-4 text-base sm:text-lg px-2">
-                    Your <strong className="text-brand-purple">Highest Quality</strong> Video is ready to download.
-                  </p>
-                  {fileSize && (
-                    <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-sm font-medium mb-8 px-4 py-2 rounded-lg bg-white/5 text-white">
-                      <span>Actual Size: <strong className="text-brand-purple">{formatFileSize(fileSize)}</strong></span>
-                      {conversionTime !== null && (
-                        <span className="hidden sm:inline">|</span>
-                      )}
-                      {conversionTime !== null && (
-                        <span>Time Taken: <strong className="text-brand-purple">{conversionTime}s</strong></span>
+                {preflightInfo && (
+                  <div className="overflow-hidden rounded-2xl relative border border-white/10 w-full bg-black/40 mt-6 animate-in slide-in-from-top-2 fade-in duration-300">
+                    <div className="p-4 sm:p-6 flex flex-col items-center text-center gap-2">
+                      <div className="w-16 h-16 bg-brand-cyan/10 rounded-full flex items-center justify-center mb-2 border border-brand-cyan/20">
+                        <MonitorPlay className="w-8 h-8 text-cyan-400" />
+                      </div>
+                      <h3 className="text-base sm:text-xl font-bold text-white line-clamp-2">{preflightInfo.title}</h3>
+                      {preflightInfo.sizeBytes > 0 && (
+                        <div className="flex flex-wrap gap-2 sm:gap-4 text-sm font-medium mt-2">
+                          <span className="bg-brand-cyan/10 px-4 py-2 rounded-xl text-brand-cyan border border-brand-cyan/20">
+                            Actual Size: {formatFileSize(preflightInfo.sizeBytes)}
+                          </span>
+                        </div>
                       )}
                     </div>
-                  )}
-                  {!fileSize && <div className="mb-8" />}
+                  </div>
+                )}
 
-                  <div className="flex flex-col sm:flex-row gap-4 w-full max-w-lg">
-                    <div className="flex flex-col gap-3 flex-1">
-                      <AnimeHover scaleHover={1.02} scaleTap={0.96} className="w-full">
-                        <button 
-                          onClick={() => { window.open(jobId, '_blank'); }}
-                          className="w-full font-semibold rounded-xl flex items-center justify-center gap-2 h-14 transition-all duration-300 btn-primary"
+                <div className="flex justify-center mt-6">
+                  {!preflightInfo ? (
+                    <button
+                      onClick={handleCheckInfo}
+                      disabled={!url || isFetchingInfo}
+                      className={`w-[280px] h-14 rounded-xl font-semibold text-lg transition-all duration-300 flex items-center justify-center gap-2 ${!url ? 'bg-white/5 text-white/40 cursor-not-allowed' : 'btn-primary'}`}
+                    >
+                      {isFetchingInfo ? (
+                        <>
+                          <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                          Checking...
+                        </>
+                      ) : 'Check Video Info'}
+                    </button>
+                  ) : (
+                    <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
+                      <AnimeHover scaleHover={1.02} scaleTap={0.96} className="w-full sm:w-[280px]">
+                        <button
+                          onClick={handleDownload}
+                          disabled={!url}
+                          className="w-full h-14 rounded-xl font-semibold text-lg transition-all duration-300 btn-primary"
                         >
-                          <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                          </svg>
-                          Download Video 
+                          Download Video
+                        </button>
+                      </AnimeHover>
+                      <AnimeHover scaleHover={1.02} scaleTap={0.96} className="w-full sm:w-[200px]">
+                        <button
+                          onClick={reset}
+                          className="w-full h-14 rounded-xl font-semibold text-base transition-all duration-300 glass-panel hover:bg-white/5 border border-white/20 text-white"
+                        >
+                          Convert Another
                         </button>
                       </AnimeHover>
                     </div>
-                    <AnimeHover scaleHover={1.02} scaleTap={0.96} className="w-full sm:w-auto">
-                      <button onClick={reset} className="glass-panel hover:bg-white/5 border border-white/20 text-white transition-all h-14 w-full px-8 whitespace-nowrap">
-                        Download Another
-                      </button>
-                    </AnimeHover>
-                  </div>
+                  )}
                 </div>
-              )}
-          </div>
+
+              </div>
+            ) : status === 'processing' || status === 'uploading' || status === 'queued' ? (
+              <ProgressCircle
+                progress={progress}
+                statusText={status === 'queued' ? `Queued (Position: ${queuePosition})` : status === 'uploading' ? "Finalizing high-speed link..." : "Downloading Video..."}
+                subText={status === 'queued' ? 'Waiting for other conversions to finish...' : status === 'uploading' ? "Generating high-speed CDN link" : "Fetching highest quality video securely"}
+              />
+            ) : (
+              <CompletionCard
+                accent="violet"
+                heading="Video is Ready!"
+                message={
+                  <>
+                    Your <strong className="text-violet-300">Highest Quality</strong> Video is ready to download.
+                  </>
+                }
+                thumbnail={videoInfo?.thumbnail || preflightInfo?.thumbnail}
+                mediaTitle={videoInfo?.title}
+                fileSize={fileSize}
+                conversionTime={conversionTime}
+                downloadLabel="Download Video"
+                onDownload={() => { if (downloadUrl) window.open(downloadUrl, '_blank'); }}
+                resetLabel="Download Another"
+                onReset={reset}
+              />
+            )}
+          </ToolPanel>
         </AnimeReveal>
 
-          {error && (
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-            >
-              <div
-                className="glass-panel p-8 rounded-2xl max-w-md w-full text-center relative animate-in fade-in zoom-in-95 duration-300"
-              >
-                <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/30">
-                  <svg width="32" height="32" fill="none" stroke="#ef4444" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-2">Download Failed</h3>
-                <p className="text-white mb-8">
-                  {error}
-                </p>
-                <button
-                  onClick={() => { setError(''); setStatus('idle'); }}
-                  className="w-full py-3 bg-black/5 hover:bg-white/20 text-white font-semibold rounded-xl transition-all"
-                >
-                  Try Again
-                </button>
-              </div>
-            </div>
-          )}
+        <ErrorDialog
+          open={!!error}
+          title={canRetry ? 'Download Did Not Complete' : 'This Link Cannot Be Downloaded'}
+          message={error}
+          actionLabel={canRetry ? 'Try Again' : 'Try A Different Link'}
+          onClose={() => { setError(''); setCanRetry(false); setStatus('idle'); }}
+        />
       </div>
     </ProtectedRoute>
   );
 }
+

@@ -1,24 +1,46 @@
+# Build context exclusions.
+#
+# Keep this file in sync with the Dockerfile. It previously excluded
+# `bgutil-ytdlp-pot-provider` outright while the Dockerfile still ran
+# `cd bgutil-ytdlp-pot-provider/server && npm ci`, so the build failed on a
+# missing directory and Render kept serving the last image that happened to
+# build. That mismatch is the reason deploys appeared to succeed locally and
+# never took effect in production.
+
+# Installed inside the image for the correct platform. Copying a
+# Windows-built tree in would break every native module.
 node_modules
+**/node_modules
+
+# Compiled output is produced by the build stage.
 dist
+**/build
+**/*.tsbuildinfo
+
+# Runtime scratch space.
 outputs/*
 !outputs/.gitkeep
 uploads/*
 !uploads/.gitkeep
 
 # Windows-only binaries are useless in a Linux image and cost ~36MB of build
-# context. yt-dlp/ffmpeg come from the Dockerfile instead.
+# context. yt-dlp and ffmpeg come from the Dockerfile instead.
 bin/*.exe
 bin/*.exe.old
 
-# The PO token provider is no longer used.
-bgutil-ytdlp-pot-provider
-
+# Secrets are supplied as environment variables by Render, never baked into a
+# layer. `.env.example` is documentation and safe to keep.
 *.env
 .env*
 !.env.example
+
+# WireGuard config carrying a private key. Never belongs in an image.
+warp.conf
+
+# Local-only scratch and docs.
 npm-debug.log*
 *.md
 .git
+.github
 .vscode
-warp.conf
 test-*.js

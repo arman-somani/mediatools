@@ -32,6 +32,8 @@ import directRoutes from './routes/direct';
 import { errorHandler } from './middleware/errorHandler';
 import { cleanupOldFiles } from './utils/cleanup';
 import { verifyMailTransport } from './utils/email';
+import { probePotProvider, getPotMode, currentLadder } from './services/ytdlp';
+import { conversionQueue } from './utils/queue';
 
 const app = express();
 
@@ -133,6 +135,14 @@ app.get('/api/health/ready', (_req, res) => {
     mail: env.mail.configured ? 'configured' : 'disabled',
     proxy: env.youtube.proxyUrl ? 'configured' : 'none',
     cookies: env.youtube.cookieFile || env.youtube.cookiesB64 ? 'configured' : 'none',
+    // The two fields worth looking at first when YouTube extraction starts
+    // failing: how tokens are being obtained, and which clients that leaves
+    // available to try.
+    potTokens: getPotMode(),
+    extractionClients: currentLadder(),
+    // Conversions run one at a time on purpose; see utils/queue.ts.
+    queue: { waiting: conversionQueue.depth, busy: conversionQueue.busy },
+    memoryMb: Math.round(process.memoryUsage().rss / 1024 / 1024),
     ...(missing.length ? { missing } : {}),
   });
 });
@@ -231,6 +241,22 @@ async function start(): Promise<void> {
   await connectDB();
   preflight();
   void verifyMailTransport();
+
+  // The sidecar is started by start.sh, which waits for it before launching
+  // this process, so the first probe normally succeeds immediately. Re-probed
+  // on a timer because the provider can die (or be OOM-killed) later, and a
+  // ladder that keeps offering web clients after that produces failures that
+  // look exactly like a YouTube block.
+  void probePotProvider().then(ready => {
+    console.log(`[boot] PO token source: ${getPotMode()}`);
+    console.log(`[boot] extraction clients: ${currentLadder().join(' -> ')}`);
+    if (!ready) {
+      console.warn('[boot] no PO token source available; the web clients are '
+        + 'excluded from the ladder and only tokenless clients will be tried');
+    }
+  });
+  const potTimer = setInterval(() => void probePotProvider(), 5 * 60 * 1000);
+  potTimer.unref();
 
   const cleanupTimer = setInterval(cleanupOldFiles, 30 * 60 * 1000);
   cleanupTimer.unref();
