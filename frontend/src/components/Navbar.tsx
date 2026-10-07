@@ -2,211 +2,216 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useAuthStore } from '@/lib/store';
 import { useState, useRef, useEffect } from 'react';
+import { LayoutDashboard, LogOut, Menu, X, ShieldCheck, ChevronDown } from 'lucide-react';
+import { useAuthStore } from '@/lib/store';
 import api from '@/lib/api';
-import { AudioLines, LayoutDashboard, Music, Clapperboard, LogOut, Menu, X, ShieldCheck } from 'lucide-react';
-import { YouTubeIcon } from '@/components/icons';
+import Logo from '@/components/Logo';
 
-const links = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Video to Audio', href: '/converter', icon: Music },
-  { name: 'YouTube Audio', href: '/youtube', icon: YouTubeIcon },
-  { name: 'YouTube Video', href: '/yt-video', icon: Clapperboard },
+const TOOL_LINKS = [
+  { name: 'Video to Audio', href: '/converter' },
+  { name: 'YouTube to MP3', href: '/youtube' },
+  { name: 'YouTube to MP4', href: '/yt-video' },
 ];
 
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, clearAuth } = useAuthStore();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const mobileRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false);
-      }
-      if (mobileRef.current && !mobileRef.current.contains(e.target as Node)) {
-        setMobileMenuOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12);
+    const onScroll = () => setScrolled(window.scrollY > 4);
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  useEffect(() => {
+    const onDown = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { setMenuOpen(false); setMobileOpen(false); }
+    };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, []);
+
   // Close menus on navigation
   useEffect(() => {
-    setMobileMenuOpen(false);
-    setDropdownOpen(false);
+    setMenuOpen(false);
+    setMobileOpen(false);
   }, [pathname]);
+
+  // Lock page scroll while the mobile sheet is open
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileOpen]);
 
   useEffect(() => {
     if (!user) return;
     const pingServer = async () => {
       try {
         await api.post('/user/ping');
-      } catch (err) {
+      } catch {
         // Ignore ping errors
       }
     };
 
-    // Initial ping on load
+    // Initial ping on load, then every 60 seconds
     pingServer();
-
-    // Ping every 60 seconds
     const interval = setInterval(pingServer, 60000);
     return () => clearInterval(interval);
   }, [user]);
 
   const handleSignOut = () => {
     clearAuth();
-    setDropdownOpen(false);
-    setMobileMenuOpen(false);
+    setMenuOpen(false);
+    setMobileOpen(false);
     router.push('/');
   };
 
-  const firstLetter = user?.name ? user.name.charAt(0).toUpperCase() : '';
+  const signedIn = mounted && !!user;
+  const initial = user?.name ? user.name.charAt(0).toUpperCase() : '';
+  const isActive = (href: string) => pathname === href;
 
   return (
-    <header className="fixed top-0 inset-x-0 z-50 px-3 sm:px-5 pt-3 sm:pt-4">
-      <div ref={mobileRef} className="mx-auto max-w-6xl relative">
-        <nav
-          className={`glass flex items-center justify-between gap-3 pl-3 pr-2 sm:pl-4 py-2 transition-all duration-300 ${scrolled ? 'shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_20px_50px_-15px_rgba(0,0,0,0.8)]' : ''}`}
-          style={{ borderRadius: '1.25rem', background: scrolled ? 'linear-gradient(140deg, rgba(20,18,44,0.6), rgba(12,12,28,0.5))' : undefined }}
-          aria-label="Main"
-        >
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group shrink-0" aria-label="MediaTools home">
-            <span className="relative w-9 h-9 rounded-xl flex items-center justify-center bg-gradient-to-br from-violet-500 via-fuchsia-500 to-cyan-400 shadow-[0_0_20px_rgba(168,85,247,0.55),inset_0_1px_0_rgba(255,255,255,0.45)] transition-transform duration-300 group-hover:rotate-[-6deg]">
-              <AudioLines className="w-5 h-5 text-white" strokeWidth={2.4} />
-            </span>
-            <span className="text-lg font-display font-bold tracking-tight text-white hidden min-[380px]:block">
-              Media<span className="text-gradient">TOOlkit</span>
-            </span>
-          </Link>
+    <header
+      className={`sticky top-0 z-50 w-full border-b transition-colors duration-200 ${
+        scrolled || mobileOpen ? 'border-line bg-bg/85 backdrop-blur-md' : 'border-transparent bg-bg'
+      }`}
+    >
+      <nav className="container-page flex h-14 items-center gap-6" aria-label="Main">
+        <Logo />
 
-          {/* Desktop links */}
-          <div className="hidden lg:flex items-center gap-1 rounded-2xl p-1 bg-black/15 border border-white/[0.06]">
-            {links.map((link) => {
-              const isActive = pathname === link.href;
-              return (
-                <Link key={link.href} href={link.href} className={`nav-link ${isActive ? 'active' : ''}`} aria-current={isActive ? 'page' : undefined}>
-                  {link.name}
-                </Link>
-              );
-            })}
-          </div>
+        <div className="hidden md:flex items-center gap-1">
+          {TOOL_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="nav-link"
+              aria-current={isActive(link.href) ? 'page' : undefined}
+            >
+              {link.name}
+            </Link>
+          ))}
+        </div>
 
-          {/* Right side */}
-          <div className="flex items-center gap-2">
-            {user ? (
-              <div className="relative" ref={dropdownRef}>
+        <div className="ml-auto flex items-center gap-2">
+          {signedIn ? (
+            <>
+              <Link
+                href="/dashboard"
+                className="nav-link hidden md:inline-flex"
+                aria-current={isActive('/dashboard') ? 'page' : undefined}
+              >
+                Dashboard
+              </Link>
+              <div className="relative" ref={menuRef}>
                 <button
                   id="user-avatar-btn"
-                  onClick={() => setDropdownOpen((v) => !v)}
-                  className="user-avatar-btn"
-                  aria-label="User menu"
-                  aria-expanded={dropdownOpen}
-                  title={user.name}
+                  onClick={() => setMenuOpen((v) => !v)}
+                  className="flex items-center gap-1.5 rounded-full p-0.5 pr-1.5 hover:bg-white/5 transition-colors"
+                  aria-label="Account menu"
+                  aria-haspopup="menu"
+                  aria-expanded={menuOpen}
                 >
-                  {firstLetter}
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-3 border border-line-strong text-[13px] font-semibold text-fg">
+                    {initial}
+                  </span>
+                  <ChevronDown className={`h-3.5 w-3.5 text-fg-subtle transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
                 </button>
 
-                {dropdownOpen && (
-                  <div className="dropdown-glass absolute right-0 top-[calc(100%+12px)] w-64 overflow-hidden z-50">
-                    <div className="p-4 flex items-center gap-3">
-                      <span className="user-avatar-btn !w-10 !h-10 shrink-0">{firstLetter}</span>
-                      <div className="min-w-0">
-                        <p className="font-semibold text-sm text-white truncate">{user.name}</p>
-                        <p className="text-xs text-white/50 truncate">{user.email}</p>
-                      </div>
+                {menuOpen && (
+                  <div role="menu" className="menu absolute right-0 top-[calc(100%+8px)] w-60 p-1 origin-top-right">
+                    <div className="px-2.5 py-2">
+                      <p className="text-[13.5px] font-medium text-fg truncate">{user?.name}</p>
+                      <p className="text-[12.5px] text-fg-subtle truncate">{user?.email}</p>
                     </div>
-                    <div className="divider" />
-                    <div className="p-1.5">
-                      <Link href="/dashboard" className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-white/80 hover:text-white hover:bg-white/[0.07] transition-colors">
-                        <LayoutDashboard className="w-4 h-4" /> Dashboard
+                    <div className="divider my-1" />
+                    <Link href="/dashboard" role="menuitem" className="menu-item">
+                      <LayoutDashboard className="h-4 w-4" /> Dashboard
+                    </Link>
+                    {user?.role === 'admin' && (
+                      <Link href="/admin" role="menuitem" className="menu-item">
+                        <ShieldCheck className="h-4 w-4" /> Admin
                       </Link>
-                      {user.role === 'admin' && (
-                        <Link href="/admin" className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-white/80 hover:text-white hover:bg-white/[0.07] transition-colors">
-                          <ShieldCheck className="w-4 h-4" /> Admin Panel
-                        </Link>
-                      )}
-                      <button
-                        id="sign-out-btn"
-                        onClick={handleSignOut}
-                        className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-rose-300 hover:bg-rose-500/10 transition-colors"
-                      >
-                        <LogOut className="w-4 h-4" /> Sign Out
-                      </button>
-                    </div>
+                    )}
+                    <div className="divider my-1" />
+                    <button id="sign-out-btn" role="menuitem" onClick={handleSignOut} className="menu-item">
+                      <LogOut className="h-4 w-4" /> Sign out
+                    </button>
                   </div>
                 )}
               </div>
-            ) : (
+            </>
+          ) : (
+            <>
+              <Link href="/auth/login" className="nav-link hidden sm:inline-flex">
+                Sign in
+              </Link>
+              <Link href="/auth/register" className="btn-primary btn-sm hidden sm:inline-flex">
+                Get started
+              </Link>
+            </>
+          )}
+
+          <button
+            id="mobile-menu-btn"
+            onClick={() => setMobileOpen((v) => !v)}
+            className="btn-icon md:hidden"
+            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileOpen}
+          >
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
+      </nav>
+
+      {mobileOpen && (
+        <div className="md:hidden fixed inset-x-0 top-14 bottom-0 bg-bg border-t border-line anim-fade-in overflow-y-auto">
+          <div className="container-page py-4">
+            <p className="eyebrow px-2 mb-1">Tools</p>
+            {TOOL_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`flex items-center h-11 px-2 rounded-lg text-[15px] ${isActive(link.href) ? 'text-fg bg-white/5' : 'text-fg-muted'}`}
+              >
+                {link.name}
+              </Link>
+            ))}
+            {signedIn && (
               <>
-                <Link href="/auth/login" className="nav-link hidden sm:inline-flex">
-                  Sign In
-                </Link>
-                <Link href="/auth/register" className="btn-primary !py-2 !px-4 text-sm !rounded-xl hidden sm:inline-flex">
-                  Get Started
-                </Link>
+                <div className="divider my-3" />
+                <Link href="/dashboard" className="flex items-center h-11 px-2 rounded-lg text-[15px] text-fg-muted">Dashboard</Link>
+                {user?.role === 'admin' && (
+                  <Link href="/admin" className="flex items-center h-11 px-2 rounded-lg text-[15px] text-fg-muted">Admin</Link>
+                )}
+                <button onClick={handleSignOut} className="flex w-full items-center h-11 px-2 rounded-lg text-[15px] text-fg-muted">Sign out</button>
               </>
             )}
-
-            <button
-              id="mobile-menu-btn"
-              onClick={() => setMobileMenuOpen((v) => !v)}
-              className="btn-icon lg:hidden !w-10 !h-10"
-              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
-              aria-expanded={mobileMenuOpen}
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-          </div>
-        </nav>
-
-        {/* Mobile sheet */}
-        {mobileMenuOpen && (
-          <div className="dropdown-glass lg:hidden absolute left-0 right-0 top-[calc(100%+10px)] p-2" style={{ transformOrigin: 'top center' }}>
-            {links.map((link) => {
-              const Icon = link.icon;
-              const isActive = pathname === link.href;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium transition-colors ${isActive ? 'bg-white/10 text-white' : 'text-white/75 hover:bg-white/[0.06] hover:text-white'}`}
-                >
-                  <span className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/[0.06] border border-white/10">
-                    <Icon className="w-4 h-4" />
-                  </span>
-                  {link.name}
-                </Link>
-              );
-            })}
-            {!user && (
-              <>
-                <div className="divider my-2" />
-                <div className="grid grid-cols-2 gap-2 p-1">
-                  <Link href="/auth/login" className="btn-glass !py-2.5 text-sm">Sign In</Link>
-                  <Link href="/auth/register" className="btn-primary !py-2.5 text-sm">Get Started</Link>
-                </div>
-              </>
+            {!signedIn && (
+              <div className="grid grid-cols-2 gap-2 mt-4">
+                <Link href="/auth/login" className="btn-secondary">Sign in</Link>
+                <Link href="/auth/register" className="btn-primary">Get started</Link>
+              </div>
             )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </header>
   );
 }
