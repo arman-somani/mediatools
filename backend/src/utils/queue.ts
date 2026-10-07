@@ -49,6 +49,20 @@ class TaskQueue {
     void this.drain();
   }
 
+  /**
+   * Whether `add` would succeed.
+   *
+   * The routes create a Conversion document and answer the client with its id
+   * *before* enqueuing the work. So capacity has to be checked up front: a
+   * rejection discovered at enqueue time would happen after the response had
+   * already gone out, leaving the caller holding a job id for work that was
+   * never queued, polling it until it timed out. Checking first turns that into
+   * a 503 the client can act on.
+   */
+  hasCapacity(): boolean {
+    return this.queue.length < env.maxQueueDepth;
+  }
+
   /** 1-based position, or 0 when running or finished. */
   getQueuePosition(id: string): number {
     const index = this.queue.findIndex(t => t.id === id);
