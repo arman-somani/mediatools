@@ -2,370 +2,447 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import {
+  Layers, Download, ShieldCheck, Clock, Music, Clapperboard, Globe,
+  ArrowRight, Trash2, RotateCcw, AlertCircle, Shield, X
+} from 'lucide-react';
 import { useAuthStore } from '@/lib/store';
 import api from '@/lib/api';
 import PageWrapper from '@/components/PageWrapper';
 import AnimeReveal from '@/components/AnimeReveal';
 import AnimeHover from '@/components/AnimeHover';
+import { YouTubeIcon } from '@/components/icons';
+import { formatFileSize } from '@/lib/utils';
 
 type RecentConversion = {
-    _id?: string;
-    outputFilename?: string;
-    originalName?: string;
-    youtubeTitle?: string;
-    type?: string;
-    status?: string;
-    fileSize?: number;
-    youtubeUrl?: string;
+  _id?: string;
+  outputFilename?: string;
+  originalName?: string;
+  youtubeTitle?: string;
+  type?: string;
+  status?: string;
+  fileSize?: number;
+  youtubeUrl?: string;
 };
 
-function formatBytes(bytes?: number) {
-    if (!bytes || bytes === 0) return 'Unknown Size';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
-
 const TOOLS = [
-    {
-        label: 'Video to Audio',
-        description: 'Convert any local video file to high-quality Audio',
-        href: '/converter',
-        gradient: 'from-brand-violet to-brand-purple',
-        shadow: 'hover:shadow-[0_0_30px_rgba(168,85,247,0.35)]',
-        border: 'border-brand-purple/20',
-        bg: 'bg-brand-purple/5',
-        icon: (
-            <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24" className="text-brand-purple">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" />
-            </svg>
-        ),
-        badge: 'Up to 320kbps',
-        badgeColor: 'bg-brand-purple/20 text-brand-purple',
-    },
-    {
-        label: 'YouTube MP3',
-        description: 'Download YouTube videos directly as MP3 audio.',
-        href: '/youtube',
-        gradient: 'from-red-500 to-red-600',
-        shadow: 'hover:shadow-[0_0_30px_rgba(239,68,68,0.35)]',
-        border: 'border-red-500/20',
-        bg: 'bg-red-500/5',
-        icon: (
-            <svg width="26" height="26" fill="currentColor" viewBox="0 0 24 24" className="text-red-500">
-                <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z" />
-            </svg>
-        ),
-        badge: 'Fast',
-        badgeColor: 'bg-red-500/20 text-red-500',
-    },
-    {
-        label: 'YouTube MP4',
-        description: 'Download YouTube videos in up to 8K MP4 resolution.',
-        href: '/yt-video',
-        gradient: 'from-brand-green to-emerald-500',
-        shadow: 'hover:shadow-[0_0_30px_rgba(34,197,94,0.35)]',
-        border: 'border-brand-green/20',
-        bg: 'bg-brand-green/5',
-        icon: (
-            <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-brand-green">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-        ),
-        badge: 'Up to 8K',
-        badgeColor: 'bg-brand-green/20 text-brand-green',
-    },
+  {
+    label: 'Video to Audio',
+    description: 'Convert any local video file into crystal-clear MP3 audio.',
+    href: '/converter',
+    badge: 'Up to 320kbps',
+    icon: Music,
+    accentColor: 'text-orange-400',
+    iconBg: 'bg-orange-500/10 border-orange-500/20',
+  },
+  {
+    label: 'YouTube MP3',
+    description: 'Download YouTube videos directly as high-bitrate audio.',
+    href: '/youtube',
+    badge: 'Fast Extract',
+    icon: YouTubeIcon,
+    accentColor: 'text-rose-400',
+    iconBg: 'bg-rose-500/10 border-rose-500/20',
+  },
+  {
+    label: 'YouTube MP4',
+    description: 'Download YouTube videos in crisp quality from 360p up to 8K.',
+    href: '/yt-video',
+    badge: 'Up to 8K',
+    icon: Clapperboard,
+    accentColor: 'text-cyan-400',
+    iconBg: 'bg-cyan-500/10 border-cyan-500/20',
+  },
+  {
+    label: 'Universal Video',
+    description: 'Save videos from Instagram, TikTok, Twitter/X, and more.',
+    href: '/universal',
+    badge: 'Multi-Platform',
+    icon: Globe,
+    accentColor: 'text-emerald-400',
+    iconBg: 'bg-emerald-500/10 border-emerald-500/20',
+  },
 ];
 
 export default function DashboardPage() {
-    const [userConversions, setUserConversions] = useState(0);
-    const [userDownloads, setUserDownloads] = useState(0);
-    const [recentConversions, setRecentConversions] = useState<RecentConversion[]>([]);
-    const [error, setError] = useState('');
-    const { user, accessToken, updateUser } = useAuthStore();
+  const [userConversions, setUserConversions] = useState(0);
+  const [userDownloads, setUserDownloads] = useState(0);
+  const [recentConversions, setRecentConversions] = useState<RecentConversion[]>([]);
+  const [error, setError] = useState('');
+  const { user, accessToken, updateUser } = useAuthStore();
 
-    useEffect(() => {
-        if (!accessToken && !user) {
-            return;
+  useEffect(() => {
+    if (!accessToken && !user) {
+      return;
+    }
+
+    setError('');
+
+    const loadDashboard = async () => {
+      try {
+        const { data } = await api.get('/user/dashboard');
+        if (data.success) {
+          if (data.data.user && data.data.user.role !== user?.role) {
+            updateUser({ role: data.data.user.role });
+          }
+          setUserConversions(data.data.stats.totalConversions || 0);
+          setUserDownloads(data.data.stats.totalDownloads || 0);
+          setRecentConversions(data.data.recentConversions || []);
         }
-
-        // Clear previous errors when user becomes available
-        setError('');
-
-        const loadDashboard = async () => {
-            try {
-                const { data } = await api.get('/user/dashboard');
-                if (data.success) {
-                    if (data.data.user && data.data.user.role !== user?.role) {
-                        updateUser({ role: data.data.user.role });
-                    }
-                    setUserConversions(data.data.stats.totalConversions || 0);
-                    setUserDownloads(data.data.stats.totalDownloads || 0);
-                    setRecentConversions(data.data.recentConversions || []);
-                }
-            } catch (err: any) {
-                if (err?.response?.status === 401) {
-                    setError('Session expired. Please log in again.');
-                } else if (err?.response?.status === 403) {
-                    setError('Your account is suspended due to security reasons.');
-                } else {
-                    setError('Failed to load dashboard. Make sure the backend is running.');
-                }
-            }
-        };
-
-        loadDashboard();
-    }, [accessToken, user]);
-
-    const handleDelete = async (id: string) => {
-        try {
-            const { data } = await api.delete(`/user/history/${id}`);
-            if (data.success) {
-                setRecentConversions(prev => prev.filter(c => c._id !== id));
-            }
-        } catch (err) {
-            console.error('Failed to delete conversion', err);
+      } catch (err: any) {
+        if (err?.response?.status === 401) {
+          setError('Session expired. Please log in again.');
+        } else if (err?.response?.status === 403) {
+          setError('Your account is suspended due to security reasons.');
+        } else {
+          setError('Failed to load dashboard. Make sure the backend server is running.');
         }
+      }
     };
 
-    const handleDeleteAll = async () => {
-        if (!confirm('Are you sure you want to clear your entire conversion history?')) return;
-        try {
-            const { data } = await api.delete('/user/history');
-            if (data.success) {
-                setRecentConversions([]);
-            }
-        } catch (err) {
-            console.error('Failed to clear history', err);
-        }
-    };
+    loadDashboard();
+  }, [accessToken, user, updateUser]);
 
-    return (
-        <PageWrapper>
-            <main className="min-h-screen w-full px-6 pt-32 pb-20 text-white">
-                <section className="mx-auto max-w-7xl">
+  const handleDelete = async (id: string) => {
+    try {
+      const { data } = await api.delete(`/user/history/${id}`);
+      if (data.success) {
+        setRecentConversions((prev) => prev.filter((c) => c._id !== id));
+      }
+    } catch (err) {
+      console.error('Failed to delete conversion', err);
+    }
+  };
 
-                    {/* ── Header ── */}
-                    <AnimeReveal
-                        delay={100}
-                        direction="up"
-                        className="mb-10"
+  const handleDeleteAll = async () => {
+    if (!confirm('Are you sure you want to clear your entire conversion history?')) return;
+    try {
+      const { data } = await api.delete('/user/history');
+      if (data.success) {
+        setRecentConversions([]);
+      }
+    } catch (err) {
+      console.error('Failed to clear history', err);
+    }
+  };
+
+  return (
+    <PageWrapper>
+      <main className="min-h-screen w-full container-page pt-28 pb-20">
+        
+        {/* ── Header ── */}
+        <AnimeReveal delay={100} direction="up" className="mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-line pb-6">
+            <div>
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-fg">Dashboard</h1>
+                {user?.role === 'admin' && (
+                  <span className="badge text-accent !bg-accent/10 !border-accent/20 font-semibold">
+                    Admin
+                  </span>
+                )}
+              </div>
+              <p className="mt-2 text-fg-muted text-sm sm:text-base">
+                {user ? `Welcome back, ${user.name}` : 'Manage your conversions, track downloads, and launch tools.'}
+              </p>
+            </div>
+
+            {user?.role === 'admin' && (
+              <Link
+                href="/admin"
+                className="btn-secondary self-start sm:self-auto gap-2"
+              >
+                <Shield className="w-4 h-4 text-accent" />
+                Admin Panel
+              </Link>
+            )}
+          </div>
+        </AnimeReveal>
+
+        {/* ── Auth Warning ── */}
+        {!user && !accessToken && (
+          <AnimeReveal delay={150} direction="up" className="mb-8">
+            <div className="card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-amber-500/20 bg-amber-500/5">
+              <div className="flex items-center gap-3 text-amber-300">
+                <AlertCircle className="w-5 h-5 flex-shrink-0 text-amber-400" />
+                <p className="text-sm">
+                  You are browsing as a guest.{' '}
+                  <span className="text-amber-200/80">Sign in to save conversions to your history and sync across devices.</span>
+                </p>
+              </div>
+              <Link href="/auth/login" className="btn-accent btn-sm self-start sm:self-auto flex-shrink-0">
+                Sign in
+              </Link>
+            </div>
+          </AnimeReveal>
+        )}
+
+        {/* ── Error Banner ── */}
+        {error && (
+          <div className="mb-8 card p-4 flex items-center justify-between border-rose-500/30 bg-rose-500/10 text-rose-300 text-sm">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-rose-400 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
+            <button onClick={() => setError('')} className="btn-icon btn-sm text-rose-400 hover:text-rose-200">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {/* ── Stats Grid ── */}
+        <AnimeReveal delay={200} direction="up" className="mb-10">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="card p-5 flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-medium text-fg-subtle uppercase tracking-wider">Conversions</span>
+                <span className="w-8 h-8 rounded-lg bg-surface-2 border border-line flex items-center justify-center text-fg-muted">
+                  <Layers className="w-4 h-4" />
+                </span>
+              </div>
+              <div>
+                <span className="text-2xl sm:text-3xl font-bold font-display text-fg tabular-nums">
+                  {userConversions}
+                </span>
+                <p className="text-xs text-fg-subtle mt-1">Processed media tasks</p>
+              </div>
+            </div>
+
+            <div className="card p-5 flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-medium text-fg-subtle uppercase tracking-wider">Downloads</span>
+                <span className="w-8 h-8 rounded-lg bg-surface-2 border border-line flex items-center justify-center text-accent">
+                  <Download className="w-4 h-4" />
+                </span>
+              </div>
+              <div>
+                <span className="text-2xl sm:text-3xl font-bold font-display text-fg tabular-nums">
+                  {userDownloads}
+                </span>
+                <p className="text-xs text-fg-subtle mt-1">Saved files</p>
+              </div>
+            </div>
+
+            <div className="card p-5 flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-medium text-fg-subtle uppercase tracking-wider">Account Tier</span>
+                <span className="w-8 h-8 rounded-lg bg-surface-2 border border-line flex items-center justify-center text-emerald-400">
+                  <ShieldCheck className="w-4 h-4" />
+                </span>
+              </div>
+              <div>
+                <span className="text-xl sm:text-2xl font-bold text-fg">
+                  {user ? (user.role === 'admin' ? 'Administrator' : 'Standard') : 'Guest'}
+                </span>
+                <p className="text-xs text-fg-subtle mt-1 truncate">
+                  {user?.email || 'Sign in for cloud sync'}
+                </p>
+              </div>
+            </div>
+
+            <div className="card p-5 flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-medium text-fg-subtle uppercase tracking-wider">Recent History</span>
+                <span className="w-8 h-8 rounded-lg bg-surface-2 border border-line flex items-center justify-center text-fg-muted">
+                  <Clock className="w-4 h-4" />
+                </span>
+              </div>
+              <div>
+                <span className="text-2xl sm:text-3xl font-bold font-display text-fg tabular-nums">
+                  {recentConversions.length}
+                </span>
+                <p className="text-xs text-fg-subtle mt-1">Files in your session</p>
+              </div>
+            </div>
+          </div>
+        </AnimeReveal>
+
+        {/* ── Tools Picker Grid ── */}
+        <AnimeReveal delay={300} direction="up" className="mb-12">
+          <div className="mb-4">
+            <h2 className="text-xl font-bold text-fg">Start a New Conversion</h2>
+            <p className="text-sm text-fg-muted">Select a media tool to convert local files or download from web links.</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {TOOLS.map((tool) => {
+              const Icon = tool.icon;
+              return (
+                <AnimeHover key={tool.href} className="w-full">
+                  <Link
+                    href={tool.href}
+                    className="card card-hover p-5 flex flex-col h-full group"
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className={`w-11 h-11 rounded-xl flex items-center justify-center border ${tool.iconBg} ${tool.accentColor}`}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <span className="badge text-[11px] font-semibold text-fg-subtle">
+                        {tool.badge}
+                      </span>
+                    </div>
+
+                    <h3 className="text-base font-semibold text-fg group-hover:text-white transition-colors mb-1.5">
+                      {tool.label}
+                    </h3>
+                    <p className="text-xs text-fg-muted leading-relaxed mb-5 flex-1">
+                      {tool.description}
+                    </p>
+
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-fg-muted group-hover:text-accent transition-colors pt-2 border-t border-line">
+                      <span>Launch tool</span>
+                      <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                    </div>
+                  </Link>
+                </AnimeHover>
+              );
+            })}
+          </div>
+        </AnimeReveal>
+
+        {/* ── Recent Conversions ── */}
+        <AnimeReveal delay={400} direction="up">
+          <div className="card p-5 sm:p-6">
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-line">
+              <div className="flex items-center gap-3">
+                <h2 className="text-lg sm:text-xl font-bold text-fg">Recent Conversions & Downloads</h2>
+                {recentConversions.length > 0 && (
+                  <span className="badge text-xs tabular-nums font-mono">
+                    {recentConversions.length}
+                  </span>
+                )}
+              </div>
+
+              {recentConversions.length > 0 && (
+                <button
+                  onClick={handleDeleteAll}
+                  className="btn-danger btn-sm text-xs gap-1.5"
+                  title="Clear all conversions"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Clear History
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-2.5">
+              {recentConversions.length > 0 ? (
+                recentConversions.map((conversion, index) => {
+                  const isYtAudio = conversion.type === 'youtube';
+                  const isYtVideo = conversion.type === 'youtube-Video';
+                  const isUniversal = conversion.type === 'universal';
+
+                  const typeLabel = isYtAudio
+                    ? 'YouTube MP3'
+                    : isYtVideo
+                    ? 'YouTube MP4'
+                    : isUniversal
+                    ? 'Universal Video'
+                    : 'Video to Audio';
+
+                  const typeHref = isYtAudio
+                    ? '/youtube'
+                    : isYtVideo
+                    ? '/yt-video'
+                    : isUniversal
+                    ? '/universal'
+                    : '/converter';
+
+                  const rowLink = conversion.youtubeUrl
+                    ? `${typeHref}?url=${encodeURIComponent(conversion.youtubeUrl)}`
+                    : typeHref;
+
+                  return (
+                    <div
+                      key={conversion._id || index}
+                      className="card-inset p-3.5 sm:p-4 flex items-center justify-between gap-3 group/row hover:border-line-strong transition-colors"
                     >
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                            <div>
-                                <h1 className="text-5xl font-bold text-white">Dashboard</h1>
-                                <p className="mt-3 text-white/60">
-                                    {user ? `Welcome back, ${user.name}` : 'Manage your conversions and downloads.'}
-                                </p>
-                            </div>
-                            {user?.role === 'admin' && (
-                                <Link href="/admin" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-cyan/10 border border-brand-cyan/20 text-brand-cyan hover:bg-brand-cyan/20 transition-all font-semibold shadow-[0_0_20px_rgba(34,211,238,0.2)]">
-                                    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    </svg>
-                                    Admin Panel
-                                </Link>
+                      {/* Left: icon & details */}
+                      <Link href={rowLink} className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="w-9 h-9 rounded-lg bg-surface-2 border border-line flex items-center justify-center flex-shrink-0 text-fg-muted group-hover/row:text-accent transition-colors">
+                          {isYtAudio ? (
+                            <Music className="w-4 h-4 text-rose-400" />
+                          ) : isYtVideo ? (
+                            <Clapperboard className="w-4 h-4 text-cyan-400" />
+                          ) : isUniversal ? (
+                            <Globe className="w-4 h-4 text-emerald-400" />
+                          ) : (
+                            <Music className="w-4 h-4 text-orange-400" />
+                          )}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-fg group-hover/row:text-white truncate" title={conversion.youtubeUrl || conversion.youtubeTitle || conversion.originalName || conversion.outputFilename}>
+                            {conversion.youtubeTitle || conversion.originalName || conversion.outputFilename || conversion.youtubeUrl || 'Converted media'}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[11px] font-semibold text-accent/90">
+                              {typeLabel}
+                            </span>
+                            {conversion.youtubeUrl && (
+                              <span className="text-[11px] text-fg-subtle truncate max-w-[200px] sm:max-w-xs">
+                                · {conversion.youtubeUrl}
+                              </span>
                             )}
+                          </div>
                         </div>
-                    </AnimeReveal>
+                      </Link>
 
-                    {/* ── Auth warning ── */}
-                    {!user && !accessToken && (
-                        <div className="mb-6 rounded-xl bg-yellow-500/10 border border-yellow-500/20 p-4 text-yellow-600 flex items-center gap-3">
-                            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            You are not logged in.{' '}
-                            <Link href="/auth/login" className="underline font-semibold ml-1">Sign in</Link> to see your conversions.
-                        </div>
-                    )}
+                      {/* Right: metadata & actions */}
+                      <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                        {conversion.fileSize ? (
+                          <span className="text-xs font-mono text-fg-muted px-2.5 py-1 rounded bg-surface border border-line hidden sm:inline-block">
+                            {formatFileSize(conversion.fileSize)}
+                          </span>
+                        ) : null}
 
-                    {error && (
-                        <div className="mb-6 rounded-xl bg-red-500/10 border border-red-500/20 p-4 text-red-600">
-                            {error}
-                        </div>
-                    )}
+                        {conversion.youtubeUrl && (
+                          <Link
+                            href={rowLink}
+                            title="Convert again"
+                            className="btn-icon btn-sm text-fg-muted hover:text-fg"
+                          >
+                            <RotateCcw className="w-4 h-4" />
+                          </Link>
+                        )}
 
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (conversion._id) handleDelete(conversion._id);
+                          }}
+                          title="Delete record"
+                          className="btn-icon danger btn-sm"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="card-inset p-10 text-center">
+                  <div className="w-12 h-12 bg-surface-2 rounded-xl border border-line flex items-center justify-center mx-auto mb-3 text-fg-subtle">
+                    <Clock className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-semibold text-fg text-sm mb-1">No conversions yet</h3>
+                  <p className="text-xs text-fg-muted max-w-sm mx-auto mb-6">
+                    Launch any of the media tools above to start extracting audio or downloading video files.
+                  </p>
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    {TOOLS.map((t) => (
+                      <Link key={t.href} href={t.href} className="btn-secondary btn-sm text-xs">
+                        {t.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </AnimeReveal>
 
-
-                    {/* ── Start New Conversion — Tool Picker ── */}
-                    <AnimeReveal
-                        delay={400}
-                        direction="up"
-                        className="mb-10"
-                    >
-                        <h2 className="text-2xl font-bold text-white mb-2">Start a New Conversion</h2>
-                        <p className="text-white/50 text-sm mb-6">Choose what you want to convert each card goes directly to that tool.</p>
-
-                        <div className="grid gap-5 sm:grid-cols-2">
-                            <AnimeReveal delay={500} staggerDelay={80} direction="up" className="contents">
-                                {TOOLS.map((tool, i) => (
-                                    <AnimeHover
-                                        key={tool.href}
-                                        className={i === 2 && TOOLS.length === 3 ? "sm:col-span-2 sm:w-[calc(50%-10px)] sm:mx-auto w-full" : "w-full"}
-                                    >
-                                        <Link
-                                            href={tool.href}
-                                            className={`flex flex-col gap-4 p-6 rounded-2xl border ${tool.border} ${tool.bg} transition-all duration-300 ${tool.shadow} group relative overflow-hidden block`}
-                                        >
-                                            {/* glow blob */}
-                                            <div className={`absolute -top-8 -right-8 w-28 h-28 rounded-full blur-2xl opacity-20 bg-gradient-to-br ${tool.gradient} pointer-events-none`} />
-
-                                            {/* Icon + badge */}
-                                            <div className="flex items-start justify-between">
-                                                <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-                                                    {tool.icon}
-                                                </div>
-                                                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${tool.badgeColor}`}>
-                                                    {tool.badge}
-                                                </span>
-                                            </div>
-
-                                            {/* Text */}
-                                            <div>
-                                                <h3 className="text-lg font-bold text-white mb-1">{tool.label}</h3>
-                                                <p className="text-sm text-white/50 leading-relaxed">{tool.description}</p>
-                                            </div>
-
-                                            {/* Arrow CTA */}
-                                            <div className={`flex items-center gap-2 text-sm font-semibold bg-gradient-to-r ${tool.gradient} bg-clip-text text-transparent mt-auto group-hover:gap-3 transition-all duration-200`}>
-                                                Open Tool
-                                                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" className={`bg-gradient-to-r ${tool.gradient} bg-clip-text`}>
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                                                </svg>
-                                            </div>
-                                        </Link>
-                                    </AnimeHover>
-                                ))}
-                            </AnimeReveal>
-                        </div>
-                    </AnimeReveal>
-
-                    {/* ── Recent Conversions ── */}
-                    <AnimeReveal
-                        delay={600}
-                        direction="up"
-                        className="glass-panel rounded-3xl p-8"
-                    >
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-2xl font-bold text-white">Recent Conversions & Downloads</h2>
-                            {recentConversions.length > 0 && (
-                                <button
-                                    onClick={handleDeleteAll}
-                                    className="text-xs font-semibold text-red-400 hover:text-red-300 bg-red-400/10 hover:bg-red-400/20 px-3 py-1.5 rounded-lg border border-red-400/20 transition-all flex items-center gap-1"
-                                >
-                                    <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                    Delete All
-                                </button>
-                            )}
-                        </div>
-
-                        <div className="space-y-3">
-                            {recentConversions.length > 0 ? (
-                                recentConversions.map((conversion, index) => {
-                                    const typeLabel =
-                                        conversion.type === 'youtube' ? 'YouTube Audio ' :
-                                            conversion.type === 'youtube-Video' ? 'YouTube Video' :
-                                                conversion.type === 'universal' ? 'Universal Video' :
-                                                    'Video Audio ';
-
-                                    const typeHref =
-                                        conversion.type === 'youtube' ? '/youtube' :
-                                            conversion.type === 'youtube-Video' ? '/yt-video' :
-                                                conversion.type === 'universal' ? '/universal' :
-                                                    '/converter';
-
-                                    return (
-                                        <AnimeHover
-                                            key={conversion._id || index}
-                                            scaleHover={1.02}
-                                            scaleTap={0.98}
-                                            className="flex items-center justify-between rounded-xl bg-white/5 hover:bg-black/[0.08] p-4 border border-white/5 transition-colors"
-                                        >
-                                            <Link href={conversion.youtubeUrl ? `${typeHref}?url=${encodeURIComponent(conversion.youtubeUrl)}` : typeHref} className="flex items-center gap-3 min-w-0 flex-1 group-hover/row:opacity-80 transition-opacity">
-                                                <div className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0">
-                                                    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-brand-purple">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" />
-                                                    </svg>
-                                                </div>
-                                                <div className="min-w-0 flex-1">
-                                                    {conversion.youtubeUrl ? (
-                                                        <p className="font-medium text-white group-hover/row:text-brand-cyan transition-colors truncate block text-sm mb-1" title={conversion.youtubeUrl}>
-                                                            {conversion.youtubeUrl}
-                                                        </p>
-                                                    ) : (
-                                                        <p className="font-medium text-white truncate text-sm mb-1">
-                                                            {conversion.youtubeTitle || conversion.originalName || conversion.outputFilename || 'converted-file'}
-                                                        </p>
-                                                    )}
-                                                    <div className="text-xs text-white/50 flex flex-wrap items-center gap-2">
-                                                        <span className="font-semibold text-brand-purple">{typeLabel}</span>
-                                                    </div>
-                                                </div>
-                                            </Link>
-
-                                            <div className="flex items-center gap-3 ml-4 flex-shrink-0">
-                                                <div className="text-xs font-mono font-medium px-3 py-1 rounded-full bg-brand-cyan/10 text-brand-cyan border border-brand-cyan/20 hidden sm:block">
-                                                    {formatBytes(conversion.fileSize)}
-                                                </div>
-                                                {conversion.youtubeUrl && (
-                                                    <Link
-                                                        href={`${typeHref}?url=${encodeURIComponent(conversion.youtubeUrl)}`}
-                                                        title="Convert Again"
-                                                        className="w-8 h-8 rounded-full bg-white/5 border border-white/10 hover:bg-brand-purple hover:border-brand-purple flex items-center justify-center transition-all group"
-                                                    >
-                                                        <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-white group-hover:scale-110 transition-transform">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                                                        </svg>
-                                                    </Link>
-                                                )}
-                                                <button
-                                                    onClick={(e) => { e.preventDefault(); handleDelete(conversion._id!); }}
-                                                    title="Delete from history"
-                                                    className="w-8 h-8 rounded-full bg-white/5 border border-white/10 hover:bg-red-500/80 hover:border-red-500 flex items-center justify-center transition-all group"
-                                                >
-                                                    <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-white group-hover:scale-110 transition-transform">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        </AnimeHover>
-                                    );
-                                })
-                            ) : (
-                                <div className="rounded-2xl bg-black/5 border border-white/5 p-10 text-center">
-                                    <div className="w-14 h-14 bg-brand-purple/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-brand-purple/20">
-                                        <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" className="text-brand-purple">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" />
-                                        </svg>
-                                    </div>
-                                    <p className="font-semibold text-white mb-1">No conversions yet</p>
-                                    <p className="text-sm text-white/50 mb-6">
-                                        Pick a tool above to start your first conversion.
-                                    </p>
-                                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                                        {TOOLS.map(tool => (
-                                            <Link
-                                                key={tool.href}
-                                                href={tool.href}
-                                                className={`text-sm font-semibold px-5 py-2.5 rounded-xl border ${tool.border} ${tool.bg} text-white hover:${tool.shadow} transition-all duration-200`}
-                                            >
-                                                {tool.label}
-                                            </Link>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </AnimeReveal>
-
-                </section>
-            </main >
-        </PageWrapper>
-    );
+      </main>
+    </PageWrapper>
+  );
 }

@@ -5,6 +5,7 @@ import AnimeReveal from '@/components/AnimeReveal';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import api from '@/lib/api';
+import { Check, AlertCircle, KeyRound } from 'lucide-react';
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
@@ -49,37 +50,38 @@ function ResetPasswordForm() {
 
   if (!token && !error) {
     return (
-      <div className="p-8 text-center text-white/60">
-        <p>No reset token found in URL. Please use the exact link sent to your email.</p>
+      <div className="card p-8 text-center text-fg-muted max-w-md mx-auto">
+        <p className="text-sm">No reset token found in URL. Please use the exact link sent to your email.</p>
+        <Link href="/auth/forgot-password" className="btn-secondary btn-sm mt-4 inline-block">
+          Request New Link
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="glass-panel p-8">
+    <div className="card p-7 sm:p-8">
       {success ? (
-        <div className="text-center">
-          <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-500/20">
-            <svg width="28" height="28" fill="none" stroke="#10b981" strokeWidth="2.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
+        <div className="text-center py-4">
+          <div className="w-14 h-14 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 flex items-center justify-center mx-auto mb-4 text-emerald-400">
+            <Check className="w-7 h-7" strokeWidth={2.5} />
           </div>
-          <h3 className="text-xl font-semibold text-white mb-2">Password Reset Successfully</h3>
-          <p className="text-white/60 text-sm mb-6">
-            Your new password is now active. You can use it to log in to your account.
+          <h3 className="text-lg font-bold text-fg mb-2">Password Reset Successfully</h3>
+          <p className="text-fg-muted text-xs sm:text-sm leading-relaxed mb-6">
+            Your new password is now active. You can now use it to sign in to MediaTools.
           </p>
-          <Link href="/auth/login" className="btn-primary px-8 py-3 w-full inline-block text-center rounded-xl font-semibold">
-            Proceed to Login
+          <Link href="/auth/login" className="btn-primary w-full h-11 text-sm font-semibold inline-flex items-center justify-center">
+            Proceed to Sign In
           </Link>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-white/50 tracking-wider mb-2">NEW PASSWORD</label>
+            <label className="label">New Password</label>
             <input
               type="password"
               className="input-modern"
-              placeholder="••••••••"
+              placeholder="Min. 8 characters"
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
@@ -88,11 +90,11 @@ function ResetPasswordForm() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-white/50 tracking-wider mb-2">CONFIRM PASSWORD</label>
+            <label className="label">Confirm New Password</label>
             <input
               type="password"
               className="input-modern"
-              placeholder="••••••••"
+              placeholder="Re-enter password"
               value={confirmPassword}
               onChange={e => setConfirmPassword(e.target.value)}
               required
@@ -101,13 +103,14 @@ function ResetPasswordForm() {
           </div>
 
           {error && (
-            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-sm">
-              ⚠️ {error}
+            <div className="p-3.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+              <span>{error}</span>
             </div>
           )}
 
-          <button type="submit" disabled={loading} className="w-full btn-primary h-12 mt-2">
-            {loading ? 'Resetting Password...' : 'Reset Password'}
+          <button type="submit" disabled={loading} className="w-full btn-primary h-11 text-sm font-semibold mt-2">
+            {loading ? 'Updating password…' : 'Reset Password'}
           </button>
         </form>
       )}
@@ -117,16 +120,21 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <div className="w-full flex items-center justify-center py-24 px-6 relative">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(168,85,247,0.1)_0%,transparent_70%)] pointer-events-none" />
-
+    <div className="w-full min-h-[calc(100vh-14rem)] flex items-center justify-center py-24 px-6 relative">
       <AnimeReveal direction="up" className="w-full max-w-md relative z-10">
-        <div className="text-center mb-10">
-          <h1 className="font-display font-bold text-3xl tracking-tight text-white mb-2">Create New Password</h1>
-          <p className="text-white/60">Choose a new password for your account.</p>
+        <div className="text-center mb-8">
+          <div className="w-14 h-14 bg-surface-2 rounded-2xl border border-line mx-auto flex items-center justify-center mb-4 text-accent">
+            <KeyRound className="w-7 h-7" />
+          </div>
+          <h1 className="font-display font-bold text-3xl tracking-tight text-fg mb-2">Create New Password</h1>
+          <p className="text-fg-muted text-sm">Choose a strong password with at least 8 characters.</p>
         </div>
 
-        <Suspense fallback={<div className="glass-panel p-8 text-center text-white/50">Loading form...</div>}>
+        <Suspense fallback={
+          <div className="card p-8 flex items-center justify-center">
+            <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+          </div>
+        }>
           <ResetPasswordForm />
         </Suspense>
       </AnimeReveal>

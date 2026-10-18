@@ -2,49 +2,67 @@
 
 import PageWrapper from '@/components/PageWrapper';
 import AnimeReveal from '@/components/AnimeReveal';
+import { Mail, MessageSquare, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 
 export default function ContactPage() {
-    return (
-        <PageWrapper>
-            <main className="min-h-screen pt-32 px-6 pb-20 text-white relative flex justify-center">
-                {/* Background elements */}
-                <div className="absolute top-[20%] left-[10%] w-[30%] h-[30%] bg-brand-violet/20 blur-[120px] rounded-full pointer-events-none" />
-                <div className="absolute bottom-[20%] right-[10%] w-[30%] h-[30%] bg-brand-cyan/10 blur-[120px] rounded-full pointer-events-none" />
+  return (
+    <PageWrapper>
+      <main className="min-h-screen container-page pt-28 pb-20 flex flex-col items-center justify-center">
+        <div className="w-full max-w-lg">
+          <AnimeReveal
+            direction="up"
+            delay={100}
+            className="card p-6 sm:p-10 text-center"
+          >
+            <div className="w-14 h-14 bg-surface-2 rounded-2xl border border-line flex items-center justify-center mx-auto mb-6 text-accent">
+              <Mail className="w-6 h-6" />
+            </div>
 
-                <div className="w-full max-w-xl relative z-10 mt-10">
-                    <AnimeReveal
-                        direction="up"
-                        className="glass-panel p-6 sm:p-10 md:p-14 rounded-3xl text-center shadow-2xl relative overflow-hidden"
-                    >
-                        <div className="w-20 h-20 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-xl border border-white/10 text-brand-cyan">
-                            <svg width="36" height="36" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                            </svg>
-                        </div>
+            <h1 className="text-3xl sm:text-4xl font-bold mb-3 tracking-tight text-fg">
+              Get in Touch
+            </h1>
+            <p className="text-fg-muted text-sm sm:text-base mb-8 leading-relaxed">
+              Have questions, feedback, or a partnership inquiry? We&apos;d love to hear from you.
+            </p>
 
-                        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4 font-display">Get in Touch</h1>
-                        <p className="text-white/60 text-base sm:text-lg mb-8 sm:mb-12 leading-relaxed">
-                            Whether you have a suggestion, found a bug, or just want to say hi, we'd love to hear from you.
-                        </p>
-
-                        <div className="space-y-4 sm:space-y-6 text-left">
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5 p-5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors group">
-                                <div className="w-12 h-12 sm:w-14 sm:h-14 shrink-0 rounded-xl bg-brand-purple/20 flex items-center justify-center text-brand-purple group-hover:scale-110 transition-transform">
-                                    <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                    </svg>
-                                </div>
-                                <div className="w-full">
-                                    <p className="text-sm text-white/50 font-medium mb-1">Email Us</p>
-                                    <p className="text-white text-base sm:text-lg font-semibold break-all">mediatools.contactus@gmail.com</p>
-                                </div>
-                            </div>
-
-
-                        </div>
-                    </AnimeReveal>
+            <div className="space-y-3 text-left">
+              <a
+                href="mailto:mediatools.contactus@gmail.com"
+                className="card-inset p-4 sm:p-5 flex items-center gap-4 hover:border-line-strong transition-colors group block"
+              >
+                <div className="w-11 h-11 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent flex-shrink-0 group-hover:scale-105 transition-transform">
+                  <Mail className="w-5 h-5" />
                 </div>
-            </main>
-        </PageWrapper>
-    );
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium text-fg-subtle mb-0.5">Email Support</p>
+                  <p className="text-sm sm:text-base font-semibold text-fg break-all group-hover:text-accent transition-colors">
+                    mediatools.contactus@gmail.com
+                  </p>
+                </div>
+              </a>
+
+              <Link
+                href="/feedback"
+                className="card-inset p-4 sm:p-5 flex items-center justify-between gap-4 hover:border-line-strong transition-colors group block"
+              >
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="w-11 h-11 rounded-xl bg-surface-2 border border-line flex items-center justify-center text-fg-muted flex-shrink-0 group-hover:scale-105 transition-transform">
+                    <MessageSquare className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-fg-subtle mb-0.5">Feedback Form</p>
+                    <p className="text-sm sm:text-base font-semibold text-fg group-hover:text-accent transition-colors">
+                      Send bugs or feature suggestions
+                    </p>
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-fg-subtle group-hover:text-accent group-hover:translate-x-1 transition-all flex-shrink-0" />
+              </Link>
+            </div>
+          </AnimeReveal>
+        </div>
+      </main>
+    </PageWrapper>
+  );
 }

@@ -9,6 +9,7 @@ const COLUMNS = [
       { label: 'Video to Audio', href: '/converter' },
       { label: 'YouTube to MP3', href: '/youtube' },
       { label: 'YouTube to MP4', href: '/yt-video' },
+      { label: 'Universal Video', href: '/universal' },
     ],
   },
   {

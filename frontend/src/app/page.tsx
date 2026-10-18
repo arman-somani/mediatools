@@ -4,7 +4,7 @@ import Link from 'next/link';
 import type { CSSProperties } from 'react';
 import {
   ArrowRight, Zap, AudioLines, ShieldCheck, Check, Music, Clapperboard, CloudUpload,
-  SlidersHorizontal, Download, FileVideoCamera, Sparkles,
+  SlidersHorizontal, Download, FileVideoCamera, Sparkles, Globe,
 } from 'lucide-react';
 import PageWrapper from '@/components/PageWrapper';
 import AnimeReveal from '@/components/AnimeReveal';
@@ -35,6 +35,14 @@ const TOOLS = [
     badge: 'Up to 8K',
     icon: Clapperboard,
     from: '#0891b2', to: '#67e8f9', glow: 'rgba(34,211,238,0.55)',
+  },
+  {
+    title: 'Universal Video',
+    description: 'Download videos from Instagram, TikTok, Twitter/X, and more.',
+    href: '/universal',
+    badge: 'Multi-Platform',
+    icon: Globe,
+    from: '#059669', to: '#34d399', glow: 'rgba(52,211,153,0.55)',
   },
 ];
 
@@ -167,7 +175,7 @@ export default function HomePage() {
                 Zero quality loss.
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-center lg:justify-start anim-fade-up" style={{ animationDelay: '420ms' }}>
+              <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-stretch sm:items-center justify-center lg:justify-start anim-fade-up" style={{ animationDelay: '420ms' }}>
                 <Link id="hero-convert-btn" href="/converter" className="btn-primary h-14 px-7 text-base">
                   Convert Video to Audio
                   <ArrowRight className="w-4 h-4" />
@@ -179,6 +187,10 @@ export default function HomePage() {
                 <Link id="hero-yt-mp4-btn" href="/yt-video" className="btn-glass h-14 px-6 text-base">
                   <Clapperboard className="w-5 h-5 text-cyan-300" />
                   YouTube MP4
+                </Link>
+                <Link id="hero-universal-btn" href="/universal" className="btn-glass h-14 px-6 text-base">
+                  <Globe className="w-5 h-5 text-emerald-400" />
+                  Universal Video
                 </Link>
               </div>
 
@@ -213,7 +225,7 @@ export default function HomePage() {
               </p>
             </AnimeReveal>
 
-            <AnimeReveal staggerDelay={110} delay={100} direction="up" className="grid gap-5 md:grid-cols-3">
+            <AnimeReveal staggerDelay={110} delay={100} direction="up" className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {TOOLS.map((tool) => {
                 const Icon = tool.icon;
                 return (
@@ -306,7 +318,7 @@ export default function HomePage() {
               <p className="text-muted text-base md:text-lg mb-9 max-w-xl mx-auto">
                 No subscriptions, no hidden fees. Every feature is free always with unlimited conversions.
               </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <div className="flex flex-col sm:flex-row flex-wrap gap-3 justify-center">
                 <Link id="cta-start-btn" href="/converter" className="btn-primary h-13 px-7 py-3.5">
                   Start Converting <ArrowRight className="w-4 h-4" />
                 </Link>
@@ -315,6 +327,9 @@ export default function HomePage() {
                 </Link>
                 <Link id="cta-yt-mp4-btn" href="/yt-video" className="btn-glass px-6 py-3.5">
                   <Clapperboard className="w-5 h-5 text-cyan-300" /> YouTube MP4
+                </Link>
+                <Link id="cta-universal-btn" href="/universal" className="btn-glass px-6 py-3.5">
+                  <Globe className="w-5 h-5 text-emerald-400" /> Universal Video
                 </Link>
               </div>
             </div>

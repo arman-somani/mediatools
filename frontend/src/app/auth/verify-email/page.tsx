@@ -1,9 +1,11 @@
 'use client';
+
 import { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import AnimeReveal from '@/components/AnimeReveal';
 import api from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
+import { MailCheck, AlertCircle } from 'lucide-react';
 
 function VerifyEmailForm() {
   const searchParams = useSearchParams();
@@ -42,29 +44,27 @@ function VerifyEmailForm() {
   };
 
   return (
-    <div className="w-full flex items-center justify-center py-24 px-6 relative min-h-screen">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(6,182,212,0.1)_0%,transparent_70%)] pointer-events-none" />
-
+    <div className="w-full flex items-center justify-center py-24 px-6 relative min-h-[calc(100vh-14rem)]">
       <AnimeReveal direction="up" className="w-full max-w-md relative z-10">
-        <div className="text-center mb-10">
-          <div className="w-16 h-16 bg-brand-cyan/10 rounded-2xl mx-auto flex items-center justify-center mb-6 shadow-xl border border-brand-cyan/20 text-brand-cyan">
-            <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
+        <div className="text-center mb-8">
+          <div className="w-14 h-14 bg-surface-2 rounded-2xl border border-line mx-auto flex items-center justify-center mb-4 text-accent">
+            <MailCheck className="w-7 h-7" />
           </div>
-          <h1 className="font-display font-bold text-3xl tracking-tight text-white mb-2">Verify Your Email</h1>
-          <p className="text-white/60">We sent a 6-digit code to verify you if email is not recived yet then check the spam folder to be verified <strong className="text-white">{email || 'your email'}</strong>.</p>
+          <h1 className="font-display font-bold text-3xl tracking-tight text-fg mb-2">Verify Your Email</h1>
+          <p className="text-fg-muted text-xs sm:text-sm max-w-sm mx-auto leading-relaxed">
+            We sent a 6-digit verification code to <strong className="text-fg font-medium">{email || 'your email'}</strong>. Check your spam folder if not received.
+          </p>
         </div>
 
-        <div className="glass-panel p-8">
-          <form onSubmit={handleVerify} className="space-y-6">
+        <div className="card p-7 sm:p-8">
+          <form onSubmit={handleVerify} className="space-y-5">
             {!emailParam && (
               <div>
-                <label className="block text-xs font-bold text-white/50 tracking-wider mb-2">EMAIL ADDRESS</label>
+                <label className="label">Email Address</label>
                 <input 
                   type="email" 
                   className="input-modern" 
-                  placeholder="you@example.com" 
+                  placeholder="you@gmail.com" 
                   value={email} 
                   onChange={e => setEmail(e.target.value)} 
                   required 
@@ -73,11 +73,11 @@ function VerifyEmailForm() {
             )}
             
             <div>
-              <label className="block text-xs font-bold text-white/50 tracking-wider mb-2 text-center">VERIFICATION CODE</label>
+              <label className="label text-center">6-Digit Verification Code</label>
               <input 
                 type="text" 
                 maxLength={6}
-                className="input-modern text-center text-3xl tracking-[1em] font-mono py-4 font-bold pl-[1em]" 
+                className="input-modern text-center text-2xl tracking-[0.6em] font-mono py-3 font-bold" 
                 placeholder="------" 
                 value={code} 
                 onChange={e => setCode(e.target.value.replace(/[^0-9]/g, ''))} 
@@ -86,13 +86,14 @@ function VerifyEmailForm() {
             </div>
 
             {error && (
-              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-sm text-center">
-                {error}
+              <div className="p-3.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+                <span>{error}</span>
               </div>
             )}
 
-            <button type="submit" disabled={loading || code.length !== 6} className="w-full btn-primary h-12">
-              {loading ? 'Verifying...' : 'Verify Email'}
+            <button type="submit" disabled={loading || code.length !== 6} className="w-full btn-primary h-11 text-sm font-semibold">
+              {loading ? 'Verifying…' : 'Verify Email & Continue'}
             </button>
           </form>
         </div>
@@ -103,7 +104,11 @@ function VerifyEmailForm() {
 
 export default function VerifyEmailPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-white">Loading...</div>}>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
       <VerifyEmailForm />
     </Suspense>
   );

@@ -12,6 +12,7 @@ const TOOL_LINKS = [
   { name: 'Video to Audio', href: '/converter' },
   { name: 'YouTube to MP3', href: '/youtube' },
   { name: 'YouTube to MP4', href: '/yt-video' },
+  { name: 'Universal Video', href: '/universal' },
 ];
 
 export default function Navbar() {
