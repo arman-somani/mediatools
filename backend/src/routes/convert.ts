@@ -31,7 +31,7 @@ import { User } from '../models/User';
 import { Innertube, UniversalCache, Platform } from 'youtubei.js';
 import vm from 'vm';
 
-import { conversionQueue } from '../utils/queue';
+import { conversionQueue, QueueFullError } from '../utils/queue';
 import { uploadToGoFile } from '../utils/gofile';
 
 /**
@@ -320,6 +320,48 @@ function resolveOutputPath(stored: string | undefined | null): string | null {
   }
 }
 
+/**
+ * Reports a route-level failure.
+ *
+ * These three routes each ended with `res.status(500).json({ message:
+ * error.message })`, which had two problems: a deliberate 403 or 503 raised
+ * inside the handler was reported to the client as a 500, and the raw message
+ * was echoed back, so a Mongo or filesystem error leaked a connection string or
+ * an absolute path. This honours the status an error carries and only passes a
+ * message through when it was written for a user.
+ */
+function failRequest(
+  res: Response,
+  error: unknown,
+  fallback: string,
+  context: string
+): void {
+  const err = error as { status?: number; code?: string; message?: string; retriable?: boolean };
+  const status = err?.status ?? (error instanceof ExtractError ? 502 : 500);
+
+  console.error(`[${context}]`, error);
+
+  if (res.headersSent) return;
+
+  if (error instanceof ExtractError) {
+    res.status(status).json({
+      success: false,
+      code: error.code,
+      retriable: error.retriable,
+      message: error.message,
+    });
+    return;
+  }
+
+  // Intentional failures below 500 carry user-facing text; anything else gets a
+  // generic message so internals are not disclosed.
+  res.status(status).json({
+    success: false,
+    code: err?.code || (status >= 500 ? 'INTERNAL_ERROR' : 'REQUEST_FAILED'),
+    message: status < 500 || err?.code === 'QUEUE_FULL' ? (err?.message || fallback) : fallback,
+  });
+}
+
 /* ── Video TO Audio ───────────────────────────────────────────────────────────── */
 const SERVER_ROLE = process.env.SERVER_ROLE || 'all';
 
@@ -362,6 +404,11 @@ router.post(
           totalDurationSecs = parseFloat(probeOut.trim());
         } catch (e) {
           console.warn('ffprobe failed, progress may be inaccurate');
+        }
+
+        if (!conversionQueue.hasCapacity()) {
+          await Conversion.deleteOne({ _id: conversion._id });
+          throw new QueueFullError(conversionQueue.depth);
         }
 
         res.json({
@@ -435,9 +482,8 @@ router.post(
             }
           }
         });
-      } catch (error: any) {
-        console.error('Video error:', error);
-        res.status(500).json({ success: false, message: error.message || 'Conversion failed' });
+      } catch (error: unknown) {
+        failRequest(res, error, 'Conversion failed. Please try again.', 'upload');
       }
     }
   );
@@ -480,6 +526,13 @@ router.post('/youtube', authenticate, convertLimiter, async (req: AuthRequest, r
     // rather than guessing a static /outputs path.
     conversion.outputUrl = `/api/convert/download/${conversion._id}`;
     await conversion.save();
+
+    // Checked before responding, because the task is enqueued below *after* the
+    // response. A backlog discovered at enqueue time would already be too late.
+    if (!conversionQueue.hasCapacity()) {
+      await Conversion.deleteOne({ _id: conversion._id });
+      throw new QueueFullError(conversionQueue.depth);
+    }
 
     res.json({
       success: true,
@@ -707,9 +760,8 @@ router.post('/youtube', authenticate, convertLimiter, async (req: AuthRequest, r
     }
     });
 
-  } catch (error: any) {
-    console.error('YouTube audio route error:', error);
-    res.status(500).json({ success: false, message: error.message || 'YouTube audio conversion failed' });
+  } catch (error: unknown) {
+    failRequest(res, error, 'Could not start the audio conversion. Please try again.', 'youtube-audio');
   }
 });
 } // END audio routes
@@ -844,6 +896,11 @@ router.post('/universal', authenticate, convertLimiter, async (req: AuthRequest,
     await conversion.save();
 
     // Respond immediately ? frontend starts polling
+    if (!conversionQueue.hasCapacity()) {
+      await Conversion.deleteOne({ _id: conversion._id });
+      throw new QueueFullError(conversionQueue.depth);
+    }
+
     res.json({
       success: true,
       message: 'Universal video download started',
@@ -1104,9 +1161,8 @@ router.post('/universal', authenticate, convertLimiter, async (req: AuthRequest,
     }
     });
 
-  } catch (error: any) {
-    console.error('Universal route error:', error);
-    res.status(500).json({ success: false, message: error.message || 'Universal video download failed' });
+  } catch (error: unknown) {
+    failRequest(res, error, 'Could not start the download. Please try again.', 'universal');
   }
 });
 } // END video routes
@@ -1280,78 +1336,21 @@ router.get('/download/:id', downloadLimiter, asyncHandler(async (req: AuthReques
   });
 }));
 
-/* ── DOWNLOAD-TEMP (audio path, keyed by job file id) ────────────────── */
+/* ── LEGACY ALIASES ──────────────────────────────────────────────────── */
 
 /**
- * GET /api/convert/download-temp/:fileId
+ * `/download-temp/:fileId` used to live here. It is gone rather than secured.
  *
- * The old implementation resolved the file with
- * `files.find(f => f.startsWith(fileId))` against the whole output directory.
- * Because that is a *prefix* match on an unvalidated parameter, a request for
- * `/download-temp/a` returned the first file in the directory beginning with
- * "a" — someone else's download. Requiring a full UUID plus a signature
- * closes both halves of that.
- */
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-router.get('/download-temp/:fileId', downloadLimiter, asyncHandler(async (req: Request, res: Response) => {
-  const { fileId } = req.params;
-
-  if (!UUID_RE.test(fileId)) {
-    res.status(400).json({ success: false, code: 'BAD_ID', message: 'Malformed file id.' });
-    return;
-  }
-
-  const verdict = verifyDownloadToken(fileId, req.query.t);
-  if (verdict === 'expired') {
-    res.status(410).json({ success: false, code: 'LINK_EXPIRED', message: 'This download link has expired.' });
-    return;
-  }
-  if (verdict !== 'valid') {
-    res.status(403).json({ success: false, code: 'FORBIDDEN', message: 'This download link is not valid.' });
-    return;
-  }
-
-  // Exact prefix on a full UUID, and the candidate must resolve to a real file
-  // inside the output directory.
-  let entries: string[];
-  try {
-    entries = fs.readdirSync(outputDir);
-  } catch {
-    res.status(404).json({ success: false, code: 'FILE_GONE', message: 'File not found.' });
-    return;
-  }
-
-  const found = entries.find(f =>
-    f.startsWith(`${fileId}.`) && !f.endsWith('.part') && !f.endsWith('.ytdl')
-  );
-  if (!found) {
-    res.status(404).json({ success: false, code: 'FILE_GONE', message: 'File not found or already expired.' });
-    return;
-  }
-
-  const filePath = resolveOutputPath(path.join(outputDir, found));
-  if (!filePath) {
-    res.status(404).json({ success: false, code: 'FILE_GONE', message: 'File not found.' });
-    return;
-  }
-
-  const conversion = await Conversion.findOne({ outputPath: filePath }).select('outputFilename');
-
-  res.setHeader('Cache-Control', 'private, no-store');
-  res.download(filePath, sanitizeFilename(conversion?.outputFilename || found), err => {
-    if (err && !res.headersSent) {
-      console.error(`[download-temp] stream failed for ${fileId}: ${err.message}`);
-    }
-  });
-}));
-
-/* ── PUBLIC-FILE (legacy alias) ──────────────────────────────────────── */
-
-/**
- * Retained only so old links do not 404 silently. It carried the same IDOR as
- * /download/:id and had no authorisation of any kind, so it now redirects into
- * the signed flow rather than serving bytes itself.
+ * It resolved a file with `files.find(f => f.startsWith(fileId))` against the
+ * whole output directory — a prefix match on an unvalidated parameter, so
+ * `/download-temp/a` served the first file beginning with "a", i.e. somebody
+ * else's download. Nothing in this codebase, the frontend or the extensions
+ * ever generated such a URL, so it was an unreferenced route whose only
+ * function was to hand out other users' files. Securing a dead endpoint would
+ * only have left one that could never succeed; deleting it is the honest fix.
+ *
+ * `/public-file/:id` is kept, as a redirect only, so existing bookmarks land
+ * somewhere meaningful instead of silently 404ing.
  */
 router.get('/public-file/:id', downloadLimiter, (req: Request, res: Response) => {
   const token = typeof req.query.t === 'string' ? req.query.t : '';

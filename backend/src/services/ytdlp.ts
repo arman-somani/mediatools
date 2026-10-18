@@ -348,9 +348,6 @@ export function currentLadder(): string[] {
   return CONFIGURED_LADDER.filter(c => TOKENLESS_CLIENTS.has(c) || c.startsWith('web_safari'));
 }
 
-/** Retained for callers that want the raw configured list. */
-export const CLIENT_LADDER = CONFIGURED_LADDER;
-
 /**
  * Remembers which client last worked, so the common case costs one attempt
  * instead of walking the ladder from the top every single time. Reset after
