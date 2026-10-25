@@ -115,14 +115,17 @@ export default function AdminPage() {
         <AnimeReveal delay={100} direction="up" className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-line pb-6">
             <div>
+              <p className="mono-label mb-2">
+                <span className="text-accent">SYS</span>
+                <span className="mx-2 text-fg-subtle/60">/</span>
+                ADMINISTRATION
+              </p>
               <div className="flex items-center gap-3">
                 <Link href="/dashboard" className="btn-icon btn-sm text-fg-muted hover:text-fg" title="Back to dashboard">
                   <ArrowLeft className="w-4 h-4" />
                 </Link>
-                <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-fg">Admin Panel</h1>
-                <span className="badge text-accent !bg-accent/10 !border-accent/20 font-semibold">
-                  System Admin
-                </span>
+                <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-fg">Admin Panel</h1>
+                <span className="badge badge-accent">System Admin</span>
               </div>
               <p className="mt-2 text-fg-muted text-sm sm:text-base">
                 Manage registered users, monitor real-time platform metrics, and control security bans.
@@ -154,7 +157,7 @@ export default function AdminPage() {
                 
                 <div className="card p-5 flex flex-col justify-between">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-medium text-fg-subtle uppercase tracking-wider">Total Users</span>
+                    <span className="mono-label">Total Users</span>
                     <span className="w-8 h-8 rounded-lg bg-surface-2 border border-line flex items-center justify-center text-accent">
                       <Users className="w-4 h-4" />
                     </span>
@@ -169,7 +172,7 @@ export default function AdminPage() {
 
                 <div className="card p-5 flex flex-col justify-between">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-medium text-fg-subtle uppercase tracking-wider">Live Online</span>
+                    <span className="mono-label">Live Online</span>
                     <span className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
                       <Radio className="w-4 h-4 animate-pulse" />
                     </span>
@@ -184,7 +187,7 @@ export default function AdminPage() {
 
                 <div className="card p-5 flex flex-col justify-between">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-medium text-fg-subtle uppercase tracking-wider">Conversions</span>
+                    <span className="mono-label">Conversions</span>
                     <span className="w-8 h-8 rounded-lg bg-surface-2 border border-line flex items-center justify-center text-fg-muted">
                       <Layers className="w-4 h-4" />
                     </span>
@@ -199,7 +202,7 @@ export default function AdminPage() {
 
                 <div className="card p-5 flex flex-col justify-between">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-medium text-fg-subtle uppercase tracking-wider">Downloads</span>
+                    <span className="mono-label">Downloads</span>
                     <span className="w-8 h-8 rounded-lg bg-surface-2 border border-line flex items-center justify-center text-fg-muted">
                       <Download className="w-4 h-4" />
                     </span>
@@ -214,7 +217,7 @@ export default function AdminPage() {
 
                 <div className="card p-5 flex flex-col justify-between col-span-2 sm:col-span-1">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-medium text-fg-subtle uppercase tracking-wider">Bandwidth</span>
+                    <span className="mono-label">Bandwidth</span>
                     <span className="w-8 h-8 rounded-lg bg-surface-2 border border-line flex items-center justify-center text-cyan-400">
                       <HardDrive className="w-4 h-4" />
                     </span>
@@ -234,7 +237,7 @@ export default function AdminPage() {
             <AnimeReveal delay={300} direction="up" className="card overflow-hidden">
               <div className="p-5 sm:p-6 border-b border-line flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-lg sm:text-xl font-bold text-fg">User Management</h2>
+                  <h2 className="font-display text-lg sm:text-xl font-bold text-fg">User Management</h2>
                   <p className="text-xs text-fg-muted mt-0.5">View accounts, activity counts, and toggle account bans.</p>
                 </div>
 

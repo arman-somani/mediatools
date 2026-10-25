@@ -48,7 +48,7 @@ export default function FeedbackPage() {
       <main className="min-h-screen container-page pt-28 pb-20 flex flex-col items-center justify-center">
         <div className="w-full max-w-xl">
           <AnimeReveal direction="up" delay={100} className="text-center mb-8">
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-fg mb-2">
+            <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-fg mb-2">
               Send Us Feedback
             </h1>
             <p className="text-fg-muted text-sm sm:text-base">

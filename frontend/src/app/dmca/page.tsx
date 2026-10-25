@@ -12,11 +12,16 @@ export default function DMCAPage() {
     <PageWrapper>
       <main className="min-h-screen container-page pt-28 pb-20">
         <div className="max-w-4xl mx-auto card p-6 sm:p-10">
+          <p className="mono-label mb-4">
+            <span className="text-accent">DOC</span>
+            <span className="mx-2 text-fg-subtle/60">/</span>
+            DMCA NOTICE
+          </p>
           <div className="flex items-center gap-3 mb-3">
             <span className="w-10 h-10 rounded-xl bg-surface-2 border border-line flex items-center justify-center text-accent">
               <ShieldAlert className="w-5 h-5" />
             </span>
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-fg">
+            <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-fg">
               DMCA Compliance
             </h1>
           </div>

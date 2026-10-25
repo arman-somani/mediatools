@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-/** Brand mark: a simple waveform glyph on an accent tile. */
+/** Brand mark: a waveform glyph on an accent tile. */
 export function LogoMark({ size = 24 }: { size?: number }) {
   return (
     <span
@@ -17,9 +17,9 @@ export function LogoMark({ size = 24 }: { size?: number }) {
 
 export default function Logo({ className = '' }: { className?: string }) {
   return (
-    <Link href="/" className={`inline-flex items-center gap-2 shrink-0 ${className}`} aria-label="MediaTools home">
+    <Link href="/" className={`inline-flex items-center gap-2.5 shrink-0 ${className}`} aria-label="MediaTools home">
       <LogoMark />
-      <span className="text-[15px] font-semibold tracking-tight text-fg">MediaTools</span>
+      <span className="font-display text-[15.5px] font-bold tracking-tight text-fg">MediaTools</span>
     </Link>
   );
 }

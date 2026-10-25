@@ -1,149 +1,188 @@
 'use client';
 
 import Link from 'next/link';
-import type { CSSProperties } from 'react';
-import {
-  ArrowRight, Zap, AudioLines, ShieldCheck, Check, Music, Clapperboard, CloudUpload,
-  SlidersHorizontal, Download, FileVideoCamera, Sparkles, Globe,
-} from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowRight, ArrowUpRight, Check, CloudUpload, Download, SlidersHorizontal } from 'lucide-react';
 import PageWrapper from '@/components/PageWrapper';
 import AnimeReveal from '@/components/AnimeReveal';
-import AnimatedText from '@/components/AnimatedText';
-import { YouTubeIcon } from '@/components/icons';
+import Spotlight from '@/components/Spotlight';
 
 const TOOLS = [
   {
-    title: 'Video to Audio',
-    description: 'Drop any MP4, MOV, MKV or WebM file and pull out a clean audio track.',
+    index: '01',
+    name: 'Video to Audio',
+    meta: 'LOCAL FILE · MP3',
+    description: 'Drop an MP4, MOV, MKV or WebM and pull out a clean audio track at up to 320 kbps.',
     href: '/converter',
-    badge: 'Up to 320kbps',
-    icon: Music,
-    from: '#7c3aed', to: '#c084fc', glow: 'rgba(168,85,247,0.6)',
   },
   {
-    title: 'YouTube MP3',
-    description: 'Search or paste a YouTube link and save it straight to audio.',
+    index: '02',
+    name: 'YouTube to MP3',
+    meta: 'URL · SEARCH BUILT IN',
+    description: 'Paste a YouTube link — or just type what you are looking for — and save the audio.',
     href: '/youtube',
-    badge: 'Search built-in',
-    icon: YouTubeIcon,
-    from: '#e11d48', to: '#fb7185', glow: 'rgba(244,63,94,0.55)',
   },
   {
-    title: 'YouTube MP4',
-    description: 'Download full videos from 360p all the way up to 8K resolution.',
+    index: '03',
+    name: 'YouTube to MP4',
+    meta: 'URL · 360P TO 8K',
+    description: 'Full videos, not re-encodes. Pick a resolution and the file lands as-is.',
     href: '/yt-video',
-    badge: 'Up to 8K',
-    icon: Clapperboard,
-    from: '#0891b2', to: '#67e8f9', glow: 'rgba(34,211,238,0.55)',
   },
   {
-    title: 'Universal Video',
-    description: 'Download videos from Instagram, TikTok, Twitter/X, and more.',
+    index: '04',
+    name: 'Universal Downloader',
+    meta: 'URL · MULTI-PLATFORM',
+    description: 'Instagram, TikTok, Twitter/X and more. One input for every platform we support.',
     href: '/universal',
-    badge: 'Multi-Platform',
-    icon: Globe,
-    from: '#059669', to: '#34d399', glow: 'rgba(52,211,153,0.55)',
-  },
-];
-
-const FEATURES = [
-  {
-    icon: Zap,
-    title: 'Lightning Fast',
-    description: 'FFmpeg-powered conversion on our servers. Most files convert in under 30 seconds.',
-    glow: 'rgba(168,85,247,0.6)', color: 'text-violet-300',
-  },
-  {
-    icon: AudioLines,
-    title: 'Studio Quality',
-    description: 'Choose from 128kbps, 192kbps, or lossless 320kbps Audio output quality.',
-    glow: 'rgba(34,211,238,0.55)', color: 'text-cyan-300',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Secure & Private',
-    description: 'Files are auto-deleted after 1 hour. Your data is never stored permanently.',
-    glow: 'rgba(52,211,153,0.55)', color: 'text-emerald-300',
   },
 ];
 
 const STEPS = [
-  { icon: CloudUpload, title: 'Drop or paste', text: 'Upload a video file or paste a YouTube link.' },
-  { icon: SlidersHorizontal, title: 'Pick quality', text: 'Select bitrate or resolution — up to 320kbps / 8K.' },
-  { icon: Download, title: 'Download', text: 'Grab your file the moment it is ready.' },
+  { icon: CloudUpload, index: '01', title: 'Drop or paste', text: 'Upload a file or paste a link. Search works too — no need to leave the page.' },
+  { icon: SlidersHorizontal, index: '02', title: 'Pick a quality', text: 'Bitrate for audio, resolution for video. Up to 320 kbps / 8K.' },
+  { icon: Download, index: '03', title: 'Save the file', text: 'A signed link, ready the moment the job finishes. Files self-destruct in an hour.' },
 ];
 
-function HeroMockup() {
-  const bars = [14, 26, 18, 34, 22, 40, 28, 46, 30, 38, 20, 32, 44, 24, 36, 18, 30, 42, 26, 16, 34, 22, 28, 12];
+const STATS = [
+  { value: '320', unit: 'kbps', label: 'MAX AUDIO BITRATE' },
+  { value: '8', unit: 'K', label: 'MAX VIDEO RES' },
+  { value: '1', unit: 'hr', label: 'UNTIL FILES AUTO-DELETE' },
+  { value: '0', unit: '', label: 'ADS · WATERMARKS · LIMITS' },
+];
+
+/* ── Interactive console mockup ───────────────────────────────────────
+   Not a static screenshot: the waveform tracks the pointer, the quality
+   buttons are real, and the job loop runs — idle → converting → done. */
+
+type MockPhase = 'idle' | 'running' | 'done';
+const MOCK_BARS = 34;
+
+function ConsoleMockup() {
+  const [phase, setPhase] = useState<MockPhase>('running');
+  const [progress, setProgress] = useState(38);
+  const [quality, setQuality] = useState('320k');
+  const [pointerX, setPointerX] = useState(0.5);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Loop a fake conversion: run to 100, hold "done", restart.
+  useEffect(() => {
+    if (phase !== 'running') return;
+    timerRef.current = setInterval(() => {
+      setProgress((p) => {
+        if (p >= 100) return 100;
+        return Math.min(100, p + 1.5);
+      });
+    }, 90);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [phase]);
+
+  useEffect(() => {
+    if (progress >= 100 && phase === 'running') {
+      const t = setTimeout(() => setPhase('done'), 700);
+      return () => clearTimeout(t);
+    }
+  }, [progress, phase]);
+
+  useEffect(() => {
+    if (phase !== 'done') return;
+    const t = setTimeout(() => {
+      setProgress(8);
+      setPhase('running');
+    }, 3400);
+    return () => clearTimeout(t);
+  }, [phase]);
+
+  const bars = useMemo(
+    () => Array.from({ length: MOCK_BARS }, (_, i) => 12 + (Math.sin(i * 1.7) * 0.5 + 0.5) * 34 + (i % 5) * 4),
+    [],
+  );
+  const filled = Math.round((progress / 100) * MOCK_BARS);
+
   return (
-    <div className="relative w-full max-w-md mx-auto lg:mx-0">
-      {/* Halo */}
-      <div className="absolute -inset-10 rounded-[3rem] bg-gradient-to-br from-violet-600/35 via-fuchsia-500/20 to-cyan-400/30 blur-3xl" aria-hidden="true" />
-
-      <div className="glass-strong relative p-5 sm:p-6 anim-float">
-        {/* Window chrome */}
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-400/80" />
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-300/80" />
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400/80" />
-          </div>
-          <span className="badge text-white/70"><Sparkles className="w-3 h-3 text-fuchsia-300" /> Converting</span>
+    <div
+      className="console console-corners"
+      onPointerMove={(e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        setPointerX(Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width)));
+      }}
+      role="img"
+      aria-label="Preview of a conversion in progress"
+    >
+      {/* Panel header strip */}
+      <div className="flex items-center justify-between border-b border-line px-5 py-3">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-danger/70" />
+          <span className="w-2 h-2 rounded-full bg-warning/70" />
+          <span className="w-2 h-2 rounded-full bg-success/70" />
+          <span className="mono-label !text-[10px] ml-2">SESSION 07</span>
         </div>
+        <span className={`mono-label !text-[10px] flex items-center gap-1.5 ${phase === 'done' ? '!text-success' : '!text-accent'}`}>
+          <span className="status-dot" />
+          {phase === 'done' ? 'COMPLETE' : 'CONVERTING'}
+        </span>
+      </div>
 
-        {/* File row */}
-        <div className="glass-inset p-3.5 flex items-center gap-3 mb-4">
-          <div className="icon-tile w-11 h-11 !rounded-xl" style={{ '--tile-glow': 'rgba(168,85,247,0.6)' } as CSSProperties}>
-            <FileVideoCamera className="w-5 h-5 text-violet-200" />
-          </div>
+      <div className="p-5 sm:p-6">
+        {/* Source row */}
+        <div className="flex items-center gap-3.5 mb-5">
+          <span className="tile !w-10 !h-10 !rounded-lg">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M2 5.5V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v2.5M2 10.5V13a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-2.5M8 5v6m0 0L5.5 8.5M8 11l2.5-2.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-white truncate">summer-roadtrip.mp4</p>
-            <p className="text-xs text-white/50">148.2 MB · 1080p</p>
+            <p className="text-sm font-semibold text-fg truncate">summer-roadtrip.mp4</p>
+            <p className="mono-label !text-[10px] mt-0.5">148.2 MB · 1080P · H.264</p>
           </div>
-          <ArrowRight className="w-4 h-4 text-white/40" />
-          <span className="badge text-violet-200 !bg-violet-500/15 !border-violet-400/25">MP3</span>
+          <ArrowRight className="w-3.5 h-3.5 text-fg-subtle shrink-0" />
+          <span className="badge badge-accent">MP3</span>
         </div>
 
-        {/* Waveform */}
-        <div className="glass-sunken px-4 py-5 mb-4 flex items-center justify-between gap-[3px] h-24" aria-hidden="true">
-          {bars.map((h, i) => (
-            <span
-              key={i}
-              className={`flex-1 rounded-full ${i < 15 ? '' : 'opacity-30'}`}
-              style={{
-                height: h,
-                background: i < 15 ? `linear-gradient(180deg, #67e8f9, #a855f7 60%, #ec4899)` : 'rgba(255,255,255,0.6)',
-                animation: `bar-grow-${(i % 4) + 1} ${0.8 + (i % 5) * 0.15}s ease-in-out infinite`,
-              }}
-            />
-          ))}
+        {/* Waveform — reacts to pointer position */}
+        <div className="card-inset px-4 py-4 mb-5 flex items-end gap-[3px] h-24" aria-hidden="true">
+          {bars.map((h, i) => {
+            const dist = Math.abs(i / MOCK_BARS - pointerX);
+            const boost = Math.max(0, 1 - dist * 4);
+            const isPast = i < filled;
+            return (
+              <span
+                key={i}
+                className="flex-1 rounded-sm transition-[height] duration-200"
+                style={{
+                  height: `${Math.min(100, h + boost * 46)}%`,
+                  background: isPast ? 'var(--color-accent)' : 'rgb(255 255 255 / 0.14)',
+                }}
+              />
+            );
+          })}
         </div>
 
-        {/* Quality */}
-        <div className="quality-track mb-4 pointer-events-none" aria-hidden="true">
+        {/* Quality — actually clickable */}
+        <div className="segmented mb-5" role="presentation">
           {['128k', '192k', '320k'].map((q) => (
-            <span key={q} className={`quality-btn ${q === '320k' ? 'active' : ''}`}>{q}</span>
+            <button
+              key={q}
+              type="button"
+              tabIndex={-1}
+              aria-checked={quality === q}
+              role="radio"
+              onClick={() => setQuality(q)}
+              className="segmented-item"
+            >
+              {q}
+            </button>
           ))}
         </div>
 
-        {/* Progress */}
-        <div className="flex items-center justify-between text-xs text-white/60 mb-2">
-          <span>Extracting audio…</span>
-          <span className="font-semibold text-white tabular-nums">72%</span>
+        {/* Progress readout */}
+        <div className="flex items-baseline justify-between mb-2">
+          <span className="mono-label">{phase === 'done' ? 'OUTPUT READY' : 'EXTRACTING AUDIO'}</span>
+          <span className="font-mono text-sm text-fg tabular-nums">{Math.round(progress)}%</span>
         </div>
-        <div className="h-2 rounded-full bg-white/[0.07] overflow-hidden">
-          <div className="h-full w-[72%] rounded-full bg-gradient-to-r from-cyan-400 via-violet-500 to-fuchsia-500 shadow-[0_0_14px_rgba(217,70,239,0.7)]" />
+        <div className="progress-track">
+          <div className="progress-bar" style={{ width: `${progress}%`, transitionDuration: '0.25s' }} />
         </div>
-      </div>
-
-      {/* Floating chips */}
-      <div className="glass absolute -left-4 sm:-left-10 top-24 px-3.5 py-2.5 !rounded-2xl flex items-center gap-2.5 anim-float-delayed">
-        <span className="w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-cyan-400 to-violet-500"><AudioLines className="w-4 h-4 text-white" /></span>
-        <div className="leading-tight"><p className="text-[11px] text-white/50">Bitrate</p><p className="text-sm font-bold text-white">320 kbps</p></div>
-      </div>
-      <div className="glass absolute -right-3 sm:-right-8 bottom-16 px-3.5 py-2.5 !rounded-2xl flex items-center gap-2.5 anim-float-delayed" style={{ animationDelay: '-5s' }}>
-        <span className="w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-rose-500 to-fuchsia-500"><Clapperboard className="w-4 h-4 text-white" /></span>
-        <div className="leading-tight"><p className="text-[11px] text-white/50">Video</p><p className="text-sm font-bold text-white">Up to 8K</p></div>
       </div>
     </div>
   );
@@ -152,184 +191,178 @@ function HeroMockup() {
 export default function HomePage() {
   return (
     <PageWrapper>
-      <div className="relative text-white">
-
+      <div>
         {/* ───────────── Hero ───────────── */}
-        <section className="relative px-5 sm:px-6 pt-36 md:pt-44 pb-20 md:pb-28">
-          <div className="mx-auto max-w-6xl grid lg:grid-cols-[1.1fr_0.9fr] gap-16 lg:gap-10 items-center">
-            <div className="text-center lg:text-left">
-              <span className="chip mb-7 anim-fade-up">
-                <span className="chip-dot"><Sparkles className="w-3 h-3 text-white" /></span>
-                100% free · No limits · No watermarks
-              </span>
+        <section className="relative overflow-hidden">
+          {/* drafting-paper grid, faded out toward the fold */}
+          <div className="bg-grid absolute inset-0 pointer-events-none" aria-hidden="true" />
 
-              <h1 className="font-display text-[2.6rem] leading-[1.05] sm:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
-                <AnimatedText text="Convert Video into" /><br />
-                <span className="text-gradient-animated">
-                  <AnimatedText text="Best-Quality Audio" delayOffset={500} />
-                </span>
-              </h1>
+          <div className="container-page relative pt-24 md:pt-36 pb-16 md:pb-24">
+            <div className="grid lg:grid-cols-[1.15fr_0.85fr] gap-14 lg:gap-16 items-center">
+              <div>
+                <p className="mono-label anim-fade-up">
+                  <span className="text-accent">001</span>
+                  <span className="mx-2 text-fg-subtle/60">/</span>
+                  MEDIA TOOLS · FREE FOREVER
+                </p>
 
-              <p className="text-muted text-lg md:text-xl max-w-xl mx-auto lg:mx-0 mb-10 leading-relaxed anim-fade-up" style={{ animationDelay: '300ms' }}>
-                The fastest way to extract Audio from Video files or use our YouTube URL Downloader with
-                Zero quality loss.
+                <h1 className="font-display font-bold tracking-[-0.03em] leading-[0.98] text-[2.9rem] sm:text-6xl lg:text-7xl text-fg mt-6 anim-fade-up" style={{ animationDelay: '80ms' }}>
+                  Audio out of
+                  <br />
+                  anything.
+                </h1>
+
+                <p className="text-muted text-lg max-w-lg mt-6 leading-relaxed anim-fade-up" style={{ animationDelay: '180ms' }}>
+                  Extract a clean audio track from any video file, or pull MP3 and MP4
+                  straight off a URL. No accounts to upgrade, no watermarks, no queues
+                  worth waiting in.
+                </p>
+
+                <div className="flex flex-wrap gap-3 items-center mt-9 anim-fade-up" style={{ animationDelay: '280ms' }}>
+                  <Link id="hero-convert-btn" href="/converter" className="btn-accent btn-lg">
+                    Convert a file
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                  <Link id="hero-yt-mp3-btn" href="/youtube" className="btn-secondary btn-lg">
+                    Paste a YouTube link
+                  </Link>
+                </div>
+
+                <ul className="mt-9 flex flex-wrap gap-x-6 gap-y-2.5 text-[13.5px] text-fg-muted anim-fade-up" style={{ animationDelay: '380ms' }}>
+                  {['320 kbps audio', '8K video', 'Files deleted in 1 hour'].map((t) => (
+                    <li key={t} className="flex items-center gap-2">
+                      <Check className="w-3.5 h-3.5 text-success" strokeWidth={2.5} />
+                      {t}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="anim-fade-up" style={{ animationDelay: '240ms' }}>
+                <ConsoleMockup />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ───────────── Tool index ───────────── */}
+        <section className="container-page py-16 md:py-24" aria-labelledby="tools-heading">
+          <AnimeReveal direction="up" className="flex flex-wrap items-end justify-between gap-4 mb-10">
+            <div>
+              <p className="mono-label mb-3">
+                <span className="text-accent">002</span>
+                <span className="mx-2 text-fg-subtle/60">/</span>
+                THE TOOLKIT
               </p>
+              <h2 id="tools-heading" className="font-display font-bold text-3xl md:text-4xl tracking-tight text-fg">
+                Four tools. One pipeline.
+              </h2>
+            </div>
+            <p className="text-fg-muted text-[15px] max-w-sm">
+              Same backend, same speed, different input. Pick the one that matches
+              where your file lives.
+            </p>
+          </AnimeReveal>
 
-              <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-stretch sm:items-center justify-center lg:justify-start anim-fade-up" style={{ animationDelay: '420ms' }}>
-                <Link id="hero-convert-btn" href="/converter" className="btn-primary h-14 px-7 text-base">
-                  Convert Video to Audio
+          <AnimeReveal staggerDelay={80} delay={100} direction="up" className="border-t border-line">
+            {TOOLS.map((tool) => (
+              <Spotlight key={tool.href} className="border-b border-line">
+                <Link
+                  href={tool.href}
+                  className="group grid grid-cols-[auto_1fr_auto] sm:grid-cols-[3.5rem_1fr_auto] md:grid-cols-[4.5rem_1.1fr_1.4fr_auto] items-center gap-x-5 md:gap-x-8 py-6 md:py-7 px-1 transition-colors"
+                >
+                  <span className="mono-label group-hover:text-accent transition-colors">{tool.index}</span>
+                  <div className="min-w-0">
+                    <h3 className="font-display font-semibold text-lg sm:text-xl text-fg leading-tight">{tool.name}</h3>
+                    <p className="mono-label !text-[10px] mt-1 md:hidden">{tool.meta}</p>
+                  </div>
+                  <p className="hidden md:block text-sm text-fg-muted leading-relaxed pr-6">{tool.description}</p>
+                  <span className="w-9 h-9 rounded-lg border border-line flex items-center justify-center text-fg-subtle transition-all duration-200 group-hover:border-accent group-hover:text-accent group-hover:translate-x-0.5">
+                    <ArrowUpRight className="w-4 h-4" />
+                  </span>
+                </Link>
+              </Spotlight>
+            ))}
+          </AnimeReveal>
+        </section>
+
+        {/* ───────────── How it works ───────────── */}
+        <section className="container-page py-16 md:py-24" aria-labelledby="how-heading">
+          <div className="rule mb-14" aria-hidden="true" />
+
+          <AnimeReveal direction="up" className="mb-12">
+            <p className="mono-label mb-3">
+              <span className="text-accent">003</span>
+              <span className="mx-2 text-fg-subtle/60">/</span>
+              PROCEDURE
+            </p>
+            <h2 id="how-heading" className="font-display font-bold text-3xl md:text-4xl tracking-tight text-fg">
+              Three steps, no detours.
+            </h2>
+          </AnimeReveal>
+
+          <div className="grid md:grid-cols-3 gap-px bg-line border border-line rounded-xl overflow-hidden">
+            {STEPS.map((s, i) => {
+              const Icon = s.icon;
+              return (
+                <AnimeReveal key={s.index} direction="up" delay={i * 90} className="bg-surface">
+                  <div className="p-7 md:p-8 h-full flex flex-col">
+                    <div className="flex items-center justify-between mb-8">
+                      <Icon className="w-5 h-5 text-fg-muted" strokeWidth={1.75} />
+                      <span className="mono-label">{s.index}</span>
+                    </div>
+                    <h3 className="font-display font-semibold text-lg text-fg mb-2">{s.title}</h3>
+                    <p className="text-sm text-fg-muted leading-relaxed">{s.text}</p>
+                  </div>
+                </AnimeReveal>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* ───────────── Stats ───────────── */}
+        <section className="container-page pb-16 md:pb-24" aria-label="Specifications">
+          <AnimeReveal staggerDelay={70} direction="up" className="grid grid-cols-2 md:grid-cols-4 gap-px bg-line border border-line rounded-xl overflow-hidden">
+            {STATS.map((s) => (
+              <div key={s.label} className="bg-bg-subtle p-6 md:p-8">
+                <p className="font-display font-bold text-3xl md:text-4xl text-fg tabular-nums leading-none">
+                  {s.value}
+                  {s.unit && <span className="text-base md:text-lg text-accent ml-1">{s.unit}</span>}
+                </p>
+                <p className="mono-label !text-[10px] mt-3">{s.label}</p>
+              </div>
+            ))}
+          </AnimeReveal>
+        </section>
+
+        {/* ───────────── Closing CTA ───────────── */}
+        <section className="container-page pb-24 md:pb-32">
+          <AnimeReveal direction="up" className="console console-corners text-center">
+            <div className="px-6 py-14 md:py-20">
+              <p className="mono-label mb-5">
+                <span className="text-accent">004</span>
+                <span className="mx-2 text-fg-subtle/60">/</span>
+                READY WHEN YOU ARE
+              </p>
+              <h2 className="font-display font-bold text-3xl md:text-5xl tracking-tight text-fg max-w-2xl mx-auto">
+                Your first conversion is thirty seconds away.
+              </h2>
+              <p className="text-fg-muted text-base md:text-lg max-w-md mx-auto mt-5">
+                Free, unlimited, and it deletes itself behind you.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center mt-9">
+                <Link id="cta-start-btn" href="/converter" className="btn-accent btn-lg">
+                  Start converting
                   <ArrowRight className="w-4 h-4" />
                 </Link>
-                <Link id="hero-yt-mp3-btn" href="/youtube" className="btn-glass h-14 px-6 text-base">
-                  <YouTubeIcon className="w-5 h-5 text-rose-400" />
-                  YouTube MP3
+                <Link id="cta-yt-mp3-btn" href="/youtube" className="btn-secondary btn-lg">
+                  YouTube to MP3
                 </Link>
-                <Link id="hero-yt-mp4-btn" href="/yt-video" className="btn-glass h-14 px-6 text-base">
-                  <Clapperboard className="w-5 h-5 text-cyan-300" />
-                  YouTube MP4
+                <Link id="cta-yt-mp4-btn" href="/yt-video" className="btn-secondary btn-lg">
+                  YouTube to MP4
                 </Link>
-                <Link id="hero-universal-btn" href="/universal" className="btn-glass h-14 px-6 text-base">
-                  <Globe className="w-5 h-5 text-emerald-400" />
-                  Universal Video
-                </Link>
-              </div>
-
-              <ul className="mt-10 flex flex-wrap gap-x-6 gap-y-3 justify-center lg:justify-start text-sm text-white/60 anim-fade-up" style={{ animationDelay: '540ms' }}>
-                {['Up to 320kbps audio', 'Up to 8K video', 'Files auto-delete in 1h'].map((t) => (
-                  <li key={t} className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-emerald-400/15 border border-emerald-400/30 flex items-center justify-center">
-                      <Check className="w-3 h-3 text-emerald-300" strokeWidth={3} />
-                    </span>
-                    {t}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="anim-fade-up px-6 sm:px-10 lg:px-0" style={{ animationDelay: '250ms' }}>
-              <HeroMockup />
-            </div>
-          </div>
-        </section>
-
-        {/* ───────────── Tools ───────────── */}
-        <section className="px-5 sm:px-6 py-16 md:py-24" aria-labelledby="tools-heading">
-          <div className="mx-auto max-w-6xl">
-            <AnimeReveal direction="up" className="text-center mb-12 md:mb-16">
-              <p className="text-sm font-semibold tracking-[0.2em] uppercase text-violet-300/80 mb-3">The Toolkit</p>
-              <h2 id="tools-heading" className="text-3xl md:text-5xl font-bold mb-4">
-                Everything You Need to <span className="text-gradient">Extract Audio</span>
-              </h2>
-              <p className="text-muted text-base md:text-lg max-w-xl mx-auto">
-                Professional-grade Audio extraction tools, built for everyone.
-              </p>
-            </AnimeReveal>
-
-            <AnimeReveal staggerDelay={110} delay={100} direction="up" className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {TOOLS.map((tool) => {
-                const Icon = tool.icon;
-                return (
-                  <Link
-                    key={tool.href}
-                    href={tool.href}
-                    className="glass glass-interactive group p-7 flex flex-col opacity-0 overflow-hidden"
-                  >
-                    <div className="glass-clip">
-                      <div className="glow-orb w-56 h-56 -top-24 -right-16 transition-opacity duration-500 opacity-40 group-hover:opacity-90" style={{ background: tool.glow }} />
-                    </div>
-                    <div className="relative flex items-start justify-between mb-8">
-                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: `linear-gradient(135deg, ${tool.from}, ${tool.to})`, boxShadow: `0 12px 30px -8px ${tool.glow}, inset 0 1px 0 rgba(255,255,255,0.45)` }}>
-                        <Icon className="w-6 h-6 text-white" />
-                      </div>
-                      <span className="badge text-white/75">{tool.badge}</span>
-                    </div>
-                    <h3 className="relative text-xl font-bold text-white mb-2">{tool.title}</h3>
-                    <p className="relative text-muted leading-relaxed mb-8">{tool.description}</p>
-                    <span className="relative mt-auto inline-flex items-center gap-2 text-sm font-semibold text-white/85 group-hover:text-white">
-                      Open tool
-                      <span className="w-7 h-7 rounded-full flex items-center justify-center bg-white/[0.08] border border-white/15 transition-transform duration-300 group-hover:translate-x-1">
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </span>
-                    </span>
-                  </Link>
-                );
-              })}
-            </AnimeReveal>
-          </div>
-        </section>
-
-        {/* ───────────── Features + Steps ───────────── */}
-        <section className="px-5 sm:px-6 py-16 md:py-24" aria-labelledby="features-heading">
-          <div className="mx-auto max-w-6xl grid lg:grid-cols-5 gap-5">
-            <AnimeReveal direction="up" className="lg:col-span-2 glass-strong p-8 md:p-10 flex flex-col overflow-hidden">
-              <div className="glass-clip">
-                <div className="glow-orb w-72 h-72 -bottom-24 -right-24" style={{ background: 'rgba(217,70,239,0.25)', opacity: 1 }} />
-              </div>
-              <p className="relative text-sm font-semibold tracking-[0.2em] uppercase text-fuchsia-300/80 mb-3">How it works</p>
-              <h2 id="features-heading" className="relative text-3xl md:text-4xl font-bold mb-8">Three steps. <span className="text-gradient">Zero friction.</span></h2>
-              <ol className="relative space-y-4 mt-auto">
-                {STEPS.map((s, i) => {
-                  const Icon = s.icon;
-                  return (
-                    <li key={s.title} className="glass-inset p-4 flex items-center gap-4">
-                      <span className="relative w-11 h-11 rounded-xl flex items-center justify-center bg-white/[0.07] border border-white/12 shrink-0">
-                        <Icon className="w-5 h-5 text-white/90" />
-                        <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-[0_0_10px_rgba(217,70,239,0.6)]">{i + 1}</span>
-                      </span>
-                      <div>
-                        <p className="font-semibold text-white">{s.title}</p>
-                        <p className="text-sm text-white/55">{s.text}</p>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ol>
-            </AnimeReveal>
-
-            <AnimeReveal staggerDelay={110} delay={150} direction="up" className="lg:col-span-3 grid sm:grid-cols-2 gap-5">
-              {FEATURES.map((f, i) => {
-                const Icon = f.icon;
-                return (
-                  <div key={f.title} className={`glass glass-interactive p-7 opacity-0 ${i === 2 ? 'sm:col-span-2' : ''}`}>
-                    <div className="icon-tile w-14 h-14 mb-6" style={{ '--tile-glow': f.glow } as CSSProperties}>
-                      <Icon className={`w-6 h-6 ${f.color}`} />
-                    </div>
-                    <h3 className="text-xl font-bold text-white mb-2">{f.title}</h3>
-                    <p className="text-muted leading-relaxed">{f.description}</p>
-                  </div>
-                );
-              })}
-            </AnimeReveal>
-          </div>
-        </section>
-
-        {/* ───────────── CTA ───────────── */}
-        <section className="px-5 sm:px-6 py-16 md:py-24">
-          <AnimeReveal direction="up" className="mx-auto max-w-4xl glass-strong p-10 md:p-14 text-center overflow-hidden">
-            <div className="glass-clip">
-              <div className="glow-orb w-96 h-96 -top-48 left-1/2 -translate-x-1/2" style={{ background: 'rgba(139,92,246,0.35)', opacity: 1 }} />
-              <div className="glow-orb w-72 h-72 -bottom-40 -left-10" style={{ background: 'rgba(34,211,238,0.2)', opacity: 1 }} />
-              <div className="glow-orb w-72 h-72 -bottom-40 -right-10" style={{ background: 'rgba(236,72,153,0.2)', opacity: 1 }} />
-            </div>
-            <div className="relative">
-              <h2 className="text-3xl md:text-5xl font-bold mb-4">
-                100% Free <span className="text-gradient">No Limits</span>
-              </h2>
-              <p className="text-muted text-base md:text-lg mb-9 max-w-xl mx-auto">
-                No subscriptions, no hidden fees. Every feature is free always with unlimited conversions.
-              </p>
-              <div className="flex flex-col sm:flex-row flex-wrap gap-3 justify-center">
-                <Link id="cta-start-btn" href="/converter" className="btn-primary h-13 px-7 py-3.5">
-                  Start Converting <ArrowRight className="w-4 h-4" />
-                </Link>
-                <Link id="cta-yt-mp3-btn" href="/youtube" className="btn-glass px-6 py-3.5">
-                  <YouTubeIcon className="w-5 h-5 text-rose-400" /> YouTube MP3
-                </Link>
-                <Link id="cta-yt-mp4-btn" href="/yt-video" className="btn-glass px-6 py-3.5">
-                  <Clapperboard className="w-5 h-5 text-cyan-300" /> YouTube MP4
-                </Link>
-                <Link id="cta-universal-btn" href="/universal" className="btn-glass px-6 py-3.5">
-                  <Globe className="w-5 h-5 text-emerald-400" /> Universal Video
+                <Link id="cta-universal-btn" href="/universal" className="btn-secondary btn-lg">
+                  Universal
                 </Link>
               </div>
             </div>

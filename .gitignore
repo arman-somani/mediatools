@@ -27,3 +27,5 @@ hf_temp/
 hf_temp2/
 *.rar
 *.ipynb
+.zcode/
+.claude/

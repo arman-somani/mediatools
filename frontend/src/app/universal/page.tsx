@@ -1,274 +1,221 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
-import { MonitorPlay } from 'lucide-react';
+
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { Globe, LoaderCircle, MonitorPlay } from 'lucide-react';
 import api, { videoApi, videoApiUrl } from '@/lib/api';
-import { pollConversion, describeFailure } from '@/lib/conversion';
+import { describeFailure, type FailureInfo } from '@/lib/conversion';
 import { formatFileSize } from '@/lib/utils';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import ProgressCircle from '@/components/ProgressCircle';
-import { requestNotificationPermission, sendNotification } from '@/lib/notifications';
 import { useAuthStore } from '@/lib/store';
+import { useConversionJob, isRunning } from '@/lib/useConversionJob';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import PageWrapper from '@/components/PageWrapper';
 import AnimeReveal from '@/components/AnimeReveal';
-import AnimeHover from '@/components/AnimeHover';
 
 import PageHeader from '@/components/ui/PageHeader';
 import ToolPanel from '@/components/ui/ToolPanel';
 import UrlInput from '@/components/ui/UrlInput';
 import QualitySelector, { type QualityOption } from '@/components/ui/QualitySelector';
 import CompletionCard from '@/components/ui/CompletionCard';
-import ErrorDialog from '@/components/ui/ErrorDialog';
+import FailureNotice from '@/components/ui/FailureNotice';
+import ProgressMeter from '@/components/ProgressMeter';
+
+interface PreflightInfo {
+  title: string;
+  thumbnail: string;
+  resolution: string;
+  sizeBytes: number;
+}
+
+const STAGE_COPY: Record<string, { title: string; subtitle: string }> = {
+  sending: { title: 'Starting the job…', subtitle: 'Handing your link to the download worker.' },
+  queued: { title: 'Waiting for a free worker', subtitle: 'Jobs run in the order they arrive — usually a short wait.' },
+  processing: { title: 'Downloading the video', subtitle: 'Pulling the best stream for the quality you picked.' },
+  finalizing: { title: 'Almost there', subtitle: 'Generating a high-speed download link.' },
+};
 
 export default function UniversalPage() {
   const { user } = useAuthStore();
   const [url, setUrl] = useState('');
   const [quality, setQuality] = useState('720p');
-  const [preflightInfo, setPreflightInfo] = useState<{ title: string; thumbnail: string; resolution: string; sizeBytes: number } | null>(null);
+  const [preflight, setPreflight] = useState<PreflightInfo | null>(null);
   const [isFetchingInfo, setIsFetchingInfo] = useState(false);
-  const [status, setStatus] = useState<'idle' | 'queued' | 'processing' | 'uploading' | 'completed' | 'failed'>('idle');
-  const [queuePosition, setQueuePosition] = useState(0);
-  const [progress, setProgress] = useState(0);
-  const [jobId, setJobId] = useState('');
-  const [downloadUrl, setDownloadUrl] = useState('');
-  const [canRetry, setCanRetry] = useState(false);
-  const [fileSize, setFileSize] = useState<number | null>(null);
-  const [videoInfo, setVideoInfo] = useState<{ title?: string; thumbnail?: string; sizeBytes?: number; } | null>(null);
-  const [error, setError] = useState('');
-  const [conversionTime, setConversionTime] = useState<number | null>(null);
-  const startTimeRef = useRef<number | null>(null);
-  const cancelPollRef = useRef<(() => void) | null>(null);
+  const [preflightError, setPreflightError] = useState<FailureInfo | null>(null);
+
+  const { state, start, reset } = useConversionJob({
+    client: videoApi,
+    toAbsolute: videoApiUrl,
+    intervalMs: 2500,
+    notification: { title: 'Download complete', body: 'Your video has finished downloading and is ready to save.' },
+  });
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const queryUrl = params.get('url');
-      if (queryUrl) setUrl(queryUrl);
-    }
+    const params = new URLSearchParams(window.location.search);
+    const queryUrl = params.get('url');
+    if (queryUrl) setUrl(queryUrl);
   }, []);
 
-  const poll = (id: string) => {
-    cancelPollRef.current?.();
-    cancelPollRef.current = pollConversion({
-      client: videoApi,
-      jobId: id,
-      toAbsolute: videoApiUrl,
-      intervalMs: 2500,
-      handlers: {
-        onQueued: (position) => {
-          setStatus('queued');
-          setQueuePosition(position);
-        },
-        onProgress: (value, snapshot) => {
-          setStatus(snapshot.status === 'uploading' ? 'uploading' : 'processing');
-          setProgress(value);
-        },
-        onCompleted: (downloadLink, snapshot) => {
-          setStatus('completed');
-          setProgress(100);
-          if (startTimeRef.current) {
-            setConversionTime(Math.round((Date.now() - startTimeRef.current) / 1000));
-          }
-          setVideoInfo({ title: snapshot.youtubeTitle, thumbnail: snapshot.youtubeThumbnail });
-          setFileSize(snapshot.fileSize ?? null);
-          setDownloadUrl(downloadLink);
-          sendNotification('Download Complete! 🎉', 'Your video has finished downloading and is ready to save.');
-        },
-        onFailed: (failure) => {
-          setStatus('failed');
-          setError(failure.message);
-          setCanRetry(failure.retriable);
-        },
-      },
-    });
-  };
-
-  useEffect(() => () => cancelPollRef.current?.(), []);
-
   const handleCheckInfo = async () => {
-    if (!url.startsWith('http')) { setError('Please enter a valid URL starting with http:// or https://'); return; }
-    setError('');
-    setCanRetry(false);
+    if (!url.startsWith('http')) {
+      setPreflightError({ code: 'UNKNOWN', message: 'Enter a URL starting with http:// or https://', retriable: true });
+      return;
+    }
+    setPreflightError(null);
     setIsFetchingInfo(true);
     try {
       const { data } = await api.get(`/extractor/info?url=${encodeURIComponent(url)}`);
       const info = data.data;
       const bestVideo = info.formats?.video?.[0];
-      setPreflightInfo({
+      setPreflight({
         title: info.title || 'Video',
         thumbnail: info.thumbnail || '',
-        resolution: bestVideo?.quality || 'Best Available',
+        resolution: bestVideo?.quality || 'Best available',
         sizeBytes: bestVideo?.size ?? 0,
       });
     } catch (err: unknown) {
-      const failure = describeFailure(err);
-      setError(failure.message);
-      setCanRetry(failure.retriable);
+      setPreflightError(describeFailure(err));
     } finally {
       setIsFetchingInfo(false);
     }
   };
 
-  const handleDownload = async () => {
-    startTimeRef.current = Date.now();
-    if (!url.startsWith('http')) { setError('Please enter a valid URL starting with http:// or https://'); return; }
-    requestNotificationPermission();
-    setError(''); setCanRetry(false); setStatus('processing'); setProgress(0); setDownloadUrl(''); setConversionTime(null);
-    try {
-      const { data } = await videoApi.post('/convert/universal', { url, videoQuality: quality });
-      setJobId(data.data.jobId);
-      if (data.data.title) setVideoInfo({ title: data.data.title });
-      poll(data.data.jobId);
-    } catch (err: unknown) {
-      setStatus('failed');
-      const failure = describeFailure(err);
-      setError(failure.message);
-      setCanRetry(failure.retriable);
+  const handleDownload = () => {
+    if (!url.startsWith('http')) {
+      setPreflightError({ code: 'UNKNOWN', message: 'Enter a URL starting with http:// or https://', retriable: true });
+      return;
     }
+    start(async ({ signal }) => {
+      const { data } = await videoApi.post('/convert/universal', { url, videoQuality: quality }, { signal });
+      return { jobId: data.data.jobId, title: data.data.title };
+    });
   };
 
-  const reset = () => {
-    cancelPollRef.current?.();
-    setUrl(''); setStatus('idle'); setProgress(0);
-    setJobId(''); setDownloadUrl(''); setVideoInfo(null); setFileSize(null);
-    setError(''); setCanRetry(false); setPreflightInfo(null); setConversionTime(null);
-  };
-
-  const qualityOptions: QualityOption<string>[] = ['360p', '480p', '720p', '1080p', '4K', '8K'].map(q => ({
+  const qualityOptions: QualityOption<string>[] = ['360p', '480p', '720p', '1080p', '4K', '8K'].map((q) => ({
     value: q,
-    locked: (q === '4K' || q === '8K') && user?.role !== 'admin' && !user?.isPremium
+    locked: (q === '4K' || q === '8K') && user?.role !== 'admin' && !user?.isPremium,
   }));
 
   return (
     <ProtectedRoute>
-      <div className="w-full max-w-4xl mx-auto px-6 py-20 flex flex-col items-center">
-        <PageHeader
-          icon={<MonitorPlay className="w-5 h-5" />}
-          eyebrow="Universal Downloader"
-          title={
-            <>
-              Universal <span className="text-gradient">Downloader</span>
-            </>
-          }
-          subtitle="Paste a link of Instagram, TikTok, Reddit, or any Video URL and download the video."
-          accent="violet"
-        />
+      <PageWrapper>
+        <div className="w-full max-w-3xl mx-auto px-6 py-20 md:py-28">
+          <PageHeader
+            index="004"
+            label="UNIVERSAL DOWNLOADER"
+            title="Any platform, one box."
+            subtitle="Instagram, TikTok, Twitter/X, Reddit and more. Paste the link, check the preview, download."
+          />
 
-        <AnimeReveal delay={100} direction="up" className="w-full mt-12">
-          <ToolPanel accent="violet">
-            {status === 'idle' || status === 'failed' ? (
-              <div key="input" className="relative z-10 space-y-8 animate-in fade-in duration-300">
-                
-                <UrlInput
-                  id="universal-url"
-                  placeholder="https://www.instagram.com/p/..."
-                  value={url}
-                  onChange={(v) => { setUrl(v); setError(''); setPreflightInfo(null); }}
-                  onEnter={() => {
-                    if (preflightInfo) handleDownload();
-                    else handleCheckInfo();
+          <AnimeReveal delay={80} direction="up" className="mt-12">
+            <ToolPanel>
+              {state.phase === 'completed' ? (
+                <CompletionCard
+                  heading="Video is ready"
+                  thumbnail={state.thumbnail}
+                  mediaTitle={state.title}
+                  fileSize={state.fileSize}
+                  durationSec={state.durationSec}
+                  downloadUrl={state.downloadUrl}
+                  downloadLabel="Download video"
+                  onDownload={() => window.open(state.downloadUrl, '_blank')}
+                  resetLabel="Download another"
+                  onReset={() => {
+                    setUrl('');
+                    setPreflight(null);
+                    reset();
                   }}
                 />
-
-                <QualitySelector
-                  label="VIDEO QUALITY"
-                  options={qualityOptions}
-                  value={quality}
-                  onSelect={setQuality}
-                  onLocked={() => alert('4K and 8K qualities are reserved for Premium users.')}
+              ) : isRunning(state.phase) ? (
+                <ProgressMeter
+                  phase={state.phase}
+                  progress={state.progress}
+                  queuePosition={state.queuePosition}
+                  title={STAGE_COPY[state.phase]?.title ?? 'Working…'}
+                  subtitle={state.title || STAGE_COPY[state.phase]?.subtitle || ''}
                 />
+              ) : (
+                <div className="space-y-7">
+                  {state.phase === 'failed' && state.error && (
+                    <FailureNotice failure={state.error} onDismiss={() => reset()} />
+                  )}
+                  {state.phase !== 'failed' && preflightError && (
+                    <FailureNotice failure={preflightError} onDismiss={() => setPreflightError(null)} />
+                  )}
 
-                {preflightInfo && (
-                  <div className="overflow-hidden rounded-2xl relative border border-white/10 w-full bg-black/40 mt-6 animate-in slide-in-from-top-2 fade-in duration-300">
-                    <div className="p-4 sm:p-6 flex flex-col items-center text-center gap-2">
-                      <div className="w-16 h-16 bg-brand-cyan/10 rounded-full flex items-center justify-center mb-2 border border-brand-cyan/20">
-                        <MonitorPlay className="w-8 h-8 text-cyan-400" />
-                      </div>
-                      <h3 className="text-base sm:text-xl font-bold text-white line-clamp-2">{preflightInfo.title}</h3>
-                      {preflightInfo.sizeBytes > 0 && (
-                        <div className="flex flex-wrap gap-2 sm:gap-4 text-sm font-medium mt-2">
-                          <span className="bg-brand-cyan/10 px-4 py-2 rounded-xl text-brand-cyan border border-brand-cyan/20">
-                            Actual Size: {formatFileSize(preflightInfo.sizeBytes)}
-                          </span>
-                        </div>
+                  <UrlInput
+                    id="universal-url"
+                    placeholder="https://www.instagram.com/p/…"
+                    value={url}
+                    onChange={(v) => {
+                      setUrl(v);
+                      setPreflight(null);
+                      setPreflightError(null);
+                    }}
+                    onEnter={() => (preflight ? handleDownload() : handleCheckInfo())}
+                  />
+
+                  <QualitySelector
+                    label="VIDEO QUALITY"
+                    options={qualityOptions}
+                    value={quality}
+                    onSelect={setQuality}
+                    onLocked={() => toast('4K and 8K are reserved for Premium accounts.')}
+                  />
+
+                  {preflight && (
+                    <div className="card-inset p-5 flex items-center gap-4 anim-fade-up">
+                      {preflight.thumbnail ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={preflight.thumbnail}
+                          alt=""
+                          className="w-24 sm:w-32 aspect-video rounded-md object-cover border border-line shrink-0 bg-black/40"
+                        />
+                      ) : (
+                        <span className="tile tile-lg shrink-0">
+                          <MonitorPlay className="w-6 h-6" />
+                        </span>
                       )}
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex justify-center mt-6">
-                  {!preflightInfo ? (
-                    <button
-                      onClick={handleCheckInfo}
-                      disabled={!url || isFetchingInfo}
-                      className={`w-[280px] h-14 rounded-xl font-semibold text-lg transition-all duration-300 flex items-center justify-center gap-2 ${!url ? 'bg-white/5 text-white/40 cursor-not-allowed' : 'btn-primary'}`}
-                    >
-                      {isFetchingInfo ? (
-                        <>
-                          <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                          Checking...
-                        </>
-                      ) : 'Check Video Info'}
-                    </button>
-                  ) : (
-                    <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
-                      <AnimeHover scaleHover={1.02} scaleTap={0.96} className="w-full sm:w-[280px]">
-                        <button
-                          onClick={handleDownload}
-                          disabled={!url}
-                          className="w-full h-14 rounded-xl font-semibold text-lg transition-all duration-300 btn-primary"
-                        >
-                          Download Video
-                        </button>
-                      </AnimeHover>
-                      <AnimeHover scaleHover={1.02} scaleTap={0.96} className="w-full sm:w-[200px]">
-                        <button
-                          onClick={reset}
-                          className="w-full h-14 rounded-xl font-semibold text-base transition-all duration-300 glass-panel hover:bg-white/5 border border-white/20 text-white"
-                        >
-                          Convert Another
-                        </button>
-                      </AnimeHover>
+                      <div className="min-w-0 flex-1">
+                        <p className="mono-label !text-[10px] mb-1">PREVIEW · {preflight.resolution.toUpperCase()}</p>
+                        <h3 className="text-base font-semibold text-fg line-clamp-2 leading-snug">{preflight.title}</h3>
+                        {preflight.sizeBytes > 0 && (
+                          <p className="mono-label mt-1.5 !text-[10px]">{formatFileSize(preflight.sizeBytes).toUpperCase()}</p>
+                        )}
+                      </div>
                     </div>
                   )}
+
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    {!preflight ? (
+                      <button onClick={handleCheckInfo} disabled={!url || isFetchingInfo} className="btn-primary btn-lg sm:w-56">
+                        {isFetchingInfo ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Globe className="w-4 h-4" />}
+                        {isFetchingInfo ? 'Checking…' : 'Check video info'}
+                      </button>
+                    ) : (
+                      <>
+                        <button onClick={handleDownload} className="btn-primary btn-lg flex-1">
+                          Download video
+                        </button>
+                        <button
+                          onClick={() => {
+                            setUrl('');
+                            setPreflight(null);
+                            reset();
+                          }}
+                          className="btn-secondary btn-lg sm:w-44"
+                        >
+                          Start over
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
-
-              </div>
-            ) : status === 'processing' || status === 'uploading' || status === 'queued' ? (
-              <ProgressCircle
-                progress={progress}
-                statusText={status === 'queued' ? `Queued (Position: ${queuePosition})` : status === 'uploading' ? "Finalizing high-speed link..." : "Downloading Video..."}
-                subText={status === 'queued' ? 'Waiting for other conversions to finish...' : status === 'uploading' ? "Generating high-speed CDN link" : "Fetching highest quality video securely"}
-              />
-            ) : (
-              <CompletionCard
-                accent="violet"
-                heading="Video is Ready!"
-                message={
-                  <>
-                    Your <strong className="text-violet-300">Highest Quality</strong> Video is ready to download.
-                  </>
-                }
-                thumbnail={videoInfo?.thumbnail || preflightInfo?.thumbnail}
-                mediaTitle={videoInfo?.title}
-                fileSize={fileSize}
-                conversionTime={conversionTime}
-                downloadLabel="Download Video"
-                onDownload={() => { if (downloadUrl) window.open(downloadUrl, '_blank'); }}
-                resetLabel="Download Another"
-                onReset={reset}
-              />
-            )}
-          </ToolPanel>
-        </AnimeReveal>
-
-        <ErrorDialog
-          open={!!error}
-          title={canRetry ? 'Download Did Not Complete' : 'This Link Cannot Be Downloaded'}
-          message={error}
-          actionLabel={canRetry ? 'Try Again' : 'Try A Different Link'}
-          onClose={() => { setError(''); setCanRetry(false); setStatus('idle'); }}
-        />
-      </div>
+              )}
+            </ToolPanel>
+          </AnimeReveal>
+        </div>
+      </PageWrapper>
     </ProtectedRoute>
   );
 }
-

@@ -1,13 +1,14 @@
 @import "tailwindcss";
 
 /* ─────────────────────────────────────────────────────────────────────
-   MediaTools design system
-   Neutral dark surfaces, a single warm accent, and restrained motion.
+   MediaTools design system — "Studio Console"
+   Neutral dark surfaces, one warm accent, technical mono labels,
+   hairline rules and film grain. No gradients, no glow, no glass.
    ───────────────────────────────────────────────────────────────────── */
 
 @theme inline {
   --font-sans: var(--font-geist), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-display: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-archivo), var(--font-geist), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, 'SFMono-Regular', Menlo, monospace;
 }
 
@@ -32,7 +33,7 @@
   --color-danger: #f0544f;
   --color-warning: #e5a50a;
 
-  /* Legacy names → mapped onto the new palette */
+  /* Legacy brand names → mapped onto the palette */
   --color-brand-purple: #ff6a3d;
   --color-brand-violet: #ff6a3d;
   --color-brand-indigo: #ff6a3d;
@@ -57,6 +58,17 @@
     background: var(--color-bg);
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
+  }
+
+  /* Film grain. Sits above everything uniformly; pointer-transparent. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 2147483000;
+    pointer-events: none;
+    opacity: 0.028;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
   body {
@@ -145,10 +157,120 @@
     background: var(--color-line);
   }
 
+  /* Console panel: the frame each tool sits in. A 1px top edge and two
+     bracket corners — a nod to rack equipment faceplates, not decoration. */
+  .console {
+    position: relative;
+    background: var(--color-surface);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .console::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    background: rgb(255 255 255 / 0.16);
+  }
+
+  .console-corners {
+    position: relative;
+  }
+
+  .console-corners::before,
+  .console-corners::after {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    pointer-events: none;
+    border-color: var(--corner-color, rgb(255 255 255 / 0.35));
+  }
+
+  .console-corners::before {
+    top: 6px;
+    left: 6px;
+    border-top: 1.5px solid;
+    border-left: 1.5px solid;
+  }
+
+  .console-corners::after {
+    bottom: 6px;
+    right: 6px;
+    border-bottom: 1.5px solid;
+    border-right: 1.5px solid;
+  }
+
+  /* Blueprint hairline rule with '+' tick marks at both ends. */
+  .rule {
+    position: relative;
+    height: 1px;
+    background: var(--color-line);
+  }
+
+  .rule::before,
+  .rule::after {
+    content: '+';
+    position: absolute;
+    top: 50%;
+    transform: translateY(-52%);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1;
+    color: var(--color-fg-subtle);
+    background: var(--color-bg);
+    padding-inline: 8px;
+  }
+
+  .rule::before { left: 0; }
+  .rule::after { right: 0; }
+
+  /* Blueprint grid backdrop; fade it out with a mask so it reads as
+     drafting paper under the hero, not a chessboard. */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, rgb(255 255 255 / 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(255 255 255 / 0.04) 1px, transparent 1px);
+    background-size: 56px 56px;
+    -webkit-mask-image: radial-gradient(ellipse 90% 80% at 50% 0%, black 30%, transparent 78%);
+    mask-image: radial-gradient(ellipse 90% 80% at 50% 0%, black 30%, transparent 78%);
+  }
+
+  /* Cursor-follow highlight. A Spotlight wrapper sets --mx/--my in px. */
+  .spotlight {
+    position: relative;
+  }
+
+  .spotlight::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(340px circle at var(--mx, 50%) var(--my, 50%), rgb(255 106 61 / 0.07), transparent 65%);
+    transition: opacity 0.25s ease;
+  }
+
+  .spotlight:hover::before {
+    opacity: 1;
+  }
+
   /* ─── Typography helpers ─── */
   .eyebrow {
     font-size: 12.5px;
     font-weight: 500;
+    color: var(--color-fg-subtle);
+  }
+
+  .mono-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
     color: var(--color-fg-subtle);
   }
 
@@ -187,6 +309,26 @@
     border: 1px solid var(--color-line-strong);
     border-bottom-width: 2px;
     border-radius: 4px;
+  }
+
+  /* ─── Tiles (icon containers — flat, bordered, no gradients) ─── */
+  .tile {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 10px;
+    border: 1px solid var(--color-line-strong);
+    background: var(--color-surface-2);
+    color: var(--color-fg-muted);
+    flex-shrink: 0;
+  }
+
+  .tile-lg {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 12px;
   }
 
   /* ─── Buttons ─── */
@@ -426,6 +568,24 @@
     transform: scale(1);
   }
 
+  /* Dropzone for local files: dashed drafting border, accent while dragging. */
+  .dropzone {
+    border: 1.5px dashed var(--color-line-strong);
+    border-radius: 12px;
+    background: var(--color-bg-subtle);
+    transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.18s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  .dropzone:hover {
+    border-color: rgb(255 255 255 / 0.26);
+  }
+
+  .dropzone[data-active='true'] {
+    border-color: var(--color-accent);
+    background: rgb(255 106 61 / 0.05);
+    transform: scale(1.008);
+  }
+
   /* ─── Segmented control ─── */
   .segmented {
     display: flex;
@@ -637,6 +797,29 @@
     animation: indeterminate 1.3s ease-in-out infinite;
   }
 
+  /* Console meter: live level bars while a job runs. */
+  .meter {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 3px;
+    height: 26px;
+  }
+
+  .meter span {
+    display: block;
+    width: 3px;
+    height: 20%;
+    border-radius: 1px;
+    background: var(--color-accent);
+    animation: meter-bounce 1.1s ease-in-out infinite;
+  }
+
+  .meter span:nth-child(3n) { animation-duration: 0.9s; }
+  .meter span:nth-child(4n) { animation-duration: 1.3s; }
+  .meter span:nth-child(5n) { animation-delay: 0.15s; }
+  .meter span:nth-child(7n) { animation-delay: 0.3s; }
+
   .skeleton {
     background: rgb(255 255 255 / 0.05);
     border-radius: 6px;
@@ -651,6 +834,31 @@
     border-right-color: transparent;
     animation: spin 0.7s linear infinite;
     flex-shrink: 0;
+  }
+
+  /* ─── Stat rows (result readouts) ─── */
+  .stat-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px dashed var(--color-line);
+    font-size: 13.5px;
+  }
+
+  .stat-row:last-child {
+    border-bottom: 0;
+  }
+
+  .stat-row dt {
+    color: var(--color-fg-subtle);
+  }
+
+  .stat-row dd {
+    color: var(--color-fg);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
   }
 
   /* ─── Table ─── */
@@ -774,6 +982,11 @@
   to { transform: rotate(360deg); }
 }
 
+@keyframes meter-bounce {
+  0%, 100% { height: 18%; opacity: 0.55; }
+  50% { height: 92%; opacity: 1; }
+}
+
 @layer utilities {
   .anim-fade-in { animation: fade-in 0.2s ease-out both; }
   .anim-fade-up { animation: fade-up 0.35s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
@@ -803,4 +1016,5 @@
     scroll-behavior: auto !important;
   }
   .reveal { opacity: 1; transform: none; }
+  .meter span { height: 40%; }
 }

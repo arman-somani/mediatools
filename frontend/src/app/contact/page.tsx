@@ -19,7 +19,7 @@ export default function ContactPage() {
               <Mail className="w-6 h-6" />
             </div>
 
-            <h1 className="text-3xl sm:text-4xl font-bold mb-3 tracking-tight text-fg">
+            <h1 className="font-display text-3xl sm:text-4xl font-bold mb-3 tracking-tight text-fg">
               Get in Touch
             </h1>
             <p className="text-fg-muted text-sm sm:text-base mb-8 leading-relaxed">

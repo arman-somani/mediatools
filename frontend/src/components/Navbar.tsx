@@ -3,16 +3,17 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
-import { LayoutDashboard, LogOut, Menu, X, ShieldCheck, ChevronDown } from 'lucide-react';
+import { LayoutDashboard, LogOut, Menu, X, ShieldCheck, ChevronDown, Search } from 'lucide-react';
 import { useAuthStore } from '@/lib/store';
 import api from '@/lib/api';
 import Logo from '@/components/Logo';
+import { openCommandPalette } from '@/components/CommandPalette';
 
 const TOOL_LINKS = [
   { name: 'Video to Audio', href: '/converter' },
   { name: 'YouTube to MP3', href: '/youtube' },
   { name: 'YouTube to MP4', href: '/yt-video' },
-  { name: 'Universal Video', href: '/universal' },
+  { name: 'Universal', href: '/universal' },
 ];
 
 export default function Navbar() {
@@ -23,9 +24,14 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isMac, setIsMac] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    setIsMac(/mac|iphone|ipad/i.test(navigator.platform || navigator.userAgent));
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 4);
@@ -94,10 +100,10 @@ export default function Navbar() {
         scrolled || mobileOpen ? 'border-line bg-bg/85 backdrop-blur-md' : 'border-transparent bg-bg'
       }`}
     >
-      <nav className="container-page flex h-14 items-center gap-6" aria-label="Main">
+      <nav className="container-page flex h-14 items-center gap-4" aria-label="Main">
         <Logo />
 
-        <div className="hidden md:flex items-center gap-1">
+        <div className="hidden lg:flex items-center gap-1">
           {TOOL_LINKS.map((link) => (
             <Link
               key={link.href}
@@ -111,6 +117,17 @@ export default function Navbar() {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
+          <button
+            type="button"
+            onClick={openCommandPalette}
+            className="hidden md:inline-flex items-center gap-2 h-8 px-2.5 text-[13px] text-fg-subtle rounded-lg border border-line hover:border-line-strong hover:text-fg-muted transition-colors"
+            aria-label="Open command palette"
+          >
+            <Search className="w-3.5 h-3.5" />
+            <span className="hidden xl:inline">Search…</span>
+            <span className="kbd !h-5 !min-w-[1.6rem]">{isMac ? '⌘K' : 'Ctrl K'}</span>
+          </button>
+
           {signedIn ? (
             <>
               <Link
@@ -184,7 +201,7 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="md:hidden fixed inset-x-0 top-14 bottom-0 bg-bg border-t border-line anim-fade-in overflow-y-auto">
           <div className="container-page py-4">
-            <p className="eyebrow px-2 mb-1">Tools</p>
+            <p className="mono-label px-2 mb-1">Tools</p>
             {TOOL_LINKS.map((link) => (
               <Link
                 key={link.href}

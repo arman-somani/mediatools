@@ -52,8 +52,8 @@ export default function Footer() {
 
           {COLUMNS.map((col) => (
             <div key={col.title}>
-              <h2 className="text-[13px] font-medium text-fg">{col.title}</h2>
-              <ul className="mt-3 space-y-2">
+              <h2 className="mono-label">{col.title}</h2>
+              <ul className="mt-4 space-y-2">
                 {col.links.map((l) => (
                   <li key={l.label}>
                     {'external' in l && l.external ? (

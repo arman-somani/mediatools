@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Archivo, Geist, Geist_Mono } from 'next/font/google';
 import { Toaster } from 'sonner';
 import './globals.css';
 import Navbar from '@/components/Navbar';
@@ -7,9 +7,11 @@ import Footer from '@/components/Footer';
 import ThemeProvider from '@/components/ThemeProvider';
 import GoogleAuthProvider from '@/components/GoogleAuthProvider';
 import ServerWakeup from '@/components/ServerWakeup';
+import CommandPalette from '@/components/CommandPalette';
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-geist', display: 'swap' });
 const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono', display: 'swap' });
+const archivo = Archivo({ subsets: ['latin'], variable: '--font-archivo', display: 'swap' });
 
 export const metadata: Metadata = {
   title: {
@@ -30,7 +32,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${geist.variable} ${geistMono.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${geist.variable} ${geistMono.variable} ${archivo.variable}`}>
       <body className="min-h-screen flex flex-col overflow-x-hidden">
         <a
           href="#main"
@@ -39,6 +41,7 @@ export default function RootLayout({
           Skip to content
         </a>
         <ServerWakeup />
+        <CommandPalette />
 
         <GoogleAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}>
           <ThemeProvider>
@@ -59,6 +62,7 @@ export default function RootLayout({
               border: '1px solid rgba(255,255,255,0.12)',
               color: '#ededee',
               fontSize: '13.5px',
+              borderRadius: '10px',
             },
           }}
         />

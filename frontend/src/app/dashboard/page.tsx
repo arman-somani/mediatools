@@ -10,7 +10,6 @@ import { useAuthStore } from '@/lib/store';
 import api from '@/lib/api';
 import PageWrapper from '@/components/PageWrapper';
 import AnimeReveal from '@/components/AnimeReveal';
-import AnimeHover from '@/components/AnimeHover';
 import { YouTubeIcon } from '@/components/icons';
 import { formatFileSize } from '@/lib/utils';
 
@@ -32,17 +31,13 @@ const TOOLS = [
     href: '/converter',
     badge: 'Up to 320kbps',
     icon: Music,
-    accentColor: 'text-orange-400',
-    iconBg: 'bg-orange-500/10 border-orange-500/20',
   },
   {
     label: 'YouTube MP3',
     description: 'Download YouTube videos directly as high-bitrate audio.',
     href: '/youtube',
-    badge: 'Fast Extract',
+    badge: 'Fast extract',
     icon: YouTubeIcon,
-    accentColor: 'text-rose-400',
-    iconBg: 'bg-rose-500/10 border-rose-500/20',
   },
   {
     label: 'YouTube MP4',
@@ -50,17 +45,13 @@ const TOOLS = [
     href: '/yt-video',
     badge: 'Up to 8K',
     icon: Clapperboard,
-    accentColor: 'text-cyan-400',
-    iconBg: 'bg-cyan-500/10 border-cyan-500/20',
   },
   {
     label: 'Universal Video',
     description: 'Save videos from Instagram, TikTok, Twitter/X, and more.',
     href: '/universal',
-    badge: 'Multi-Platform',
+    badge: 'Multi-platform',
     icon: Globe,
-    accentColor: 'text-emerald-400',
-    iconBg: 'bg-emerald-500/10 border-emerald-500/20',
   },
 ];
 
@@ -129,31 +120,29 @@ export default function DashboardPage() {
   return (
     <PageWrapper>
       <main className="min-h-screen w-full container-page pt-28 pb-20">
-        
+
         {/* ── Header ── */}
-        <AnimeReveal delay={100} direction="up" className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-line pb-6">
+        <AnimeReveal delay={80} direction="up" className="mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-line pb-6">
             <div>
+              <p className="mono-label mb-2">
+                <span className="text-accent">DASH</span>
+                <span className="mx-2 text-fg-subtle/60">/</span>
+                YOUR ACCOUNT
+              </p>
               <div className="flex items-center gap-3">
-                <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-fg">Dashboard</h1>
-                {user?.role === 'admin' && (
-                  <span className="badge text-accent !bg-accent/10 !border-accent/20 font-semibold">
-                    Admin
-                  </span>
-                )}
+                <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-fg">Dashboard</h1>
+                {user?.role === 'admin' && <span className="badge badge-accent">Admin</span>}
               </div>
               <p className="mt-2 text-fg-muted text-sm sm:text-base">
-                {user ? `Welcome back, ${user.name}` : 'Manage your conversions, track downloads, and launch tools.'}
+                {user ? `Welcome back, ${user.name}.` : 'Manage your conversions, track downloads, and launch tools.'}
               </p>
             </div>
 
             {user?.role === 'admin' && (
-              <Link
-                href="/admin"
-                className="btn-secondary self-start sm:self-auto gap-2"
-              >
+              <Link href="/admin" className="btn-secondary self-start sm:self-auto gap-2">
                 <Shield className="w-4 h-4 text-accent" />
-                Admin Panel
+                Admin panel
               </Link>
             )}
           </div>
@@ -161,15 +150,12 @@ export default function DashboardPage() {
 
         {/* ── Auth Warning ── */}
         {!user && !accessToken && (
-          <AnimeReveal delay={150} direction="up" className="mb-8">
-            <div className="card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-amber-500/20 bg-amber-500/5">
-              <div className="flex items-center gap-3 text-amber-300">
-                <AlertCircle className="w-5 h-5 flex-shrink-0 text-amber-400" />
-                <p className="text-sm">
-                  You are browsing as a guest.{' '}
-                  <span className="text-amber-200/80">Sign in to save conversions to your history and sync across devices.</span>
-                </p>
-              </div>
+          <AnimeReveal delay={140} direction="up" className="mb-8">
+            <div className="alert alert-warn">
+              <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <p className="flex-1">
+                You are browsing as a guest. Sign in to save conversions to your history and sync across devices.
+              </p>
               <Link href="/auth/login" className="btn-accent btn-sm self-start sm:self-auto flex-shrink-0">
                 Sign in
               </Link>
@@ -179,88 +165,64 @@ export default function DashboardPage() {
 
         {/* ── Error Banner ── */}
         {error && (
-          <div className="mb-8 card p-4 flex items-center justify-between border-rose-500/30 bg-rose-500/10 text-rose-300 text-sm">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-rose-400 flex-shrink-0" />
-              <span>{error}</span>
-            </div>
-            <button onClick={() => setError('')} className="btn-icon btn-sm text-rose-400 hover:text-rose-200">
-              <X className="w-4 h-4" />
+          <div className="mb-8 alert alert-error">
+            <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <span className="flex-1">{error}</span>
+            <button onClick={() => setError('')} className="btn-icon !w-6 !h-6" aria-label="Dismiss">
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
         )}
 
         {/* ── Stats Grid ── */}
         <AnimeReveal delay={200} direction="up" className="mb-10">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="card p-5 flex flex-col justify-between">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-medium text-fg-subtle uppercase tracking-wider">Conversions</span>
-                <span className="w-8 h-8 rounded-lg bg-surface-2 border border-line flex items-center justify-center text-fg-muted">
-                  <Layers className="w-4 h-4" />
-                </span>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-line border border-line rounded-xl overflow-hidden">
+            <div className="bg-surface p-5">
+              <div className="flex items-center justify-between mb-4">
+                <span className="mono-label">CONVERSIONS</span>
+                <Layers className="w-4 h-4 text-fg-subtle" />
               </div>
-              <div>
-                <span className="text-2xl sm:text-3xl font-bold font-display text-fg tabular-nums">
-                  {userConversions}
-                </span>
-                <p className="text-xs text-fg-subtle mt-1">Processed media tasks</p>
-              </div>
+              <span className="font-display text-3xl font-bold text-fg tabular-nums">{userConversions}</span>
+              <p className="text-xs text-fg-subtle mt-1">Processed media tasks</p>
             </div>
 
-            <div className="card p-5 flex flex-col justify-between">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-medium text-fg-subtle uppercase tracking-wider">Downloads</span>
-                <span className="w-8 h-8 rounded-lg bg-surface-2 border border-line flex items-center justify-center text-accent">
-                  <Download className="w-4 h-4" />
-                </span>
+            <div className="bg-surface p-5">
+              <div className="flex items-center justify-between mb-4">
+                <span className="mono-label">DOWNLOADS</span>
+                <Download className="w-4 h-4 text-accent" />
               </div>
-              <div>
-                <span className="text-2xl sm:text-3xl font-bold font-display text-fg tabular-nums">
-                  {userDownloads}
-                </span>
-                <p className="text-xs text-fg-subtle mt-1">Saved files</p>
-              </div>
+              <span className="font-display text-3xl font-bold text-fg tabular-nums">{userDownloads}</span>
+              <p className="text-xs text-fg-subtle mt-1">Saved files</p>
             </div>
 
-            <div className="card p-5 flex flex-col justify-between">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-medium text-fg-subtle uppercase tracking-wider">Account Tier</span>
-                <span className="w-8 h-8 rounded-lg bg-surface-2 border border-line flex items-center justify-center text-emerald-400">
-                  <ShieldCheck className="w-4 h-4" />
-                </span>
+            <div className="bg-surface p-5">
+              <div className="flex items-center justify-between mb-4">
+                <span className="mono-label">ACCOUNT</span>
+                <ShieldCheck className="w-4 h-4 text-fg-subtle" />
               </div>
-              <div>
-                <span className="text-xl sm:text-2xl font-bold text-fg">
-                  {user ? (user.role === 'admin' ? 'Administrator' : 'Standard') : 'Guest'}
-                </span>
-                <p className="text-xs text-fg-subtle mt-1 truncate">
-                  {user?.email || 'Sign in for cloud sync'}
-                </p>
-              </div>
+              <span className="font-display text-xl sm:text-2xl font-bold text-fg">
+                {user ? (user.role === 'admin' ? 'Administrator' : 'Standard') : 'Guest'}
+              </span>
+              <p className="text-xs text-fg-subtle mt-1 truncate">
+                {user?.email || 'Sign in for cloud sync'}
+              </p>
             </div>
 
-            <div className="card p-5 flex flex-col justify-between">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-medium text-fg-subtle uppercase tracking-wider">Recent History</span>
-                <span className="w-8 h-8 rounded-lg bg-surface-2 border border-line flex items-center justify-center text-fg-muted">
-                  <Clock className="w-4 h-4" />
-                </span>
+            <div className="bg-surface p-5">
+              <div className="flex items-center justify-between mb-4">
+                <span className="mono-label">IN SESSION</span>
+                <Clock className="w-4 h-4 text-fg-subtle" />
               </div>
-              <div>
-                <span className="text-2xl sm:text-3xl font-bold font-display text-fg tabular-nums">
-                  {recentConversions.length}
-                </span>
-                <p className="text-xs text-fg-subtle mt-1">Files in your session</p>
-              </div>
+              <span className="font-display text-3xl font-bold text-fg tabular-nums">{recentConversions.length}</span>
+              <p className="text-xs text-fg-subtle mt-1">Files in your session</p>
             </div>
           </div>
         </AnimeReveal>
 
         {/* ── Tools Picker Grid ── */}
-        <AnimeReveal delay={300} direction="up" className="mb-12">
+        <AnimeReveal delay={280} direction="up" className="mb-12">
           <div className="mb-4">
-            <h2 className="text-xl font-bold text-fg">Start a New Conversion</h2>
+            <h2 className="font-display text-xl font-bold text-fg">Start a new conversion</h2>
             <p className="text-sm text-fg-muted">Select a media tool to convert local files or download from web links.</p>
           </div>
 
@@ -268,48 +230,41 @@ export default function DashboardPage() {
             {TOOLS.map((tool) => {
               const Icon = tool.icon;
               return (
-                <AnimeHover key={tool.href} className="w-full">
-                  <Link
-                    href={tool.href}
-                    className="card card-hover p-5 flex flex-col h-full group"
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className={`w-11 h-11 rounded-xl flex items-center justify-center border ${tool.iconBg} ${tool.accentColor}`}>
-                        <Icon className="w-5 h-5" />
-                      </div>
-                      <span className="badge text-[11px] font-semibold text-fg-subtle">
-                        {tool.badge}
-                      </span>
-                    </div>
+                <Link
+                  key={tool.href}
+                  href={tool.href}
+                  className="card card-hover p-5 flex flex-col h-full group"
+                >
+                  <div className="flex items-start justify-between mb-5">
+                    <span className="tile !w-10 !h-10 !rounded-lg group-hover:text-accent group-hover:border-accent/30 transition-colors">
+                      <Icon className="w-5 h-5" />
+                    </span>
+                    <span className="mono-label !text-[10px]">{tool.badge.toUpperCase()}</span>
+                  </div>
 
-                    <h3 className="text-base font-semibold text-fg group-hover:text-white transition-colors mb-1.5">
-                      {tool.label}
-                    </h3>
-                    <p className="text-xs text-fg-muted leading-relaxed mb-5 flex-1">
-                      {tool.description}
-                    </p>
+                  <h3 className="text-base font-semibold text-fg mb-1.5">{tool.label}</h3>
+                  <p className="text-[13px] text-fg-muted leading-relaxed mb-5 flex-1">
+                    {tool.description}
+                  </p>
 
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-fg-muted group-hover:text-accent transition-colors pt-2 border-t border-line">
-                      <span>Launch tool</span>
-                      <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-                    </div>
-                  </Link>
-                </AnimeHover>
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-fg-muted group-hover:text-accent transition-colors pt-3 border-t border-line">
+                    <span>Launch tool</span>
+                    <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                  </div>
+                </Link>
               );
             })}
           </div>
         </AnimeReveal>
 
         {/* ── Recent Conversions ── */}
-        <AnimeReveal delay={400} direction="up">
+        <AnimeReveal delay={360} direction="up">
           <div className="card p-5 sm:p-6">
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-line">
               <div className="flex items-center gap-3">
-                <h2 className="text-lg sm:text-xl font-bold text-fg">Recent Conversions & Downloads</h2>
+                <h2 className="font-display text-lg sm:text-xl font-bold text-fg">Recent conversions</h2>
                 {recentConversions.length > 0 && (
-                  <span className="badge text-xs tabular-nums font-mono">
-                    {recentConversions.length}
-                  </span>
+                  <span className="badge tabular-nums">{recentConversions.length}</span>
                 )}
               </div>
 
@@ -320,12 +275,12 @@ export default function DashboardPage() {
                   title="Clear all conversions"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
-                  Clear History
+                  Clear history
                 </button>
               )}
             </div>
 
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {recentConversions.length > 0 ? (
                 recentConversions.map((conversion, index) => {
                   const isYtAudio = conversion.type === 'youtube';
@@ -357,25 +312,24 @@ export default function DashboardPage() {
                       key={conversion._id || index}
                       className="card-inset p-3.5 sm:p-4 flex items-center justify-between gap-3 group/row hover:border-line-strong transition-colors"
                     >
-                      {/* Left: icon & details */}
                       <Link href={rowLink} className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className="w-9 h-9 rounded-lg bg-surface-2 border border-line flex items-center justify-center flex-shrink-0 text-fg-muted group-hover/row:text-accent transition-colors">
+                        <span className="tile !w-9 !h-9 !rounded-lg group-hover/row:text-accent transition-colors">
                           {isYtAudio ? (
-                            <Music className="w-4 h-4 text-rose-400" />
+                            <Music className="w-4 h-4" />
                           ) : isYtVideo ? (
-                            <Clapperboard className="w-4 h-4 text-cyan-400" />
+                            <Clapperboard className="w-4 h-4" />
                           ) : isUniversal ? (
-                            <Globe className="w-4 h-4 text-emerald-400" />
+                            <Globe className="w-4 h-4" />
                           ) : (
-                            <Music className="w-4 h-4 text-orange-400" />
+                            <Music className="w-4 h-4" />
                           )}
-                        </div>
+                        </span>
 
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-fg group-hover/row:text-white truncate" title={conversion.youtubeUrl || conversion.youtubeTitle || conversion.originalName || conversion.outputFilename}>
+                          <p className="text-sm font-medium text-fg truncate" title={conversion.youtubeUrl || conversion.youtubeTitle || conversion.originalName || conversion.outputFilename}>
                             {conversion.youtubeTitle || conversion.originalName || conversion.outputFilename || conversion.youtubeUrl || 'Converted media'}
                           </p>
-                          <div className="flex items-center gap-2 mt-1">
+                          <div className="flex items-center gap-2 mt-0.5">
                             <span className="text-[11px] font-semibold text-accent/90">
                               {typeLabel}
                             </span>
@@ -388,10 +342,9 @@ export default function DashboardPage() {
                         </div>
                       </Link>
 
-                      {/* Right: metadata & actions */}
                       <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                         {conversion.fileSize ? (
-                          <span className="text-xs font-mono text-fg-muted px-2.5 py-1 rounded bg-surface border border-line hidden sm:inline-block">
+                          <span className="text-xs font-mono text-fg-muted px-2 py-1 rounded bg-surface border border-line hidden sm:inline-block tabular">
                             {formatFileSize(conversion.fileSize)}
                           </span>
                         ) : null}
@@ -422,9 +375,9 @@ export default function DashboardPage() {
                 })
               ) : (
                 <div className="card-inset p-10 text-center">
-                  <div className="w-12 h-12 bg-surface-2 rounded-xl border border-line flex items-center justify-center mx-auto mb-3 text-fg-subtle">
+                  <span className="tile mx-auto mb-3">
                     <Clock className="w-5 h-5" />
-                  </div>
+                  </span>
                   <h3 className="font-semibold text-fg text-sm mb-1">No conversions yet</h3>
                   <p className="text-xs text-fg-muted max-w-sm mx-auto mb-6">
                     Launch any of the media tools above to start extracting audio or downloading video files.

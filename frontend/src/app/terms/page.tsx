@@ -11,7 +11,12 @@ export default function TermsPage() {
     <PageWrapper>
       <main className="min-h-screen container-page pt-28 pb-20">
         <div className="max-w-4xl mx-auto card p-6 sm:p-10">
-          <h1 className="text-3xl sm:text-4xl font-bold mb-3 tracking-tight text-fg">
+          <p className="mono-label mb-4">
+            <span className="text-accent">DOC</span>
+            <span className="mx-2 text-fg-subtle/60">/</span>
+            TERMS · REV 2026-10
+          </p>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold mb-3 tracking-tight text-fg">
             Terms of Service
           </h1>
           <p className="text-xs text-fg-subtle mb-8">Last updated: October 2026</p>
