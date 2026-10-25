@@ -171,7 +171,7 @@ export default function YtVideoPage() {
                         onLocked={() => toast('4K and 8K are reserved for Premium accounts.')}
                       />
                     </div>
-                    <button onClick={handleDownload} disabled={!url} className="btn-primary btn-lg sm:w-52">
+                    <button onClick={handleDownload} disabled={!url} className="btn-primary btn-lg sm:w-52 sm:mt-[25px]">
                       <Clapperboard className="w-4 h-4" />
                       Download video
                     </button>

@@ -165,7 +165,7 @@ export default function YouTubePage() {
                     <div className="flex-1">
                       <QualitySelector label="OUTPUT QUALITY" options={qualityOptions} value={quality} onSelect={setQuality} />
                     </div>
-                    <button onClick={handleConvert} disabled={!url} className="btn-primary btn-lg sm:w-52">
+                    <button onClick={handleConvert} disabled={!url} className="btn-primary btn-lg sm:w-52 sm:mt-[25px]">
                       <Music className="w-4 h-4" />
                       Convert audio
                     </button>

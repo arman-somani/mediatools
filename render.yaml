@@ -60,13 +60,14 @@ services:
       - key: ENABLE_POT_PROVIDER
         value: "true"
 
-      # Reinstall yt-dlp from master at every boot. Off by default because it
-      # adds 10-20s to a cold start. Turn it on if the site has been working
-      # and suddenly stops: YouTube ships breaking extractor changes without
-      # notice and fixes land on master within days, so a stale yt-dlp is the
-      # most common single cause.
+      # Reinstall yt-dlp from master at every boot. Adds 10-20s to a cold
+      # start, but a stale yt-dlp is the single most common cause of a
+      # deployment that worked last month and fails today: YouTube ships
+      # breaking extractor changes without notice and fixes land on master
+      # within days. On the free plan the container is spun down regularly
+      # anyway, so this keeps the extractor fresh without manual redeploys.
       - key: YTDLP_AUTO_UPDATE
-        value: "false"
+        value: "true"
 
       # Order of extraction clients to try. Leave unset to use the built-in
       # ladder (android_vr, tv_simply, web_safari, tv_embedded, default), which
