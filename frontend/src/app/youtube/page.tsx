@@ -5,6 +5,7 @@ import { Music } from 'lucide-react';
 import api, { audioApi, audioApiUrl } from '@/lib/api';
 import { isValidYouTubeUrl, getYouTubeVideoId } from '@/lib/utils';
 import { useConversionJob, isRunning } from '@/lib/useConversionJob';
+import { useServerQueue } from '@/lib/useServerQueue';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import PageWrapper from '@/components/PageWrapper';
 import AnimeReveal from '@/components/AnimeReveal';
@@ -15,6 +16,7 @@ import UrlInput, { YouTubeSearchResults, YouTubePreview } from '@/components/ui/
 import QualitySelector, { type QualityOption } from '@/components/ui/QualitySelector';
 import CompletionCard from '@/components/ui/CompletionCard';
 import FailureNotice from '@/components/ui/FailureNotice';
+import QueuePanel from '@/components/ui/QueuePanel';
 import ProgressMeter from '@/components/ProgressMeter';
 
 type Quality = '128' | '192' | '320';
@@ -38,6 +40,13 @@ export default function YouTubePage() {
     toAbsolute: audioApiUrl,
     intervalMs: 2000,
     notification: { title: 'Audio ready', body: 'Your audio file has finished converting and is ready to save.' },
+  });
+
+  // Server-wide queue view: shows what the single worker is doing right now.
+  // Not polled while our own job is past the queue — its own poll covers that.
+  const serverQueue = useServerQueue({
+    client: audioApi,
+    enabled: state.phase !== 'processing' && state.phase !== 'finalizing',
   });
 
   // Deep-link support: /youtube?url=… pre-fills the field.
@@ -72,6 +81,11 @@ export default function YouTubePage() {
 
   const videoId = url ? getYouTubeVideoId(url) : null;
   const thumbnailPreview = videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : null;
+
+  // While our own job is queued, the meter's subtitle names the job ahead of us.
+  const queuedSubtitle = serverQueue.busy && serverQueue.current
+    ? `Now downloading: ${serverQueue.current.title} · ${Math.round(serverQueue.current.progress)}% — you are next.`
+    : STAGE_COPY.queued.subtitle;
 
   const handleConvert = () => {
     if (!isValidYouTubeUrl(url)) {
@@ -126,10 +140,11 @@ export default function YouTubePage() {
                   progress={state.progress}
                   queuePosition={state.queuePosition}
                   title={STAGE_COPY[state.phase]?.title ?? 'Working…'}
-                  subtitle={state.title || STAGE_COPY[state.phase]?.subtitle || ''}
+                  subtitle={state.phase === 'queued' && !state.title ? queuedSubtitle : (state.title || STAGE_COPY[state.phase]?.subtitle || '')}
                 />
               ) : (
                 <div className="space-y-7">
+                  <QueuePanel queue={serverQueue} />
                   {state.phase === 'failed' && state.error && (
                     <FailureNotice
                       failure={state.error}

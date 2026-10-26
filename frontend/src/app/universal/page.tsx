@@ -8,6 +8,7 @@ import { describeFailure, type FailureInfo } from '@/lib/conversion';
 import { formatFileSize } from '@/lib/utils';
 import { useAuthStore } from '@/lib/store';
 import { useConversionJob, isRunning } from '@/lib/useConversionJob';
+import { useServerQueue } from '@/lib/useServerQueue';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import PageWrapper from '@/components/PageWrapper';
 import AnimeReveal from '@/components/AnimeReveal';
@@ -18,6 +19,7 @@ import UrlInput from '@/components/ui/UrlInput';
 import QualitySelector, { type QualityOption } from '@/components/ui/QualitySelector';
 import CompletionCard from '@/components/ui/CompletionCard';
 import FailureNotice from '@/components/ui/FailureNotice';
+import QueuePanel from '@/components/ui/QueuePanel';
 import ProgressMeter from '@/components/ProgressMeter';
 
 interface PreflightInfo {
@@ -48,6 +50,17 @@ export default function UniversalPage() {
     intervalMs: 2500,
     notification: { title: 'Download complete', body: 'Your video has finished downloading and is ready to save.' },
   });
+
+  // Server-wide queue view: shows what the single worker is doing right now.
+  const serverQueue = useServerQueue({
+    client: videoApi,
+    enabled: state.phase !== 'processing' && state.phase !== 'finalizing',
+  });
+
+  // While our own job is queued, the meter's subtitle names the job ahead of us.
+  const queuedSubtitle = serverQueue.busy && serverQueue.current
+    ? `Now downloading: ${serverQueue.current.title} · ${Math.round(serverQueue.current.progress)}% — you are next.`
+    : STAGE_COPY.queued.subtitle;
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -131,10 +144,11 @@ export default function UniversalPage() {
                   progress={state.progress}
                   queuePosition={state.queuePosition}
                   title={STAGE_COPY[state.phase]?.title ?? 'Working…'}
-                  subtitle={state.title || STAGE_COPY[state.phase]?.subtitle || ''}
+                  subtitle={state.phase === 'queued' && !state.title ? queuedSubtitle : (state.title || STAGE_COPY[state.phase]?.subtitle || '')}
                 />
               ) : (
                 <div className="space-y-7">
+                  <QueuePanel queue={serverQueue} />
                   {state.phase === 'failed' && state.error && (
                     <FailureNotice failure={state.error} onDismiss={() => reset()} />
                   )}

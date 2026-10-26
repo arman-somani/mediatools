@@ -166,14 +166,18 @@ services:
       - key: ADMIN_EMAIL
         sync: false
 
-      # ---- Optional: keep-warm --------------------------------------------
-      # Leave false. The free plan allows 750 instance-hours per month and a
-      # month is about 730 hours, so pinging around the clock consumes the
-      # entire allowance for the whole account. It also cannot wake a service
-      # Render has already spun down, because the timer doing the pinging is
-      # inside the stopped container.
+      # ---- Keep-warm (anti-sleep) -----------------------------------------
+      # Pings the service's own /api/health through Render's public URL every
+      # 10 minutes, so the free instance never accumulates the 15 idle minutes
+      # that trigger Render's spin-down. Trade-off, accepted: one service
+      # running 24/7 uses ~730 of the free plan's 750 monthly instance-hours,
+      # so this consumes nearly the whole allowance for the account — any
+      # OTHER free service on the same account will run out of hours.
+      # More reliable still is an external pinger (UptimeRobot / cron-job.org
+      # hitting /api/health every 5-10 min), because it also works after a
+      # deploy or crash when no timer inside the container is running.
       - key: SELF_PING
-        value: "false"
+        value: "true"
 
       # ---- Optional: payments and media storage ---------------------------
       - key: RAZORPAY_KEY_ID

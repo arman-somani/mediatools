@@ -376,6 +376,20 @@ function failRequest(
   });
 }
 
+/* ── SERVER QUEUE SNAPSHOT ───────────────────────────────────────────── */
+/**
+ * GET /api/convert/queue
+ *
+ * What the single conversion worker is doing right now, for the "queue"
+ * panel in the UI: the running job's title and progress, plus how many jobs
+ * are waiting. Deliberately anonymous — no user ids or links — so a waiting
+ * user can see the worker is genuinely busy without exposing anyone's
+ * activity to the next visitor.
+ */
+router.get('/queue', authenticate, (_req: AuthRequest, res: Response) => {
+  res.json({ success: true, data: conversionQueue.snapshot() });
+});
+
 /* ── Video TO Audio ───────────────────────────────────────────────────────────── */
 const SERVER_ROLE = process.env.SERVER_ROLE || 'all';
 
@@ -440,6 +454,15 @@ router.post(
             try {
               const ffmpeg = spawn('ffmpeg', ['-y', '-i', file.path, '-threads', '1', '-vn', '-ab', `${quality}k`, outputPath]);
 
+              // Publish to the server-wide queue view others poll.
+              conversionQueue.setCurrent({
+                id: conversion._id.toString(),
+                title: sanitizeFilename(file.originalname),
+                type: 'upload',
+                progress: 0,
+                startedAt: Date.now(),
+              });
+
               activePolls.set(conversion._id.toString(), Date.now());
               const zombieKiller = setInterval(() => {
                 const lastPoll = activePolls.get(conversion._id.toString());
@@ -465,6 +488,7 @@ router.post(
                   if (now - lastUpdate > 1000) {
                     lastUpdate = now;
                     Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
+                    conversionQueue.reportProgress(conversion._id.toString(), progress);
                   }
                 }
               });
@@ -483,11 +507,13 @@ router.post(
                 await User.findByIdAndUpdate(userId, { $inc: { monthlyBandwidthUsed: conversion.fileSize } });
               }
 
+              conversionQueue.clearCurrent(conversion._id.toString());
               conversion.status = 'completed';
               conversion.progress = 100;
               await conversion.save();
               await User.findByIdAndUpdate(userId, { $inc: { totalConversions: 1 } });
             } catch (ffmpegError: any) {
+              conversionQueue.clearCurrent(conversion._id.toString());
               conversion.status = 'failed';
               conversion.errorMessage = ffmpegError.message || 'FFmpeg failed';
               await conversion.save();
@@ -586,6 +612,15 @@ router.post('/youtube', authenticate, convertLimiter, async (req: AuthRequest, r
         conversion.outputFilename = `${safeTitle}.mp3`;
         await conversion.save();
 
+        // Publish this job to the server-wide queue view others poll.
+        conversionQueue.setCurrent({
+          id: conversion._id.toString(),
+          title: safeTitle,
+          type: 'audio',
+          progress: 0,
+          startedAt: Date.now(),
+        });
+
         const runYtDlpAudio = (proxy?: string | null, client?: string) => new Promise((resolve, reject) => {
           // Save directly as a flat file, not in a subdirectory, to avoid path issues
           const flatOutputTemplate = path.join(outputDir, `${fileId}.%(ext)s`);
@@ -626,6 +661,7 @@ router.post('/youtube', authenticate, convertLimiter, async (req: AuthRequest, r
                 if (now - lastUpdate > 1000) {
                   lastUpdate = now;
                   Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
+                  conversionQueue.reportProgress(conversion._id.toString(), progress);
                 }
               }
             }
@@ -738,6 +774,9 @@ router.post('/youtube', authenticate, convertLimiter, async (req: AuthRequest, r
           await User.findByIdAndUpdate(userId, { $inc: { monthlyBandwidthUsed: conversion.fileSize } });
         }
 
+        // Download phase is over; stop advertising this job as in progress.
+        conversionQueue.clearCurrent(conversion._id.toString());
+
         // Use tmpfiles.org for 1 Gbps direct download unthrottled links
         try {
           conversion.status = 'uploading';
@@ -778,6 +817,7 @@ router.post('/youtube', authenticate, convertLimiter, async (req: AuthRequest, r
 
       } catch (err: any) {
         console.error('YouTube audio background error:', err.message);
+        conversionQueue.clearCurrent(conversion._id.toString());
         try {
           conversion.status = 'failed';
           conversion.errorMessage = err.message || 'Download failed';
@@ -966,6 +1006,15 @@ router.post('/universal', authenticate, convertLimiter, async (req: AuthRequest,
         conversion.outputFilename = `${safeTitle}.mp4`;
         await conversion.save();
 
+        // Publish this job to the server-wide queue view others poll.
+        conversionQueue.setCurrent({
+          id: conversion._id.toString(),
+          title: safeTitle,
+          type: 'video',
+          progress: 0,
+          startedAt: Date.now(),
+        });
+
         // Step 2: Download video with the user's selected quality
         console.log(`[QUALITY DEBUG] User requested: ${videoQuality} → targetHeight: ${targetHeight}`);
         const runYtDlpDownload = (proxy?: string | null, client?: string) => new Promise((resolve, reject) => {
@@ -1018,6 +1067,7 @@ router.post('/universal', authenticate, convertLimiter, async (req: AuthRequest,
                 if (now - lastUpdate > 1000) {
                   lastUpdate = now;
                   Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
+                  conversionQueue.reportProgress(conversion._id.toString(), progress);
                 }
               }
             }
@@ -1138,6 +1188,9 @@ router.post('/universal', authenticate, convertLimiter, async (req: AuthRequest,
           console.warn('ffprobe resolution check failed', e);
         }
         
+        // Download phase is over; stop advertising this job as in progress.
+        conversionQueue.clearCurrent(conversion._id.toString());
+
         // Upload to CDN networks
         try {
           conversion.status = 'uploading';
@@ -1190,6 +1243,7 @@ router.post('/universal', authenticate, convertLimiter, async (req: AuthRequest,
 
       } catch (err: any) {
         console.error('Universal video background error:', err.message);
+        conversionQueue.clearCurrent(conversion._id.toString());
         try {
           conversion.status = 'failed';
           conversion.errorMessage = err.message || 'Download failed';

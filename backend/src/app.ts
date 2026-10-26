@@ -215,15 +215,17 @@ function preflight(): void {
 }
 
 /**
- * Keeps the instance warm on Render's free tier, when explicitly enabled.
+ * Keeps the instance awake on Render's free tier. Enabled by default in
+ * render.yaml (SELF_PING=true) so the service does not spin down after 15
+ * idle minutes: pinging /api/health through the public URL every 10 minutes
+ * never lets that idle window accumulate.
  *
- * Off by default, and that is the correct default. The free plan allows 750
- * instance-hours per month; a month is ~730 hours, so pinging around the clock
- * consumes essentially the entire allowance and leaves nothing for any other
- * free service on the account. It also only works while the instance happens
- * to be awake — once Render has spun the service down, no timer inside it is
- * running to wake it up, so this cannot recover from a spin-down, only delay
- * the first one. Set SELF_PING=true if you have decided that trade is worth it.
+ * Two honest caveats: 24/7 uptime consumes ~730 of the free plan's 750
+ * monthly instance-hours, so it leaves nothing for another free service on
+ * the same account. And a timer inside the container cannot run while the
+ * container is stopped — if a deploy or crash lets Render spin the service
+ * down anyway, only an external pinger (UptimeRobot, cron-job.org) can wake
+ * it or keep it awake from there.
  */
 function startSelfPing(port: number): NodeJS.Timeout | null {
   if ((process.env.SELF_PING || '').toLowerCase() !== 'true') {

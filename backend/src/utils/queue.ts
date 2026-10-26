@@ -6,6 +6,17 @@ export interface Task {
   execute: () => Promise<void>;
 }
 
+/** What is on the worker right now, shown to everyone waiting. */
+export interface CurrentJob {
+  id: string;
+  /** Human-facing name: video title or uploaded filename. */
+  title: string;
+  /** Coarse kind, e.g. audio | video | upload. */
+  type: string;
+  progress: number;
+  startedAt: number;
+}
+
 /** Thrown when the backlog is full. Surfaces as a 503 with a Retry-After. */
 export class QueueFullError extends Error {
   readonly status = 503;
@@ -39,6 +50,8 @@ class TaskQueue {
   private queue: Task[] = [];
   private isProcessing = false;
   private currentTaskId: string | null = null;
+  /** Metadata for the running job, published via GET /convert/queue. */
+  private current: CurrentJob | null = null;
 
   /** @throws QueueFullError when the backlog is at capacity. */
   add(task: Task): void {
@@ -71,6 +84,37 @@ class TaskQueue {
 
   isCurrentlyProcessing(id: string): boolean {
     return this.currentTaskId === id;
+  }
+
+  /**
+   * Publishes what is being downloaded right now.
+   *
+   * Deliberately anonymous: the title, kind and progress only. No user ids,
+   * no links — enough for a waiting user to see the worker is genuinely busy,
+   * not enough to leak anyone's activity to the next visitor.
+   */
+  setCurrent(job: CurrentJob): void {
+    this.current = job;
+    this.currentTaskId = job.id;
+  }
+
+  /** Live progress for the published job; ignored if it is no longer current. */
+  reportProgress(id: string, progress: number): void {
+    if (this.current?.id === id) this.current.progress = progress;
+  }
+
+  /** Clears the published job, but only if `id` still owns the slot. */
+  clearCurrent(id: string): void {
+    if (this.current?.id === id) this.current = null;
+  }
+
+  /** One-shot view for the queue endpoint. */
+  snapshot(): { busy: boolean; waiting: number; current: CurrentJob | null } {
+    return {
+      busy: this.isProcessing && this.current !== null,
+      waiting: this.queue.length,
+      current: this.current ? { ...this.current } : null,
+    };
   }
 
   /** Waiting jobs, excluding the one currently running. */
@@ -106,6 +150,7 @@ class TaskQueue {
           console.error(`[queue] task ${task.id} threw:`, error);
         }
         this.currentTaskId = null;
+        this.current = null; // safety net if the task forgot to clear itself
         task = this.queue.shift();
       }
     } finally {

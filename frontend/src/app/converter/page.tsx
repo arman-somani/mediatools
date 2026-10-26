@@ -6,6 +6,7 @@ import { FileAudio, FileVideo, UploadCloud } from 'lucide-react';
 import { audioApi, audioApiUrl } from '@/lib/api';
 import { formatFileSize } from '@/lib/utils';
 import { useConversionJob, isRunning } from '@/lib/useConversionJob';
+import { useServerQueue } from '@/lib/useServerQueue';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import PageWrapper from '@/components/PageWrapper';
 import AnimeReveal from '@/components/AnimeReveal';
@@ -15,6 +16,7 @@ import ToolPanel from '@/components/ui/ToolPanel';
 import QualitySelector, { type QualityOption } from '@/components/ui/QualitySelector';
 import CompletionCard from '@/components/ui/CompletionCard';
 import FailureNotice from '@/components/ui/FailureNotice';
+import QueuePanel from '@/components/ui/QueuePanel';
 import ProgressMeter from '@/components/ProgressMeter';
 
 type Quality = '128' | '192' | '320';
@@ -36,6 +38,17 @@ export default function ConverterPage() {
     toAbsolute: audioApiUrl,
     notification: { title: 'Conversion complete', body: 'Your audio file is ready to save.' },
   });
+
+  // Server-wide queue view: shows what the single worker is doing right now.
+  const serverQueue = useServerQueue({
+    client: audioApi,
+    enabled: state.phase !== 'processing' && state.phase !== 'finalizing',
+  });
+
+  // While our own job is queued, the meter's subtitle names the job ahead of us.
+  const queuedSubtitle = serverQueue.busy && serverQueue.current
+    ? `Now converting: ${serverQueue.current.title} · ${Math.round(serverQueue.current.progress)}% — you are next.`
+    : STAGE_COPY.queued.subtitle;
 
   const onDrop = useCallback((accepted: File[]) => {
     if (accepted[0]) setFile(accepted[0]);
@@ -113,10 +126,11 @@ export default function ConverterPage() {
                   progress={state.progress}
                   queuePosition={state.queuePosition}
                   title={STAGE_COPY[state.phase]?.title ?? 'Working…'}
-                  subtitle={STAGE_COPY[state.phase]?.subtitle ?? ''}
+                  subtitle={state.phase === 'queued' ? queuedSubtitle : (STAGE_COPY[state.phase]?.subtitle ?? '')}
                 />
               ) : (
                 <div className="space-y-7">
+                  <QueuePanel queue={serverQueue} />
                   {state.phase === 'failed' && state.error && (
                     <FailureNotice
                       failure={state.error}
