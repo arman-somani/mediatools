@@ -26,6 +26,7 @@ export default function Navbar() {
   const [mounted, setMounted] = useState(false);
   const [isMac, setIsMac] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => setMounted(true), []);
 
@@ -43,6 +44,7 @@ export default function Navbar() {
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) setMobileOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') { setMenuOpen(false); setMobileOpen(false); }
@@ -60,12 +62,6 @@ export default function Navbar() {
     setMenuOpen(false);
     setMobileOpen(false);
   }, [pathname]);
-
-  // Lock page scroll while the mobile sheet is open
-  useEffect(() => {
-    document.body.style.overflow = mobileOpen ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
-  }, [mobileOpen]);
 
   useEffect(() => {
     if (!user) return;
@@ -116,7 +112,7 @@ export default function Navbar() {
           ))}
         </div>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2 relative">
           <button
             type="button"
             onClick={openCommandPalette}
@@ -186,50 +182,70 @@ export default function Navbar() {
             </>
           )}
 
-          <button
-            id="mobile-menu-btn"
-            onClick={() => setMobileOpen((v) => !v)}
-            className="btn-icon md:hidden"
-            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-            aria-expanded={mobileOpen}
-          >
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
-        </div>
-      </nav>
+          <div className="relative md:static" ref={mobileMenuRef}>
+            <button
+              id="mobile-menu-btn"
+              onClick={() => setMobileOpen((v) => !v)}
+              className="btn-icon md:hidden"
+              aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+              aria-haspopup="menu"
+              aria-expanded={mobileOpen}
+            >
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
 
-      {mobileOpen && (
-        <div className="md:hidden fixed inset-x-0 top-14 bottom-0 bg-bg border-t border-line anim-fade-in overflow-y-auto">
-          <div className="container-page py-4">
-            <p className="mono-label px-2 mb-1">Tools</p>
-            {TOOL_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`flex items-center h-11 px-2 rounded-lg text-[15px] ${isActive(link.href) ? 'text-fg bg-white/5' : 'text-fg-muted'}`}
+            {mobileOpen && (
+              <div
+                role="menu"
+                className="menu absolute right-0 top-[calc(100%+8px)] w-64 p-1 origin-top-right md:hidden max-h-[calc(100vh-5rem)] overflow-y-auto"
               >
-                {link.name}
-              </Link>
-            ))}
-            {signedIn && (
-              <>
-                <div className="divider my-3" />
-                <Link href="/dashboard" className="flex items-center h-11 px-2 rounded-lg text-[15px] text-fg-muted">Dashboard</Link>
-                {user?.role === 'admin' && (
-                  <Link href="/admin" className="flex items-center h-11 px-2 rounded-lg text-[15px] text-fg-muted">Admin</Link>
+                <p className="mono-label px-2.5 pt-2 pb-1">Tools</p>
+                {TOOL_LINKS.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    role="menuitem"
+                    className="menu-item !text-[14px] !h-10"
+                    aria-current={isActive(link.href) ? 'page' : undefined}
+                  >
+                    {link.name}
+                  </Link>
+                ))}
+
+                {signedIn && (
+                  <>
+                    <div className="divider my-1" />
+                    <Link href="/dashboard" role="menuitem" className="menu-item !text-[14px] !h-10">
+                      <LayoutDashboard className="h-4 w-4" /> Dashboard
+                    </Link>
+                    {user?.role === 'admin' && (
+                      <Link href="/admin" role="menuitem" className="menu-item !text-[14px] !h-10">
+                        <ShieldCheck className="h-4 w-4" /> Admin
+                      </Link>
+                    )}
+                    <div className="divider my-1" />
+                    <button role="menuitem" onClick={handleSignOut} className="menu-item !text-[14px] !h-10">
+                      <LogOut className="h-4 w-4" /> Sign out
+                    </button>
+                  </>
                 )}
-                <button onClick={handleSignOut} className="flex w-full items-center h-11 px-2 rounded-lg text-[15px] text-fg-muted">Sign out</button>
-              </>
-            )}
-            {!signedIn && (
-              <div className="grid grid-cols-2 gap-2 mt-4">
-                <Link href="/auth/login" className="btn-secondary">Sign in</Link>
-                <Link href="/auth/register" className="btn-primary">Get started</Link>
+
+                {!signedIn && (
+                  <>
+                    <div className="divider my-1" />
+                    <Link href="/auth/login" role="menuitem" className="menu-item !text-[14px] !h-10">
+                      Sign in
+                    </Link>
+                    <Link href="/auth/register" role="menuitem" className="menu-item !text-[14px] !h-10 !text-fg font-medium">
+                      Get started
+                    </Link>
+                  </>
+                )}
               </div>
             )}
           </div>
         </div>
-      )}
+      </nav>
     </header>
   );
 }
