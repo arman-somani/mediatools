@@ -33,6 +33,8 @@ import { errorHandler } from './middleware/errorHandler';
 import { cleanupOldFiles } from './utils/cleanup';
 import { verifyMailTransport } from './utils/email';
 import { probePotProvider, getPotMode, currentLadder } from './services/ytdlp';
+import { proxyPool } from './services/proxyPool';
+import { startProxyShim, shimProxyUrl } from './services/cfProxyShim';
 import { conversionQueue } from './utils/queue';
 
 const app = express();
@@ -135,6 +137,13 @@ app.get('/api/health/ready', (_req, res) => {
     mail: env.mail.configured ? 'configured' : 'disabled',
     proxy: env.youtube.proxyUrl ? 'configured' : 'none',
     cookies: env.youtube.cookieFile || env.youtube.cookiesB64 ? 'configured' : 'none',
+    // Egress pool: how downloads leave this server. When CF_PROXY_URLS is
+    // configured, the first entry here is the local shim and the rest are the
+    // failover routes in the order a job would try them.
+    egress: {
+      shim: shimProxyUrl(),
+      routes: proxyPool.status(),
+    },
     // The two fields worth looking at first when YouTube extraction starts
     // failing: how tokens are being obtained, and which clients that leaves
     // available to try.
@@ -261,6 +270,20 @@ async function start(): Promise<void> {
   const cleanupTimer = setInterval(cleanupOldFiles, 30 * 60 * 1000);
   cleanupTimer.unref();
   void cleanupOldFiles();
+
+  // Local forward proxy that tunnels yt-dlp through the Cloudflare Workers
+  // listed in CF_PROXY_URLS. Started only when Workers are configured; the
+  // pool then offers the shim as the preferred egress route with upstream
+  // proxies (PROXY_URL / YT_PROXY_URLS) and direct egress as fallbacks.
+  if (env.youtube.cfProxyUrls.length) {
+    if (!env.youtube.cfProxyToken) {
+      console.warn('[boot] CF_PROXY_URLS is set but CF_PROXY_TOKEN is not; '
+        + 'requests to the workers will be rejected unless the workers run without a token');
+    }
+    startProxyShim();
+  } else {
+    console.log('[boot] cloudflare egress disabled (set CF_PROXY_URLS to enable)');
+  }
 
   const port = env.port;
   const server = app.listen(port, '0.0.0.0', () => {

@@ -20,6 +20,8 @@ import {
   ExtractError,
 } from '../services/ytdlp';
 
+import { proxyPool, IP_RELATED_CODES } from '../services/proxyPool';
+
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { convertLimiter, metadataLimiter, downloadLimiter } from '../middleware/rateLimiter';
 import { buildDownloadUrl, verifyDownloadToken } from '../services/downloadToken';
@@ -72,6 +74,18 @@ const pollSweeper = setInterval(() => {
 pollSweeper.unref();
 
 const execAsync = promisify(exec);
+
+/**
+ * Egress routes for this job, capped by YT_MAX_EGRESS_ATTEMPTS.
+ *
+ * Shared by the audio and video paths, which spawn yt-dlp themselves for
+ * progress parsing instead of going through runWithEgressFailover, and so
+ * replicate the same rotation here: routes outer, clients inner, with the
+ * pool marking each route healthy or cooling down as attempts land.
+ */
+function egressRoutes() {
+  return proxyPool.candidates().slice(0, Math.max(1, env.youtube.maxEgressAttempts));
+}
 
 /**
  * URL parsing and yt-dlp invocation both live in ../services/ytdlp now.
@@ -572,7 +586,7 @@ router.post('/youtube', authenticate, convertLimiter, async (req: AuthRequest, r
         conversion.outputFilename = `${safeTitle}.mp3`;
         await conversion.save();
 
-        const runYtDlpAudio = (client?: string) => new Promise((resolve, reject) => {
+        const runYtDlpAudio = (proxy?: string | null, client?: string) => new Promise((resolve, reject) => {
           // Save directly as a flat file, not in a subdirectory, to avoid path issues
           const flatOutputTemplate = path.join(outputDir, `${fileId}.%(ext)s`);
           const flags = [
@@ -587,7 +601,7 @@ router.post('/youtube', authenticate, convertLimiter, async (req: AuthRequest, r
           // place it after `--`. Appending it into the flags array (as this
           // did before) is what allowed a URL of "--exec=..." to be read as an
           // option and execute a shell command on the server.
-          const ytdlp = spawn(getYtDlpPath(), buildArgs(flags, [cleanUrl], client), {
+          const ytdlp = spawn(getYtDlpPath(), buildArgs(flags, [cleanUrl], client, proxy), {
             windowsHide: true,
             stdio: ['ignore', 'pipe', 'pipe'],
           });
@@ -643,25 +657,38 @@ router.post('/youtube', authenticate, convertLimiter, async (req: AuthRequest, r
         let success = false;
         let lastFailure: ExtractError | null = null;
 
-        // Walk the no-PO-token client ladder, most-recently-successful first.
-        // A non-retriable verdict (bot check, private, geo-block) ends the loop
-        // immediately: those are deterministic, so trying four more clients
-        // only burns ~30s and more requests against an already-throttled IP.
-        for (const client of orderedClients()) {
-          console.log(`[audio] trying client=${client}`);
-          try {
-            await runYtDlpAudio(client);
-            console.log(`[audio] succeeded with client=${client}`);
-            success = true;
-            break;
-          } catch (err: any) {
-            const failure = err instanceof ExtractError
-              ? err
-              : new ExtractError('UNKNOWN', String(err?.message || err), true);
-            lastFailure = failure;
-            console.warn(`[audio] client=${client} failed: ${failure.code} — ${failure.message}`);
-            if (!failure.retriable) break;
+        // Walk every egress route × extraction client until one works. The
+        // output template is stable across attempts, so a route that died
+        // mid-download resumes from the `.part` file on the next route
+        // instead of starting the transfer over. A non-retriable verdict
+        // (private video, unsupported URL) ends the loop immediately.
+        egressLoop:
+        for (const route of egressRoutes()) {
+          const proxyArg = route.getProxyArg();
+          for (const client of orderedClients()) {
+            console.log(`[audio] trying route=${route.id} client=${client}`);
+            try {
+              await runYtDlpAudio(proxyArg, client);
+              proxyPool.reportSuccess(route.id);
+              rememberWorkingClient(client);
+              console.log(`[audio] succeeded with route=${route.id} client=${client}`);
+              success = true;
+              break egressLoop;
+            } catch (err: any) {
+              const failure = err instanceof ExtractError
+                ? err
+                : new ExtractError('UNKNOWN', String(err?.message || err), true);
+              lastFailure = failure;
+              console.warn(`[audio] route=${route.id} client=${client} failed: ${failure.code} — ${failure.message}`);
+              if (!failure.retriable) break egressLoop;
+              if (IP_RELATED_CODES.has(failure.code)) {
+                proxyPool.reportFailure(route.id, `${failure.code}: ${failure.message}`);
+              }
+            }
           }
+          // Client ladder exhausted with a non-IP error: another IP will not
+          // change that answer, so don't burn the remaining routes on it.
+          if (lastFailure && !IP_RELATED_CODES.has(lastFailure.code)) break;
         }
 
         // Final fallback: youtubei.js talks to the InnerTube API directly, so
@@ -941,7 +968,7 @@ router.post('/universal', authenticate, convertLimiter, async (req: AuthRequest,
 
         // Step 2: Download video with the user's selected quality
         console.log(`[QUALITY DEBUG] User requested: ${videoQuality} → targetHeight: ${targetHeight}`);
-        const runYtDlpDownload = (proxy?: string, client?: string) => new Promise((resolve, reject) => {
+        const runYtDlpDownload = (proxy?: string | null, client?: string) => new Promise((resolve, reject) => {
           // Prefer H.264 video + AAC audio so the merge is a pure stream copy
           // into a real .mp4. Two reasons this matters:
           //  1) yt-dlp's default pick here was AV1+Opus, which merges to .webm -
@@ -966,7 +993,7 @@ router.post('/universal', authenticate, convertLimiter, async (req: AuthRequest,
           ];
 
           // Positional URL kept out of the flags array — see the audio path.
-          const ytdlp = spawn(getYtDlpPath(), buildArgs(flags, [cleanUrl], client), {
+          const ytdlp = spawn(getYtDlpPath(), buildArgs(flags, [cleanUrl], client, proxy), {
             windowsHide: true,
             stdio: ['ignore', 'pipe', 'pipe'],
           });
@@ -1022,23 +1049,34 @@ router.post('/universal', authenticate, convertLimiter, async (req: AuthRequest,
         let success = false;
         let lastFailure: ExtractError | null = null;
 
-        // Same no-PO-token client ladder as the audio path, most-recently
-        // successful client first, stopping on any deterministic verdict.
-        for (const client of orderedClients()) {
-          console.log(`[video] trying client=${client}`);
-          try {
-            await runYtDlpDownload(client);
-            console.log(`[video] succeeded with client=${client}`);
-            success = true;
-            break;
-          } catch (err: any) {
-            const failure = err instanceof ExtractError
-              ? err
-              : new ExtractError('UNKNOWN', String(err?.message || err), true);
-            lastFailure = failure;
-            console.warn(`[video] client=${client} failed: ${failure.code} — ${failure.message}`);
-            if (!failure.retriable) break;
+        // Same egress × client matrix as the audio path. The stable output
+        // template means a blocked-mid-download attempt resumes from its
+        // `.part` file on the next route instead of restarting.
+        egressLoop:
+        for (const route of egressRoutes()) {
+          const proxyArg = route.getProxyArg();
+          for (const client of orderedClients()) {
+            console.log(`[video] trying route=${route.id} client=${client}`);
+            try {
+              await runYtDlpDownload(proxyArg, client);
+              proxyPool.reportSuccess(route.id);
+              rememberWorkingClient(client);
+              console.log(`[video] succeeded with route=${route.id} client=${client}`);
+              success = true;
+              break egressLoop;
+            } catch (err: any) {
+              const failure = err instanceof ExtractError
+                ? err
+                : new ExtractError('UNKNOWN', String(err?.message || err), true);
+              lastFailure = failure;
+              console.warn(`[video] route=${route.id} client=${client} failed: ${failure.code} — ${failure.message}`);
+              if (!failure.retriable) break egressLoop;
+              if (IP_RELATED_CODES.has(failure.code)) {
+                proxyPool.reportFailure(route.id, `${failure.code}: ${failure.message}`);
+              }
+            }
           }
+          if (lastFailure && !IP_RELATED_CODES.has(lastFailure.code)) break;
         }
 
         // Final fallback: youtubei.js, which reaches InnerTube independently.

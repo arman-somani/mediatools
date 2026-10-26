@@ -3,6 +3,7 @@ import path from 'path';
 import os from 'os';
 import fs from 'fs';
 import { env } from '../config/env';
+import { proxyPool, IP_RELATED_CODES } from './proxyPool';
 
 /* -------------------------------------------------------------------------- */
 /* Binary resolution                                                          */
@@ -31,6 +32,7 @@ export function ytDlpBinary(): string {
 export type ExtractFailure =
   | 'BOT_CHECK'
   | 'RATE_LIMITED'
+  | 'IP_BLOCKED'
   | 'AGE_RESTRICTED'
   | 'PRIVATE'
   | 'MEMBERS_ONLY'
@@ -61,12 +63,13 @@ export class ExtractError extends Error {
 /**
  * Maps yt-dlp's stderr onto a typed failure.
  *
- * The distinction that matters most is `retriable`. A bot check, a private
- * video and a geo-block are *deterministic* — walking the rest of the client
- * ladder cannot change the answer, it just burns 30 seconds and another few
- * requests against an IP that is already rate-limited. The old code retried
- * everything three times through five clients, which is why a failing download
- * took minutes to report an error the very first attempt already knew.
+ * The distinction that matters most is `retriable`. A private video is private
+ * from every IP on earth, so walking the ladder cannot help. A bot check, a
+ * rate limit and a geo block, however, are properties of the *egress IP* —
+ * with the Cloudflare proxy pool configured, a different route genuinely is
+ * the fix, so those are retriable and the failover loop rotates to it. The
+ * old code marked all three non-retriable, which was correct only when the
+ * server had exactly one IP.
  */
 export function classifyYtDlpError(stderr: string): ExtractError {
   const s = (stderr || '').toLowerCase();
@@ -77,11 +80,19 @@ export function classifyYtDlpError(stderr: string): ExtractError {
   if (s.includes("confirm you're not a bot") || s.includes('confirm you are not a bot') ||
       s.includes('sign in to confirm')) {
     return match('BOT_CHECK',
-      'YouTube is challenging this server with a bot check. This is an IP-reputation block on the hosting provider, not a problem with the link.',
-      false);
+      'YouTube challenged this egress IP with a bot check. The pool will rotate to another one.',
+      true);
   }
   if (s.includes('http error 429') || s.includes('too many requests')) {
-    return match('RATE_LIMITED', 'YouTube is rate-limiting this server. Try again in a few minutes.', false);
+    return match('RATE_LIMITED', 'YouTube is rate-limiting the current egress IP. Rotating to another.', true);
+  }
+  // Mid-download blocks: googlevideo 403s a stream that started fine, or the
+  // fragment pipeline gives up. The .part file survives, so the next attempt
+  // on a different egress route resumes instead of restarting.
+  if (s.includes('http error 403') || s.includes('403: forbidden') ||
+      s.includes('gvs returned code') || s.includes('fragment retries') ||
+      s.includes('precondition failed') || s.includes('http error 416')) {
+    return match('IP_BLOCKED', 'YouTube cut off the download partway through. Resuming on another egress IP.', true);
   }
   if (s.includes('age') && (s.includes('confirm your age') || s.includes('age-restricted') || s.includes('inappropriate for some users'))) {
     return match('AGE_RESTRICTED', 'This video is age-restricted and needs a signed-in account to download.', true);
@@ -94,7 +105,7 @@ export function classifyYtDlpError(stderr: string): ExtractError {
   }
   if (s.includes('not available in your country') || s.includes('blocked it in your country') ||
       s.includes('geo restricted') || s.includes('geo-restricted')) {
-    return match('GEO_BLOCKED', 'This video is not available in the server\'s region.', false);
+    return match('GEO_BLOCKED', 'This video is not available from the current egress region. Rotating.', true);
   }
   if (s.includes('is not yet available') || s.includes('premieres in') || s.includes('will begin in')) {
     return match('NOT_YET_AVAILABLE', 'This video has not premiered yet.', false);
@@ -424,6 +435,11 @@ export function getCookieFile(): string | null {
 export interface RunOptions {
   /** Extraction client for this attempt. */
   client?: string;
+  /**
+   * `--proxy` value for this attempt. `null` means direct egress; `undefined`
+   * resolves to direct as well. The caller (the failover loop) picks which.
+   */
+  proxy?: string | null;
   /** Overall wall-clock limit in ms. */
   timeoutMs?: number;
   /** Called with each stdout line, for progress parsing. */
@@ -436,7 +452,7 @@ export interface RunOptions {
  * `urls` are appended after a `--` terminator so they can never be read as
  * options, regardless of what validation upstream did or did not do.
  */
-export function buildArgs(flags: string[], urls: string[], client?: string): string[] {
+export function buildArgs(flags: string[], urls: string[], client?: string, proxy?: string | null): string[] {
   const args: string[] = [
     // Fetches yt-dlp's JS challenge solver and gives it a runtime. Without
     // both, signature and n-parameter deciphering fail and every resolved
@@ -462,7 +478,20 @@ export function buildArgs(flags: string[], urls: string[], client?: string): str
     '--no-playlist',
     '--no-progress',
     '--force-ipv4',
+
+    // Resume partial downloads. yt-dlp keeps `<file>.part` on disk and picks
+    // up from the last byte by default, which is the mechanism the egress
+    // failover relies on: when a route dies mid-download the next attempt
+    // continues from where it stopped instead of starting over. Stated
+    // explicitly so nothing downstream can accidentally disable it.
+    '--continue',
   ];
+
+  // Parallel fragment downloads make DASH/HLS transfers much faster. Kept
+  // modest: each connection is another request pattern for YouTube to notice,
+  // and on the free 512MB instance each one holds a buffer.
+  const fragments = Math.max(1, Math.min(8, env.youtube.concurrentFragments || 1));
+  if (fragments > 1) args.push('--concurrent-fragments', String(fragments));
 
   if (client && client !== 'default') {
     args.push('--extractor-args', `youtube:player_client=${client}`);
@@ -471,7 +500,10 @@ export function buildArgs(flags: string[], urls: string[], client?: string): str
   const cookieFile = getCookieFile();
   if (cookieFile) args.push('--cookies', cookieFile);
 
-  if (env.youtube.proxyUrl) args.push('--proxy', env.youtube.proxyUrl);
+  // Proxy selection now belongs to the egress pool: PROXY_URL is registered
+  // there as an upstream route alongside the Cloudflare shim, and the failover
+  // loop passes the winning route in per attempt.
+  if (proxy) args.push('--proxy', proxy);
 
   // Only passed once the generator has been verified. Advertising a provider we
   // have not checked made every extraction spend its retry budget on a refused
@@ -513,10 +545,10 @@ export function runYtDlp(
   urls: string[],
   options: RunOptions = {}
 ): Promise<RunResult> {
-  const { client, timeoutMs = 120_000, onStdout } = options;
+  const { client, proxy, timeoutMs = 120_000, onStdout } = options;
 
   return new Promise((resolve, reject) => {
-    const child = spawn(YTDLP_BIN, buildArgs(flags, urls, client), {
+    const child = spawn(YTDLP_BIN, buildArgs(flags, urls, client, proxy), {
       windowsHide: true,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -577,37 +609,78 @@ export function runYtDlp(
 }
 
 /**
- * Runs yt-dlp against each client in turn until one succeeds.
+ * Runs yt-dlp across the full egress × client matrix until one combination
+ * succeeds.
  *
- * Stops immediately on a non-retriable failure. Reports the *first*
- * non-retriable error rather than the last one seen, because "this video is
- * private" is the useful answer and whatever the final rung said about
- * formats is noise.
+ * The outer loop walks egress routes (Cloudflare Workers through the shim,
+ * then upstream proxies, then direct); the inner loop walks extraction
+ * clients, most-recently-successful first. Two rules keep it fast:
+ *
+ *   - a non-retriable verdict ("this video is private") ends everything
+ *     immediately — no IP rotation can change it, so reporting it at once is
+ *     the honest and quick answer;
+ *   - an IP-related verdict (bot check, rate limit, mid-download 403, network
+ *     error) marks the route unhealthy and moves to the next one. This is the
+ *     whole point of the pool: YouTube's enforcement is per-IP, so the fix
+ *     for "this IP stopped working" is a different IP.
+ *
+ * A mid-download block still resumes: yt-dlp keeps the `.part` file, the
+ * next attempt passes `--continue`, and the transfer picks up from the last
+ * complete byte on whichever route comes next.
+ */
+export async function runWithEgressFailover(
+  flags: string[],
+  urls: string[],
+  options: Omit<RunOptions, 'client' | 'proxy'> = {}
+): Promise<RunResult & { client: string; proxy: string | null }> {
+  const routes = proxyPool.candidates().slice(0, Math.max(1, env.youtube.maxEgressAttempts));
+  let lastError: ExtractError | null = null;
+
+  for (const route of routes) {
+    const proxyArg = route.getProxyArg();
+    for (const client of orderedClients()) {
+      try {
+        const result = await runYtDlp(flags, urls, { ...options, client, proxy: proxyArg });
+        proxyPool.reportSuccess(route.id);
+        rememberWorkingClient(client);
+        return { ...result, client, proxy: proxyArg };
+      } catch (error) {
+        const err = error instanceof ExtractError
+          ? error
+          : new ExtractError('UNKNOWN', String((error as Error)?.message || error), true);
+
+        console.warn(`[ytdlp] route=${route.id} client=${client} failed: ${err.code} — ${err.message}`);
+        lastError = err;
+
+        if (!err.retriable) throw err;
+
+        // Only blame the route for failures an IP change can fix. Format
+        // gaps and the like are tried on the next client instead.
+        if (IP_RELATED_CODES.has(err.code)) {
+          proxyPool.reportFailure(route.id, `${err.code}: ${err.message}`);
+        }
+      }
+    }
+
+    // The client ladder was exhausted on this route with a non-IP error;
+    // a different IP will not change that answer, so stop here.
+    if (lastError && !IP_RELATED_CODES.has(lastError.code)) break;
+  }
+
+  throw lastError ?? new ExtractError('UNKNOWN', 'Extraction failed.', false);
+}
+
+/**
+ * Backwards-compatible wrapper over {@link runWithEgressFailover}.
+ *
+ * Every route in the codebase used to call this directly; they now all get
+ * egress failover for free while keeping their existing call shape.
  */
 export async function runWithClientLadder(
   flags: string[],
   urls: string[],
-  options: Omit<RunOptions, 'client'> = {}
+  options: Omit<RunOptions, 'client' | 'proxy'> = {}
 ): Promise<RunResult & { client: string }> {
-  const clients = orderedClients();
-  let lastError: ExtractError | null = null;
-
-  for (const client of clients) {
-    try {
-      const result = await runYtDlp(flags, urls, { ...options, client });
-      rememberWorkingClient(client);
-      return { ...result, client };
-    } catch (error) {
-      const err = error instanceof ExtractError
-        ? error
-        : new ExtractError('UNKNOWN', String((error as Error)?.message || error), true);
-
-      console.warn(`[ytdlp] client=${client} failed: ${err.code} — ${err.message}`);
-
-      if (!err.retriable) throw err;
-      lastError = err;
-    }
-  }
-
-  throw lastError ?? new ExtractError('UNKNOWN', 'Extraction failed.', false);
+  const { stdout, stderr, client } = await runWithEgressFailover(flags, urls, options);
+  return { stdout, stderr, client };
 }

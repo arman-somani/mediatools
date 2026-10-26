@@ -1,0 +1,25 @@
+# Cloudflare Worker configuration for the MediaTools YouTube egress proxy.
+#
+# Deploy with:
+#   cd cloudflare/yt-proxy
+#   npx wrangler login
+#   npx wrangler secret put PROXY_TOKEN     # any long random string
+#   npx wrangler deploy
+#
+# The backend needs the resulting URL:
+#   CF_PROXY_URLS=https://mediatools-yt-proxy-1.<your-subdomain>.workers.dev
+#   CF_PROXY_TOKEN=<the same value you put in PROXY_TOKEN>
+#
+# To get additional fallback egress IPs, copy this file with a different
+# `name` (e.g. mediatools-yt-proxy-2) and deploy again, then add every URL
+# to CF_PROXY_URLS as a comma-separated list.
+
+name = "mediatools-yt-proxy-1"
+main = "worker.js"
+compatibility_date = "2024-12-01"
+
+# Optional host allow-list as a comma-separated suffix list. Commented out by
+# default: the PROXY_TOKEN secret already gates the Worker, and an allow-list
+# would break the universal (non-YouTube) downloader.
+# [vars]
+# PROXY_ALLOW_HOSTS = "youtube.com,googlevideo.com,ytimg.com,googleapis.com,gstatic.com,ggpht.com"

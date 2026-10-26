@@ -75,6 +75,34 @@ services:
       - key: YT_CLIENT_LADDER
         sync: false
 
+      # ---- Cloudflare egress pool (recommended) ---------------------------
+      # Routes every download through Cloudflare Workers instead of Render's
+      # datacenter IPs, with automatic failover: a bot check, rate limit or
+      # mid-download block on one egress IP rotates to the next Worker, and
+      # yt-dlp's .part files resume the transfer from where it stopped.
+      #
+      # Deploy cloudflare/yt-proxy (see CLOUDFLARE_PROXY_SETUP.md), then list
+      # one or more Worker URLs here, comma-separated, plus the same secret
+      # you set as the Worker's PROXY_TOKEN.
+      - key: CF_PROXY_URLS
+        sync: false
+      - key: CF_PROXY_TOKEN
+        sync: false
+
+      # Additional fallback proxies (comma-separated http:// or socks5://
+      # URLs), used after the Cloudflare pool and before direct egress.
+      - key: YT_PROXY_URLS
+        sync: false
+
+      # Parallel fragment downloads per transfer. Higher is faster, lower is
+      # less conspicuous. 3 is a good middle ground.
+      - key: YT_CONCURRENT_FRAGMENTS
+        value: "3"
+
+      # How many egress routes one job may walk through before giving up.
+      - key: YT_MAX_EGRESS_ATTEMPTS
+        value: "8"
+
       # ---- Memory budget (512MB instance) ---------------------------------
       # Peak usage is the API plus yt-dlp plus one of (token generator | ffmpeg),
       # which do not overlap. Roughly: 190 + 70 + 120 = 380MB.
@@ -91,13 +119,10 @@ services:
         value: "12"
 
       # ---- Optional: better YouTube success rate ---------------------------
-      # Honest expectation setting: YouTube's bot detection keys substantially
-      # on IP reputation, and Render's egress addresses are datacenter ranges
-      # that are already heavily rate-limited. The token provider and client
-      # ladder above are the whole of what code can do. If a meaningful share
-      # of requests still come back as "Sign in to confirm you're not a bot",
-      # a residential proxy in PROXY_URL is the only remaining lever — the code
-      # already routes through it when set, so it is a one-variable change.
+      # With CF_PROXY_URLS configured above, the pool already handles IP
+      # rotation through Cloudflare, and PROXY_URL is just one more fallback
+      # route in the pool. Without it, a residential proxy in PROXY_URL is
+      # the only remaining lever — the pool routes through it when set.
       - key: PROXY_URL
         sync: false
       # Base64 of a Netscape cookies.txt. Not required; unlocks age-restricted

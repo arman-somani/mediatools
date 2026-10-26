@@ -23,6 +23,7 @@ import { env } from '../config/env';
 const STATUS_BY_CODE: Record<ExtractFailure, number> = {
   BOT_CHECK: 429,
   RATE_LIMITED: 429,
+  IP_BLOCKED: 429,
   AGE_RESTRICTED: 403,
   PRIVATE: 403,
   MEMBERS_ONLY: 403,

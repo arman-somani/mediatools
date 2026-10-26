@@ -113,6 +113,31 @@ export const env = {
     cookieFile: optional('YOUTUBE_COOKIES_FILE'),
     cookiesB64: optional('YOUTUBE_COOKIES_B64'),
     proxyUrl: optional('PROXY_URL'),
+
+    /**
+     * Cloudflare egress pool.
+     *
+     * CF_PROXY_URLS is a comma-separated list of deployed yt-proxy Worker
+     * URLs (cloudflare/yt-proxy). When set, the backend runs a tiny forward
+     * proxy on 127.0.0.1 that tunnels yt-dlp's traffic through the Workers,
+     * so requests to YouTube leave from Cloudflare's network instead of the
+     * hosting provider's datacenter range. Workers that fail are put on an
+     * exponential cooldown and the pool rotates, which is what turns a bot
+     * check on one egress IP into a retry on another.
+     */
+    cfProxyUrls: optional('CF_PROXY_URLS').split(',').map(s => s.trim()).filter(Boolean),
+    /** Shared secret the Workers require (their PROXY_TOKEN). */
+    cfProxyToken: optional('CF_PROXY_TOKEN'),
+    /** Fixed port for the local shim; 0 lets the OS pick a free one. */
+    shimPort: Number(optional('CF_SHIM_PORT', '0')),
+
+    /** Additional HTTP/SOCKS proxies beyond PROXY_URL, comma-separated. */
+    extraProxyUrls: optional('YT_PROXY_URLS').split(',').map(s => s.trim()).filter(Boolean),
+
+    /** How many egress routes a single job may walk before giving up. */
+    maxEgressAttempts: Number(optional('YT_MAX_EGRESS_ATTEMPTS', '8')),
+    /** Parallel fragment downloads; higher is faster but more conspicuous. */
+    concurrentFragments: Number(optional('YT_CONCURRENT_FRAGMENTS', '3')),
     /**
      * PO token generation.
      *
