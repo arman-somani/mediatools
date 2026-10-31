@@ -7,8 +7,10 @@
 #   npx wrangler deploy
 #
 # The backend needs the resulting URL:
-#   CF_PROXY_URLS=https://mediatools-yt-proxy-1.<your-subdomain>.workers.dev
-#   CF_PROXY_TOKEN=<the same value you put in PROXY_TOKEN>
+#   CF_PROXY_URLS=https://mediatools-yt-proxy-1.mediatoolkit.workers.dev
+#   CF_PROXY_TOKEN=<set via `wrangler secret put PROXY_TOKEN` — never commit>
+#
+# Live deployment: https://mediatools-yt-proxy-1.mediatoolkit.workers.dev
 #
 # To get additional fallback egress IPs, copy this file with a different
 # `name` (e.g. mediatools-yt-proxy-2) and deploy again, then add every URL
