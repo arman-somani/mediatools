@@ -241,21 +241,35 @@ function preflight(): void {
  * it or keep it awake from there.
  */
 function startSelfPing(port: number): NodeJS.Timeout | null {
-  if ((process.env.SELF_PING || '').toLowerCase() !== 'true') {
-    console.log('[self-ping] disabled (set SELF_PING=true to keep the free instance warm)');
+  const isExplicitlyDisabled = (process.env.SELF_PING || '').toLowerCase() === 'false';
+  if (isExplicitlyDisabled) {
+    console.log('[self-ping] disabled via SELF_PING=false');
     return null;
   }
 
-  const target = process.env.SELF_PING_URL
-    || (process.env.RENDER_EXTERNAL_URL
+  const target =
+    process.env.SELF_PING_URL ||
+    (process.env.RENDER_EXTERNAL_URL
       ? `${process.env.RENDER_EXTERNAL_URL.replace(/\/$/, '')}/api/health`
-      : `http://127.0.0.1:${port}/api/health`);
+      : 'https://mediatools-x03l.onrender.com/api/health');
 
-  console.log(`[self-ping] every 10m -> ${target}`);
+  console.log(`[self-ping] active every 5m -> ${target}`);
+
+  // Initial warmup ping 10s after boot
+  setTimeout(() => {
+    axios
+      .get(target, { timeout: 20_000 })
+      .then(() => console.log(`[self-ping] initial ping ok -> ${target}`))
+      .catch((err: any) => console.warn(`[self-ping] initial ping failed: ${err.message}`));
+  }, 10_000);
+
+  // Ping every 5 minutes to prevent 15-minute idle spin-down
   const timer = setInterval(() => {
-    axios.get(target, { timeout: 15_000 })
-      .catch((err: any) => console.warn(`[self-ping] failed: ${err.message}`));
-  }, 10 * 60 * 1000);
+    axios
+      .get(target, { timeout: 20_000 })
+      .then(() => console.log(`[self-ping] ping ok -> ${target}`))
+      .catch((err: any) => console.warn(`[self-ping] ping failed: ${err.message}`));
+  }, 5 * 60 * 1000);
 
   timer.unref();
   return timer;

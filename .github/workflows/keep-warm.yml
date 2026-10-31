@@ -1,0 +1,18 @@
+name: Keep Render Server Warm
+
+on:
+  schedule:
+    # Trigger every 10 minutes to prevent Render free-tier 15-minute idle sleep
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  keep-warm:
+    name: Ping MediaTools Health
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Ping Public Health Endpoint
+        run: |
+          echo "Pinging MediaTools API..."
+          curl -s -S -f --max-time 45 "https://mediatools-x03l.onrender.com/api/health" || echo "Ping failed or server waking up"

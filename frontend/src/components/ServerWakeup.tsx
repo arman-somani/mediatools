@@ -12,26 +12,35 @@ export default function ServerWakeup() {
     checking.current = true;
     
     let isMounted = true;
+    let pollTimer: NodeJS.Timeout | null = null;
+    let keepAliveTimer: NodeJS.Timeout | null = null;
 
     const pingServer = async () => {
       try {
-        await api.get('/health', { timeout: 5000 });
+        await api.get('/health', { timeout: 8000 });
         if (isMounted) {
           setServerReady(true);
           setHasCheckedServer(true);
         }
-      } catch (error) {
+      } catch {
         if (isMounted) {
-          // Keep polling every 5 seconds until server wakes up
-          setTimeout(pingServer, 5000);
+          // Keep polling every 4 seconds until server wakes up
+          pollTimer = setTimeout(pingServer, 4000);
         }
       }
     };
 
     pingServer();
 
+    // While any tab is open, keep sending a heartbeat every 4 minutes so the cloud backend stays warm
+    keepAliveTimer = setInterval(() => {
+      api.get('/health', { timeout: 10000 }).catch(() => {});
+    }, 4 * 60 * 1000);
+
     return () => {
       isMounted = false;
+      if (pollTimer) clearTimeout(pollTimer);
+      if (keepAliveTimer) clearInterval(keepAliveTimer);
     };
   }, [setServerReady, setHasCheckedServer]);
 
