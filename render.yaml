@@ -111,7 +111,7 @@ services:
       # to get the container killed. Conversions already run strictly one at a
       # time; that is a deliberate constraint, not a limitation to remove.
       - key: NODE_HEAP_MB
-        value: "192"
+        value: "280"
       # Jobs allowed to wait behind the running one. Beyond this, new requests
       # get a 503 with Retry-After rather than joining a backlog that cannot be
       # cleared before the finished files expire.

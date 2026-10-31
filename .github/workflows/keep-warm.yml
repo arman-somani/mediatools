@@ -16,3 +16,4 @@ jobs:
         run: |
           echo "Pinging MediaTools API..."
           curl -s -S -f --max-time 45 "https://mediatools-x03l.onrender.com/api/health" || echo "Ping failed or server waking up"
+

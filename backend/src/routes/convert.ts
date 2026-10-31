@@ -121,6 +121,17 @@ async function writeAsyncIterableToFile(stream: AsyncIterable<Uint8Array>, fileP
   await pipeline(Readable.from(stream as any), fs.createWriteStream(filePath));
 }
 
+let cachedInnertube: Promise<Innertube> | null = null;
+function getInnertube(): Promise<Innertube> {
+  if (!cachedInnertube) {
+    cachedInnertube = Innertube.create({ cache: new UniversalCache(false) }).catch(err => {
+      cachedInnertube = null;
+      throw err;
+    });
+  }
+  return cachedInnertube;
+}
+
 /**
  * Fallback: download audio via youtubei.js when yt-dlp is blocked.
  * youtubei.js uses the InnerTube API with its own session management and
@@ -133,7 +144,7 @@ async function fallbackYoutubeJsAudio(
   audioQuality: string
 ): Promise<{ title: string; thumbnail: string }> {
   console.log(`[youtubei.js] Attempting audio fallback for ${videoId}`);
-  const yt = await Innertube.create({ cache: new UniversalCache(false) });
+  const yt = await getInnertube();
   const info = await yt.getBasicInfo(videoId);
   const title = info.basic_info?.title || 'Downloaded Audio';
   const thumbnail = info.basic_info?.thumbnail?.[0]?.url || '';
@@ -183,7 +194,7 @@ async function fallbackYoutubeJsVideo(
   targetHeight: string
 ): Promise<{ filePath: string; title: string; thumbnail: string }> {
   console.log(`[youtubei.js] Attempting video fallback for ${videoId}`);
-  const yt = await Innertube.create({ cache: new UniversalCache(false) });
+  const yt = await getInnertube();
   const info = await yt.getBasicInfo(videoId);
   const title = info.basic_info?.title || 'Downloaded Video';
   const thumbnail = info.basic_info?.thumbnail?.[0]?.url || '';

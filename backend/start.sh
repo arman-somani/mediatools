@@ -27,7 +27,7 @@
 set -euo pipefail
 
 POT_SERVER_HOME="${POT_SERVER_HOME:-/app/bgutil-ytdlp-pot-provider/server}"
-NODE_HEAP_MB="${NODE_HEAP_MB:-192}"
+NODE_HEAP_MB="${NODE_HEAP_MB:-280}"
 
 # The token generator caches to $XDG_CACHE_HOME (or $HOME/.cache). Pointing it
 # somewhere guaranteed writable matters because the image runs as an
