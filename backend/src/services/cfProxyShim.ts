@@ -205,17 +205,24 @@ function connectViaWorker(workerUrl: string, host: string, port: number): Promis
     ws.binaryType = 'arraybuffer';
 
     const timer = setTimeout(() => {
-      try { ws.close(); } catch { /* never opened */ }
-      reject(new Error('tunnel handshake timed out'));
+      bail('tunnel handshake timed out');
     }, HANDSHAKE_TIMEOUT_MS);
 
+    // Guard against re-entry: bail() calls ws.close() which fires ws.onclose
+    // which would call bail() again → infinite recursion → stack overflow.
+    let settled = false;
     const bail = (message: string) => {
+      if (settled) return;
+      settled = true;
       clearTimeout(timer);
+      ws.onclose = null;
+      ws.onerror = null;
+      ws.onmessage = null;
       try { ws.close(); } catch { /* already closed */ }
       reject(new Error(message));
     };
 
-    ws.onerror = () => { if (timer) bail('tunnel websocket error'); };
+    ws.onerror = () => bail('tunnel websocket error');
     ws.onclose = () => bail('tunnel closed before it was ready');
 
     ws.onopen = () => {
@@ -226,8 +233,11 @@ function connectViaWorker(workerUrl: string, host: string, port: number): Promis
       clearTimeout(timer);
       const text = event.data instanceof ArrayBuffer ? Buffer.from(event.data).toString('utf8') : String(event.data);
       if (text === 'ok') {
+        settled = true;
+        clearTimeout(timer);
         ws.onclose = null;
         ws.onerror = null;
+        ws.onmessage = null;
         resolve(ws);
       } else {
         bail(text.startsWith('err:') ? text.slice(4) : 'unexpected tunnel reply');
