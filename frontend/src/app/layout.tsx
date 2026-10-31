@@ -43,7 +43,7 @@ export default function RootLayout({
         <ServerWakeup />
         <CommandPalette />
 
-        <GoogleAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}>
+        <GoogleAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '922405274681-tshc81918urtt7ucfr1ji5jiis8h62bk.apps.googleusercontent.com'}>
           <ThemeProvider>
             <Navbar />
             <main id="main" className="flex-1 w-full">

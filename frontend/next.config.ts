@@ -10,6 +10,9 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
     NEXT_PUBLIC_RAZORPAY_KEY_ID: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '',
+    NEXT_PUBLIC_GOOGLE_CLIENT_ID:
+      process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+      '922405274681-tshc81918urtt7ucfr1ji5jiis8h62bk.apps.googleusercontent.com',
   },
   async headers() {
     return [
@@ -18,28 +21,28 @@ const nextConfig = {
         headers: [
           {
             key: 'X-DNS-Prefetch-Control',
-            value: 'on'
+            value: 'on',
           },
           {
             key: 'X-XSS-Protection',
-            value: '1; mode=block'
+            value: '1; mode=block',
           },
           {
             key: 'X-Frame-Options',
-            value: 'SAMEORIGIN'
+            value: 'SAMEORIGIN',
           },
           {
             key: 'X-Content-Type-Options',
-            value: 'nosniff'
+            value: 'nosniff',
           },
           {
             key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin'
-          }
-        ]
-      }
+            value: 'strict-origin-when-cross-origin',
+          },
+        ],
+      },
     ];
-  }
+  },
 };
 
 export default nextConfig;

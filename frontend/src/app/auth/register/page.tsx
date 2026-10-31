@@ -22,11 +22,13 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanName = name.trim();
     if (!agreedToTerms) {
       setError('You must agree to the Terms and Privacy Policy to register.');
       return;
     }
-    if (!email.toLowerCase().endsWith('@gmail.com')) {
+    if (!cleanEmail.endsWith('@gmail.com')) {
       setError('Only @gmail.com domains are allowed. Institute and temp mail logins will not get registered.');
       return;
     }
@@ -37,11 +39,15 @@ export default function RegisterPage() {
     setLoading(true);
     setError('');
     try {
-      await api.post('/auth/register', { name, email, password });
-      router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`);
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setError(msg || 'Registration failed. Please try again.');
+      await api.post('/auth/register', { name: cleanName, email: cleanEmail, password });
+      router.push(`/auth/verify-email?email=${encodeURIComponent(cleanEmail)}`);
+    } catch (err: any) {
+      if (!err?.response) {
+        setError('Server is not responding. Please wait a moment and try again.');
+      } else {
+        const msg = err.response?.data?.message;
+        setError(msg || 'Registration failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -55,14 +61,22 @@ export default function RegisterPage() {
         const { data } = await api.post('/auth/google', { accessToken: tokenResponse.access_token });
         setAuth(data.data.user, data.data.accessToken, data.data.refreshToken);
         router.push('/dashboard');
-      } catch (err: unknown) {
-        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-        setError(msg || 'Google signup failed');
+      } catch (err: any) {
+        console.error('Google register error:', err);
+        const msg = err?.response?.data?.message;
+        if (!err?.response) {
+          setError('Server is not responding. Please wait a moment and try again.');
+        } else {
+          setError(msg || 'Google signup failed');
+        }
       } finally {
         setLoading(false);
       }
     },
-    onError: () => setError('Google signup failed'),
+    onError: (errorResponse) => {
+      console.error('Google OAuth popup error:', errorResponse);
+      setError('Google sign-in was cancelled or blocked. Please allow popups and try again.');
+    },
   });
 
   return (

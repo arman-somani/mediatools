@@ -52,6 +52,7 @@ app.disable('x-powered-by');
 
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
+  crossOriginOpenerPolicy: false,
   // This process serves JSON and media files, never HTML that executes
   // scripts, so the script/style directives that used to be here (complete
   // with 'unsafe-eval') protected nothing and only advertised intent.
@@ -71,7 +72,12 @@ app.use(cors({
     // Origin header at all and must not be rejected.
     if (!origin) return callback(null, true);
     const normalised = origin.replace(/\/$/, '');
-    if (env.frontendOrigins.includes('*') || env.frontendOrigins.includes(normalised)) {
+    if (
+      env.frontendOrigins.includes('*') ||
+      env.frontendOrigins.includes(normalised) ||
+      /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(normalised) ||
+      /^https:\/\/.*\.vercel\.app$/.test(normalised)
+    ) {
       return callback(null, true);
     }
     console.warn(`[cors] blocked ${origin} (allowed: ${env.frontendOrigins.join(', ')})`);
@@ -79,7 +85,14 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'ngrok-skip-browser-warning',
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+  ],
   maxAge: 86400,
 }));
 

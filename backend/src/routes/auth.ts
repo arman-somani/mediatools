@@ -152,6 +152,14 @@ router.post(
 
     const user = await User.findOne({ email }).select('+password');
 
+    if (user && !user.password && user.googleId) {
+      res.status(400).json({
+        success: false,
+        message: 'This account was signed up using Google. Please log in with Google, or reset your password to set one.',
+      });
+      return;
+    }
+
     // One message for "no such user" and "wrong password" so the endpoint
     // cannot be used to enumerate which addresses are registered.
     if (!user || !(await user.comparePassword(password))) {
@@ -189,7 +197,7 @@ router.post(
       return;
     }
 
-    let profile: { sub?: string; email?: string; name?: string; picture?: string };
+    let profile: { sub?: string; email?: string; name?: string; picture?: string } | null = null;
     try {
       const { data } = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
         headers: { Authorization: `Bearer ${googleAccessToken}` },
@@ -197,7 +205,20 @@ router.post(
       });
       profile = data;
     } catch (error: any) {
-      console.error('[auth] Google token exchange failed:', error?.response?.status || error?.message);
+      // Fallback: in case token is an ID token or credential
+      try {
+        const { data } = await axios.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(googleAccessToken)}`, {
+          timeout: 10000,
+        });
+        profile = { sub: data.sub, email: data.email, name: data.name, picture: data.picture };
+      } catch (fallbackErr: any) {
+        console.error('[auth] Google token exchange failed:', error?.response?.status || error?.message);
+        res.status(401).json({ success: false, message: 'Invalid Google token' });
+        return;
+      }
+    }
+
+    if (!profile) {
       res.status(401).json({ success: false, message: 'Invalid Google token' });
       return;
     }
@@ -222,11 +243,26 @@ router.post(
         avatar: asString(profile.picture, 512) || undefined,
         isEmailVerified: true,
       });
-    } else if (!user.googleId) {
-      user.googleId = googleId;
+    } else {
+      let modified = false;
+      if (!user.googleId) {
+        user.googleId = googleId;
+        modified = true;
+      }
       const avatar = asString(profile.picture, 512);
-      if (avatar) user.avatar = avatar;
-      await user.save();
+      if (avatar && user.avatar !== avatar) {
+        user.avatar = avatar;
+        modified = true;
+      }
+      if (!user.isEmailVerified) {
+        user.isEmailVerified = true;
+        user.emailVerificationToken = undefined;
+        user.emailVerificationExpiry = undefined;
+        modified = true;
+      }
+      if (modified) {
+        await user.save();
+      }
     }
 
     if (user.isBanned) {

@@ -14,11 +14,15 @@ export function videoApiUrl(path: string): string {
   return `${VIDEO_API_URL}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
+const baseHeaders: Record<string, string> = {
+  'Content-Type': 'application/json',
+};
+if (API_BASE_URL.includes('ngrok')) {
+  baseHeaders['ngrok-skip-browser-warning'] = '69420';
+}
+
 const baseConfig = {
-  headers: {
-    'Content-Type': 'application/json',
-    'ngrok-skip-browser-warning': '69420',
-  },
+  headers: baseHeaders,
   withCredentials: false,
   // Without a timeout axios waits indefinitely. On Render's free tier the
   // instance spins down after inactivity and the first request after that sits
@@ -54,7 +58,8 @@ function applyInterceptors(axiosInstance: any) {
     (res: any) => res,
     async (error: any) => {
       const original = error.config;
-      if (error.response?.status === 401 && !original._retry) {
+      const isAuthRoute = original.url?.includes('/auth/login') || original.url?.includes('/auth/register') || original.url?.includes('/auth/google') || original.url?.includes('/auth/refresh');
+      if (error.response?.status === 401 && !original._retry && !isAuthRoute) {
         original._retry = true;
         try {
           const stored = localStorage.getItem('mediatools-auth');

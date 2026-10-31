@@ -8,12 +8,13 @@ import { useAuthStore, useServerStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
 import { useGoogleLogin } from '@react-oauth/google';
 import { GoogleIcon } from '@/components/icons';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2, ArrowRight } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [unverifiedEmail, setUnverifiedEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [showServerPopup, setShowServerPopup] = useState(false);
   const [countdown, setCountdown] = useState(60);
@@ -30,7 +31,8 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.toLowerCase().endsWith('@gmail.com')) {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail.endsWith('@gmail.com')) {
       setError('Only @gmail.com domains are allowed. Institute and temp mail logins will not get registered.');
       return;
     }
@@ -40,13 +42,23 @@ export default function LoginPage() {
     }
     setLoading(true);
     setError('');
+    setUnverifiedEmail('');
     try {
-      const { data } = await api.post('/auth/login', { email, password });
+      const { data } = await api.post('/auth/login', { email: cleanEmail, password });
       setAuth(data.data.user, data.data.accessToken, data.data.refreshToken);
       router.push('/dashboard');
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setError(msg || 'Invalid email or password');
+    } catch (err: any) {
+      const resData = err?.response?.data;
+      if (resData?.code === 'EMAIL_NOT_VERIFIED') {
+        setUnverifiedEmail(cleanEmail);
+        setError(resData?.message || 'Please verify your email address to log in.');
+        return;
+      }
+      if (!err?.response) {
+        setError('Server is not responding. If the cloud instance is booting up, please wait a moment and try again.');
+        return;
+      }
+      setError(resData?.message || 'Invalid email or password');
     } finally { 
       setLoading(false); 
       setShowServerPopup(false);
@@ -61,19 +73,28 @@ export default function LoginPage() {
       }
       setLoading(true);
       setError('');
+      setUnverifiedEmail('');
       try {
         const { data } = await api.post('/auth/google', { accessToken: tokenResponse.access_token });
         setAuth(data.data.user, data.data.accessToken, data.data.refreshToken);
         router.push('/dashboard');
-      } catch (err: unknown) {
-        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-        setError(msg || 'Google login failed');
+      } catch (err: any) {
+        console.error('Google login backend error:', err);
+        const msg = err?.response?.data?.message;
+        if (!err?.response) {
+          setError('Server is not responding. Please wait a moment and try again.');
+        } else {
+          setError(msg || 'Google login failed');
+        }
       } finally { 
         setLoading(false); 
         setShowServerPopup(false);
       }
     },
-    onError: () => setError('Google login failed'),
+    onError: (errorResponse) => {
+      console.error('Google OAuth popup error:', errorResponse);
+      setError('Google sign-in was cancelled or blocked. Please allow popups and try again.');
+    },
   });
 
   return (
@@ -107,7 +128,8 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => handleGoogleLogin()}
-            className="w-full h-11 flex items-center justify-center gap-3 bg-surface-2 hover:bg-surface-3 text-fg rounded-xl font-medium transition-colors mb-6 border border-line text-sm"
+            disabled={loading}
+            className="w-full h-11 flex items-center justify-center gap-3 bg-surface-2 hover:bg-surface-3 text-fg rounded-xl font-medium transition-colors mb-6 border border-line text-sm disabled:opacity-50"
           >
             <GoogleIcon className="w-4 h-4 flex-shrink-0" />
             Continue with Google
@@ -149,9 +171,19 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div className="p-3.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
-                <span>{error}</span>
+              <div className="p-3.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+                  <span>{error}</span>
+                </div>
+                {unverifiedEmail && (
+                  <Link
+                    href={`/auth/verify-email?email=${encodeURIComponent(unverifiedEmail)}`}
+                    className="mt-1 inline-flex items-center gap-1.5 text-accent hover:underline font-medium text-xs pl-6"
+                  >
+                    Enter verification code <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                )}
               </div>
             )}
 
