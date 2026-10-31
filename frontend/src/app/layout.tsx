@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     template: '%s · MediaTools',
   },
   description:
-    'Extract audio from video files at up to 320 kbps, or download YouTube videos as MP3 or MP4 up to 8K. Free, no watermarks, files deleted after one hour.',
+    'Extract audio from video files at up to 320 kbps, or download YouTube videos as high-quality MP3 audio. Free, no watermarks, files deleted after one hour.',
 };
 
 export const viewport: Viewport = {

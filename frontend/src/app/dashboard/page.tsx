@@ -40,13 +40,6 @@ const TOOLS = [
     icon: YouTubeIcon,
   },
   {
-    label: 'YouTube MP4',
-    description: 'Download YouTube videos in crisp quality from 360p up to 8K.',
-    href: '/yt-video',
-    badge: 'Up to 8K',
-    icon: Clapperboard,
-  },
-  {
     label: 'Universal Video',
     description: 'Save videos from Instagram, TikTok, Twitter/X, and more.',
     href: '/universal',
@@ -298,7 +291,7 @@ export default function DashboardPage() {
                   const typeHref = isYtAudio
                     ? '/youtube'
                     : isYtVideo
-                    ? '/yt-video'
+                    ? '/youtube'
                     : isUniversal
                     ? '/universal'
                     : '/converter';

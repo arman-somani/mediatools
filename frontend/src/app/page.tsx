@@ -24,13 +24,6 @@ const TOOLS = [
   },
   {
     index: '03',
-    name: 'YouTube to MP4',
-    meta: 'URL · 360P TO 8K',
-    description: 'Full videos, not re-encodes. Pick a resolution and the file lands as-is.',
-    href: '/yt-video',
-  },
-  {
-    index: '04',
     name: 'Universal Downloader',
     meta: 'URL · MULTI-PLATFORM',
     description: 'Instagram, TikTok, Twitter/X and more. One input for every platform we support.',
@@ -357,9 +350,6 @@ export default function HomePage() {
                 </Link>
                 <Link id="cta-yt-mp3-btn" href="/youtube" className="btn-secondary btn-lg">
                   YouTube to MP3
-                </Link>
-                <Link id="cta-yt-mp4-btn" href="/yt-video" className="btn-secondary btn-lg">
-                  YouTube to MP4
                 </Link>
                 <Link id="cta-universal-btn" href="/universal" className="btn-secondary btn-lg">
                   Universal

@@ -21,7 +21,6 @@ interface Entry {
 const TOOLS: Entry[] = [
   { label: 'Video to Audio', hint: 'Convert a local file', href: '/converter', group: 'Tools' },
   { label: 'YouTube to MP3', hint: 'Paste a link or search', href: '/youtube', group: 'Tools' },
-  { label: 'YouTube to MP4', hint: 'Up to 8K', href: '/yt-video', group: 'Tools' },
   { label: 'Universal Downloader', hint: 'Instagram, TikTok, X and more', href: '/universal', group: 'Tools' },
 ];
 
