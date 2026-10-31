@@ -72,8 +72,7 @@ export default {
  * opaque binary in both directions.
  */
 function handleTunnel(request, env) {
-  const pair = new WebSocketPair();
-  const server = pair.server;
+  const [client, server] = Object.values(new WebSocketPair());
   server.accept();
 
   let tcp = null;
@@ -122,7 +121,7 @@ function handleTunnel(request, env) {
   server.addEventListener('close', () => { try { tcp?.close(); } catch {} });
   server.addEventListener('error', () => { try { tcp?.close(); } catch {} });
 
-  return new Response(null, { status: 101, webSocket: pair.client });
+  return new Response(null, { status: 101, webSocket: client });
 }
 
 function fail(ws, message) {
