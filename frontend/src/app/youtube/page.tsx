@@ -38,7 +38,7 @@ export default function YouTubePage() {
   const { state, start, reset } = useConversionJob({
     client: audioApi,
     toAbsolute: audioApiUrl,
-    intervalMs: 2000,
+    intervalMs: 1200,
     notification: { title: 'Audio ready', body: 'Your audio file has finished converting and is ready to save.' },
   });
 

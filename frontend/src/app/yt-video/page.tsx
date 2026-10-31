@@ -41,7 +41,7 @@ export default function YtVideoPage() {
   const { state, start, reset } = useConversionJob({
     client: videoApi,
     toAbsolute: videoApiUrl,
-    intervalMs: 2500,
+    intervalMs: 1200,
     notification: { title: 'Video ready', body: 'Your video file has finished downloading and is ready to save.' },
   });
 

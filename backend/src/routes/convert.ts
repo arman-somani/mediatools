@@ -662,24 +662,31 @@ router.post('/youtube', authenticate, convertLimiter, async (req: AuthRequest, r
             }
           }, 5000);
 
-          let lastUpdate = Date.now();
-          ytdlp.stdout.on('data', (data) => {
-            const match = data.toString().match(/\[download\]\s+([\d.]+)%/);
-            if (match) {
-              const progress = parseFloat(match[1]);
+          let lastUpdate = 0;
+          const parseProgress = (chunk: Buffer | string) => {
+            const str = chunk.toString();
+            const matches = [...str.matchAll(/\[download\]\s+([\d.]+)%/g)];
+            if (matches.length > 0) {
+              const lastMatch = matches[matches.length - 1];
+              const progress = Math.min(99, Math.round(parseFloat(lastMatch[1])));
               if (!isNaN(progress)) {
                 const now = Date.now();
-                if (now - lastUpdate > 1000) {
+                if (now - lastUpdate >= 500) {
                   lastUpdate = now;
                   Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
                   conversionQueue.reportProgress(conversion._id.toString(), progress);
                 }
               }
             }
+          };
+
+          ytdlp.stdout.on('data', (data) => {
+            parseProgress(data);
           });
 
           let audioStderr = '';
           ytdlp.stderr.on('data', (data) => {
+            parseProgress(data);
             audioStderr += data.toString();
             if (audioStderr.length > 64_000) audioStderr = audioStderr.slice(-32_000);
           });
@@ -1068,24 +1075,31 @@ router.post('/universal', authenticate, convertLimiter, async (req: AuthRequest,
             }
           }, 5000);
 
-          let lastUpdate = Date.now();
-          ytdlp.stdout.on('data', (data) => {
-            const match = data.toString().match(/\[download\]\s+([\d.]+)%/);
-            if (match) {
-              const progress = parseFloat(match[1]);
+          let lastUpdate = 0;
+          const parseVideoProgress = (chunk: Buffer | string) => {
+            const str = chunk.toString();
+            const matches = [...str.matchAll(/\[download\]\s+([\d.]+)%/g)];
+            if (matches.length > 0) {
+              const lastMatch = matches[matches.length - 1];
+              const progress = Math.min(99, Math.round(parseFloat(lastMatch[1])));
               if (!isNaN(progress)) {
                 const now = Date.now();
-                if (now - lastUpdate > 1000) {
+                if (now - lastUpdate >= 500) {
                   lastUpdate = now;
                   Conversion.findByIdAndUpdate(conversion._id, { progress }).catch(() => { });
                   conversionQueue.reportProgress(conversion._id.toString(), progress);
                 }
               }
             }
+          };
+
+          ytdlp.stdout.on('data', (data) => {
+            parseVideoProgress(data);
           });
 
           let videoStderr = '';
           ytdlp.stderr.on('data', (data) => {
+            parseVideoProgress(data);
             videoStderr += data.toString();
             if (videoStderr.length > 64_000) videoStderr = videoStderr.slice(-32_000);
           });

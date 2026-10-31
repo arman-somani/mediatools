@@ -476,7 +476,8 @@ export function buildArgs(flags: string[], urls: string[], client?: string, prox
 
     '--no-warnings',
     '--no-playlist',
-    '--no-progress',
+    '--progress',
+    '--newline',
     '--force-ipv4',
 
     // Resume partial downloads. yt-dlp keeps `<file>.part` on disk and picks

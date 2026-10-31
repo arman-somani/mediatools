@@ -47,7 +47,7 @@ export default function UniversalPage() {
   const { state, start, reset } = useConversionJob({
     client: videoApi,
     toAbsolute: videoApiUrl,
-    intervalMs: 2500,
+    intervalMs: 1200,
     notification: { title: 'Download complete', body: 'Your video has finished downloading and is ready to save.' },
   });
 
