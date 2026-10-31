@@ -78,12 +78,17 @@ class ProxyPool {
       });
     });
 
-    this.routes.push({
-      id: 'direct',
-      kind: 'direct',
-      label: 'direct (server IP)',
-      getProxyArg: () => null,
-    });
+    // Only add direct egress when no Cloudflare proxy is configured. When
+    // CF_PROXY_URLS is set, every request should go through the shim so
+    // YouTube never sees the server's datacenter IP.
+    if (!env.youtube.cfProxyUrls.length) {
+      this.routes.push({
+        id: 'direct',
+        kind: 'direct',
+        label: 'direct (server IP)',
+        getProxyArg: () => null,
+      });
+    }
 
     for (const route of this.routes) {
       this.health.set(route.id, { fails: 0, cooldownUntil: 0, lastSuccessAt: 0, lastError: '' });
