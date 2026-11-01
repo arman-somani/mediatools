@@ -29,6 +29,7 @@ import searchRoutes from './routes/search';
 import extractorRoutes from './routes/extractor';
 import adminRoutes from './routes/admin';
 import directRoutes from './routes/direct';
+import audioToolsRoutes from './routes/audioTools';
 import { errorHandler } from './middleware/errorHandler';
 import { cleanupOldFiles } from './utils/cleanup';
 import { verifyMailTransport } from './utils/email';
@@ -186,6 +187,7 @@ app.use('/api/search', searchRoutes);
 app.use('/api/extractor', extractorRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/direct', directRoutes);
+app.use('/api/audio-tools', audioToolsRoutes);
 
 // A JSON 404 for unmatched API paths. Without this, a typo'd endpoint fell
 // through to Express's HTML error page, which the frontend's axios layer
