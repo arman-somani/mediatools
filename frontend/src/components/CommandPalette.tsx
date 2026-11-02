@@ -21,6 +21,7 @@ interface Entry {
 const TOOLS: Entry[] = [
   { label: 'Video to Audio', hint: 'Convert a local file', href: '/converter', group: 'Tools' },
   { label: 'YouTube to MP3', hint: 'Paste a link or search', href: '/youtube', group: 'Tools' },
+  { label: 'Universal Downloader', hint: 'Instagram, TikTok, X and more', href: '/universal', group: 'Tools' },
   { label: 'Audio Converter', hint: 'Convert between MP3, WAV, FLAC, OGG', href: '/audio-tools?tool=converter', group: 'Tools' },
   { label: 'Audio Trimmer', hint: 'Cut, slice, and trim audio clips', href: '/audio-tools?tool=trimmer', group: 'Tools' },
   { label: 'Change Audio Speed', hint: 'Speed up or slow down audio', href: '/audio-tools?tool=speed', group: 'Tools' },

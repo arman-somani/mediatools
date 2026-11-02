@@ -29,6 +29,13 @@ const TOOLS = [
     description: 'Paste a YouTube link — or just type what you are looking for — and save the audio.',
     href: '/youtube',
   },
+  {
+    index: '04',
+    name: 'Universal Downloader',
+    meta: 'URL · MULTI-PLATFORM',
+    description: 'Instagram, TikTok, Twitter/X and more. One input for every platform we support.',
+    href: '/universal',
+  },
 ];
 
 const STEPS = [
