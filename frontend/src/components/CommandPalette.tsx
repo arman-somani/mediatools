@@ -33,7 +33,6 @@ const TOOLS: Entry[] = [
 const PAGES: Entry[] = [
   { label: 'Dashboard', hint: 'History and stats', href: '/dashboard', group: 'Account' },
   { label: 'Contact', hint: 'Get in touch', href: '/contact', group: 'Pages' },
-  { label: 'Feedback', hint: 'Report a bug or send a note', href: '/feedback', group: 'Pages' },
   { label: 'Privacy Policy', hint: 'Document', href: '/privacy', group: 'Pages' },
   { label: 'Terms of Service', hint: 'Document', href: '/terms', group: 'Pages' },
   { label: 'DMCA', hint: 'Document', href: '/dmca', group: 'Pages' },

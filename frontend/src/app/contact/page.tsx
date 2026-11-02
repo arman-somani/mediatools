@@ -2,8 +2,7 @@
 
 import PageWrapper from '@/components/PageWrapper';
 import AnimeReveal from '@/components/AnimeReveal';
-import { Mail, MessageSquare, ArrowRight } from 'lucide-react';
-import Link from 'next/link';
+import { Mail } from 'lucide-react';
 
 export default function ContactPage() {
   return (
@@ -23,7 +22,7 @@ export default function ContactPage() {
               Get in Touch
             </h1>
             <p className="text-fg-muted text-sm sm:text-base mb-8 leading-relaxed">
-              Have questions, feedback, or a partnership inquiry? We&apos;d love to hear from you.
+              Have questions or a partnership inquiry? We&apos;d love to hear from you.
             </p>
 
             <div className="space-y-3 text-left">
@@ -41,24 +40,6 @@ export default function ContactPage() {
                   </p>
                 </div>
               </a>
-
-              <Link
-                href="/feedback"
-                className="card-inset p-4 sm:p-5 flex items-center justify-between gap-4 hover:border-line-strong transition-colors group block"
-              >
-                <div className="flex items-center gap-4 min-w-0">
-                  <div className="w-11 h-11 rounded-xl bg-surface-2 border border-line flex items-center justify-center text-fg-muted flex-shrink-0 group-hover:scale-105 transition-transform">
-                    <MessageSquare className="w-5 h-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-fg-subtle mb-0.5">Feedback Form</p>
-                    <p className="text-sm sm:text-base font-semibold text-fg group-hover:text-accent transition-colors">
-                      Send bugs or feature suggestions
-                    </p>
-                  </div>
-                </div>
-                <ArrowRight className="w-4 h-4 text-fg-subtle group-hover:text-accent group-hover:translate-x-1 transition-all flex-shrink-0" />
-              </Link>
             </div>
           </AnimeReveal>
         </div>

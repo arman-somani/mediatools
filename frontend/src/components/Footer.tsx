@@ -15,7 +15,6 @@ const COLUMNS = [
   {
     title: 'Support',
     links: [
-      { label: 'Send feedback', href: '/feedback' },
       { label: 'Contact', href: '/contact' },
       { label: 'Source code', href: 'https://github.com/arman-somani/', external: true },
     ],
