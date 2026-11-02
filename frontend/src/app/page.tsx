@@ -10,17 +10,17 @@ import Spotlight from '@/components/Spotlight';
 const TOOLS = [
   {
     index: '01',
+    name: 'Audio Studio',
+    meta: '6 TOOLS · LOCAL FILE',
+    description: 'Convert formats, trim clips, change speed & tempo, boost volume, merge tracks, and edit metadata.',
+    href: '/audio-tools',
+  },
+  {
+    index: '02',
     name: 'Video to Audio',
     meta: 'LOCAL FILE · MP3',
     description: 'Drop an MP4, MOV, MKV or WebM and pull out a clean audio track at up to 320 kbps.',
     href: '/converter',
-  },
-  {
-    index: '02',
-    name: 'YouTube to MP3',
-    meta: 'URL · SEARCH BUILT IN',
-    description: 'Paste a YouTube link — or just type what you are looking for — and save the audio.',
-    href: '/youtube',
   },
   {
     index: '03',
@@ -206,18 +206,16 @@ export default function HomePage() {
                 </h1>
 
                 <p className="text-muted text-lg max-w-lg mt-6 leading-relaxed anim-fade-up" style={{ animationDelay: '180ms' }}>
-                  Extract a clean audio track from any video file, or pull MP3 and MP4
-                  straight off a URL. No accounts to upgrade, no watermarks, no queues
-                  worth waiting in.
+                  Extract a clean audio track from any video file, or convert media from a URL. No accounts to upgrade, no watermarks, no queues worth waiting in.
                 </p>
 
                 <div className="flex flex-wrap gap-3 items-center mt-9 anim-fade-up" style={{ animationDelay: '280ms' }}>
-                  <Link id="hero-convert-btn" href="/converter" className="btn-accent btn-lg">
-                    Convert a file
+                  <Link id="hero-convert-btn" href="/audio-tools" className="btn-accent btn-lg">
+                    Open Audio Studio
                     <ArrowRight className="w-4 h-4" />
                   </Link>
-                  <Link id="hero-yt-mp3-btn" href="/youtube" className="btn-secondary btn-lg">
-                    Paste a YouTube link
+                  <Link id="hero-yt-mp3-btn" href="/converter" className="btn-secondary btn-lg">
+                    Convert a file
                   </Link>
                 </div>
 
@@ -344,12 +342,12 @@ export default function HomePage() {
                 Free, unlimited, and it deletes itself behind you.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center mt-9">
-                <Link id="cta-start-btn" href="/converter" className="btn-accent btn-lg">
+                <Link id="cta-start-btn" href="/audio-tools" className="btn-accent btn-lg">
                   Start converting
                   <ArrowRight className="w-4 h-4" />
                 </Link>
-                <Link id="cta-yt-mp3-btn" href="/youtube" className="btn-secondary btn-lg">
-                  YouTube to MP3
+                <Link id="cta-yt-mp3-btn" href="/converter" className="btn-secondary btn-lg">
+                  Convert a file
                 </Link>
                 <Link id="cta-universal-btn" href="/universal" className="btn-secondary btn-lg">
                   Universal

@@ -10,7 +10,6 @@ import { useAuthStore } from '@/lib/store';
 import api from '@/lib/api';
 import PageWrapper from '@/components/PageWrapper';
 import AnimeReveal from '@/components/AnimeReveal';
-import { YouTubeIcon } from '@/components/icons';
 import { formatFileSize } from '@/lib/utils';
 
 type RecentConversion = {
@@ -26,18 +25,18 @@ type RecentConversion = {
 
 const TOOLS = [
   {
+    label: 'Audio Studio',
+    description: 'Convert formats, trim clips, change speed & tempo, boost volume, merge tracks, and edit metadata.',
+    href: '/audio-tools',
+    badge: '6 audio tools',
+    icon: Music,
+  },
+  {
     label: 'Video to Audio',
     description: 'Convert any local video file into crystal-clear MP3 audio.',
     href: '/converter',
     badge: 'Up to 320kbps',
     icon: Music,
-  },
-  {
-    label: 'YouTube MP3',
-    description: 'Download YouTube videos directly as high-bitrate audio.',
-    href: '/youtube',
-    badge: 'Fast extract',
-    icon: YouTubeIcon,
   },
   {
     label: 'Universal Video',
@@ -281,17 +280,17 @@ export default function DashboardPage() {
                   const isUniversal = conversion.type === 'universal';
 
                   const typeLabel = isYtAudio
-                    ? 'YouTube MP3'
+                    ? 'Audio'
                     : isYtVideo
-                    ? 'YouTube MP4'
+                    ? 'Video'
                     : isUniversal
                     ? 'Universal Video'
                     : 'Video to Audio';
 
                   const typeHref = isYtAudio
-                    ? '/youtube'
+                    ? '/audio-tools?tool=converter'
                     : isYtVideo
-                    ? '/youtube'
+                    ? '/audio-tools?tool=converter'
                     : isUniversal
                     ? '/universal'
                     : '/converter';

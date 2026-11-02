@@ -10,10 +10,9 @@ import Logo from '@/components/Logo';
 import { openCommandPalette } from '@/components/CommandPalette';
 
 const TOOL_LINKS = [
+  { name: 'Audio Studio', href: '/audio-tools' },
   { name: 'Video to Audio', href: '/converter' },
-  { name: 'YouTube to MP3', href: '/youtube' },
   { name: 'Universal', href: '/universal' },
-  { name: 'Audio Tools', href: '/audio-tools' },
 ];
 
 export default function Navbar() {

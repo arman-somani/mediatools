@@ -6,10 +6,9 @@ const COLUMNS = [
   {
     title: 'Tools',
     links: [
-      { label: 'Video to Audio', href: '/converter' },
-      { label: 'YouTube to MP3', href: '/youtube' },
-      { label: 'Universal Video', href: '/universal' },
       { label: 'Audio Studio', href: '/audio-tools' },
+      { label: 'Video to Audio', href: '/converter' },
+      { label: 'Universal Video', href: '/universal' },
     ],
   },
   {
@@ -38,7 +37,7 @@ export default function Footer() {
           <div className="col-span-2 md:col-span-1">
             <Logo />
             <p className="mt-3 max-w-xs text-[13.5px] leading-relaxed text-fg-muted">
-              Pull audio out of video files and save YouTube videos as MP3. Free to use.
+              Pull audio out of video files and convert media with our free audio tools.
             </p>
             <div className="mt-5 flex items-center gap-1 -ml-2">
               <a href="https://github.com/arman-somani/" target="_blank" rel="noopener noreferrer" className="btn-icon" aria-label="GitHub">
