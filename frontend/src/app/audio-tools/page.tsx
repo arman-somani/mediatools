@@ -306,7 +306,6 @@ const [selectedFile, setSelectedFile] = useState<File | null>(null);
     <PageWrapper>
       <div className="container-page py-10 max-w-4xl">
         <PageHeader
-          index="004"
           label="AUDIO STUDIO"
           title="Audio Studio Tools"
           subtitle="Fast, zero-quality-loss audio utilities. Convert formats, trim clips, alter speed & volume, merge tracks, or edit metadata."

@@ -22,13 +22,6 @@ const TOOLS = [
     description: 'Drop an MP4, MOV, MKV or WebM and pull out a clean audio track at up to 320 kbps.',
     href: '/converter',
   },
-  {
-    index: '03',
-    name: 'Universal Downloader',
-    meta: 'URL · MULTI-PLATFORM',
-    description: 'Instagram, TikTok, Twitter/X and more. One input for every platform we support.',
-    href: '/universal',
-  },
 ];
 
 const STEPS = [
@@ -331,8 +324,6 @@ export default function HomePage() {
           <AnimeReveal direction="up" className="console text-center">
             <div className="px-6 py-14 md:py-20">
               <p className="mono-label mb-5">
-                <span className="text-accent">004</span>
-                <span className="mx-2 text-fg-subtle/60">/</span>
                 READY WHEN YOU ARE
               </p>
               <h2 className="font-display font-bold text-3xl md:text-5xl tracking-tight text-fg max-w-2xl mx-auto">
