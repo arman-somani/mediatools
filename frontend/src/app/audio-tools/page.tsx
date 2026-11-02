@@ -28,7 +28,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import QueueModal from '@/components/ui/QueueModal';
 import ProgressMeter from '@/components/ProgressMeter';
 import FailureNotice from '@/components/ui/FailureNotice';
-import api from '@/lib/api';
+import api, { apiUrl } from '@/lib/api';
 
 type ToolType = 'converter' | 'trimmer' | 'speed' | 'volume' | 'merger' | 'metadata';
 
@@ -188,7 +188,7 @@ const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
         if (snap.status === 'completed') {
           setIsCompleted(true);
-          setDownloadUrl(snap.downloadUrl);
+          setDownloadUrl(snap.downloadUrl ? apiUrl(snap.downloadUrl) : null);
           setOutputFilename(snap.outputFilename || 'audio.mp3');
           setFileSize(snap.fileSize || null);
           return;
