@@ -92,9 +92,9 @@ function ConsoleMockup() {
   );
   const filled = Math.round((progress / 100) * MOCK_BARS);
 
-  return (
+return (
     <div
-      className="console console-corners"
+      className="rounded-xl border border-line-strong bg-surface"
       onPointerMove={(e) => {
         const rect = e.currentTarget.getBoundingClientRect();
         setPointerX(Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width)));
@@ -315,7 +315,7 @@ export default function HomePage() {
 
         {/* ───────────── Stats ───────────── */}
         <section className="container-page pb-16 md:pb-24" aria-label="Specifications">
-          <AnimeReveal staggerDelay={70} direction="up" className="grid grid-cols-2 md:grid-cols-4 gap-px bg-line border border-line rounded-xl overflow-hidden">
+          <AnimeReveal direction="up" className="grid grid-cols-2 md:grid-cols-4 gap-px bg-line border border-line rounded-xl overflow-hidden">
             {STATS.map((s) => (
               <div key={s.label} className="bg-bg-subtle p-6 md:p-8">
                 <p className="font-display font-bold text-3xl md:text-4xl text-fg tabular-nums leading-none">
@@ -330,7 +330,7 @@ export default function HomePage() {
 
         {/* ───────────── Closing CTA ───────────── */}
         <section className="container-page pb-24 md:pb-32">
-          <AnimeReveal direction="up" className="console console-corners text-center">
+          <AnimeReveal direction="up" className="console text-center">
             <div className="px-6 py-14 md:py-20">
               <p className="mono-label mb-5">
                 <span className="text-accent">004</span>

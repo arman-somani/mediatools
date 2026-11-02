@@ -1,0 +1,161 @@
+================================================================================
+           LIGHTWEIGHT AUDIO TOOLS SUITE - IMPLEMENTATION PLAN
+================================================================================
+Overview:
+A complete architectural and execution plan to add 6 fast, lightweight audio 
+manipulation tools to MediaTools across both the Backend (Express/FFmpeg) and 
+Frontend (Next.js/Tailwind).
+
+All operations will leverage the existing FFmpeg/FFprobe installation inside 
+the Docker container, ensuring near-instant processing, zero new heavy 
+dependencies, and very low memory consumption (<50MB RAM per operation).
+
+--------------------------------------------------------------------------------
+FEATURE BREAKDOWN & FFMPEG COMMAND ARCHITECTURE
+--------------------------------------------------------------------------------
+
+1. Audio Converter
+   - Formats Supported: MP3, WAV, AAC, M4A, FLAC, OGG, OPUS, WMA.
+   - Quality/Bitrate Options: 64kbps, 128kbps, 192kbps, 256kbps, 320kbps, VBR / Lossless.
+   - FFmpeg Command:
+     ffmpeg -i input.[ext] -vn -b:a 320k -ar 44100 output.[format]
+   - Processing Time: 1–3 seconds for typical audio tracks.
+
+2. Audio Trimmer / Cutter
+   - Inputs: Start Time (seconds/timestamp), End Time (seconds/timestamp), Fade in/out toggle.
+   - Modes:
+     * Fast Cut (stream copy when same format): ffmpeg -ss [start] -to [end] -i input.mp3 -c copy output.mp3
+     * Accurate Cut (with optional fade): ffmpeg -ss [start] -to [end] -i input.mp3 -af "afade=t=in:ss=0:d=1,afade=t=out:st=[out_start]:d=1" output.mp3
+   - Processing Time: <1 second (instant).
+
+3. Change Audio Speed & Tempo
+   - Controls: Speed multiplier (0.5x, 0.75x, 1.0x, 1.25x, 1.5x, 2.0x, custom).
+   - Pitch preservation: Keeps original pitch while speeding up/slowing down.
+   - FFmpeg Command:
+     ffmpeg -i input.mp3 -filter:a "atempo=1.5" -vn output.mp3
+     (For extreme speeds >2.0x, chains filters: "atempo=2.0,atempo=1.5")
+   - Processing Time: 1–2 seconds.
+
+4. Audio Volume Adjuster / Booster / Normalizer
+   - Controls: Percentage slider (10% to 300%) or dB offset (-12dB to +12dB), or Auto-Normalize (loudnorm).
+   - FFmpeg Command:
+     * Multiplier: ffmpeg -i input.mp3 -filter:a "volume=1.5" -vn output.mp3
+     * Decibels:   ffmpeg -i input.mp3 -filter:a "volume=6dB" -vn output.mp3
+     * EBU R128:   ffmpeg -i input.mp3 -filter:a "loudnorm" -vn output.mp3
+   - Processing Time: 1–2 seconds.
+
+5. Merge Small Audio Files (Audio Joiner)
+   - Inputs: Multiple audio files (2 to 10 files) with drag-to-reorder capability.
+   - Modes:
+     * Sequential Join: plays file 1 then file 2 then file 3.
+     * Optional crossfade between tracks: "acrossfade=d=2:c1=tri:c2=tri"
+   - FFmpeg Command:
+     ffmpeg -f concat -safe 0 -i filelist.txt -c copy output.mp3
+     (or via filter_complex concat when files have different sample rates/formats)
+   - Processing Time: 2–4 seconds.
+
+6. Audio Metadata / ID3 Tag Editor
+   - Editable Fields: Title, Artist, Album, Year, Genre, Track Number, Comment, Album Cover Art.
+   - FFmpeg Command:
+     ffmpeg -i input.mp3 -i cover.jpg -map 0:a -map 1:v? \
+       -metadata title="Title" \
+       -metadata artist="Artist" \
+       -metadata album="Album" \
+       -metadata date="2026" \
+       -metadata genre="Pop" \
+       -codec copy -id3v2_version 3 output.mp3
+   - Processing Time: <1 second (direct tag writing without re-encoding).
+
+--------------------------------------------------------------------------------
+BACKEND ARCHITECTURE & ENDPOINTS
+--------------------------------------------------------------------------------
+
+New Route File: backend/src/routes/audioTools.ts
+Mount Path: /api/audio-tools/*
+
+Endpoints:
+1. POST /api/audio-tools/convert
+   - Body (multipart): file, targetFormat, bitrate
+2. POST /api/audio-tools/trim
+   - Body (multipart): file, startTime, endTime, fadeIn, fadeOut
+3. POST /api/audio-tools/speed
+   - Body (multipart): file, speed (float: 0.5 - 3.0), preservePitch (boolean)
+4. POST /api/audio-tools/volume
+   - Body (multipart): file, volumePct (number) or volumeDb (number), normalize (boolean)
+5. POST /api/audio-tools/merge
+   - Body (multipart): files[] (array of audio files), crossfadeSec (number)
+6. POST /api/audio-tools/metadata
+   - Body (multipart): file, coverImage (optional), title, artist, album, year, genre
+
+Common Backend Processing Utilities:
+- File Upload Handler: Multer with 50MB per-file ceiling (or 100MB for merge).
+- Auto-Cleanup: Output files saved to `/tmp/audio-tools/[uuid]/`, served directly or uploaded to TmpFiles, and cleaned up automatically after download or 1 hour.
+- Error Handling: Validate audio headers via `ffprobe` before running tasks. Reject corrupt files early.
+
+--------------------------------------------------------------------------------
+FRONTEND ARCHITECTURE & UI DESIGN
+--------------------------------------------------------------------------------
+
+Option A: Dedicated Hub Page with Tool Tabs
+- Route: `/audio-tools`
+- Header with unified tab selector:
+  [ Convert ] [ Trim ] [ Speed ] [ Volume ] [ Merge ] [ Metadata ]
+- Advantage: Clean, shared audio player component, unified file uploader, cohesive branding.
+
+Option B: Individual Dedicated Tool Routes
+- `/audio/converter`
+- `/audio/trimmer`
+- `/audio/speed`
+- `/audio/volume`
+- `/audio/merger`
+- `/audio/metadata`
+- Advantage: Stronger SEO targeting ("free online audio trimmer", "audio speed changer", etc.).
+
+Recommended Strategy:
+Both! Provide dedicated URLs for SEO (`/audio/trimmer`, etc.) while sharing reusable building block components:
+- `AudioDropzone.tsx`: Unified drag-and-drop file upload zone.
+- `WaveformPlayer.tsx`: Visual audio scrubber using HTML5 Web Audio API / canvas waveform for trimming start/end points.
+- `SpeedSlider.tsx`: Interactive slider with presets (0.5x, 0.75x, 1x, 1.25x, 1.5x, 2x).
+- `VolumeMeter.tsx`: Volume slider with decibel & percentage indicator.
+- `ReorderableFileList.tsx`: Drag-and-drop file sorting list for merging.
+- `MetadataForm.tsx`: Clean inputs for ID3 tags with album art preview.
+
+Navigation Updates:
+- Navbar: Add dropdown or direct link "Audio Tools"
+- Footer: Group under "Audio Suite"
+- Command Palette (Ctrl+K): Register all 6 new actions for instant keyboard access.
+
+--------------------------------------------------------------------------------
+EXECUTION ROADMAP & STEP-BY-STEP PHASES
+--------------------------------------------------------------------------------
+
+Phase 1: Backend Foundation
+  1. Create `backend/src/services/audioProcessor.ts`:
+     - Encapsulate FFmpeg wrapper functions for convert, trim, speed, volume, merge, and metadata.
+  2. Create `backend/src/routes/audioTools.ts`:
+     - Wire up the 6 endpoints with Multer file validation and rate limiting.
+  3. Register route in `backend/src/app.ts` under `/api/audio-tools`.
+  4. Test each FFmpeg command pipeline locally to verify speed and memory footprint.
+
+Phase 2: Frontend Shared Audio Components
+  1. Create `frontend/src/components/audio/AudioDropzone.tsx`.
+  2. Create `frontend/src/components/audio/WaveformPreview.tsx` (lightweight HTML5 canvas preview).
+  3. Create `frontend/src/components/audio/AudioResultCard.tsx` (inline audio playback & download button).
+
+Phase 3: Frontend Tool Pages Implementation
+  1. Build Audio Trimmer UI (`/audio/trimmer`).
+  2. Build Audio Converter UI (`/audio/converter`).
+  3. Build Speed & Pitch Changer UI (`/audio/speed`).
+  4. Build Volume Booster / Adjuster UI (`/audio/volume`).
+  5. Build Audio Merger UI (`/audio/merger`).
+  6. Build Metadata Editor UI (`/audio/metadata`).
+  7. Build Main Hub Page (`/audio-tools`).
+
+Phase 4: Navigation, Polish & Testing
+  1. Update Navbar and Footer links.
+  2. Register tools in `CommandPalette.tsx`.
+  3. Verify memory usage during concurrent conversions.
+  4. Deploy backend to Render and frontend to Vercel.
+
+================================================================================
+

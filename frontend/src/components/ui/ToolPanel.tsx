@@ -13,7 +13,7 @@ interface ToolPanelProps {
 export default function ToolPanel({ children, className = '' }: ToolPanelProps) {
   return (
     <div
-      className={`console console-corners anim-fade-up ${className}`}
+      className={`console anim-fade-up ${className}`}
       style={{ animationDelay: '160ms', '--corner-color': 'rgb(255 255 255 / 0.3)' } as React.CSSProperties}
     >
       <div className="p-5 sm:p-8 md:p-10">{children}</div>

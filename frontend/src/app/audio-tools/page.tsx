@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
@@ -20,6 +20,8 @@ import {
   Trash2,
   Loader2,
   Sparkles,
+  GripVertical,
+  X,
 } from 'lucide-react';
 import PageWrapper from '@/components/PageWrapper';
 import PageHeader from '@/components/ui/PageHeader';
@@ -43,9 +45,38 @@ export default function AudioToolsPage() {
   const [activeTab, setActiveTab] = useState<ToolType>('converter');
 
   // Common file states
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+
+  const moveFile = (fromIndex: number, toIndex: number) => {
+    setSelectedFiles((prev) => {
+      const item = prev[fromIndex];
+      const newFiles = [...prev];
+      newFiles.splice(fromIndex, 1);
+      newFiles.splice(toIndex, 0, item);
+      return newFiles;
+    });
+  };
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDragIdx(index);
+    e.dataTransfer.setData('text/plain', String(index));
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    const fromIndex = Number(e.dataTransfer.getData('text/plain'));
+    if (fromIndex !== index) moveFile(fromIndex, index);
+    setDragIdx(null);
+  };
   const [audioDuration, setAudioDuration] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -466,14 +497,24 @@ export default function AudioToolsPage() {
                   <p className="text-xs text-fg-muted mt-1">Files will be concatenated in order into one track</p>
                 </div>
 
-                {selectedFiles.length > 0 && (
+{selectedFiles.length > 0 && (
                   <div className="mt-4 space-y-2">
                     {selectedFiles.map((f, idx) => (
                       <div
                         key={idx}
-                        className="p-3 rounded-xl bg-surface-2 border border-line flex items-center justify-between text-xs"
+                        className="p-3 rounded-xl bg-surface-2 border border-line flex items-center justify-between text-xs cursor-grab"
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, idx)}
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDrop(e, idx)}
+                        style={{ userSelect: 'none' }}
                       >
                         <span className="font-mono text-accent font-semibold mr-2">#{idx + 1}</span>
+                        {dragIdx !== null && dragIdx === idx && (
+                          <GripVertical
+                            className="w-3 h-3 text-fg-muted"
+                          />
+                        )}
                         <span className="truncate flex-1 font-medium">{f.name}</span>
                         <button
                           type="button"
@@ -597,16 +638,17 @@ export default function AudioToolsPage() {
                     type="range"
                     min="0.5"
                     max="2.5"
-                    step="0.05"
+step="0.5"
                     value={speed}
                     onChange={(e) => setSpeed(parseFloat(e.target.value))}
                     className="w-full accent-accent cursor-pointer"
                   />
                   <div className="flex justify-between text-[11px] text-fg-subtle mt-1 font-mono">
-                    <span>0.5x (Slow)</span>
-                    <span>1.0x (Normal)</span>
+                    <span>0.5x</span>
+                    <span>1x</span>
                     <span>1.5x</span>
-                    <span>2.5x (Fast)</span>
+                    <span>2x</span>
+                    <span>2.5x</span>
                   </div>
                 </div>
               )}
@@ -616,24 +658,26 @@ export default function AudioToolsPage() {
                 <div className="space-y-4">
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <label className="text-xs font-semibold text-fg-muted">OUTPUT VOLUME</label>
-                      <span className="font-mono text-base font-bold text-accent">{volumePct}%</span>
-                    </div>
+  <label className="text-xs font-semibold text-fg-muted">OUTPUT VOLUME</label>
+  <span className="font-mono text-base font-bold text-accent">{volumePct}%</span>
+</div>
+
                     <input
                       type="range"
-                      min="20"
-                      max="300"
-                      step="5"
-                      value={volumePct}
-                      onChange={(e) => setVolumePct(parseInt(e.target.value, 10))}
+                      min="0"
+                      max="4"
+                      step="1"
+                      value={[50, 100, 150, 200, 300].indexOf(volumePct)}
+                      onChange={(e) => setVolumePct([50, 100, 150, 200, 300][parseInt(e.target.value)])}
                       disabled={normalize}
                       className="w-full accent-accent cursor-pointer disabled:opacity-40"
                     />
                     <div className="flex justify-between text-[11px] text-fg-subtle mt-1 font-mono">
-                      <span>20% (Quiet)</span>
-                      <span>100% (Original)</span>
-                      <span>200% (2x Boost)</span>
-                      <span>300% (Max)</span>
+                      <span>50%</span>
+                      <span>100%</span>
+                      <span>150%</span>
+                      <span>200%</span>
+                      <span>300%</span>
                     </div>
                   </div>
 
@@ -722,11 +766,23 @@ export default function AudioToolsPage() {
                     <label className="block text-xs font-semibold text-fg-muted mb-1.5">ALBUM COVER ART (OPTIONAL)</label>
                     <div className="flex items-center gap-4">
                       {coverPreview && (
-                        <img
-                          src={coverPreview}
-                          alt="Cover Art"
-                          className="w-16 h-16 rounded-xl object-cover border border-line"
-                        />
+                        <div className="relative">
+                          <img
+                            src={coverPreview}
+                            alt="Cover Art"
+                            className="w-16 h-16 rounded-xl object-cover border border-line"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCoverFile(null);
+                              setCoverPreview(null);
+                            }}
+                            className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition-colors"
+                          >
+                            <X className="w-2.5 h-2.5" />
+                          </button>
+                        </div>
                       )}
                       <input
                         type="file"
@@ -772,3 +828,4 @@ export default function AudioToolsPage() {
     </PageWrapper>
   );
 }
+
