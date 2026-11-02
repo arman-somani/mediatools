@@ -109,8 +109,6 @@ export default function YouTubePage() {
       <PageWrapper>
         <div className="w-full max-w-3xl mx-auto px-6 py-20 md:py-28">
           <PageHeader
-            index="002"
-            label="YOUTUBE AUDIO"
             title="YouTube to MP3."
             subtitle="Paste a link, or type what you are looking for and pick it from the search results."
           />

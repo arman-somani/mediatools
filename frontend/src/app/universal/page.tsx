@@ -100,7 +100,6 @@ export default function UniversalPage() {
       <PageWrapper>
         <div className="w-full max-w-3xl mx-auto px-6 py-20 md:py-28">
           <PageHeader
-            label="Universal Downloader"
             title="Any platform, one box."
             subtitle="Instagram, TikTok, Twitter/X, Reddit and more. Paste the link, check the preview, download."
           />

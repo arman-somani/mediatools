@@ -4,7 +4,7 @@ interface PageHeaderProps {
   /** Zero-padded index, e.g. "001" — reads like a numbered chapter plate. */
   index?: string;
   /** Short mono label, e.g. "LOCAL CONVERTER". */
-  label: string;
+  label?: string;
   title: ReactNode;
   subtitle?: ReactNode;
   className?: string;
@@ -13,15 +13,16 @@ interface PageHeaderProps {
 export default function PageHeader({ index, label, title, subtitle, className = '' }: PageHeaderProps) {
   return (
     <header className={`w-full anim-fade-up ${className}`}>
-      {index && (
+      {label && (
         <p className="mono-label">
-          <span className="text-accent">{index}</span>
-          <span className="mx-2 text-fg-subtle/60">/</span>
+          {index && (
+            <>
+              <span className="text-accent">{index}</span>
+              <span className="mx-2 text-fg-subtle/60">/</span>
+            </>
+          )}
           {label}
         </p>
-      )}
-      {!index && (
-        <p className="mono-label">{label}</p>
       )}
       <h1
         className="font-display font-bold text-4xl sm:text-5xl tracking-tight leading-[1.02] text-fg mt-4 anim-fade-up"

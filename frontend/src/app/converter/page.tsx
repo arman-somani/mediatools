@@ -97,8 +97,6 @@ export default function ConverterPage() {
       <PageWrapper>
         <div className="w-full max-w-3xl mx-auto px-6 py-20 md:py-28">
           <PageHeader
-            index="001"
-            label="LOCAL CONVERTER"
             title="Video to audio."
             subtitle="Drop a file below. The audio track comes out untouched — same bitrate ceiling as the source, up to 320 kbps."
           />
