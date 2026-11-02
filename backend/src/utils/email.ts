@@ -248,15 +248,18 @@ export async function sendFeedbackEmail(
   type: string,
   message: string
 ): Promise<boolean> {
+  // Feedback always goes to the site contact inbox, regardless of FROM_EMAIL.
   const operator = env.mail.fromEmail;
   if (!operator) {
     console.error('[email] cannot send feedback: FROM_EMAIL is not set');
     return false;
   }
 
+  const feedbackTo = env.mail.feedbackEmail || 'mediatools.contactus@gmail.com';
+
   return deliver({
     kind: 'feedback',
-    to: operator,
+    to: feedbackTo,
     replyTo: email,
     subject: `[${type.toUpperCase()}] Feedback from ${name}`.slice(0, 120),
     html: layout(

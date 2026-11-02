@@ -104,6 +104,7 @@ export const env = {
     pass: optional('SMTP_PASS'),
     fromName: optional('FROM_NAME', 'MediaTools'),
     fromEmail: optional('FROM_EMAIL') || optional('SMTP_USER'),
+    feedbackEmail: optional('FEEDBACK_EMAIL', 'mediatools.contactus@gmail.com'),
     get configured(): boolean {
       return Boolean(this.user && this.pass && this.fromEmail);
     },
