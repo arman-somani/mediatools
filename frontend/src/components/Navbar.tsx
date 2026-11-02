@@ -11,6 +11,7 @@ import { openCommandPalette } from '@/components/CommandPalette';
 
 const TOOL_LINKS = [
   { name: 'Audio Studio', href: '/audio-tools' },
+  { name: 'YouTube to MP3', href: '/youtube' },
   { name: 'Video to Audio', href: '/converter' },
   { name: 'Universal', href: '/universal' },
 ];

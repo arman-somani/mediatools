@@ -10,6 +10,7 @@ import { useAuthStore } from '@/lib/store';
 import api from '@/lib/api';
 import PageWrapper from '@/components/PageWrapper';
 import AnimeReveal from '@/components/AnimeReveal';
+import { YouTubeIcon } from '@/components/icons';
 import { formatFileSize } from '@/lib/utils';
 
 type RecentConversion = {
@@ -30,6 +31,13 @@ const TOOLS = [
     href: '/audio-tools',
     badge: '6 audio tools',
     icon: Music,
+  },
+  {
+    label: 'YouTube MP3',
+    description: 'Download YouTube videos directly as high-bitrate audio.',
+    href: '/youtube',
+    badge: 'Fast extract',
+    icon: YouTubeIcon,
   },
   {
     label: 'Video to Audio',
@@ -280,17 +288,17 @@ export default function DashboardPage() {
                   const isUniversal = conversion.type === 'universal';
 
                   const typeLabel = isYtAudio
-                    ? 'Audio'
+                    ? 'YouTube MP3'
                     : isYtVideo
-                    ? 'Video'
+                    ? 'YouTube MP4'
                     : isUniversal
                     ? 'Universal Video'
                     : 'Video to Audio';
 
                   const typeHref = isYtAudio
-                    ? '/audio-tools?tool=converter'
+                    ? '/youtube'
                     : isYtVideo
-                    ? '/audio-tools?tool=converter'
+                    ? '/youtube'
                     : isUniversal
                     ? '/universal'
                     : '/converter';

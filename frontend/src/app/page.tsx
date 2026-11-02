@@ -22,6 +22,13 @@ const TOOLS = [
     description: 'Drop an MP4, MOV, MKV or WebM and pull out a clean audio track at up to 320 kbps.',
     href: '/converter',
   },
+  {
+    index: '03',
+    name: 'YouTube to MP3',
+    meta: 'URL · SEARCH BUILT IN',
+    description: 'Paste a YouTube link — or just type what you are looking for — and save the audio.',
+    href: '/youtube',
+  },
 ];
 
 const STEPS = [
@@ -199,7 +206,9 @@ export default function HomePage() {
                 </h1>
 
                 <p className="text-muted text-lg max-w-lg mt-6 leading-relaxed anim-fade-up" style={{ animationDelay: '180ms' }}>
-                  Extract a clean audio track from any video file, or convert media from a URL. No accounts to upgrade, no watermarks, no queues worth waiting in.
+                  Extract a clean audio track from any video file, or pull MP3 and MP4
+                  straight off a URL. No accounts to upgrade, no watermarks, no queues
+                  worth waiting in.
                 </p>
 
                 <div className="flex flex-wrap gap-3 items-center mt-9 anim-fade-up" style={{ animationDelay: '280ms' }}>
@@ -207,8 +216,8 @@ export default function HomePage() {
                     Open Audio Studio
                     <ArrowRight className="w-4 h-4" />
                   </Link>
-                  <Link id="hero-yt-mp3-btn" href="/converter" className="btn-secondary btn-lg">
-                    Convert a file
+                  <Link id="hero-yt-mp3-btn" href="/youtube" className="btn-secondary btn-lg">
+                    Paste a YouTube link
                   </Link>
                 </div>
 
@@ -337,8 +346,8 @@ export default function HomePage() {
                   Start converting
                   <ArrowRight className="w-4 h-4" />
                 </Link>
-                <Link id="cta-yt-mp3-btn" href="/converter" className="btn-secondary btn-lg">
-                  Convert a file
+                <Link id="cta-yt-mp3-btn" href="/youtube" className="btn-secondary btn-lg">
+                  YouTube to MP3
                 </Link>
                 <Link id="cta-universal-btn" href="/universal" className="btn-secondary btn-lg">
                   Universal

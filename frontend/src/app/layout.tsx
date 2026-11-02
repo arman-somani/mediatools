@@ -15,11 +15,11 @@ const archivo = Archivo({ subsets: ['latin'], variable: '--font-archivo', displa
 
 export const metadata: Metadata = {
   title: {
-    default: 'MediaTools: Audio Studio & Media Converter',
+    default: 'MediaTools: Video to Audio and YouTube Downloader',
     template: '%s · MediaTools',
   },
   description:
-    'Convert audio formats, trim clips, change speed & tempo, boost volume, merge tracks, and edit metadata. Free, no watermarks, files deleted after one hour.',
+    'Extract audio from video files at up to 320 kbps, or download YouTube videos as high-quality MP3 audio. Free, no watermarks, files deleted after one hour.',
 };
 
 export const viewport: Viewport = {
