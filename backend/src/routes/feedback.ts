@@ -3,6 +3,7 @@ import { body } from 'express-validator';
 import { sendFeedbackEmail } from '../utils/email';
 import { generalLimiter } from '../middleware/rateLimiter';
 import { asyncHandler, failedValidation, asString, normaliseEmail } from '../utils/http';
+import { Feedback } from '../models/Feedback';
 
 const router = Router();
 
@@ -33,13 +34,14 @@ router.post(
       return;
     }
 
-    const delivered = await sendFeedbackEmail(name, email, type, message);
-    if (!delivered) {
-      res.status(502).json({
-        success: false,
-        message: 'We could not send your feedback right now. Please try again shortly.',
-      });
-      return;
+    // Persist feedback so it is never lost, even when SMTP mail is not configured.
+    await Feedback.create({ name, email, type, message });
+
+    // Best-effort email notification; do not block the user when mail is unset.
+    try {
+      await sendFeedbackEmail(name, email, type, message);
+    } catch {
+      // Ignore email failures — feedback is already stored in the database.
     }
 
     res.json({ success: true, message: 'Thanks — your feedback has been sent.' });
