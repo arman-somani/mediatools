@@ -112,6 +112,9 @@ export default function YouTubePage() {
             title="YouTube to MP3."
             subtitle="Paste a link, or type what you are looking for and pick it from the search results."
           />
+          <p className="text-muted text-base sm:text-lg leading-relaxed max-w-xl mt-4 text-yellow-600 font-medium anim-fade-up">
+            NOTE : youtube to mp3 downloader may not work sometimes so try again twice
+          </p>
 
           <AnimeReveal delay={80} direction="up" className="mt-12">
             <ToolPanel>
